@@ -5,7 +5,7 @@
 
 ## Terms
 
-- **Instance** — one deployed copy of the OS spine-design. There are two: **work** and **personal**, isolated (no shared runtime/memory → hard confidentiality wall). Both are the same *design*, deployed twice.
+- **Instance** — one deployed copy of the OS spine-design. There are two: **work** and **personal**. **Deployment model = ONE repo (the spine-design), installed and configured twice — NOT one live linked spine with two interfaces.** Like the same app installed on two separate machines with two separate accounts, not one server with a work tab and a home tab. What's **shared** = the *design* (improve a skill / tighten the constitution once → both installs adopt it on next pull). What's **separate** = everything that runs and everything stored (own process, own queue/card-folder, own traces, own memory, own vault, own config profile). They never talk at runtime. **This runtime isolation IS the confidentiality wall — physics, not policy:** work data cannot reach the personal vault because no channel exists between them. Each install carries its own config (work → Teams/Copilot vessel, conservative calibration; personal → Hermes/Discord vessel, permissive calibration). A deliberate, human-driven, one-way publish of a *non-confidential* asset into the shared repo is allowed (that's editing the shared *design*); a runtime link between the two live systems is never.
 
 - **Spine** — the common, largely-shared *design* underneath both instances: the execution engine, roles, skills, gating. Shared as a design, NOT as a running system.
 
