@@ -34,3 +34,21 @@
 - **Glance layer** (T3) — a **Bases view** (Obsidian core Bases + a Bases-kanban plugin) renders cards as a board grouped by `status`. It is Dan's human surface ONLY — **agents never touch the plugin**, they read/write frontmatter directly. Truth is per-note frontmatter, so the board/plugin is disposable (swap at zero data cost).
 
 - **The board (Option B)** (T3) — 4 live columns **Inbox → Queued → Working → Review**; **Done is archived OFF-board** (a card leaving the active folder = "emptied"; traces persist in archive). **`blocked` + `needs-input` are flags, not columns.** **Standing/recurring work = a generator** that drops cards into Inbox, never a column. **Working→Review = the executed-check gate** (a worker can never self-promote — the check is the contract). **Review, ranked = the single digest = the North-Star final checkpoint.**
+
+- **The Constitution** (T5) — the 9 shape-independent standing principles every capability in both instances obeys. Full text in ticket #6's resolution comment. Load-bearing terms below.
+
+- **The consequence gate** (T5) — a T3 action's safety is *structural*, not discretionary: generic worker lanes are only ever granted read/reversible capability scopes, so they physically cannot touch money/external/credentials. Anything irreversible routes to the one **bounded hard-gated worker** — the only lane holding those keys, which additionally **runs frontier-tier** and **cannot start without an explicit per-card human approval**. "Take away the keys," never "trust the agent to ask." Fail-closed by construction.
+
+- **T3 = irreversible external side-effect** (T5) — the gating tier is defined by a bright-line undo test: *if this goes wrong, can the system undo it with nobody outside noticing?* No → T3. Default is T1/T2; tasks are **decomposed so only the irreversible verb is T3** (a bill = 9 reversible steps + 1 T3 "pay"). Genuine classification ambiguity **routes up** (fail-closed) and is captured as a durable **per-instance classification rule** so the same ambiguity never pauses twice.
+
+- **BLOCKED vs HUMAN HOLD** (T5) — the two pause types. **BLOCKED** = stuck on the *work* → the answer belongs **on the record, on the card** (any fresh session resumes it). **HUMAN HOLD** = stuck on *authority/permission/credentials* → the answer belongs to the **owner privately, off the record**. Every T3 approval is a HUMAN HOLD; this is the same channel as the confidentiality wall.
+
+- **Receipt** (T5, refined) — the mandatory explicit outcome written at every task close (what was done · which check proved it · what's left / any HUMAN HOLD). **No-receipt = not-done** (fail-closed). Receipts are the **atoms of the ranked digest** (the Review column). Distinct from a **trace** (full run-log, for the system's drift-control + self-improvement). NOTE: how receipts *surface* to Dan (notification / response UX) is deferred to ticket #7.
+
+- **Self-pruning** (T5) — the OS periodically tries its own machinery (skills, gates, generators) against its **traces**; anything that can't demonstrate value from usage evidence is retired. Periodic audit, never per-task.
+
+- **Agenticity dimmer** (T5) — how a capability earns autonomy: **caged start** → **graduate by trace evidence** → **consent-bound scope that re-asks on expansion** → **symmetric demotion**. **T3 never graduates** (irreversible actions stay hard-gated forever). **One mechanism, two calibration profiles** — personal tuned permissive, work tuned conservative (the concrete example of what legitimately diverges between the two instances: *calibration* diverges, *mechanism* stays common).
+
+- **Define-done-before-work** (T5) — no task enters a worker lane without a written **done-contract**, and that contract **IS the executed check** (defined at spec-time by the head, run at close-time). Unspecifiable-done = the task isn't ready → route back. Fail-closed at the front mirrors fail-closed at the back; this is what makes the cheap-worker model safe.
+
+- **Cost posture: performance-first** (T5) — spend on **judgment** (spec/synthesis/review = frontier head) and on **irreversibility** (T3 executing worker = frontier); economize on **legwork** (gather/fetch/edit = cheapest reliable actor, often no LLM). **Delegate for breadth, never delegate judgment.** Thrift survives only for trivial, reversible, high-confidence T1 work.
