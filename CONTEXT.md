@@ -26,3 +26,11 @@
 - **Sessions are cattle, not pets** — every session (Dispatcher or worker) is fresh, disposable, and reconstitutes its context by reading durable state (queue + traces + wiki + memory). Crash/close/`/new` resilience is free; nothing real lives only in a session's head.
 
 - **Capture inputs (many) ≠ front doors (one per instance)** — you can capture from anywhere; it all converges on one Dispatcher per domain.
+
+- **Card** (T3) — one markdown **note** = one unit of work. Lifecycle state lives in its **YAML frontmatter** (`status`, `claimed_by`, `created`, `modified`, back-refs); the task is the body. The queue is a *folder of cards*, one folder per instance (isolation is just separate folders). This is the durable substrate of record.
+
+- **Vault-as-substrate** (T3) — the continuity substrate is **markdown-on-disk in the Obsidian vault**, not a hosted tracker. Portable, greppable, git-able, tool-agnostic. GitHub Issues is held only as an escape hatch (hosted concurrency + mobile board) we don't expect to need at personal scale.
+
+- **Glance layer** (T3) — a **Bases view** (Obsidian core Bases + a Bases-kanban plugin) renders cards as a board grouped by `status`. It is Dan's human surface ONLY — **agents never touch the plugin**, they read/write frontmatter directly. Truth is per-note frontmatter, so the board/plugin is disposable (swap at zero data cost).
+
+- **The board (Option B)** (T3) — 4 live columns **Inbox → Queued → Working → Review**; **Done is archived OFF-board** (a card leaving the active folder = "emptied"; traces persist in archive). **`blocked` + `needs-input` are flags, not columns.** **Standing/recurring work = a generator** that drops cards into Inbox, never a column. **Working→Review = the executed-check gate** (a worker can never self-promote — the check is the contract). **Review, ranked = the single digest = the North-Star final checkpoint.**
