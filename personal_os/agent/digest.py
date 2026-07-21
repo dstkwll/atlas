@@ -33,19 +33,35 @@ def _cards_root(state_dir: str) -> str:
     return os.path.join(os.path.dirname(state_dir), "cards")
 
 
-def _manifest_path(state_dir: str) -> str:
-    return os.path.join(state_dir, "digest_manifest.json")
+def _digests_dir(state_dir: str) -> str:
+    return os.path.join(state_dir, "digests")
 
 
-def _write_manifest(state_dir: str, now: _dt.datetime, rows: list[dict]) -> None:
-    """Persist the number->card_id mapping so a reply '<n> <verb>' can resolve.
-    Overwritten each digest; the latest digest is the authoritative numbering."""
-    payload = {"issued_at": _iso(now), "items": rows}
-    os.makedirs(state_dir, exist_ok=True)
-    tmp = _manifest_path(state_dir) + ".tmp"
+def _make_digest_id(now: _dt.datetime) -> str:
+    """Human-legible, date-scoped, unique: 2026-07-21-HHMMSS."""
+    return now.strftime("%Y-%m-%d-%H%M%S")
+
+
+def _write_manifest(state_dir: str, now: _dt.datetime, digest_id: str, rows: list[dict]) -> None:
+    """Persist an IMMUTABLE per-digest manifest keyed by digest_id (sol's staleness fix).
+
+    A positional number is only meaningful WITHIN a specific digest. Replies must
+    resolve against the digest they answer, never a mutable 'latest'. We also drop a
+    latest.json pointer for display/debug only (NOT authoritative for mutations)."""
+    digests_dir = _digests_dir(state_dir)
+    os.makedirs(digests_dir, exist_ok=True)
+    payload = {"schema": 1, "digest_id": digest_id, "created_at": _iso(now), "items": rows}
+    snap = os.path.join(digests_dir, f"{digest_id}.json")
+    tmp = snap + ".tmp"
     with open(tmp, "w", encoding="utf-8") as fh:
         json.dump(payload, fh)
-    os.replace(tmp, _manifest_path(state_dir))
+    os.replace(tmp, snap)
+    # display-only pointer to the newest digest
+    ptr = os.path.join(state_dir, "latest_digest.json")
+    tmpp = ptr + ".tmp"
+    with open(tmpp, "w", encoding="utf-8") as fh:
+        json.dump(payload, fh)
+    os.replace(tmpp, ptr)
 
 
 def _load_column(cards_root: str, col: str) -> list[tuple[str, dict, str]]:
@@ -104,6 +120,7 @@ def run(env: dict | None = None) -> str:
     state_dir = vault_state_dir(env)
     cards_root = _cards_root(state_dir)
     now = _utc_now()
+    digest_id = _make_digest_id(now)
     one_nag_cap = (cfg.get("surfacing", {}) or {}).get("one_nag_cap", 1)
     max_age_days = (cfg.get("surfacing", {}) or {}).get("max_age_days_escalate", 3)
 
@@ -117,7 +134,7 @@ def run(env: dict | None = None) -> str:
 
     date_str = now.strftime("%a %b %-d")
     if not ranked:
-        _write_manifest(state_dir, now, [])
+        _write_manifest(state_dir, now, digest_id, [])
         return f"📥 Comms digest — {date_str}\nAll clear — nothing needs you. ✅"
 
     lines = [f"📥 Comms digest — {date_str}", "", f"NEEDS YOU ({len(ranked)})"]
@@ -142,9 +159,10 @@ def run(env: dict | None = None) -> str:
         except Exception:
             pass
 
-    _write_manifest(state_dir, now, manifest_rows)
+    _write_manifest(state_dir, now, digest_id, manifest_rows)
     lines.append("")
     lines.append("Reply: <n> done | <n> snooze <when> | <n> dismiss | <n> ack")
+    lines.append(f"Digest: {digest_id}")
     return "\n".join(lines)
 
 

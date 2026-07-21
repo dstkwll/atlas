@@ -46,23 +46,30 @@ def _cards_root(state_dir: str) -> str:
     return os.path.join(os.path.dirname(state_dir), "cards")
 
 
-def _manifest_path(state_dir: str) -> str:
-    return os.path.join(state_dir, "digest_manifest.json")
+def _snapshot_path(state_dir: str, digest_id: str) -> str:
+    return os.path.join(state_dir, "digests", f"{digest_id}.json")
 
 
-def resolve_target(target: str, state_dir: str) -> str:
-    """Return a card_id. If target is an int, look it up in the latest digest manifest."""
+def resolve_target(target: str, state_dir: str, digest_id: str | None = None) -> str:
+    """Return a card_id.
+    A positional NUMBER is only meaningful within a specific immutable digest, so a
+    numbered target REQUIRES digest_id and resolves against that snapshot only —
+    never a mutable 'latest' (sol's staleness invariant). A non-numeric target is
+    assumed to already be a card_id.
+    """
     target = str(target).strip()
     if not target.isdigit():
-        return target  # assume it's already a card_id
-    path = _manifest_path(state_dir)
+        return target  # already a card_id
+    if not digest_id:
+        raise ValueError("a numbered target requires --digest-id (which digest are you replying to?)")
+    path = _snapshot_path(state_dir, digest_id)
     if not os.path.exists(path):
-        raise ValueError("no digest manifest yet; cannot resolve a number to a card")
+        raise ValueError(f"digest {digest_id} not found; cannot resolve number {target}")
     manifest = json.load(open(path, encoding="utf-8"))
     for row in manifest.get("items", []):
         if int(row["n"]) == int(target):
             return row["card_id"]
-    raise ValueError(f"number {target} not in the latest digest")
+    raise ValueError(f"number {target} not in digest {digest_id}")
 
 
 def _find_card(card_id: str, cards_root: str):
@@ -92,7 +99,8 @@ def _move_card(path: str, card: dict, body: str, dest_col: str, cards_root: str,
     return dest
 
 
-def apply_verb(verb: str, target: str, when: str | None = None, env: dict | None = None) -> dict:
+def apply_verb(verb: str, target: str, when: str | None = None, env: dict | None = None,
+               digest_id: str | None = None) -> dict:
     if verb not in VALID_VERBS:
         return {"ok": False, "message": f"unknown verb: {verb}"}
     load_config(env)
@@ -101,14 +109,16 @@ def apply_verb(verb: str, target: str, when: str | None = None, env: dict | None
     now = _utc_now()
 
     try:
-        card_id = resolve_target(target, state_dir)
+        card_id = resolve_target(target, state_dir, digest_id)
     except ValueError as e:
         return {"ok": False, "message": str(e)}
 
     found = _find_card(card_id, cards_root)
     if not found:
-        return {"ok": False, "card_id": card_id,
-                "message": f"card {card_id} not found in live columns (already handled?)"}
+        # Idempotent: a card already off-board is a truthful no-op, not an error
+        # (sol: done-on-done returns a truthful no-op receipt).
+        return {"ok": True, "noop": True, "verb": verb, "card_id": card_id,
+                "message": f"↩️ Already handled — “{card_id}” is no longer on the board."}
     path, card, body, col = found
     subject = _subject_of(body)
     msg = ""
@@ -149,8 +159,10 @@ def main(argv=None) -> int:
     ap.add_argument("--verb", required=True, choices=sorted(VALID_VERBS))
     ap.add_argument("--target", required=True, help="digest number or card_id")
     ap.add_argument("--when", help="ISO UTC timestamp for snooze")
+    ap.add_argument("--digest-id", dest="digest_id",
+                    help="digest the number refers to (required for numbered targets)")
     args = ap.parse_args(argv)
-    receipt = apply_verb(args.verb, args.target, when=args.when)
+    receipt = apply_verb(args.verb, args.target, when=args.when, digest_id=args.digest_id)
     print(json.dumps(receipt))
     return 0 if receipt.get("ok") else 1
 

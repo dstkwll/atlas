@@ -33,11 +33,14 @@ def _put_card(env, col="inbox", subject="Test subj"):
     return c
 
 
-def _write_manifest(env, rows):
-    sd = _state_dir(env)
+DIGEST_ID = "2026-07-21-090000"
+
+
+def _write_manifest(env, rows, digest_id=DIGEST_ID):
+    sd = os.path.join(_state_dir(env), "digests")
     os.makedirs(sd, exist_ok=True)
-    json.dump({"issued_at": "t", "items": rows},
-              open(os.path.join(sd, "digest_manifest.json"), "w"))
+    json.dump({"schema": 1, "digest_id": digest_id, "created_at": "t", "items": rows},
+              open(os.path.join(sd, f"{digest_id}.json"), "w"))
 
 
 def _card_in(env, col, card_id):
@@ -49,7 +52,7 @@ def test_done_archives_card(tmp_path):
     env = _env(tmp_path)
     c = _put_card(env, "inbox")
     _write_manifest(env, [{"n": 1, "card_id": c["card_id"], "subject": "Test subj"}])
-    r = apply_verb.apply_verb("done", "1", env=env)
+    r = apply_verb.apply_verb("done", "1", env=env, digest_id=DIGEST_ID)
     assert r["ok"] and r["verb"] == "done"
     assert not _card_in(env, "inbox", c["card_id"])
     assert _card_in(env, "done", c["card_id"])
@@ -68,7 +71,7 @@ def test_snooze_moves_to_queued_with_timestamp(tmp_path):
     env = _env(tmp_path)
     c = _put_card(env, "inbox")
     _write_manifest(env, [{"n": 1, "card_id": c["card_id"], "subject": "s"}])
-    r = apply_verb.apply_verb("snooze", "1", when="2026-07-25T08:00:00Z", env=env)
+    r = apply_verb.apply_verb("snooze", "1", when="2026-07-25T08:00:00Z", env=env, digest_id=DIGEST_ID)
     assert r["ok"]
     assert _card_in(env, "queued", c["card_id"])
     card, _ = from_markdown(open(os.path.join(_cards_root(env), "queued", f"{c['card_id']}.md")).read())
@@ -93,22 +96,39 @@ def test_dismiss_archives_and_marks(tmp_path):
     assert card.get("dismissed") is True
 
 
-def test_missing_card_reports_already_handled(tmp_path):
+def test_missing_card_is_idempotent_noop(tmp_path):
     env = _env(tmp_path)
     _write_manifest(env, [{"n": 1, "card_id": "GONE", "subject": "s"}])
-    r = apply_verb.apply_verb("done", "1", env=env)
-    assert not r["ok"] and "not found" in r["message"]
+    r = apply_verb.apply_verb("done", "1", env=env, digest_id=DIGEST_ID)
+    # already off-board -> truthful no-op, not an error (idempotency)
+    assert r["ok"] and r.get("noop") is True
 
 
-def test_bad_number_not_in_manifest(tmp_path):
+def test_numbered_target_requires_digest_id(tmp_path):
+    env = _env(tmp_path)
+    c = _put_card(env, "inbox")
+    _write_manifest(env, [{"n": 1, "card_id": c["card_id"], "subject": "s"}])
+    r = apply_verb.apply_verb("done", "1", env=env)  # no digest_id
+    assert not r["ok"] and "digest" in r["message"].lower()
+
+
+def test_stale_digest_id_fails_closed(tmp_path):
+    env = _env(tmp_path)
+    c = _put_card(env, "inbox")
+    _write_manifest(env, [{"n": 1, "card_id": c["card_id"], "subject": "s"}])
+    r = apply_verb.apply_verb("done", "1", env=env, digest_id="2020-01-01-000000")
+    assert not r["ok"] and "not found" in r["message"].lower()
+
+
+def test_bad_number_not_in_digest(tmp_path):
     env = _env(tmp_path)
     _put_card(env, "inbox")
     _write_manifest(env, [{"n": 1, "card_id": "x", "subject": "s"}])
-    r = apply_verb.apply_verb("done", "9", env=env)
+    r = apply_verb.apply_verb("done", "9", env=env, digest_id=DIGEST_ID)
     assert not r["ok"]
 
 
 def test_unknown_verb(tmp_path):
     env = _env(tmp_path)
-    r = apply_verb.apply_verb("nuke", "1", env=env)
+    r = apply_verb.apply_verb("nuke", "1", env=env, digest_id=DIGEST_ID)
     assert not r["ok"]
