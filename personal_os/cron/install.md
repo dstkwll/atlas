@@ -1,69 +1,69 @@
 # Cron wiring — the dumb clock
 
-Two Hermes cron jobs. **Cron holds zero business logic** — it only schedules the
-poller and the digest. All logic lives in `poller/` and `agent/`.
+Two Hermes cron jobs. **Cron holds zero business logic** — both are `no_agent`
+script jobs that just run a launcher on a schedule. All logic lives in `poller/`
+and `agent/` as deterministic Python.
 
-> Do NOT schedule these until go-live. This doc is the wiring reference; the
-> build session leaves scheduling to Dan's explicit approval (one state change
-> at a time).
+> This is the as-shipped wiring reference. Both jobs are live. Scheduling is a
+> state change — do it deliberately, one at a time.
+
+## Architecture (as built)
+
+Stage-2 is **deterministic scripts**, not an agent turn (an unattended cron agent
+stalled on MCP init; scripts are reliable and cheaper). The only agent-in-the-loop
+piece is the **interactive reply** (`agent/reply.md` skill), which runs in the live
+gateway session, not a cron spawn.
+
+```
+poll+classify job ──> personal-comms-poll.sh ──> poll.py (stage-1, stdlib)
+                                              └─> classify.py (stage-2, 1 LLM call/microbatch)
+                                                     └─> mint_cards.py (deterministic)
+digest job ─────────> personal-comms-digest.sh ─> digest.py (deterministic ranked digest)
+reply (interactive) ─> personal-comms-reply skill ─> apply_verb.py (deterministic mutation)
+```
 
 ## Job 1 — Poll + classify (the incremental loop)
 
-Runs the stage-1 poller as a `script`, then the agent turn consumes the handoff
-and runs `agent/classify-and-digest.md`.
-
-- **schedule:** `config.digest.poll_interval_cron` (default `*/30 * * * *`)
-- **script:** `~/atlas/personal_os/poller/poll.py`  (stdout receipt feeds the agent prompt)
-- **prompt:** "Load the `personal-comms-classify-digest` skill. The poller just
-  ran; its receipt is above. Process any new handoff files in
-  `$OBSIDIAN_VAULT_PATH/personal-os/state/handoff/`: dedup, classify, mint
-  actionable cards, rank. Do NOT send the full digest on this tick unless a
-  push-worthy item exists (HUMAN HOLD / consequence-escalation / unrecoverable
-  failure). Surface-only, zero sends."
-- **enabled_toolsets:** `["file", "terminal"]`
-- **deliver:** `origin` (or the `#hermes-chat` channel id) so replies reach an agent.
+- **schedule:** `*/30 * * * *`
+- **no_agent:** `true`  (script's stdout delivered verbatim; silent on no-op)
+- **script:** `personal-comms-poll.sh` (thin wrapper in `~/.hermes/scripts/` →
+  `~/atlas/personal_os/poller/run.sh`, which runs poll.py then classify.py)
+- **deliver:** `#hermes-chat` channel id
 - **workdir:** `~/atlas`
 
-Env: the job must see `EMAIL_ADDRESS`, `GOOGLE_APP_PASSWORD`, `OBSIDIAN_VAULT_PATH`
-(already in `~/.hermes/.env`, loaded by the gateway).
-
-The poller must run with the repo importable. Since `script` runs the file
-directly, wrap it so the package import works, e.g. a tiny launcher:
-`cd ~/atlas && ./.venv/bin/python -m personal_os.poller.poll`
-(create the launcher as `poller/run.sh` at go-live, or set the cron `script` to a
-`.sh` that does the `cd` + module invocation).
+Silent watchdog pattern: prints nothing when there's no new mail (no Discord
+spam); logs receipts to `$VAULT/personal-os/state/poll.log`; a non-zero exit
+surfaces an error alert.
 
 ## Job 2 — Morning digest (the heartbeat / pull-safety valve)
 
-Forces the full two-tier digest once a day even on a quiet night.
-
-- **schedule:** `config.digest.morning_push_cron` (default `0 8 * * *`)
-- **prompt:** "Load `personal-comms-classify-digest`. First re-check `queued`
-  cards for expired snoozes (move due ones back to actionable). Then compose and
-  deliver the full action-first two-tier digest to #hermes-chat. If nothing
-  needs Dan, the one-line header is the whole message. Surface-only."
-- **enabled_toolsets:** `["file"]`
-- **deliver:** `#hermes-chat`
+- **schedule:** `0 8 * * *`
+- **no_agent:** `true`
+- **script:** `personal-comms-digest.sh` → `~/atlas/personal_os/agent/run_digest.sh`
+  (runs digest.py: reactivates due snoozes, ranks, writes the immutable per-digest
+  manifest `state/digests/<digest_id>.json` + `latest_digest.json`, prints the
+  two-tier digest with a `Digest: <id>` footer)
+- **deliver:** `#hermes-chat` channel id
 - **workdir:** `~/atlas`
 
-## Copy-paste creation (RUN ONLY AT GO-LIVE)
+## Reply loop (no cron — interactive)
 
-```
-# Job 1 — poll every 30 min
-cronjob action=create name="personal-comms poll" schedule="*/30 * * * *" \
-  script="~/atlas/personal_os/poller/run.sh" workdir="~/atlas" \
-  enabled_toolsets=["file","terminal"] deliver="<#hermes-chat id>" \
-  prompt="<Job 1 prompt above>"
+A bare `<n> <verb>` reply (done/snooze/dismiss/ack) in #hermes-chat is recognized
+via a memory steer → the `personal-comms-reply` skill loads → resolves the number
+against the immutable disk manifest (keyed by the digest's `Digest: <id>`) → runs
+`apply_verb.py`. Stateless and durable: survives `/new` because recognition is in
+memory and the source of truth is the disk manifest, not any session transcript.
 
-# Job 2 — morning digest at 08:00
-cronjob action=create name="personal-comms digest" schedule="0 8 * * *" \
-  workdir="~/atlas" enabled_toolsets=["file"] deliver="<#hermes-chat id>" \
-  prompt="<Job 2 prompt above>"
-```
+## Env
 
-## Why single-job (not two chained) for the loop
+Both scripts self-heal: `poller/config.py` auto-hydrates `EMAIL_ADDRESS`,
+`GOOGLE_APP_PASSWORD`, `OBSIDIAN_VAULT_PATH` from `~/.hermes/.env` when absent, so
+every entrypoint works whether or not the caller sourced env.
 
-Q6 chose one job where `script` runs the poller and its output feeds the same
-agent turn. If handoff batches ever grow large enough that inlining strains the
-agent context, split into two jobs chained via `context_from`. Not needed at
-personal scale (~30 mails/day).
+## Why deterministic scripts (not an agent turn) for stage-2
+
+An unattended cron agent stalled every run (MCP servers fail to connect on session
+spawn, ~30s of retries). Collapsing stage-2 to one tool-less LLM classification
+call wrapped in a deterministic script removed the flaky orchestration — and, since
+email is untrusted input, a tool-less classifier also closes the prompt-injection
+→ tool boundary. The agent is reserved for the interactive reply path only.
