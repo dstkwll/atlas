@@ -33,6 +33,21 @@ def _cards_root(state_dir: str) -> str:
     return os.path.join(os.path.dirname(state_dir), "cards")
 
 
+def _manifest_path(state_dir: str) -> str:
+    return os.path.join(state_dir, "digest_manifest.json")
+
+
+def _write_manifest(state_dir: str, now: _dt.datetime, rows: list[dict]) -> None:
+    """Persist the number->card_id mapping so a reply '<n> <verb>' can resolve.
+    Overwritten each digest; the latest digest is the authoritative numbering."""
+    payload = {"issued_at": _iso(now), "items": rows}
+    os.makedirs(state_dir, exist_ok=True)
+    tmp = _manifest_path(state_dir) + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(payload, fh)
+    os.replace(tmp, _manifest_path(state_dir))
+
+
 def _load_column(cards_root: str, col: str) -> list[tuple[str, dict, str]]:
     out = []
     for path in glob.glob(os.path.join(cards_root, col, "*.md")):
@@ -102,9 +117,11 @@ def run(env: dict | None = None) -> str:
 
     date_str = now.strftime("%a %b %-d")
     if not ranked:
+        _write_manifest(state_dir, now, [])
         return f"📥 Comms digest — {date_str}\nAll clear — nothing needs you. ✅"
 
     lines = [f"📥 Comms digest — {date_str}", "", f"NEEDS YOU ({len(ranked)})"]
+    manifest_rows = []
     for i, card in enumerate(ranked, 1):
         path, _c, body = by_id[card["card_id"]]
         tier = card.get("consequence_tier", "T1")
@@ -115,6 +132,7 @@ def run(env: dict | None = None) -> str:
         subject = _subject_of(body)
         sender = _short_sender(card.get("_from") or "")
         lines.append(f"{i}. [{tier}·{hier}{dl}]{review} {subject}")
+        manifest_rows.append({"n": i, "card_id": card["card_id"], "subject": subject})
         # update surfaced bookkeeping
         card["surfaced_count"] = int(card.get("surfaced_count", 0)) + 1
         card["last_surfaced"] = _iso(now)
@@ -124,6 +142,7 @@ def run(env: dict | None = None) -> str:
         except Exception:
             pass
 
+    _write_manifest(state_dir, now, manifest_rows)
     lines.append("")
     lines.append("Reply: <n> done | <n> snooze <when> | <n> dismiss | <n> ack")
     return "\n".join(lines)
