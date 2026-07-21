@@ -21,8 +21,42 @@ class ConfigError(RuntimeError):
     pass
 
 
+_DOTENV_KEYS = ("EMAIL_ADDRESS", "GOOGLE_APP_PASSWORD", "OBSIDIAN_VAULT_PATH", "PERSONAL_OS_CONFIG")
+
+
+def _hydrate_from_dotenv(e: dict) -> dict:
+    """Self-healing fallback: if the needed keys aren't in the environment, read them
+    from ~/.hermes/.env directly. This makes every entrypoint (poller, classify,
+    digest, apply_verb) work whether or not the caller sourced .env first — the
+    interactive reply path in particular runs from a gateway shell that may not have
+    sourced it. Values already present in the environment always win (never overridden).
+    """
+    if all(e.get(k) for k in ("EMAIL_ADDRESS", "GOOGLE_APP_PASSWORD")):
+        return e  # already have the secrets; nothing to do
+    dotenv = os.path.expanduser("~/.hermes/.env")
+    if not os.path.exists(dotenv):
+        return e
+    e = dict(e)
+    try:
+        with open(dotenv, "r", encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, _, val = line.partition("=")
+                key = key.strip()
+                if key in _DOTENV_KEYS and not e.get(key):
+                    val = val.strip().strip('"').strip("'")
+                    e[key] = val
+    except OSError:
+        pass
+    return e
+
+
 def resolve_config_path(env: dict | None = None) -> str:
-    e = dict(os.environ) if env is None else env
+    # Only self-heal from ~/.hermes/.env for the REAL environment; an explicit env
+    # dict (tests, embedding) is taken as authoritative and never hydrated.
+    e = _hydrate_from_dotenv(dict(os.environ)) if env is None else env
     explicit = e.get("PERSONAL_OS_CONFIG")
     if explicit:
         return explicit
@@ -36,7 +70,7 @@ def resolve_config_path(env: dict | None = None) -> str:
 
 def load_config(env: dict | None = None) -> dict:
     """Load merged config: file JSON + secret from env. Fail loud if secret missing."""
-    e = dict(os.environ) if env is None else env
+    e = _hydrate_from_dotenv(dict(os.environ)) if env is None else env
     path = resolve_config_path(e)
     if not os.path.exists(path):
         raise ConfigError(f"config file not found: {path}")
@@ -56,6 +90,5 @@ def load_config(env: dict | None = None) -> dict:
 
 def vault_state_dir(env: dict | None = None) -> str:
     """Where the poller writes cursor / handoff / traces. Under the vault, alongside config."""
-    e = dict(os.environ) if env is None else env
-    path = resolve_config_path(e)
+    path = resolve_config_path(env)
     return os.path.join(os.path.dirname(path), "state")

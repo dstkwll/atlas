@@ -60,9 +60,16 @@ conversation and confirm before mutating.
 
 For each verb clause, run (from workdir `~/atlas`):
 ```
-~/atlas/.venv/bin/python -m personal_os.agent.apply_verb \
+cd ~/atlas && set -a && . ~/.hermes/.env && set +a && \
+PERSONAL_OS_CONFIG="$OBSIDIAN_VAULT_PATH/personal-os/config.json" \
+./.venv/bin/python -m personal_os.agent.apply_verb \
     --verb <verb> --target <number> --digest-id <id> [--when <iso-utc>]
 ```
+**Env MUST be sourced first.** `apply_verb` reads `EMAIL_ADDRESS` +
+`GOOGLE_APP_PASSWORD` + `OBSIDIAN_VAULT_PATH` from `~/.hermes/.env` (or it throws
+ConfigError). The `set -a && . ~/.hermes/.env && set +a` prefix above loads them;
+always include it. If you skip it you'll get a config error, not a silent wrong result.
+
 **Just run it — do not ask permission first.** The applier is surface-only,
 idempotent, and only moves a card between vault folders (never sends email, never
 irreversible). Use your terminal tool and execute it directly; then relay the
