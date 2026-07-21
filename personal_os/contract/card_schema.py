@@ -124,8 +124,12 @@ def _parse_scalar(s: str):
 def to_markdown(card: dict, body: str = "") -> str:
     """Render a card as a markdown note with a deterministic (sorted) frontmatter block."""
     validate_card(card)
+    # Serialize required fields plus any extra optional scalar fields (e.g.
+    # snooze_until) so lifecycle metadata added downstream is not silently lost.
+    extra_keys = [k for k in card.keys() if k not in REQUIRED_FIELDS
+                  and not isinstance(card[k], (list, dict))]
     lines = ["---"]
-    for k in sorted(REQUIRED_FIELDS):
+    for k in sorted(REQUIRED_FIELDS) + sorted(extra_keys):
         if k == "flags":
             inline = ", ".join(str(x) for x in card["flags"])
             lines.append(f"flags: [{inline}]")
