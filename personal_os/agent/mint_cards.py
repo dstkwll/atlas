@@ -38,6 +38,8 @@ from ..contract.card_schema import (
     VALID_TIER, VALID_SENSITIVITY, VALID_HIERARCHY, VALID_STOP,
 )
 
+_VALID_FLAGS = {"needs-review", "blocked", "needs-input"}
+
 
 def _utc_now_iso() -> str:
     return _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -111,6 +113,9 @@ def run(handoff_path: str, decisions: dict, env: dict | None = None) -> dict:
         stub["malcolm_flag"] = bool(decision.get("malcolm_flag", False))
         stub["done_contract"] = decision.get("done_contract", "notified") \
             if decision.get("done_contract") in VALID_STOP else "notified"
+        flags = decision.get("flags", [])
+        stub["flags"] = [flag for flag in flags if flag in _VALID_FLAGS] \
+            if isinstance(flags, list) else []
 
         validate_card(stub)  # hard contract gate (incl. surface-only floor)
 

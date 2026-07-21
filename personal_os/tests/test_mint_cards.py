@@ -78,3 +78,14 @@ def test_t3_label_allowed_but_capped_semantics(tmp_path):
     card, _ = from_markdown(open(receipt["cards"][0]).read())
     assert card["consequence_tier"] == "T3"  # label preserved; action-gating enforced elsewhere
     assert card["autonomy_mode"] == "surface-only"
+
+
+def test_decision_flags_are_validated_and_minted(tmp_path):
+    env = _env(tmp_path)
+    hp = _handoff(tmp_path, env, [_rec("<flags@x>", "k-flags", "Needs judgment")])
+    receipt = mint_cards.run(hp, {
+        "<flags@x>": {"actionable": True,
+                       "flags": ["needs-review", "blocked", "not-allowed"]},
+    }, env=env)
+    card, _ = from_markdown(open(receipt["cards"][0]).read())
+    assert card["flags"] == ["needs-review", "blocked"]
