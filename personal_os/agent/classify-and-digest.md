@@ -42,8 +42,14 @@ Read the config path from `PERSONAL_OS_CONFIG` or `$OBSIDIAN_VAULT_PATH/personal
 ## Procedure
 
 ### 1. Load survivors + existing cards
-Read every unprocessed handoff line. Load existing card frontmatter via
-`personal_os.contract.card_schema.from_markdown` for dedup.
+**Disk is the source of truth, not the poller's receipt.** Always glob
+`$VAULT/personal-os/state/handoff/*.jsonl` first and process EVERY file found —
+a prior tick (or an overlapping run) may have left an unprocessed handoff even
+if this tick's receipt says `survivors: 0`. If the glob is empty, there is
+genuinely nothing to do → stay silent. Otherwise read every handoff line across
+all files. Load existing card frontmatter via
+`personal_os.contract.card_schema.from_markdown` for dedup (the minter also
+dedups defensively).
 
 ### 2. Two-layer dedup (T6) — BEFORE minting
 For each survivor:
