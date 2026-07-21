@@ -1,0 +1,7 @@
+# Personal config + secrets must NEVER be committed (public-repo forcing-function rule).
+# Real config lives in the vault; only config.example.json ships here.
+config.json
+config.local.json
+*.local.json
+*.local.yaml
+config.yaml

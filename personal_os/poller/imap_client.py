@@ -1,0 +1,122 @@
+"""Read-only IMAP capture (Q3/Q5).
+
+Stdlib `imaplib` only. Never mutates the mailbox:
+  * SELECT is issued readonly (EXAMINE) so no flags change.
+  * Bodies fetched with BODY.PEEK[...] so the \\Seen flag is never set.
+
+The transport is injectable: `fetch_new` takes a `conn` object exposing the
+imaplib.IMAP4 methods we use, so unit tests run against a fake with zero network.
+"""
+
+from __future__ import annotations
+
+import email
+import hashlib
+import re
+from email.header import decode_header, make_header
+
+
+def _decode(raw) -> str:
+    if raw is None:
+        return ""
+    try:
+        return str(make_header(decode_header(raw)))
+    except Exception:
+        return str(raw)
+
+
+def _normalize_subject(subject: str) -> str:
+    s = subject.lower().strip()
+    s = re.sub(r"^(re|fwd|fw):\s*", "", s)          # strip one reply/forward prefix
+    s = re.sub(r"\s+", " ", s)
+    return s
+
+
+def semantic_source_key(sender: str, subject: str) -> str:
+    """Layer-2 dedup key: hash(sender | normalized-subject)."""
+    basis = f"{sender.lower().strip()}|{_normalize_subject(subject)}"
+    return hashlib.sha256(basis.encode("utf-8")).hexdigest()[:16]
+
+
+def _parse_headers_and_snippet(header_bytes: bytes, text_bytes: bytes) -> dict:
+    msg = email.message_from_bytes(header_bytes)
+    sender = _decode(msg.get("From"))
+    subject = _decode(msg.get("Subject"))
+    message_id = (msg.get("Message-ID") or "").strip()
+    date = (msg.get("Date") or "").strip()
+    list_unsub = msg.get("List-Unsubscribe")
+    headers = {}
+    if list_unsub:
+        headers["List-Unsubscribe"] = list_unsub
+    snippet = ""
+    if text_bytes:
+        try:
+            snippet = text_bytes.decode("utf-8", errors="replace")
+        except Exception:
+            snippet = ""
+    return {
+        "from": sender,
+        "subject": subject,
+        "message_id": message_id,
+        "date": date,
+        "headers": headers,
+        "snippet": snippet[:2048],
+    }
+
+
+def get_uidvalidity(conn, mailbox: str) -> int:
+    """EXAMINE (readonly select) the mailbox and return its UIDVALIDITY."""
+    typ, _ = conn.select(mailbox, readonly=True)
+    if typ != "OK":
+        raise RuntimeError(f"could not EXAMINE mailbox {mailbox}")
+    typ, data = conn.status(mailbox, "(UIDVALIDITY UIDNEXT)")
+    if typ != "OK":
+        raise RuntimeError("could not read UIDVALIDITY/UIDNEXT")
+    line = data[0].decode() if isinstance(data[0], bytes) else str(data[0])
+    m = re.search(r"UIDVALIDITY (\d+)", line)
+    if not m:
+        raise RuntimeError(f"no UIDVALIDITY in status response: {line!r}")
+    return int(m.group(1))
+
+
+def get_uidnext(conn, mailbox: str) -> int:
+    typ, data = conn.status(mailbox, "(UIDNEXT)")
+    if typ != "OK":
+        raise RuntimeError("could not read UIDNEXT")
+    line = data[0].decode() if isinstance(data[0], bytes) else str(data[0])
+    m = re.search(r"UIDNEXT (\d+)", line)
+    if not m:
+        raise RuntimeError(f"no UIDNEXT in status response: {line!r}")
+    return int(m.group(1))
+
+
+def fetch_since(conn, mailbox: str, after_uid: int) -> list[dict]:
+    """Return metadata dicts for messages with UID strictly greater than after_uid.
+
+    Read-only: EXAMINE select + BODY.PEEK fetch. Each dict carries a `uid` field.
+    """
+    typ, _ = conn.select(mailbox, readonly=True)
+    if typ != "OK":
+        raise RuntimeError(f"could not EXAMINE mailbox {mailbox}")
+
+    typ, data = conn.uid("search", None, f"UID {after_uid + 1}:*")
+    if typ != "OK":
+        raise RuntimeError("UID SEARCH failed")
+    raw = data[0].decode() if data and isinstance(data[0], bytes) else (data[0] or "")
+    uids = [int(x) for x in raw.split() if x.isdigit() and int(x) > after_uid]
+
+    out = []
+    for uid in sorted(uids):
+        typ, hdr = conn.uid("fetch", str(uid), "(BODY.PEEK[HEADER])")
+        if typ != "OK" or not hdr or hdr[0] is None:
+            continue
+        header_bytes = hdr[0][1] if isinstance(hdr[0], tuple) else b""
+        typ2, txt = conn.uid("fetch", str(uid), "(BODY.PEEK[TEXT]<0.2048>)")
+        text_bytes = b""
+        if typ2 == "OK" and txt and txt[0] is not None and isinstance(txt[0], tuple):
+            text_bytes = txt[0][1] or b""
+        meta = _parse_headers_and_snippet(header_bytes, text_bytes)
+        meta["uid"] = uid
+        meta["source_key"] = semantic_source_key(meta["from"], meta["subject"])
+        out.append(meta)
+    return out

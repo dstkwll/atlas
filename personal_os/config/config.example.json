@@ -1,0 +1,23 @@
+{
+  "schema_version": "0.1.0",
+  "mailbox": "INBOX",
+  "imap_host": "imap.gmail.com",
+  "imap_port": 993,
+  "noise_rules": {
+    "sender_patterns": ["no-reply@", "noreply@", "newsletter@", "@promotions.", "@e.", "mailer-daemon@"],
+    "subject_patterns": ["unsubscribe", "% off", "flash sale"],
+    "list_unsubscribe_header": true
+  },
+  "priority": {
+    "hierarchy_order": ["family", "health", "home", "money", "work", "projects"],
+    "malcolm_terms": ["malcolm"]
+  },
+  "digest": {
+    "morning_push_cron": "0 8 * * *",
+    "poll_interval_cron": "*/30 * * * *"
+  },
+  "surfacing": {
+    "one_nag_cap": 1,
+    "max_age_days_escalate": 3
+  }
+}
