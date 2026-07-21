@@ -55,11 +55,14 @@ For each survivor:
   leave its surfaced state alone unless it's an escalation).
 
 ### 3. LLM gate + classify (Q4b — you decide card-worthiness)
-For each de-duped survivor, judge from `from/subject/snippet`:
+Your job is ONLY the judgment. Do NOT write cards by hand — a deterministic
+helper does the mechanical minting, dedup, validation, and trace-logging, so the
+fragile parts stay out of free-form code.
+
+For each survivor, decide from `from/subject/snippet` and emit a JSON object:
 - **Not actionable?** (FYI, receipt, automated status Dan needn't act on) →
-  append a `{verdict: "not-actionable", reason}` line to the trace ledger
-  `$VAULT/personal-os/state/traces/<date>.jsonl`. **Do not mint a card.**
-- **Actionable?** enrich the `card_stub`:
+  `{"actionable": false, "reason": "<short>"}`.
+- **Actionable?** → `{"actionable": true, ...}` with:
   - `consequence_tier`: T1 (info), T2 (needs a reply/decision), T3 (label-only:
     irreversible/financial/legal deadline — surfaces, never actioned in v0).
   - `sensitivity_class`: `sensitive` for health/financial/legal/private, else `normal`.
@@ -70,9 +73,20 @@ For each de-duped survivor, judge from `from/subject/snippet`:
     to jump tiers it must ALSO carry a real consequence signal — encode that by
     raising `consequence_tier`, not by the flag.)
   - `done_contract`: `notified` (v0 default) unless clearly needs acknowledgement.
-  - Validate with `validate_card`, then write to `cards/inbox/<card_id>.md` via
-    `to_markdown`, body = the email excerpt (from/subject/date/snippet) + a
-    one-line "why surfaced" trace note.
+  - `why`: a one-line reason, surfaced in the card body.
+
+Build a decisions object keyed by each survivor's `source_ref`, write it to a
+temp file, then run the deterministic minter (from workdir `~/atlas`):
+
+```
+~/atlas/.venv/bin/python -m personal_os.agent.mint_cards \
+    --handoff <handoff_path> --decisions <decisions.json>
+```
+
+It does dedup (two-layer), enrichment, `validate_card` (incl. the surface-only
+floor), markdown minting into `cards/inbox/`, trace-logging non-actionables, and
+consumes the handoff file. It prints a JSON receipt
+`{minted, deduped, not_actionable, cards}`. Use that receipt directly.
 
 ### 4. Rank (deterministic — no LLM in the sort)
 Order actionable open cards with
