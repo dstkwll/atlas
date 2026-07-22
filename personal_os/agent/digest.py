@@ -154,8 +154,10 @@ def run(env: dict | None = None) -> str:
         subject = _subject_of(card, body)
         sender = _short_sender(card.get("_from") or "")
         gl = gmail_link(card.get("source_ref"))
-        link = f" · [open](<{gl}>)" if gl else ""
-        lines.append(f"{i}. [{tier}·{hier}{dl}]{review} {subject}{link}")
+        # The title itself is the tap target (bigger, cleaner on mobile);
+        # angle-bracketed URL suppresses Discord's link embed.
+        label = f"[{subject}](<{gl}>)" if gl else subject
+        lines.append(f"{i}. [{tier}·{hier}{dl}]{review} {label}")
         manifest_rows.append({"n": i, "card_id": card["card_id"], "subject": subject})
         # update surfaced bookkeeping
         card["surfaced_count"] = int(card.get("surfaced_count", 0)) + 1
