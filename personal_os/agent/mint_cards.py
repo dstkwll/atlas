@@ -34,7 +34,7 @@ import sys
 
 from ..poller.config import load_config, vault_state_dir
 from ..contract.card_schema import (
-    new_card, validate_card, to_markdown, from_markdown,
+    new_card, validate_card, to_markdown, from_markdown, build_title,
     VALID_TIER, VALID_SENSITIVITY, VALID_HIERARCHY, VALID_STOP,
 )
 
@@ -118,6 +118,8 @@ def run(handoff_path: str, decisions: dict, env: dict | None = None) -> dict:
             if isinstance(flags, list) else []
 
         validate_card(stub)  # hard contract gate (incl. surface-only floor)
+
+        stub["title"] = build_title(meta.get("subject"), meta.get("from"))
 
         body = (
             f"**From:** {meta.get('from','')}\n"

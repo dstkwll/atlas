@@ -45,6 +45,29 @@ def _ulid() -> str:
     return base64.b32encode(ts + rand).decode("ascii").rstrip("=")
 
 
+def build_title(subject: str | None, sender: str | None = None, *, max_len: int = 80) -> str:
+    """Human-readable card heading from an email's subject (+ sender fallback).
+
+    Single source of truth for card titles so the board, digest, and mobile
+    notifications all read identically. Collapses whitespace, strips common
+    reply/forward prefixes, and truncates with an ellipsis. Falls back to a
+    cleaned sender, then to "(no subject)" so a card is never title-less.
+    """
+    import re
+
+    subj = (subject or "").strip()
+    subj = re.sub(r"\s+", " ", subj)
+    subj = re.sub(r"^(?:(re|fwd|fw)\s*:\s*)+", "", subj, flags=re.IGNORECASE).strip()
+    if not subj:
+        s = (sender or "").strip()
+        # prefer a display name over a bare address: "Name <a@b>" -> "Name"
+        m = re.match(r"^\s*\"?([^\"<]+?)\"?\s*<", s)
+        subj = (m.group(1).strip() if m else s) or "(no subject)"
+    if len(subj) > max_len:
+        subj = subj[: max_len - 1].rstrip() + "…"
+    return subj
+
+
 def new_card(*, source_ref: str, source_key: str, captured_at: str) -> dict:
     """Poller mints an INBOX card at capture with T6 @capture defaults.
 
@@ -55,6 +78,9 @@ def new_card(*, source_ref: str, source_key: str, captured_at: str) -> dict:
     return {
         "schema_version": SCHEMA_VERSION,
         "card_id": _ulid(),
+        "title": "",                       # human-readable card heading (subject-derived);
+                                           # every surface (board/digest/mobile) titles from this.
+                                           # Optional in the contract so pre-title cards still validate.
         "source_ref": source_ref,          # gmail Message-ID -- layer-1 (literal) dedup
         "source_key": source_key,          # hash(sender|norm-subject) -- layer-2 semantic dedup
         "status": "inbox",

@@ -120,7 +120,7 @@ def apply_verb(verb: str, target: str, when: str | None = None, env: dict | None
         return {"ok": True, "noop": True, "verb": verb, "card_id": card_id,
                 "message": f"↩️ Already handled — “{card_id}” is no longer on the board."}
     path, card, body, col = found
-    subject = _subject_of(body)
+    subject = _subject_of(card, body)
     msg = ""
 
     if verb == "done":
@@ -147,7 +147,12 @@ def apply_verb(verb: str, target: str, when: str | None = None, env: dict | None
     return {"ok": True, "verb": verb, "card_id": card_id, "subject": subject, "message": msg}
 
 
-def _subject_of(body: str) -> str:
+def _subject_of(card: dict, body: str) -> str:
+    """Prefer the card's frontmatter `title` (single source of truth); fall back
+    to scanning the body for pre-title cards."""
+    t = (card.get("title") or "").strip()
+    if t:
+        return t[:60]
     for line in body.splitlines():
         if line.startswith("**Subject:**"):
             return line.replace("**Subject:**", "").strip()[:60]

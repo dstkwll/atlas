@@ -82,7 +82,12 @@ def _short_sender(frm: str) -> str:
     return (frm or "unknown")[:28]
 
 
-def _subject_of(body: str) -> str:
+def _subject_of(card: dict, body: str) -> str:
+    """Prefer the card's frontmatter `title` (single source of truth); fall back
+    to scanning the body for pre-title cards."""
+    t = (card.get("title") or "").strip()
+    if t:
+        return t[:60]
     for line in body.splitlines():
         if line.startswith("**Subject:**"):
             return line.replace("**Subject:**", "").strip()[:60]
@@ -146,7 +151,7 @@ def run(env: dict | None = None) -> str:
         deadline = card.get("deadline")
         dl = f"·due {deadline}" if deadline else ""
         review = " ⚑review" if "needs-review" in (card.get("flags") or []) else ""
-        subject = _subject_of(body)
+        subject = _subject_of(card, body)
         sender = _short_sender(card.get("_from") or "")
         lines.append(f"{i}. [{tier}·{hier}{dl}]{review} {subject}")
         manifest_rows.append({"n": i, "card_id": card["card_id"], "subject": subject})
