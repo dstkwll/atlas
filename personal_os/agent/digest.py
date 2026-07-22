@@ -17,7 +17,7 @@ import json
 import os
 
 from ..poller.config import load_config, vault_state_dir
-from ..contract.card_schema import from_markdown, to_markdown, gmail_link, gmail_search_link
+from ..contract.card_schema import from_markdown, to_markdown
 from ..contract.ranking import rank_cards
 
 
@@ -80,14 +80,6 @@ def _short_sender(frm: str) -> str:
     if "<" in frm:
         frm = frm.split("<")[0].strip().strip('"')
     return (frm or "unknown")[:28]
-
-
-def _from_of(body: str) -> str:
-    """Raw From: header line from a card body (for search-link sender filter)."""
-    for line in body.splitlines():
-        if line.startswith("**From:**"):
-            return line.replace("**From:**", "").strip()
-    return ""
 
 
 def _subject_of(card: dict, body: str) -> str:
@@ -161,18 +153,9 @@ def run(env: dict | None = None) -> str:
         review = " ⚑review" if "needs-review" in (card.get("flags") or []) else ""
         subject = _subject_of(card, body)
         sender = _short_sender(card.get("_from") or "")
-        gl = gmail_link(card.get("source_ref"), card.get("gm_msgid"))
-        gs = gmail_search_link(card.get("title") or subject, _from_of(body))
-        # Title is the primary tap target (permalink where available); a search
-        # fallback rides alongside since Gmail mobile web ignores #all/ anchors.
-        if gl:
-            label = f"[{subject}](<{gl}>)"
-        elif gs:
-            label = f"[{subject}](<{gs}>)"
-        else:
-            label = subject
-        tail = f" · [🔍](<{gs}>)" if gs and gl else ""
-        lines.append(f"{i}. [{tier}·{hier}{dl}]{review} {label}{tail}")
+        # No Gmail link: mail.google.com URLs are dead on iOS (see mint_cards).
+        # The digest line is a plain, readable summary; detail lives in the card.
+        lines.append(f"{i}. [{tier}·{hier}{dl}]{review} {subject}")
         manifest_rows.append({"n": i, "card_id": card["card_id"], "subject": subject})
         # update surfaced bookkeeping
         card["surfaced_count"] = int(card.get("surfaced_count", 0)) + 1

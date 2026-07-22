@@ -34,8 +34,7 @@ import sys
 
 from ..poller.config import load_config, vault_state_dir
 from ..contract.card_schema import (
-    new_card, validate_card, to_markdown, from_markdown, build_title, gmail_link,
-    gmail_search_link,
+    new_card, validate_card, to_markdown, from_markdown, build_title,
     VALID_TIER, VALID_SENSITIVITY, VALID_HIERARCHY, VALID_STOP,
 )
 
@@ -122,24 +121,19 @@ def run(handoff_path: str, decisions: dict, env: dict | None = None) -> dict:
 
         stub["title"] = build_title(meta.get("subject"), meta.get("from"))
         if meta.get("gm_msgid"):
-            stub["gm_msgid"] = meta["gm_msgid"]   # Gmail X-GM-MSGID → true permalink
+            stub["gm_msgid"] = meta["gm_msgid"]   # kept for future non-iOS surfaces / provenance
 
-        gl = gmail_link(ref, meta.get("gm_msgid"))
-        gs = gmail_search_link(meta.get("subject"), meta.get("from"))
-        links = []
-        if gl:
-            links.append(f"[📧 Open in Gmail]({gl})")
-        if gs and gs != gl:
-            links.append(f"[🔍 Search in Gmail]({gs})")
-        open_line = f"\n**{'  ·  '.join(links)}**\n" if links else ""
-        # Readable body extract (MIME already parsed to clean text upstream).
+        # NOTE: no Gmail link. Confirmed 2026-07-21 that Gmail on iOS Safari
+        # discards mail.google.com URL fragments (#all/, #search/, rfc822msgid:)
+        # and bounces to its mobile landing page — every deep/search link is
+        # dead on mobile. So the CARD BODY is the product: a clean, readable
+        # extract (MIME parsed upstream) sized to act on without opening Gmail.
         snippet = meta.get("snippet", "").strip()
         quoted = "\n".join(f"> {ln}" for ln in snippet.splitlines()[:20])[:1500] if snippet else ""
         body = (
             f"**From:** {meta.get('from','')}\n"
             f"**Subject:** {meta.get('subject','')}\n"
-            f"**Date:** {meta.get('date','')}\n"
-            f"{open_line}\n"
+            f"**Date:** {meta.get('date','')}\n\n"
             f"{quoted}\n\n"
             f"_Why surfaced:_ {decision.get('why','actionable email')}\n"
         )
