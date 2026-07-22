@@ -145,6 +145,20 @@ def main(argv=None) -> int:
         print(f"[poller] ERROR: {type(e).__name__}: {e}", file=sys.stderr)
         return 1
     print(f"[poller] {json.dumps(summary)}")
+
+    # Non-fatal health guard: warn (never block capture) if any card would
+    # vanish from the board (YAML-unsafe) or sits in the wrong column
+    # (status/folder drift). Cheap; runs every tick.
+    try:
+        from ..agent.card_lint import lint, _cards_root
+        r = lint(_cards_root(vault_state_dir()))
+        if not r["ok"]:
+            n = len(r["yaml_bad"]) + len(r["drift"]) + len(r["unreadable"])
+            print(f"[poller] CARD-LINT WARNING: {n} card issue(s) — run "
+                  f"`python -m personal_os.agent.card_lint` (use --fix for drift)",
+                  file=sys.stderr)
+    except Exception:  # never let the guard break a successful poll
+        pass
     return 0
 
 
