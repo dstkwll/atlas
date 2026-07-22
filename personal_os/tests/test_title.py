@@ -4,7 +4,9 @@ Regression guard for the mobile-unusable board bug: cards were titled by their
 card_id ULID because no human-readable field existed. Every card must now carry
 a subject-derived `title`, and the digest/apply_verb surfaces must prefer it.
 """
-from personal_os.contract.card_schema import build_title, gmail_link, new_card, to_markdown, from_markdown
+from personal_os.contract.card_schema import (
+    build_title, gmail_link, gmail_search_link, new_card, to_markdown, from_markdown,
+)
 
 
 def test_build_title_from_subject():
@@ -66,3 +68,14 @@ def test_gmail_link_gm_msgid_accepts_int_and_falls_back_on_garbage():
 def test_gmail_link_empty_when_no_ref():
     assert gmail_link("") == ""
     assert gmail_link(None) == ""
+
+
+def test_gmail_search_link_builds_subject_and_from():
+    url = gmail_search_link("Re: Cabin dates", '"Mona" <mona@gmail.com>')
+    assert url.startswith("https://mail.google.com/mail/u/0/#search/")
+    assert "subject" in url and "Cabin%20dates" in url
+    assert "from%3Amona%40gmail.com" in url
+
+
+def test_gmail_search_link_empty_when_nothing_usable():
+    assert gmail_search_link("", "") == ""

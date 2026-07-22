@@ -35,6 +35,7 @@ import sys
 from ..poller.config import load_config, vault_state_dir
 from ..contract.card_schema import (
     new_card, validate_card, to_markdown, from_markdown, build_title, gmail_link,
+    gmail_search_link,
     VALID_TIER, VALID_SENSITIVITY, VALID_HIERARCHY, VALID_STOP,
 )
 
@@ -124,13 +125,22 @@ def run(handoff_path: str, decisions: dict, env: dict | None = None) -> dict:
             stub["gm_msgid"] = meta["gm_msgid"]   # Gmail X-GM-MSGID → true permalink
 
         gl = gmail_link(ref, meta.get("gm_msgid"))
-        open_line = f"\n**[📧 Open in Gmail]({gl})**\n" if gl else ""
+        gs = gmail_search_link(meta.get("subject"), meta.get("from"))
+        links = []
+        if gl:
+            links.append(f"[📧 Open in Gmail]({gl})")
+        if gs and gs != gl:
+            links.append(f"[🔍 Search in Gmail]({gs})")
+        open_line = f"\n**{'  ·  '.join(links)}**\n" if links else ""
+        # Readable body extract (MIME already parsed to clean text upstream).
+        snippet = meta.get("snippet", "").strip()
+        quoted = "\n".join(f"> {ln}" for ln in snippet.splitlines()[:20])[:1500] if snippet else ""
         body = (
             f"**From:** {meta.get('from','')}\n"
             f"**Subject:** {meta.get('subject','')}\n"
             f"**Date:** {meta.get('date','')}\n"
             f"{open_line}\n"
-            f"> {(''.join(meta.get('snippet','').splitlines()[:6]))[:500]}\n\n"
+            f"{quoted}\n\n"
             f"_Why surfaced:_ {decision.get('why','actionable email')}\n"
         )
         card_path = os.path.join(inbox_dir, f"{stub['card_id']}.md")

@@ -38,7 +38,71 @@ def semantic_source_key(sender: str, subject: str) -> str:
     return hashlib.sha256(basis.encode("utf-8")).hexdigest()[:16]
 
 
-def _parse_headers_and_snippet(header_bytes: bytes, text_bytes: bytes) -> dict:
+def _strip_html(html: str) -> str:
+    """Very small HTML→text fallback for emails that ship only text/html.
+    Drops script/style, converts breaks to newlines, strips tags + entities."""
+    import html as _htmlmod
+
+    html = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", " ", html)
+    html = re.sub(r"(?i)<br\s*/?>", "\n", html)
+    html = re.sub(r"(?i)</p>", "\n\n", html)
+    html = re.sub(r"(?s)<[^>]+>", " ", html)
+    html = _htmlmod.unescape(html)
+    html = re.sub(r"[ \t]+", " ", html)
+    html = re.sub(r"\n\s*\n\s*\n+", "\n\n", html)
+    return html.strip()
+
+
+def _clean_body(full_bytes: bytes) -> str:
+    """Extract a human-readable body from a full RFC822 message.
+
+    Walks the MIME tree, prefers the first text/plain part; falls back to a
+    stripped text/html part. This is what fixes the garbled '--_----DvM...'
+    MIME-soup snippet: we never render raw multipart bytes, only the decoded
+    text of the chosen part.
+    """
+    try:
+        msg = email.message_from_bytes(full_bytes)
+    except Exception:
+        return ""
+
+    def _decode_part(part) -> str:
+        try:
+            payload = part.get_payload(decode=True)
+            if payload is None:
+                return ""
+            charset = part.get_content_charset() or "utf-8"
+            return payload.decode(charset, errors="replace")
+        except Exception:
+            return ""
+
+    plain, html = "", ""
+    if msg.is_multipart():
+        for part in msg.walk():
+            if part.is_multipart():
+                continue
+            ctype = part.get_content_type()
+            disp = str(part.get("Content-Disposition") or "")
+            if "attachment" in disp.lower():
+                continue
+            if ctype == "text/plain" and not plain:
+                plain = _decode_part(part)
+            elif ctype == "text/html" and not html:
+                html = _decode_part(part)
+    else:
+        if msg.get_content_type() == "text/html":
+            html = _decode_part(msg)
+        else:
+            plain = _decode_part(msg)
+
+    text = plain.strip() or _strip_html(html)
+    # collapse excessive blank lines / trailing whitespace
+    text = re.sub(r"[ \t]+\n", "\n", text)
+    text = re.sub(r"\n\s*\n\s*\n+", "\n\n", text).strip()
+    return text
+
+
+def _parse_headers_and_snippet(header_bytes: bytes, full_bytes: bytes) -> dict:
     msg = email.message_from_bytes(header_bytes)
     sender = _decode(msg.get("From"))
     subject = _decode(msg.get("Subject"))
@@ -48,12 +112,7 @@ def _parse_headers_and_snippet(header_bytes: bytes, text_bytes: bytes) -> dict:
     headers = {}
     if list_unsub:
         headers["List-Unsubscribe"] = list_unsub
-    snippet = ""
-    if text_bytes:
-        try:
-            snippet = text_bytes.decode("utf-8", errors="replace")
-        except Exception:
-            snippet = ""
+    snippet = _clean_body(full_bytes) if full_bytes else ""
     return {
         "from": sender,
         "subject": subject,
@@ -122,11 +181,14 @@ def fetch_since(conn, mailbox: str, after_uid: int) -> list[dict]:
                 if m:
                     gm_msgid = m.group(1).decode()
                     break
-        typ2, txt = conn.uid("fetch", str(uid), "(BODY.PEEK[TEXT]<0.2048>)")
-        text_bytes = b""
+        # Fetch the full raw message (PEEK, capped) so we can parse the MIME
+        # tree and pull a clean text/plain (or stripped HTML) body instead of
+        # rendering raw multipart soup. 64KB cap keeps it bounded.
+        typ2, txt = conn.uid("fetch", str(uid), "(BODY.PEEK[]<0.65536>)")
+        full_bytes = b""
         if typ2 == "OK" and txt and txt[0] is not None and isinstance(txt[0], tuple):
-            text_bytes = txt[0][1] or b""
-        meta = _parse_headers_and_snippet(header_bytes, text_bytes)
+            full_bytes = txt[0][1] or b""
+        meta = _parse_headers_and_snippet(header_bytes, full_bytes)
         meta["uid"] = uid
         meta["gm_msgid"] = gm_msgid
         meta["source_key"] = semantic_source_key(meta["from"], meta["subject"])

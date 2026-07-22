@@ -100,6 +100,30 @@ def gmail_link(source_ref: str | None, gm_msgid: str | int | None = None) -> str
     return f"https://mail.google.com/mail/u/0/#search/{q}"
 
 
+def gmail_search_link(subject: str | None, sender: str | None = None) -> str:
+    """Fallback link: open Gmail with a search for this subject/sender.
+
+    Gmail mobile web won't honor a message-anchor URL (it drops you at the
+    inbox), but it DOES honor a #search/ query — so this lands you on a short
+    result list containing the email, one tap from the message. Best-effort:
+    quotes the subject and adds a from: filter when we can parse an address.
+    """
+    import re
+    import urllib.parse
+
+    terms = []
+    subj = re.sub(r"^(?:(re|fwd|fw)\s*:\s*)+", "", (subject or "").strip(), flags=re.IGNORECASE).strip()
+    if subj:
+        terms.append(f'subject:"{subj}"')
+    m = re.search(r"<([^>]+@[^>]+)>", sender or "") or re.search(r"([^\s<]+@[^\s>]+)", sender or "")
+    if m:
+        terms.append(f"from:{m.group(1)}")
+    if not terms:
+        return ""
+    q = urllib.parse.quote(" ".join(terms), safe="")
+    return f"https://mail.google.com/mail/u/0/#search/{q}"
+
+
 def new_card(*, source_ref: str, source_key: str, captured_at: str) -> dict:
     """Poller mints an INBOX card at capture with T6 @capture defaults.
 
