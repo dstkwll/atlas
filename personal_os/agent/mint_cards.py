@@ -34,7 +34,7 @@ import sys
 
 from ..poller.config import load_config, vault_state_dir
 from ..contract.card_schema import (
-    new_card, validate_card, to_markdown, from_markdown, build_title,
+    new_card, validate_card, to_markdown, from_markdown, build_title, gmail_link,
     VALID_TIER, VALID_SENSITIVITY, VALID_HIERARCHY, VALID_STOP,
 )
 
@@ -121,10 +121,13 @@ def run(handoff_path: str, decisions: dict, env: dict | None = None) -> dict:
 
         stub["title"] = build_title(meta.get("subject"), meta.get("from"))
 
+        gl = gmail_link(ref)
+        open_line = f"\n**[📧 Open in Gmail]({gl})**\n" if gl else ""
         body = (
             f"**From:** {meta.get('from','')}\n"
             f"**Subject:** {meta.get('subject','')}\n"
-            f"**Date:** {meta.get('date','')}\n\n"
+            f"**Date:** {meta.get('date','')}\n"
+            f"{open_line}\n"
             f"> {(''.join(meta.get('snippet','').splitlines()[:6]))[:500]}\n\n"
             f"_Why surfaced:_ {decision.get('why','actionable email')}\n"
         )

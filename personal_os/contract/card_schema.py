@@ -68,6 +68,24 @@ def build_title(subject: str | None, sender: str | None = None, *, max_len: int 
     return subj
 
 
+def gmail_link(source_ref: str | None) -> str:
+    """Deep link that opens the email in Gmail from an RFC822 Message-ID.
+
+    Uses Gmail's `rfc822msgid:` search operator wrapped in a /mail/u/0/ URL:
+    on mobile the mail.google.com universal link hands off to the Gmail app and
+    lands on the exact message; on desktop it opens Gmail search scoped to that
+    one message. `source_ref` is the raw Message-ID we already capture at poll
+    time (e.g. "<abc@host>"). Returns "" when no id is available.
+    """
+    import urllib.parse
+
+    mid = (source_ref or "").strip().strip("<>").strip()
+    if not mid:
+        return ""
+    q = urllib.parse.quote(f"rfc822msgid:{mid}", safe="")
+    return f"https://mail.google.com/mail/u/0/#search/{q}"
+
+
 def new_card(*, source_ref: str, source_key: str, captured_at: str) -> dict:
     """Poller mints an INBOX card at capture with T6 @capture defaults.
 
