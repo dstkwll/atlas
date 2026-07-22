@@ -44,6 +44,31 @@ def test_title_survives_markdown_roundtrip():
     assert parsed["title"] == "Furniture Delivery — Order scheduled"
 
 
+def test_yaml_unsafe_titles_are_quoted_and_roundtrip():
+    """Regression: titles with ':', '?', em-dash, apostrophes, or leading
+    indicators broke Bases' strict YAML parser → card silently vanished from
+    the board. They must serialize as valid YAML and roundtrip exactly."""
+    tricky = [
+        "Reminder: Malcolm's 2-year checkup Thu 9:00 AM",   # colon-space
+        "Yellowstone dates — can you confirm the cabin?",   # em-dash + trailing ?
+        "This week's Health Beat is here, Daniel",          # apostrophe + comma
+        "- starts with a dash",                             # leading indicator
+        "true",                                             # would parse as bool
+        "42",                                               # would parse as int
+        "value # with hash",
+    ]
+    for t in tricky:
+        c = new_card(source_ref="<x>", source_key="k", captured_at="2026-07-21T00:00:00Z")
+        c["title"] = t
+        md = to_markdown(c, "body")
+        # must be parseable by a strict YAML parser (same as Bases uses)
+        import yaml
+        fm = md.split("---", 2)[1]
+        yaml.safe_load(fm)                 # raises if invalid → test fails
+        parsed, _b = from_markdown(md)
+        assert parsed["title"] == t, f"roundtrip failed for {t!r} -> {parsed['title']!r}"
+
+
 def test_gmail_link_from_message_id():
     url = gmail_link("<d6a0674e-a94c@furnituredelivery.gomwd.com>")
     assert url.startswith("https://mail.google.com/mail/u/0/#search/")

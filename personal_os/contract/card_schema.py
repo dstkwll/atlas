@@ -182,22 +182,54 @@ def validate_card(c: dict) -> None:
 
 
 # ---- markdown <-> dict serialization (stdlib-only, deterministic) ------------
+# A bare YAML scalar is unsafe when it starts with an indicator char or contains
+# ": " / " #" etc. We double-quote such strings and escape "\ so Bases' strict
+# YAML parser accepts them. Without this, a title like `Malcolm's checkup: 9 AM`
+# (colon-space) is invalid YAML and Bases silently drops the whole card.
+_YAML_INDICATORS = set("!&*[]{}>|%@`\"'#,?:-")
+
+
+def _needs_quote(s: str) -> bool:
+    if s == "" or s != s.strip():
+        return True
+    if s[0] in _YAML_INDICATORS:
+        return True
+    if ": " in s or " #" in s or s.endswith(":"):
+        return True
+    # values that would otherwise parse as a non-string type must be quoted to
+    # stay strings (e.g. a title that is literally "true" or "42")
+    if s in ("null", "true", "false", "~") or s.isdigit():
+        return True
+    return False
+
+
 def _fmt_scalar(v) -> str:
     if v is None:
         return "null"
     if isinstance(v, bool):
         return "true" if v else "false"
-    return str(v)
+    if isinstance(v, int):
+        return str(v)
+    s = str(v)
+    if _needs_quote(s):
+        return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
+    return s
 
 
 def _parse_scalar(s: str):
     s = s.strip()
-    if s == "null":
+    if s == "null" or s == "~" or s == "":
         return None
     if s == "true":
         return True
     if s == "false":
         return False
+    # double-quoted string: unescape
+    if len(s) >= 2 and s[0] == '"' and s[-1] == '"':
+        return s[1:-1].replace('\\"', '"').replace("\\\\", "\\")
+    # single-quoted string: YAML unescapes '' -> '
+    if len(s) >= 2 and s[0] == "'" and s[-1] == "'":
+        return s[1:-1].replace("''", "'")
     if s.isdigit():
         return int(s)
     return s
@@ -212,8 +244,13 @@ def to_markdown(card: dict, body: str = "") -> str:
                   and not isinstance(card[k], (list, dict))]
     lines = ["---"]
     for k in sorted(REQUIRED_FIELDS) + sorted(extra_keys):
+        # Defense: never emit a key that isn't a safe bare YAML mapping key
+        # (e.g. a corrupted '- needs-review' leaked from a bad flags write would
+        # produce an invalid block-mapping line and make Bases drop the card).
+        if k != "flags" and (not isinstance(k, str) or _needs_quote(k) or k.startswith("-")):
+            continue
         if k == "flags":
-            inline = ", ".join(str(x) for x in card["flags"])
+            inline = ", ".join(_fmt_scalar(x) for x in card["flags"])
             lines.append(f"flags: [{inline}]")
         else:
             lines.append(f"{k}: {_fmt_scalar(card[k])}")
