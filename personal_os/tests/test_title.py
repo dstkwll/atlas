@@ -50,6 +50,19 @@ def test_gmail_link_from_message_id():
     assert "d6a0674e-a94c%40furnituredelivery.gomwd.com" in url
 
 
+def test_gmail_link_prefers_gm_msgid_permalink():
+    # X-GM-MSGID (decimal) → hex permalink to the exact message, not a search
+    url = gmail_link("<x@y>", gm_msgid="1770000000000000001")
+    assert url == "https://mail.google.com/mail/u/0/#all/" + format(1770000000000000001, "x")
+    assert "#all/" in url and "search" not in url
+
+
+def test_gmail_link_gm_msgid_accepts_int_and_falls_back_on_garbage():
+    assert gmail_link("<x@y>", gm_msgid=42) == "https://mail.google.com/mail/u/0/#all/2a"
+    # non-numeric gm_msgid → fall back to rfc822msgid search
+    assert "#search/" in gmail_link("<x@y>", gm_msgid="not-a-number")
+
+
 def test_gmail_link_empty_when_no_ref():
     assert gmail_link("") == ""
     assert gmail_link(None) == ""

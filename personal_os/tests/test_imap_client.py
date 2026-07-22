@@ -22,9 +22,11 @@ def _raw_email(sender, subject, msgid, extra_headers=""):
 
 
 class FakeIMAP:
-    def __init__(self, messages, uidvalidity=111, uidnext=1000):
+    def __init__(self, messages, uidvalidity=111, uidnext=1000, gm_msgids=None):
         # messages: dict uid -> (header_bytes, text_bytes)
+        # gm_msgids: optional dict uid -> decimal X-GM-MSGID string
         self.messages = messages
+        self.gm_msgids = gm_msgids or {}
         self.uidvalidity = uidvalidity
         self.uidnext = uidnext
         self.select_calls = []
@@ -48,7 +50,10 @@ class FakeIMAP:
             self.fetch_specs.append(spec)
             header_bytes, text_bytes = self.messages[uid]
             if "HEADER" in spec:
-                return ("OK", [(b"x", header_bytes)])
+                # Gmail returns X-GM-MSGID in the untagged FETCH line prefix.
+                prefix = f"{uid} (X-GM-MSGID {self.gm_msgids[uid]} UID {uid} ".encode() \
+                    if uid in self.gm_msgids else b"x"
+                return ("OK", [(prefix, header_bytes)])
             if "TEXT" in spec:
                 return ("OK", [(b"x", text_bytes)])
         return ("NO", [b""])
@@ -87,3 +92,12 @@ def test_fetch_is_readonly_and_peek_only():
 
 def test_source_key_ignores_reply_prefix():
     assert semantic_source_key("a@b.com", "Re: Dinner") == semantic_source_key("a@b.com", "Dinner")
+
+
+def test_fetch_captures_gm_msgid():
+    msgs = {950: (_raw_email("x@y.com", "hi", "<c@x>"), b"body")}
+    fake = FakeIMAP(msgs, gm_msgids={950: "1770000000000000001"})
+    out = fetch_since(fake, "INBOX", after_uid=0)
+    assert out[0]["gm_msgid"] == "1770000000000000001"
+    # X-GM-MSGID must be requested in the fetch spec
+    assert any("X-GM-MSGID" in spec for spec in fake.fetch_specs)

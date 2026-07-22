@@ -117,7 +117,8 @@ def run(env: dict | None = None, dry_run: bool = False, _conn=None) -> dict:
         stub = new_card(source_ref=m["message_id"], source_key=m["source_key"], captured_at=ts)
         handoff_rec = {"card_stub": stub, "meta": {
             "uid": m["uid"], "from": m["from"], "subject": m["subject"],
-            "date": m["date"], "snippet": m["snippet"]}}
+            "date": m["date"], "snippet": m["snippet"],
+            "gm_msgid": m.get("gm_msgid", "")}}
         if not dry_run:
             _append_jsonl(handoff_path, handoff_rec)
 

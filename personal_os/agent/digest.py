@@ -153,7 +153,7 @@ def run(env: dict | None = None) -> str:
         review = " ⚑review" if "needs-review" in (card.get("flags") or []) else ""
         subject = _subject_of(card, body)
         sender = _short_sender(card.get("_from") or "")
-        gl = gmail_link(card.get("source_ref"))
+        gl = gmail_link(card.get("source_ref"), card.get("gm_msgid"))
         # The title itself is the tap target (bigger, cleaner on mobile);
         # angle-bracketed URL suppresses Discord's link embed.
         label = f"[{subject}](<{gl}>)" if gl else subject

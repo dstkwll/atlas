@@ -68,16 +68,30 @@ def build_title(subject: str | None, sender: str | None = None, *, max_len: int 
     return subj
 
 
-def gmail_link(source_ref: str | None) -> str:
-    """Deep link that opens the email in Gmail from an RFC822 Message-ID.
+def gmail_link(source_ref: str | None, gm_msgid: str | int | None = None) -> str:
+    """Deep link to open the email in Gmail.
 
-    Uses Gmail's `rfc822msgid:` search operator wrapped in a /mail/u/0/ URL:
-    on mobile the mail.google.com universal link hands off to the Gmail app and
-    lands on the exact message; on desktop it opens Gmail search scoped to that
-    one message. `source_ref` is the raw Message-ID we already capture at poll
-    time (e.g. "<abc@host>"). Returns "" when no id is available.
+    Two tiers, best first:
+      1. If `gm_msgid` (Gmail's X-GM-MSGID, a decimal uint64 from IMAP) is
+         present, build a true message permalink:
+         https://mail.google.com/mail/u/0/#all/<hex>  — opens the exact message
+         (not a search). This is the only link that targets a specific message.
+      2. Else fall back to the RFC822 Message-ID via Gmail's `rfc822msgid:`
+         search operator — resolves to the message on desktop web, but renders
+         as a search view.
+
+    Note: Gmail's iOS/Android app universal-link handoff is unreliable and not
+    guaranteed by Google; the permalink still opens the right message on web.
+    Returns "" when no id is available.
     """
     import urllib.parse
+
+    if gm_msgid not in (None, "", 0, "0"):
+        try:
+            hexid = format(int(gm_msgid), "x")
+            return f"https://mail.google.com/mail/u/0/#all/{hexid}"
+        except (ValueError, TypeError):
+            pass
 
     mid = (source_ref or "").strip().strip("<>").strip()
     if not mid:

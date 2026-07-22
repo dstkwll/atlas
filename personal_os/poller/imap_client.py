@@ -107,16 +107,28 @@ def fetch_since(conn, mailbox: str, after_uid: int) -> list[dict]:
 
     out = []
     for uid in sorted(uids):
-        typ, hdr = conn.uid("fetch", str(uid), "(BODY.PEEK[HEADER])")
+        typ, hdr = conn.uid("fetch", str(uid), "(BODY.PEEK[HEADER] X-GM-MSGID)")
         if typ != "OK" or not hdr or hdr[0] is None:
             continue
         header_bytes = hdr[0][1] if isinstance(hdr[0], tuple) else b""
+        # X-GM-MSGID (Gmail extension) rides in the untagged FETCH response line,
+        # e.g. b'12 (X-GM-MSGID 1770... UID 138432 BODY[HEADER] {NNNN}'. Parse it
+        # from whichever part of the response carries it.
+        gm_msgid = ""
+        for part in hdr:
+            blob = part[0] if isinstance(part, tuple) else part
+            if isinstance(blob, bytes):
+                m = re.search(rb"X-GM-MSGID\s+(\d+)", blob)
+                if m:
+                    gm_msgid = m.group(1).decode()
+                    break
         typ2, txt = conn.uid("fetch", str(uid), "(BODY.PEEK[TEXT]<0.2048>)")
         text_bytes = b""
         if typ2 == "OK" and txt and txt[0] is not None and isinstance(txt[0], tuple):
             text_bytes = txt[0][1] or b""
         meta = _parse_headers_and_snippet(header_bytes, text_bytes)
         meta["uid"] = uid
+        meta["gm_msgid"] = gm_msgid
         meta["source_key"] = semantic_source_key(meta["from"], meta["subject"])
         out.append(meta)
     return out

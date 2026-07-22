@@ -120,8 +120,10 @@ def run(handoff_path: str, decisions: dict, env: dict | None = None) -> dict:
         validate_card(stub)  # hard contract gate (incl. surface-only floor)
 
         stub["title"] = build_title(meta.get("subject"), meta.get("from"))
+        if meta.get("gm_msgid"):
+            stub["gm_msgid"] = meta["gm_msgid"]   # Gmail X-GM-MSGID → true permalink
 
-        gl = gmail_link(ref)
+        gl = gmail_link(ref, meta.get("gm_msgid"))
         open_line = f"\n**[📧 Open in Gmail]({gl})**\n" if gl else ""
         body = (
             f"**From:** {meta.get('from','')}\n"
