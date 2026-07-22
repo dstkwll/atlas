@@ -124,6 +124,26 @@ def gmail_search_link(subject: str | None, sender: str | None = None) -> str:
     return f"https://mail.google.com/mail/u/0/#search/{q}"
 
 
+def apple_mail_link(source_ref: str | None) -> str:
+    """Deep link that opens the email in the native iOS/macOS Mail app.
+
+    Uses Apple Mail's `message:` URL scheme with the RFC822 Message-ID (which we
+    capture as source_ref). CONFIRMED WORKING on iOS 2026-07-21: unlike every
+    mail.google.com URL (which Gmail mobile web discards), this hands off to the
+    Mail app and opens the exact message — provided the account is added to the
+    native Mail app (Settings → Mail → Accounts).
+
+    The Message-ID's angle brackets are URL-encoded (%3c / %3e) per the scheme.
+    Returns "" when no id is available.
+    """
+    import urllib.parse
+
+    mid = (source_ref or "").strip().strip("<>").strip()
+    if not mid:
+        return ""
+    return "message://%3c" + urllib.parse.quote(mid, safe="") + "%3e"
+
+
 def new_card(*, source_ref: str, source_key: str, captured_at: str) -> dict:
     """Poller mints an INBOX card at capture with T6 @capture defaults.
 

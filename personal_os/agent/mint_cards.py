@@ -34,7 +34,7 @@ import sys
 
 from ..poller.config import load_config, vault_state_dir
 from ..contract.card_schema import (
-    new_card, validate_card, to_markdown, from_markdown, build_title,
+    new_card, validate_card, to_markdown, from_markdown, build_title, apple_mail_link,
     VALID_TIER, VALID_SENSITIVITY, VALID_HIERARCHY, VALID_STOP,
 )
 
@@ -123,17 +123,20 @@ def run(handoff_path: str, decisions: dict, env: dict | None = None) -> dict:
         if meta.get("gm_msgid"):
             stub["gm_msgid"] = meta["gm_msgid"]   # kept for future non-iOS surfaces / provenance
 
-        # NOTE: no Gmail link. Confirmed 2026-07-21 that Gmail on iOS Safari
-        # discards mail.google.com URL fragments (#all/, #search/, rfc822msgid:)
-        # and bounces to its mobile landing page — every deep/search link is
-        # dead on mobile. So the CARD BODY is the product: a clean, readable
-        # extract (MIME parsed upstream) sized to act on without opening Gmail.
+        # Apple Mail deep link — CONFIRMED WORKING on iOS (2026-07-21). The
+        # `message:` scheme hands off to the native Mail app and opens the exact
+        # email, where every mail.google.com URL fails on Gmail mobile web.
+        # Requires the account in Settings → Mail → Accounts. Card body stays
+        # self-sufficient regardless.
+        am = apple_mail_link(ref)
+        open_line = f"**[📬 Open in Apple Mail]({am})**\n\n" if am else ""
         snippet = meta.get("snippet", "").strip()
         quoted = "\n".join(f"> {ln}" for ln in snippet.splitlines()[:20])[:1500] if snippet else ""
         body = (
             f"**From:** {meta.get('from','')}\n"
             f"**Subject:** {meta.get('subject','')}\n"
             f"**Date:** {meta.get('date','')}\n\n"
+            f"{open_line}"
             f"{quoted}\n\n"
             f"_Why surfaced:_ {decision.get('why','actionable email')}\n"
         )

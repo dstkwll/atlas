@@ -5,7 +5,8 @@ card_id ULID because no human-readable field existed. Every card must now carry
 a subject-derived `title`, and the digest/apply_verb surfaces must prefer it.
 """
 from personal_os.contract.card_schema import (
-    build_title, gmail_link, gmail_search_link, new_card, to_markdown, from_markdown,
+    build_title, gmail_link, gmail_search_link, apple_mail_link,
+    new_card, to_markdown, from_markdown,
 )
 
 
@@ -104,3 +105,13 @@ def test_gmail_search_link_builds_subject_and_from():
 
 def test_gmail_search_link_empty_when_nothing_usable():
     assert gmail_search_link("", "") == ""
+
+
+def test_apple_mail_link_encodes_message_id():
+    url = apple_mail_link("<6a62b69f-8d86@atl1s07.xt.local>")
+    assert url == "message://%3c6a62b69f-8d86%40atl1s07.xt.local%3e"
+
+
+def test_apple_mail_link_empty_when_no_ref():
+    assert apple_mail_link("") == ""
+    assert apple_mail_link(None) == ""
