@@ -85,9 +85,11 @@ class FakeRefiner:
     required field so the admissibility gate blocks the execution child.
     """
 
-    def __init__(self, run_dir: RunDir, make_inadmissible: bool = False) -> None:
+    def __init__(self, run_dir: RunDir, make_inadmissible: bool = False,
+                 exec_locator: str = "brokencli/cli.py") -> None:
         self._run_dir = run_dir
         self._make_inadmissible = make_inadmissible
+        self._exec_locator = exec_locator
 
     def execute(self, request: WorkRequest) -> WorkResult:
         parent_id = request.node_id
@@ -106,7 +108,7 @@ class FakeRefiner:
             ],
             "candidate_failures": [
                 {"failure_class": "CLEAN_INSTALL_BLOCKER",
-                 "locator": "brokencli/cli.py"},
+                 "locator": self._exec_locator},
             ],
             "children": [
                 {"id": f"{parent_id}-exec", "parent_id": parent_id,

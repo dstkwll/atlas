@@ -108,7 +108,7 @@ class AdmissibilityValidator:
             strength=self.strength,
             ran=True,
             passed=passed,
-            workspace_id="",
+            workspace_id=f"run:{run_dir.run_id}",  # audit identity (no state attested)
             commands=[],       # admissibility runs no commands
             exit_codes=[],     # and therefore attests NO execution (invariant 3)
             artifact_hashes={},

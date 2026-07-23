@@ -77,3 +77,18 @@ def test_refine_journals_children_added(tmp_path):
     with open(rd.events_path) as f:
         types = [json.loads(line)["type"] for line in f if line.strip()]
     assert "CHILDREN_ADDED" in types
+
+
+def test_exec_child_target_derived_from_selected_failure(tmp_path):
+    # P2 fidelity (sol sequencing): the execution child's contract target must
+    # be DERIVED FROM the selected evidenced failure's locator, not lifted from
+    # a refiner-preselected block. Make the selected failure point at a distinct
+    # locator and assert the compiled contract target follows it.
+    rd = new_run(str(tmp_path))
+    journal = Journal(rd.events_path, run_id=rd.run_id)
+    result = refine(_top(), FakeRefiner(rd, exec_locator="brokencli/cli.py"), rd, journal)
+    exec_children = [c for c in result.children if c.get("role") == "execution"]
+    assert len(exec_children) == 1
+    # The contract target equals the selected failure locator.
+    assert exec_children[0]["contract"]["target"] == exec_children[0]["selected_failure"]["locator"]
+    assert exec_children[0]["contract"]["target"] == "brokencli/cli.py"

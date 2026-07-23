@@ -56,7 +56,19 @@ def assert_workresult_contract(
     for ev in d.get("evidence_proposals", []):
         assert isinstance(ev, dict), "evidence_proposal must be a dict"
         assert ev.get("claim_id"), "evidence_proposal missing claim_id"
-        for key in _FORBIDDEN_KEYS:
-            assert key not in ev, (
-                f"evidence_proposal must not carry a {key!r} field (invariant 1)"
+        # Defense-in-depth: no forbidden self-certification key ANYWHERE in the
+        # (arbitrarily nested) evidence proposal, incl. a nested `proposal` dict.
+        _assert_no_forbidden_keys_deep(ev)
+
+
+def _assert_no_forbidden_keys_deep(obj: Any) -> None:
+    """Recursively assert no forbidden self-certification key appears."""
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            assert k not in _FORBIDDEN_KEYS, (
+                f"nested {k!r} field is a forbidden self-certification (invariant 1)"
             )
+            _assert_no_forbidden_keys_deep(v)
+    elif isinstance(obj, (list, tuple)):
+        for item in obj:
+            _assert_no_forbidden_keys_deep(item)

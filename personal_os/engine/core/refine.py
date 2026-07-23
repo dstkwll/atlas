@@ -107,9 +107,13 @@ def refine(node, worker, run_dir, journal) -> "RefineResult":
     if receipt.passed:
         chosen = select_failure(proposal.get("candidate_failures", []))
         # Compile the execution child's contract FROM the selected evidenced
-        # failure (never preselected). The refiner's proposal carries the
-        # command evidence the contract is built from.
-        exec_contract = compile_leaf_contract(proposal["execution_contract"])
+        # failure: the failure's run-relative locator BECOMES the contract
+        # target (derived, never lifted from a preselected target). The refiner
+        # supplies the command scaffold (install/run/test) as evidence; Core
+        # binds the target to what selection actually chose.
+        contract_fields = dict(proposal["execution_contract"])
+        contract_fields["target"] = chosen["locator"]
+        exec_contract = compile_leaf_contract(contract_fields)
         children.append({
             "id": f"{node.id}-exec", "parent_id": node.id, "role": "execution",
             "objective": exec_contract["objective"],
