@@ -56,7 +56,9 @@ class Workspace:
         root_prefix = self.root + os.sep
         if real != self.root and not real.startswith(root_prefix):
             raise ValueError(f"path escapes workspace root: {relpath!r}")
-        return candidate
+        # Return the canonicalized real path (symlinks collapsed) so what we
+        # hand back is exactly what we validated (P3-1: no validate/return gap).
+        return real
 
     @property
     def id(self) -> str:

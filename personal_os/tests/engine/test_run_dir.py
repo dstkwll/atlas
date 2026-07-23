@@ -41,6 +41,16 @@ def test_reusing_populated_run_dir_raises(tmp_path):
         RunDir.adopt(rd.path, rd.run_id, require_empty=True)
 
 
+def test_reusing_run_dir_with_stale_journal_raises(tmp_path):
+    # P2-1 hardening: a leftover top-level events.jsonl from a prior aborted run
+    # must make the dir non-adoptable even when the subdirs are empty.
+    rd = new_run(str(tmp_path))
+    with open(rd.events_path, "w") as f:
+        f.write('{"event_id":"stale"}\n')
+    with pytest.raises(ValueError):
+        RunDir.adopt(rd.path, rd.run_id, require_empty=True)
+
+
 def test_put_artifact_is_content_addressed(tmp_path):
     rd = new_run(str(tmp_path))
     h = rd.put_artifact(b"hello world")

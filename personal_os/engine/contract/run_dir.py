@@ -68,10 +68,21 @@ class RunDir:
         """Create/adopt a run dir, refusing a populated one when required."""
         rd = cls(path, run_id)
         if require_empty and os.path.isdir(rd.path):
-            for sub in _SUBDIRS:
-                d = os.path.join(rd.path, sub)
-                if os.path.isdir(d) and os.listdir(d):
-                    raise ValueError(f"refusing to reuse non-empty run dir: {rd.path}")
+            # Non-empty == ANY pre-existing content: a populated subdir OR a
+            # stale top-level file (e.g. an events.jsonl from a prior aborted
+            # run). Judging emptiness by subdirs alone would let a leftover
+            # journal slip through and weaken invariant 10 (P2-1 hardening).
+            for entry in os.listdir(rd.path):
+                full = os.path.join(rd.path, entry)
+                if os.path.isdir(full):
+                    if os.listdir(full):
+                        raise ValueError(
+                            f"refusing to reuse non-empty run dir: {rd.path}"
+                        )
+                else:
+                    raise ValueError(
+                        f"refusing to reuse non-empty run dir: {rd.path}"
+                    )
         for sub in _SUBDIRS:
             os.makedirs(os.path.join(rd.path, sub), exist_ok=True)
         return rd
