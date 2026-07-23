@@ -62,3 +62,71 @@ class FakeWorker:
             usage={"llm_calls": 0},
             failure=None,
         )
+
+
+# The canonical execution-leaf contract proposal the refiner emits — the same
+# shape the compiler normalizes and the Phase-1 leaf fulfills (parity).
+_EXECUTION_CONTRACT_PROPOSAL = {
+    "target": "brokencli/cli.py",
+    "objective": "make brokencli reproducibly runnable",
+    "install_cmd": "pip install --no-index --no-build-isolation .",
+    "run_cmd": "python -m brokencli.cli hello 8",
+    "test_cmd": "python -m unittest discover -p test_*.py",
+}
+
+
+class FakeRefiner:
+    """A canned REFINE worker: emits a well-formed research proposal, no LLM.
+
+    The proposal cites a real (resolving) evidence artifact, declares a
+    schema-valid command record, lists candidate failures, traces its children
+    to the parent, and carries the canonical ``execution_contract`` the refiner
+    would compile the execution child from. ``make_inadmissible`` drops a
+    required field so the admissibility gate blocks the execution child.
+    """
+
+    def __init__(self, run_dir: RunDir, make_inadmissible: bool = False) -> None:
+        self._run_dir = run_dir
+        self._make_inadmissible = make_inadmissible
+
+    def execute(self, request: WorkRequest) -> WorkResult:
+        parent_id = request.node_id
+        # A real evidence artifact so citations/log handles resolve.
+        ev_handle = self._run_dir.put_artifact(
+            b"clean run: `brokencli` -> ModuleNotFoundError: No module named 'tinyfmt'"
+        )
+        proposal = {
+            "parent_id": parent_id,
+            "citations": [
+                {"claim_id": "readme", "source_handle": ev_handle.to_str()},
+            ],
+            "command_records": [
+                {"cmd": "python -m brokencli.cli hello 8", "exit_code": 1,
+                 "log_handle": ev_handle.to_str()},
+            ],
+            "candidate_failures": [
+                {"failure_class": "CLEAN_INSTALL_BLOCKER",
+                 "locator": "brokencli/cli.py"},
+            ],
+            "children": [
+                {"id": f"{parent_id}-exec", "parent_id": parent_id,
+                 "objective": "fix the import"},
+            ],
+            "coverage_map": {"import_bug": f"{parent_id}-exec"},
+            "residue": ["other latent failures possible"],
+            "execution_contract": dict(_EXECUTION_CONTRACT_PROPOSAL),
+        }
+        if self._make_inadmissible:
+            # Break admissibility: remove the required coverage_map.
+            del proposal["coverage_map"]
+
+        return WorkResult(
+            status="ok",
+            artifact_handles=[ev_handle],
+            evidence_proposals=[
+                {"claim_id": "refine-proposal", "kind": "decomposition",
+                 "source_handle": ev_handle.to_str(), "proposal": proposal},
+            ],
+            usage={"llm_calls": 0},
+            failure=None,
+        )
