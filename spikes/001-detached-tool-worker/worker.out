@@ -1,0 +1,4 @@
+WORKER_DONE
+=== EXIT_CODE=0 ELAPSED=13s ===
+=== artifact exists? ===
+ls: artifact.md: No such file or directory

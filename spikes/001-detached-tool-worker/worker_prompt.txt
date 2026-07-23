@@ -1,0 +1,5 @@
+You are a headless research worker. Do EXACTLY this, then stop:
+1. Use web search to find the current population of Monroe, Washington (the town). 
+2. Write a file named artifact.md in your current working directory containing: a one-line answer with the number, and the source URL you used.
+3. Print the single line: WORKER_DONE
+Do not ask questions. Do not do anything else.
