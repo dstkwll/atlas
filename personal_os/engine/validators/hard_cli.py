@@ -49,6 +49,32 @@ class HardCliValidator:
     version = "0.1.0"
     strength = ValidationStrength.HARD
 
+    @staticmethod
+    def expected_contract_fields():
+        """The canonical leaf-contract fields this validator consumes (SSOT).
+
+        Derived from the compiler's ``LEAF_CONTRACT_FIELDS`` — the validator has
+        no independent hand-mirrored schema, so it can't drift (Task 2.1a).
+        """
+        from personal_os.engine.core.contract_compiler import LEAF_CONTRACT_FIELDS
+
+        return tuple(LEAF_CONTRACT_FIELDS)
+
+    def validate_contract(self, contract: Dict[str, Any]) -> None:
+        """Fail-closed check of a leaf contract against the canonical schema.
+
+        Raises ``ValueError`` on any missing OR unknown field (ignoring the
+        ``schema_version`` stamp the compiler adds).
+        """
+        expected = set(self.expected_contract_fields())
+        provided = {k for k in contract if k != "schema_version"}
+        extra = provided - expected
+        if extra:
+            raise ValueError(f"contract has unknown field(s): {sorted(extra)}")
+        missing = expected - provided
+        if missing:
+            raise ValueError(f"contract missing field(s): {sorted(missing)}")
+
     def validate(self, workspace: RunDir, node: Any, config: Optional[Dict[str, Any]] = None) -> Receipt:
         """Run the HARD checks against ``workspace`` (a RunDir); mint a receipt.
 
