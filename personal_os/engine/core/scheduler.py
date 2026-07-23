@@ -25,6 +25,7 @@ execution child actually HARD-discharged.
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
 
@@ -142,3 +143,91 @@ class Scheduler:
         # discharge already journaled the status; mirror into our projection.
         self._statuses[node.id] = result.status
         return result.status
+
+
+def resume(run_dir: RunDir, hard_validator) -> RunOutcome:
+    """Resume a crashed run: rebuild projection + re-verify the frontier.
+
+    Bounded, VERIFICATION-ONLY (invariant 8 / Skeptic D3):
+    - rebuild the ``LifecycleProjection`` from the journal (torn tail tolerated,
+      events deduped),
+    - for each node the projection reports as ``HARD_DISCHARGED``, re-verify its
+      receipt cheaply by re-hashing the receipted artifact: the receipt artifact
+      must still be present AND its bytes must still content-address to the same
+      handle,
+    - a passing re-verify leaves the node ``HARD_DISCHARGED`` (no re-run, no
+      attempt consumed),
+    - a failing re-verify (missing/changed artifact) marks the node ``BLOCKED``
+      with ``RESUME_REVERIFY_FAILED`` — it NEVER re-enters ``DISCHARGING`` and
+      never fabricates a stale success.
+
+    Returns a ``RunOutcome`` reflecting the reconciled projection.
+    """
+    from personal_os.engine.contract.enums import RationaleCode
+    from personal_os.engine.contract.journal import Journal, replay
+
+    proj = replay(run_dir.events_path)
+    journal = Journal(run_dir.events_path, run_id=run_dir.run_id)
+
+    statuses: Dict[str, NodeStatus] = {}
+    for node_id, status_str in proj.node_status.items():
+        statuses[node_id] = NodeStatus(status_str)
+
+    # Re-verify every HARD_DISCHARGED node on the frontier (verification-only).
+    for node_id, status in list(statuses.items()):
+        if status is not NodeStatus.HARD_DISCHARGED:
+            continue
+        ok = _reverify_receipt(run_dir, proj, node_id)
+        if not ok:
+            statuses[node_id] = NodeStatus.BLOCKED
+            journal.append(
+                EventType.NODE_STATUS, node_id=node_id,
+                payload={"status": NodeStatus.BLOCKED.value,
+                         "rationale": RationaleCode.RESUME_REVERIFY_FAILED.value},
+            )
+
+    # Reconcile the top: if its execution child is no longer HARD_DISCHARGED, the
+    # top can no longer be AWAITING_ACCEPTANCE (a BLOCKED child can't keep the
+    # parent eligible — Skeptic E5).
+    top_id = _find_top(proj)
+    top_status = statuses.get(top_id, NodeStatus.PENDING)
+    if top_status is NodeStatus.AWAITING_ACCEPTANCE:
+        exec_ok = any(
+            nid.startswith(top_id) and nid.endswith("-exec")
+            and statuses.get(nid) is NodeStatus.HARD_DISCHARGED
+            for nid in statuses
+        )
+        if not exec_ok:
+            top_status = NodeStatus.BLOCKED
+            statuses[top_id] = top_status
+            journal.append(EventType.NODE_STATUS, node_id=top_id,
+                           payload={"status": NodeStatus.BLOCKED.value,
+                                    "rationale": RationaleCode.RESUME_REVERIFY_FAILED.value})
+
+    return RunOutcome(top_status=top_status, node_statuses=statuses)
+
+
+def _find_top(proj) -> str:
+    """The top node id (a NODE_CREATED with no parent-derived suffix)."""
+    # In v0 the top is the shortest node id (children are "<top>-role").
+    if not proj.node_status:
+        return "top"
+    return min(proj.node_status.keys(), key=len)
+
+
+def _reverify_receipt(run_dir: RunDir, proj, node_id: str) -> bool:
+    """Cheaply re-verify a node's receipt: artifact present + hash unchanged."""
+    receipts = proj.receipts.get(node_id, [])
+    if not receipts:
+        return False
+    handle_str = receipts[-1].get("receipt_handle")
+    if not handle_str:
+        return False
+    sha = handle_str.split(":", 1)[1]
+    path = os.path.join(run_dir.artifacts_dir, sha)
+    if not os.path.exists(path):
+        return False
+    import hashlib
+    with open(path, "rb") as f:
+        actual = hashlib.sha256(f.read()).hexdigest()
+    return actual == sha
