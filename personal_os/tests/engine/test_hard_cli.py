@@ -80,3 +80,31 @@ def test_simulated_timeout_is_ran_true_passed_false(tmp_path):
     assert receipt.passed is False
     # Timeout is captured, not a silent None.
     assert receipt is not None
+
+
+def test_validator_internal_error_fails_closed_to_receipt(tmp_path):
+    # P2 hardening: a generic internal error (not just timeout/missing-exec)
+    # must still mint a ran=True, passed=False receipt — never propagate a raw
+    # exception (the docstring/plan promise "never a silent None").
+    rd = new_run(str(tmp_path))
+    stage(fixture_root(), rd)
+    v = HardCliValidator()
+
+    # Force an internal failure deep in the run: monkeypatch put_artifact to
+    # raise, simulating an OSError while capturing output.
+    import personal_os.engine.validators.hard_cli as mod
+
+    orig = mod.subprocess.run
+
+    def boom(*a, **k):
+        raise OSError("simulated internal failure")
+
+    mod.subprocess.run = boom
+    try:
+        receipt = v.validate(rd, node=None, config={})
+    finally:
+        mod.subprocess.run = orig
+    assert receipt is not None
+    assert receipt.ran is True
+    assert receipt.passed is False
+    assert receipt.validator_id == "hard_cli"

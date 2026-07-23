@@ -25,7 +25,6 @@ validator rejects rather than rubber-stamps.
 from __future__ import annotations
 
 import json
-import os
 from dataclasses import dataclass
 
 from personal_os.engine.contract.enums import NodeStatus
@@ -43,6 +42,23 @@ class DischargeResult:
     status: NodeStatus
     receipt: Receipt
     patched_ok: bool
+
+
+def _verify_patch_landed(run_dir: RunDir, patch_handle, dest: str) -> bool:
+    """Confirm the staged file's bytes equal the proposed patch content.
+
+    Re-resolves the patch payload from its handle and compares its declared
+    ``content`` to what is actually on disk at ``dest`` — a genuine
+    proof-of-landing, not a mere existence check.
+    """
+    try:
+        resolved = run_dir.resolve_handle(patch_handle)
+        with open(resolved, "rb") as f:
+            payload = json.loads(f.read().decode("utf-8"))
+        with open(dest, "r") as f:
+            return f.read() == payload["content"]
+    except (OSError, ValueError, KeyError):
+        return False
 
 
 def discharge(
@@ -73,8 +89,10 @@ def discharge(
     patch_handle = result.artifact_handles[0]
     dest = apply_patch(run_dir, patch_handle)
 
-    # Core verifies the change landed (never trust the worker's self-report).
-    patched_ok = os.path.exists(dest)
+    # Core verifies the change actually landed (never trust the worker's
+    # self-report): re-read the staged file and confirm its bytes equal the
+    # proposed patch content — a genuine at-handle check, not a mere exists().
+    patched_ok = _verify_patch_landed(run_dir, patch_handle, dest)
 
     # 4. Core-minted validation.
     receipt = validator.validate(run_dir, node=node, config={})

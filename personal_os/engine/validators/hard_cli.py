@@ -77,18 +77,46 @@ class HardCliValidator:
         artifact_hashes: Dict[str, str] = {}
         passed = True
 
-        for label, cmd, cwd in steps:
-            commands.append(" ".join(cmd))
-            output, code = self._run_step(cmd, cwd, timeout_s)
-            handle = run_dir.put_artifact(output.encode("utf-8"))
-            artifact_hashes[handle.to_str()] = handle.id
-            exit_codes.append(code)
-            if code != 0:
-                passed = False
-                break  # first failing step short-circuits
+        try:
+            for label, cmd, cwd in steps:
+                commands.append(" ".join(cmd))
+                output, code = self._run_step(cmd, cwd, timeout_s)
+                handle = run_dir.put_artifact(output.encode("utf-8"))
+                artifact_hashes[handle.to_str()] = handle.id
+                exit_codes.append(code)
+                if code != 0:
+                    passed = False
+                    break  # first failing step short-circuits
 
-        # workspace_id is the deterministic hash of the staged tree structure.
-        workspace_id = Workspace(staged).id
+            # workspace_id is the deterministic hash of the staged tree.
+            workspace_id = Workspace(staged).id
+        except Exception as exc:  # noqa: BLE001 - fail closed to a receipt
+            # ANY validator-internal error (OSError, hashing failure, etc.)
+            # must still mint a ran=True, passed=False receipt — never a silent
+            # None and never a propagated raw exception (invariant 4 / Task 1.4).
+            try:
+                err_handle = run_dir.put_artifact(
+                    f"[validator-internal error: {exc!r}]".encode("utf-8")
+                )
+                artifact_hashes[err_handle.to_str()] = err_handle.id
+            except Exception:  # pragma: no cover - last-ditch
+                pass
+            return Receipt(
+                node_id=getattr(node, "id", "") if node is not None else "",
+                validator_id=self.id,
+                validator_version=self.version,
+                strength=self.strength,
+                ran=True,
+                passed=False,
+                workspace_id="",
+                commands=commands,
+                exit_codes=exit_codes,
+                artifact_hashes=artifact_hashes,
+                evidence=[{"schema_version": ENGINE_SCHEMA_VERSION,
+                           "internal_error": repr(exc)}],
+                residual=[],
+                ts=_now_iso(),
+            )
 
         return Receipt(
             node_id=getattr(node, "id", "") if node is not None else "",

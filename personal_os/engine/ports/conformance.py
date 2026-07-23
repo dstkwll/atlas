@@ -52,7 +52,11 @@ def assert_workresult_contract(
         except ValueError as exc:  # pragma: no cover - message only
             raise AssertionError(f"artifact handle does not resolve: {exc}")
 
-    # 4. Evidence proposals are well-formed.
+    # 4. Evidence proposals are well-formed (and carry no self-certification).
     for ev in d.get("evidence_proposals", []):
         assert isinstance(ev, dict), "evidence_proposal must be a dict"
         assert ev.get("claim_id"), "evidence_proposal missing claim_id"
+        for key in _FORBIDDEN_KEYS:
+            assert key not in ev, (
+                f"evidence_proposal must not carry a {key!r} field (invariant 1)"
+            )
