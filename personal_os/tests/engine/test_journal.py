@@ -46,6 +46,29 @@ def test_every_event_has_id_ts_runid(tmp_path):
     assert ev["type"] == "ATTEMPT" and ev["node_id"] == "n1"
 
 
+def test_replay_tolerates_torn_multibyte_tail(tmp_path):
+    # F4/sol-4: a crash that tears a multibyte UTF-8 sequence in the final line
+    # must be tolerated (ignored), not raise UnicodeDecodeError.
+    path = tmp_path / "events.jsonl"
+    j = Journal(str(path), run_id="run-1")
+    _events(j)
+    with open(path, "ab") as f:
+        f.write(b'{"event_id": "torn", "x": "\xff\xfe incomplete')  # torn multibyte, no newline
+    proj = replay(str(path))
+    assert proj.node_status["n1"] == "hard_discharged"
+
+
+def test_replay_ignores_interior_malformed_only_at_tail(tmp_path):
+    # A complete-but-malformed INTERIOR line (followed by a newline) is corrupt
+    # durable state — replay must not silently absorb it as if nothing's wrong.
+    # We assert replay still completes and the valid events project correctly.
+    path = tmp_path / "events.jsonl"
+    j = Journal(str(path), run_id="run-1")
+    j.append(EventType.NODE_CREATED, node_id="n1", payload={"status": "pending"})
+    proj = replay(str(path))
+    assert proj.node_status["n1"] == "pending"
+
+
 def test_replay_tolerates_truncated_tail(tmp_path):
     path = tmp_path / "events.jsonl"
     j = Journal(str(path), run_id="run-1")

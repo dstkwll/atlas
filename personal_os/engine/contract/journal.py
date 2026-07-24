@@ -56,6 +56,24 @@ class Journal:
         parent = os.path.dirname(os.path.abspath(path))
         if parent:
             os.makedirs(parent, exist_ok=True)
+        # F5: fsync the parent directory once so the journal file's directory
+        # entry is itself durable (a durable file with a non-durable dir entry
+        # can vanish on crash).
+        self._fsync_parent_dir(parent)
+
+    @staticmethod
+    def _fsync_parent_dir(parent: str) -> None:
+        if not parent:
+            return
+        try:
+            dfd = os.open(parent, os.O_RDONLY)
+            try:
+                os.fsync(dfd)
+            finally:
+                os.close(dfd)
+        except OSError:
+            # Some filesystems disallow directory fsync; best-effort.
+            pass
 
     def append(
         self,
@@ -67,7 +85,9 @@ class Journal:
 
         A single ``O_APPEND`` write of one JSON line + ``flush()`` +
         ``os.fsync()`` so a crash can only ever leave a torn *final* line,
-        never a corrupted earlier one.
+        never a corrupted earlier one. The write LOOPS until every byte lands
+        (``os.write`` may return a short count — F5) so a partial write can
+        never convert into malformed interior data.
         """
         event_id = str(uuid.uuid4())
         event = {
@@ -78,11 +98,17 @@ class Journal:
             "type": EventType(event_type).value,
             "payload": payload or {},
         }
-        line = json.dumps(event, sort_keys=True) + "\n"
+        data = (json.dumps(event, sort_keys=True) + "\n").encode("utf-8")
         with self._lock:
             fd = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644)
             try:
-                os.write(fd, line.encode("utf-8"))
+                view = memoryview(data)
+                total = 0
+                while total < len(data):
+                    written = os.write(fd, view[total:])
+                    if written <= 0:
+                        raise OSError("journal write made no progress")
+                    total += written
                 os.fsync(fd)
             finally:
                 os.close(fd)
@@ -113,12 +139,21 @@ def replay(path: str) -> LifecycleProjection:
     if not os.path.exists(path):
         return proj
 
-    with open(path, "r") as f:
-        lines = f.readlines()
+    # F4: read BINARY and split on newline. A crash can tear a multibyte UTF-8
+    # sequence in the final line; decoding the whole file as text would raise
+    # UnicodeDecodeError and bypass the JSON handler. Decode each COMPLETE line
+    # individually; a torn/undecodable final fragment is ignored, not fatal.
+    with open(path, "rb") as f:
+        blob = f.read()
 
-    for raw in lines:
-        raw = raw.strip()
-        if not raw:
+    raw_lines = blob.split(b"\n")
+    for raw_bytes in raw_lines:
+        if not raw_bytes.strip():
+            continue
+        try:
+            raw = raw_bytes.decode("utf-8")
+        except UnicodeDecodeError:
+            # Torn multibyte sequence (crash mid-write): ignore this fragment.
             continue
         try:
             ev = json.loads(raw)
