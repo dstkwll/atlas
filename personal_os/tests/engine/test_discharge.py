@@ -62,6 +62,22 @@ class _EmptyHandleWorker:
                           evidence_proposals=[], usage={}, failure=None)
 
 
+class _FailedWorker:
+    """Reports a normal worker failure without proposing a patch."""
+
+    def execute(self, request):
+        return WorkResult(status="failed", artifact_handles=[],
+                          evidence_proposals=[], usage={},
+                          failure={"message": "no patch produced"})
+
+
+class _RaisingWorker:
+    """Models an expected detached-worker process failure."""
+
+    def execute(self, request):
+        raise RuntimeError("worker process exited")
+
+
 def test_discharge_hard_leaf_end_to_end(tmp_path):
     rd = new_run(str(tmp_path))
     stage(fixture_root(), rd)
@@ -163,3 +179,19 @@ def test_discharge_rejects_missing_patch_handle_before_indexing(tmp_path):
 
     with pytest.raises(AssertionError):
         discharge(_node(), _EmptyHandleWorker(), HardCliValidator(), rd, journal)
+
+
+@pytest.mark.parametrize("worker", [_FailedWorker(), _RaisingWorker()])
+def test_worker_failure_terminalizes_discharge_as_blocked(tmp_path, worker):
+    """Normal worker failures cannot strand the node in DISCHARGING."""
+    rd = new_run(str(tmp_path))
+    stage(fixture_root(), rd)
+    journal = Journal(rd.events_path, run_id=rd.run_id)
+
+    result = discharge(_node(), worker, HardCliValidator(), rd, journal)
+
+    assert result.status is NodeStatus.BLOCKED
+    assert result.patched_ok is False
+    projection = replay(rd.events_path)
+    assert projection.node_status["leaf-1"] == NodeStatus.BLOCKED.value
+    assert projection.receipts["leaf-1"]

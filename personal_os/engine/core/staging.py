@@ -32,7 +32,9 @@ def stage(source_tree: str, run_dir: RunDir) -> str:
     """Copy ``source_tree`` into ``run_dir/staging`` and return the staged root.
 
     The source is left untouched (isolation). If staging is already populated
-    it is replaced wholesale (a run stages exactly once in normal flow).
+    it is replaced wholesale (a run stages exactly once in normal flow). Source
+    symlinks are copied without dereferencing and then rejected: v0 fixtures
+    must contain only plain files and directories.
     """
     staged = run_dir.staging_dir
     if os.path.isdir(staged) and os.listdir(staged):
@@ -41,7 +43,12 @@ def stage(source_tree: str, run_dir: RunDir) -> str:
     # we want to rely on); ensure a clean target.
     if os.path.isdir(staged):
         shutil.rmtree(staged)
-    shutil.copytree(source_tree, staged)
+    shutil.copytree(source_tree, staged, symlinks=True)
+    for root, directories, files in os.walk(staged, followlinks=False):
+        for name in directories + files:
+            path = os.path.join(root, name)
+            if stat.S_ISLNK(os.lstat(path).st_mode):
+                raise ValueError(f"source fixture contains a symlink: {path!r}")
     return staged
 
 

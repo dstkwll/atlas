@@ -37,6 +37,27 @@ def test_stage_copies_and_leaves_source_untouched(tmp_path):
         assert "from tinyfmt import leftpad" in f.read()
 
 
+@pytest.mark.parametrize("target_kind", ["inside", "outside"])
+def test_stage_rejects_source_symlinks_without_dereferencing(tmp_path, target_kind):
+    """Staging fails closed on every link and never copies linked bytes."""
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "plain.txt").write_text("plain")
+    if target_kind == "inside":
+        target = source / "plain.txt"
+    else:
+        target = tmp_path / "outside.txt"
+        target.write_text("outside-secret")
+    os.symlink(str(target), str(source / "link.txt"))
+    rd = new_run(str(tmp_path / "runs"))
+
+    with pytest.raises(ValueError, match="symlink"):
+        stage(str(source), rd)
+
+    staged_link = os.path.join(rd.staging_dir, "link.txt")
+    assert not (os.path.lexists(staged_link) and not os.path.islink(staged_link))
+
+
 def test_apply_patch_edits_staged_tree(tmp_path):
     rd = new_run(str(tmp_path))
     staged = stage(fixture_root(), rd)

@@ -84,17 +84,30 @@ def discharge(
         objective=node.objective,
         contract=dict(node.done_contract),
     )
-    result = worker.execute(request)
-    assert_workresult_contract(result, run_dir, require_patch_handle=True)
+    patched_ok = False
+    try:
+        result = worker.execute(request)
+    except Exception:
+        # A detached worker process can fail without returning a WorkResult.
+        # That is a normal negative outcome, not a reason to strand the durable
+        # lifecycle in DISCHARGING. Core mints the negative receipt below.
+        result = None
 
-    # 3. Apply the proposed patch onto the staged tree (wall re-contains it).
-    patch_handle = result.artifact_handles[0]
-    dest = apply_patch(run_dir, patch_handle)
+    if result is not None:
+        # A non-success result may legitimately have no patch, but its remaining
+        # shape must still conform. A claimed success has the stronger contract:
+        # it must carry a resolvable patch handle before Core may act on it.
+        assert_workresult_contract(result, run_dir)
+        if result.status == "ok":
+            assert_workresult_contract(result, run_dir, require_patch_handle=True)
 
-    # Core verifies the change actually landed (never trust the worker's
-    # self-report): re-read the staged file and confirm its bytes equal the
-    # proposed patch content — a genuine at-handle check, not a mere exists().
-    patched_ok = _verify_patch_landed(run_dir, patch_handle, dest)
+            # 3. Apply the proposed patch onto the staged tree (wall contains it).
+            patch_handle = result.artifact_handles[0]
+            dest = apply_patch(run_dir, patch_handle)
+
+            # Core verifies the change actually landed (never trust the worker's
+            # self-report): re-read the staged file and compare it to the patch.
+            patched_ok = _verify_patch_landed(run_dir, patch_handle, dest)
 
     # 4. Core-minted validation.
     receipt = validator.validate(run_dir, node=node, config={})

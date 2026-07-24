@@ -93,6 +93,33 @@ def test_no_progress_execution_leaf_reaches_blocked(tmp_path):
     assert exec_ids and outcome.node_statuses[exec_ids[0]] is NodeStatus.BLOCKED
 
 
+def test_failed_worker_result_reaches_blocked_without_crashing(tmp_path):
+    """A worker's normal negative outcome is a Core-owned BLOCKED result."""
+    from personal_os.engine.ports.worker import WorkResult
+
+    class _FailedWorker:
+        def execute(self, request):
+            return WorkResult(
+                status="failed", artifact_handles=[], evidence_proposals=[],
+                usage={}, failure={"message": "no patch produced"},
+            )
+
+    rd = new_run(str(tmp_path))
+    stage(fixture_root(), rd)
+    scheduler = Scheduler(
+        run_dir=rd, journal=Journal(rd.events_path, run_id=rd.run_id),
+        refiner=FakeRefiner(rd), worker=_FailedWorker(),
+        hard_validator=HardCliValidator(),
+    )
+
+    outcome = scheduler.run(_top())
+
+    exec_ids = [nid for nid in outcome.node_statuses if nid.endswith("-exec")]
+    assert exec_ids and outcome.node_statuses[exec_ids[0]] is NodeStatus.BLOCKED
+    assert outcome.top_status is NodeStatus.BLOCKED
+    assert replay(rd.events_path).node_status[exec_ids[0]] == NodeStatus.BLOCKED.value
+
+
 def test_budget_exhausted_branch_reaches_failed(tmp_path):
     # A top node that can only refine, with depth budget 0 -> the refiner's
     # children can't go deeper; an inadmissible refine leaves no exec child and
