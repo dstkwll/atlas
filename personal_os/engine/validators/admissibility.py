@@ -51,23 +51,36 @@ class AdmissibilityValidator:
         run_dir = workspace
         reasons: List[str] = []
 
+        # 0. The proposal itself must be a dict (fail closed, don't crash).
+        if not isinstance(proposal, dict):
+            reasons.append("proposal is not a dict")
+            proposal = {}
+
         parent_id = proposal.get("parent_id")
 
-        # 1. Citations: each source_handle must resolve in the run.
-        for cite in proposal.get("citations", []):
+        # 1. Citations: each must be a dict with a resolving source_handle.
+        for cite in _as_list(proposal.get("citations")):
+            if not isinstance(cite, dict):
+                reasons.append("citation is not a dict")
+                continue
             if not cite.get("claim_id"):
                 reasons.append("citation missing claim_id")
             self._require_resolves(run_dir, cite.get("source_handle"), reasons,
                                    "citation source_handle")
 
-        # 2. Command RECORDS are schema-valid + self-consistent — this proves
+        # 2. Command RECORDS are schema-valid + self-consistent — proves
         #    well-formedness, NOT that the command executed (invariant 3).
         if "command_records" not in proposal:
             reasons.append("missing command_records")
-        for rec in proposal.get("command_records", []):
+        for rec in _as_list(proposal.get("command_records")):
+            if not isinstance(rec, dict):
+                reasons.append("command record is not a dict")
+                continue
             if not rec.get("cmd"):
                 reasons.append("command record missing cmd")
-            if not isinstance(rec.get("exit_code"), int):
+            # type() is int (NOT isinstance) so a bool exit_code is rejected —
+            # isinstance(True, int) is True (sol-11).
+            if type(rec.get("exit_code")) is not int:
                 reasons.append("command record missing/invalid exit_code")
             self._require_resolves(run_dir, rec.get("log_handle"), reasons,
                                    "command record log_handle")
@@ -75,14 +88,20 @@ class AdmissibilityValidator:
         # 3. Candidate failures carry a valid FailureClass + a locator.
         if not proposal.get("candidate_failures"):
             reasons.append("missing candidate_failures")
-        for cand in proposal.get("candidate_failures", []):
+        for cand in _as_list(proposal.get("candidate_failures")):
+            if not isinstance(cand, dict):
+                reasons.append("candidate failure is not a dict")
+                continue
             if cand.get("failure_class") not in _VALID_FAILURE_CLASSES:
                 reasons.append(f"invalid failure_class: {cand.get('failure_class')!r}")
             if not cand.get("locator"):
                 reasons.append("candidate failure missing locator")
 
         # 4. Children trace to the parent.
-        for child in proposal.get("children", []):
+        for child in _as_list(proposal.get("children")):
+            if not isinstance(child, dict):
+                reasons.append("child is not a dict")
+                continue
             if child.get("parent_id") != parent_id:
                 reasons.append(
                     f"child {child.get('id')!r} does not trace to parent {parent_id!r}"
@@ -123,7 +142,15 @@ class AdmissibilityValidator:
         if not handle_str:
             reasons.append(f"{label} missing")
             return
+        if not isinstance(handle_str, str):
+            reasons.append(f"{label} is not a string handle")
+            return
         try:
             run_dir.resolve_handle(ArtifactHandle.from_str(handle_str))
         except (ValueError, KeyError):
             reasons.append(f"{label} does not resolve: {handle_str!r}")
+
+
+def _as_list(value) -> list:
+    """Coerce a proposal field to a list; a non-list becomes empty (fail closed)."""
+    return value if isinstance(value, list) else []

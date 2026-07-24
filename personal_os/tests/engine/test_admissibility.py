@@ -102,3 +102,36 @@ def test_missing_coverage_or_residue_fails(tmp_path):
     del p["coverage_map"]
     receipt = AdmissibilityValidator().validate(rd, node=None, config={"proposal": p})
     assert receipt.passed is False
+
+
+def test_bool_exit_code_rejected(tmp_path):
+    # F9/sol-11: isinstance(True, int) is True — a boolean exit_code must be
+    # rejected (type() is int), not accepted as a valid record.
+    rd = new_run(str(tmp_path))
+    p = _wellformed_proposal(rd)
+    p["command_records"][0]["exit_code"] = True
+    receipt = AdmissibilityValidator().validate(rd, node=None, config={"proposal": p})
+    assert receipt.passed is False
+
+
+def test_non_dict_member_does_not_crash(tmp_path):
+    # A non-dict in a collection must become a reason, not raise AttributeError.
+    rd = new_run(str(tmp_path))
+    p = _wellformed_proposal(rd)
+    p["citations"].append("not-a-dict")
+    receipt = AdmissibilityValidator().validate(rd, node=None, config={"proposal": p})
+    assert receipt.passed is False  # degraded, not crashed
+
+
+def test_non_string_handle_does_not_crash(tmp_path):
+    rd = new_run(str(tmp_path))
+    p = _wellformed_proposal(rd)
+    p["citations"][0]["source_handle"] = 12345  # not a string
+    receipt = AdmissibilityValidator().validate(rd, node=None, config={"proposal": p})
+    assert receipt.passed is False
+
+
+def test_non_dict_proposal_does_not_crash(tmp_path):
+    rd = new_run(str(tmp_path))
+    receipt = AdmissibilityValidator().validate(rd, node=None, config={"proposal": "nope"})
+    assert receipt.passed is False
