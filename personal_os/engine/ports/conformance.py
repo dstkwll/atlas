@@ -36,6 +36,7 @@ def assert_workresult_contract(
     d = result.to_dict() if isinstance(result, WorkResult) else dict(result)
 
     # 1. No self-certification anywhere.
+    _assert_no_forbidden_keys_deep(d)
     for key in _FORBIDDEN_KEYS:
         assert key not in d, f"WorkResult must not carry a {key!r} field (invariant 1)"
 

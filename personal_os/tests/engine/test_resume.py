@@ -159,6 +159,54 @@ def test_resume_blocks_receipt_without_workspace_binding(tmp_path):
     assert outcome.node_statuses[exec_id] is NodeStatus.BLOCKED
 
 
+def test_resume_blocks_malformed_receipt_handle_without_raising(tmp_path):
+    rd = new_run(str(tmp_path))
+    journal = Journal(rd.events_path, run_id=rd.run_id)
+    journal.append(EventType.NODE_CREATED, node_id="top",
+                   payload={"status": NodeStatus.PENDING.value})
+    journal.append(EventType.NODE_STATUS, node_id="top-exec",
+                   payload={"status": NodeStatus.HARD_DISCHARGED.value})
+    journal.append(EventType.RECEIPT_WRITTEN, node_id="top-exec",
+                   payload={"receipt_handle": "malformed"})
+
+    outcome = resume(rd, HardCliValidator())
+
+    assert outcome.node_statuses["top-exec"] is NodeStatus.BLOCKED
+
+
+def test_resume_blocks_non_dict_receipt_body_without_raising(tmp_path):
+    rd = new_run(str(tmp_path))
+    handle = rd.put_artifact(json.dumps(["not", "a", "receipt"]).encode("utf-8"))
+    journal = Journal(rd.events_path, run_id=rd.run_id)
+    journal.append(EventType.NODE_CREATED, node_id="top",
+                   payload={"status": NodeStatus.PENDING.value})
+    journal.append(EventType.NODE_STATUS, node_id="top-exec",
+                   payload={"status": NodeStatus.HARD_DISCHARGED.value})
+    journal.append(EventType.RECEIPT_WRITTEN, node_id="top-exec",
+                   payload={"receipt_handle": handle.to_str()})
+
+    outcome = resume(rd, HardCliValidator())
+
+    assert outcome.node_statuses["top-exec"] is NodeStatus.BLOCKED
+
+
+def test_resume_blocks_non_dict_artifact_hashes_without_raising(tmp_path):
+    rd = new_run(str(tmp_path))
+    receipt = {"artifact_hashes": [], "workspace_id": "unused"}
+    handle = rd.put_artifact(json.dumps(receipt).encode("utf-8"))
+    journal = Journal(rd.events_path, run_id=rd.run_id)
+    journal.append(EventType.NODE_CREATED, node_id="top",
+                   payload={"status": NodeStatus.PENDING.value})
+    journal.append(EventType.NODE_STATUS, node_id="top-exec",
+                   payload={"status": NodeStatus.HARD_DISCHARGED.value})
+    journal.append(EventType.RECEIPT_WRITTEN, node_id="top-exec",
+                   payload={"receipt_handle": handle.to_str()})
+
+    outcome = resume(rd, HardCliValidator())
+
+    assert outcome.node_statuses["top-exec"] is NodeStatus.BLOCKED
+
+
 def test_resume_blocks_interrupted_discharging(tmp_path):
     # F11/sol-2: a crash mid-DISCHARGING leaves the node in a transitional
     # state. Resume must fail it closed to BLOCKED, never leave it DISCHARGING

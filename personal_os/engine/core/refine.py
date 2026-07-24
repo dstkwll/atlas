@@ -4,7 +4,7 @@
 failure by ``FailureClass`` total order, tiebreaking on a RUN-RELATIVE locator
 (absolute locators are rejected — Skeptic E6). No LLM.
 
-``refine(node, worker, run_dir, journal)`` (Task 2.5) runs the research track:
+``refine(node, worker, run_dir, journal, attempt=1)`` (Task 2.5) runs the research track:
 worker (REFINE) → ``AdmissibilityValidator`` → ``select_failure`` →
 ``compile_leaf_contract`` an execution child **from the selected evidenced
 failure** (compiled from evidence, never preselected). It commits a
@@ -52,7 +52,7 @@ class RefineResult:
     receipt: Any
 
 
-def refine(node, worker, run_dir, journal) -> "RefineResult":
+def refine(node, worker, run_dir, journal, attempt: int = 1) -> "RefineResult":
     """Run the research track: propose → admit → select → compile exec child.
 
     1. worker (REFINE) proposes a research decomposition (untrusted data),
@@ -80,7 +80,7 @@ def refine(node, worker, run_dir, journal) -> "RefineResult":
         kind=WorkKind.REFINE,
         run_id=run_dir.run_id,
         node_id=node.id,
-        attempt=1,
+        attempt=attempt,
         objective=node.objective,
         contract=dict(node.done_contract),
     )

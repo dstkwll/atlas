@@ -37,7 +37,7 @@ from personal_os.engine.contract.enums import (
 )
 from personal_os.engine.contract.journal import EventType, Journal, replay
 from personal_os.engine.contract.node import Budget, ProofObligationNode
-from personal_os.engine.contract.run_dir import RunDir
+from personal_os.engine.contract.run_dir import ArtifactHandle, RunDir
 from personal_os.engine.core.discharge import discharge
 from personal_os.engine.core.refine import refine
 from personal_os.engine.core.router import route
@@ -99,8 +99,10 @@ class Scheduler:
         return RunOutcome(top_status=top_status, node_statuses=dict(self._statuses))
 
     def _handle_refine(self, top: ProofObligationNode) -> NodeStatus:
-        self._journal.append(EventType.ATTEMPT, node_id=top.id, payload={"attempt": 1})
-        result = refine(top, self._refiner, self._rd, self._journal)
+        attempt = replay(self._rd.events_path).attempt_counts.get(top.id, 0) + 1
+        self._journal.append(EventType.ATTEMPT, node_id=top.id,
+                             payload={"attempt": attempt})
+        result = refine(top, self._refiner, self._rd, self._journal, attempt=attempt)
 
         if not result.admissible:
             # No admissible decomposition -> nothing to discharge. If the depth
@@ -303,10 +305,17 @@ def _reverify_receipt(run_dir: RunDir, proj, node_id: str) -> bool:
     receipts = proj.receipts.get(node_id, [])
     if not receipts:
         return False
-    handle_str = receipts[-1].get("receipt_handle")
+    receipt_event = receipts[-1]
+    if not isinstance(receipt_event, dict):
+        return False
+    handle_str = receipt_event.get("receipt_handle")
     if not handle_str:
         return False
-    sha = handle_str.split(":", 1)[1]
+    try:
+        handle = ArtifactHandle.from_str(handle_str)
+    except (TypeError, ValueError):
+        return False
+    sha = handle.id
     blob_path = os.path.join(run_dir.artifacts_dir, sha)
     if not os.path.exists(blob_path):
         return False
@@ -320,7 +329,14 @@ def _reverify_receipt(run_dir: RunDir, proj, node_id: str) -> bool:
         receipt = _json.loads(blob.decode("utf-8"))
     except (ValueError, UnicodeDecodeError):
         return False
-    for ref_handle, ref_sha in receipt.get("artifact_hashes", {}).items():
+    if not isinstance(receipt, dict):
+        return False
+    artifact_hashes = receipt.get("artifact_hashes", {})
+    if not isinstance(artifact_hashes, dict):
+        return False
+    for ref_handle, ref_sha in artifact_hashes.items():
+        if not isinstance(ref_handle, str) or not isinstance(ref_sha, str):
+            return False
         ref_path = os.path.join(run_dir.artifacts_dir, ref_sha)
         if not os.path.exists(ref_path):
             return False

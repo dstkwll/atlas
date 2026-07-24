@@ -127,6 +127,36 @@ def test_run_refuses_to_rerun_attempt_exhausted_node(tmp_path):
     assert outcome.top_status is NodeStatus.FAILED
 
 
+def test_refine_attempt_number_comes_from_journal_after_restart(tmp_path):
+    """A restarted refine sends the next journal-authoritative attempt number."""
+    class _RecordingRefiner:
+        def __init__(self, delegate):
+            self.delegate = delegate
+            self.requests = []
+
+        def execute(self, request):
+            self.requests.append(request)
+            return self.delegate.execute(request)
+
+    rd = new_run(str(tmp_path))
+    stage(fixture_root(), rd)
+    journal = Journal(rd.events_path, run_id=rd.run_id)
+    journal.append(EventType.NODE_CREATED, node_id="top",
+                   payload={"status": NodeStatus.PENDING.value})
+    journal.append(EventType.ATTEMPT, node_id="top", payload={"attempt": 1})
+    refiner = _RecordingRefiner(FakeRefiner(rd))
+    scheduler = Scheduler(
+        run_dir=rd, journal=Journal(rd.events_path, run_id=rd.run_id),
+        refiner=refiner, worker=FakeWorker(rd),
+        hard_validator=HardCliValidator(),
+    )
+
+    scheduler.run(_top())
+
+    assert refiner.requests[0].attempt == 2
+    assert replay(rd.events_path).attempt_counts["top"] == 2
+
+
 def test_run_is_journaled(tmp_path):
     rd = new_run(str(tmp_path))
     stage(fixture_root(), rd)

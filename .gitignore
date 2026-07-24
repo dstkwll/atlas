@@ -5,3 +5,7 @@ __pycache__/
 node_modules/
 .hermes/
 .pytest_cache/
+
+# Python build artifacts from the brokencli test fixture install
+*.egg-info/
+personal_os/tests/engine/fixtures/brokencli/build/
