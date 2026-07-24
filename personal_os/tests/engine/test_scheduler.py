@@ -114,3 +114,25 @@ def test_run_is_journaled(tmp_path):
     # Journal has the top and both children.
     assert "top" in proj.node_status
     assert any(k.endswith("-exec") for k in proj.node_status)
+
+
+def test_execution_child_routed_not_role_dispatched(tmp_path, monkeypatch):
+    # F10/sol-inv5: the execution child must reach discharge THROUGH route(),
+    # not by the scheduler hardcoding the verb from child["role"]. If route()
+    # says something other than DISCHARGE for that node, the scheduler must NOT
+    # discharge it. We assert route() is consulted for the execution child.
+    import personal_os.engine.core.scheduler as sched_mod
+
+    routed_nodes = []
+    real_route = sched_mod.route
+
+    def spy_route(node, projection):
+        routed_nodes.append(node.id)
+        return real_route(node, projection)
+
+    monkeypatch.setattr(sched_mod, "route", spy_route)
+    rd = new_run(str(tmp_path))
+    stage(fixture_root(), rd)
+    _scheduler(rd).run(_top())
+    # The execution child id must have been passed through route().
+    assert any(nid.endswith("-exec") for nid in routed_nodes), routed_nodes

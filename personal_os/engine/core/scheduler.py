@@ -113,9 +113,22 @@ class Scheduler:
                 # This can NEVER discharge a HARD obligation (invariant 5).
                 self._set(child_id, NodeStatus.ADMISSIBILITY_PASSED)
             elif role == "execution":
-                status = self._discharge_child(child)
-                if status is NodeStatus.HARD_DISCHARGED:
-                    exec_discharged = True
+                # F10 (invariant 5): the ROUTER — not the role string — decides
+                # the verb. Build the node, ask route(), and only discharge if
+                # the router authorizes DISCHARGE. The scheduler never
+                # self-selects a verb from role.
+                node = self._build_execution_node(child)
+                action, _rationale = route(node, self._projection())
+                if action is RouterAction.DISCHARGE:
+                    status = self._discharge_node(node)
+                    if status is NodeStatus.HARD_DISCHARGED:
+                        exec_discharged = True
+                elif action is RouterAction.FAIL:
+                    self._set(child_id, NodeStatus.FAILED)
+                elif action is RouterAction.ESCALATE:
+                    self._set(child_id, NodeStatus.ESCALATED)
+                else:  # REFINE — no deeper recursion in v0 -> blocked
+                    self._set(child_id, NodeStatus.BLOCKED)
 
         # A parent is eligible only if its execution child actually
         # HARD-discharged (a BLOCKED child cannot make it eligible — Skeptic E5).
@@ -126,10 +139,16 @@ class Scheduler:
         self._set(top.id, top_status)
         return top_status
 
-    def _discharge_child(self, child: Dict[str, Any]) -> NodeStatus:
-        """Build a HARD execution node from a compiled child + discharge it."""
+    def _projection(self) -> "LifecycleProjection":
+        """A LifecycleProjection view of the scheduler's current statuses."""
+        proj = LifecycleProjection()
+        proj.node_status = {nid: st.value for nid, st in self._statuses.items()}
+        return proj
+
+    def _build_execution_node(self, child: Dict[str, Any]) -> ProofObligationNode:
+        """Build a HARD execution node from a compiled child (does NOT discharge)."""
         contract = child["contract"]
-        node = ProofObligationNode(
+        return ProofObligationNode(
             id=child["id"], parent_id=child["parent_id"],
             objective=child["objective"], done_contract=dict(contract),
             admissible_evidence=[], validator_ref=self._hard.id,
@@ -137,7 +156,6 @@ class Scheduler:
             budget=Budget(max_depth=1, max_children=0, max_attempts=1),
             status=NodeStatus.PENDING, provenance={"depth": 1, "attempts": 0},
         )
-        return self._discharge_node(node)
 
     def _discharge_node(self, node: ProofObligationNode) -> NodeStatus:
         result = discharge(node, self._worker, self._hard, self._rd, self._journal)
