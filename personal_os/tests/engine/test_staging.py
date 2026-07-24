@@ -99,3 +99,21 @@ def test_apply_patch_rejects_symlink_in_intermediate_component(tmp_path):
         apply_patch(rd, h)
 
     assert not os.path.exists(os.path.join(real_dir, "escaped.py"))
+
+
+def test_apply_patch_replaces_shared_inode_without_modifying_outside_file(tmp_path):
+    """A staged hard link must be replaced, never truncated in place."""
+    rd = new_run(str(tmp_path))
+    staged = stage(fixture_root(), rd)
+    outside = tmp_path / "outside.txt"
+    outside.write_text("outside-original")
+    staged_leaf = os.path.join(staged, "shared.txt")
+    os.link(str(outside), staged_leaf)
+    original_inode = os.stat(outside).st_ino
+
+    apply_patch(rd, _patch_handle(rd, "shared.txt", "staged-new"))
+
+    assert outside.read_text() == "outside-original"
+    with open(staged_leaf) as f:
+        assert f.read() == "staged-new"
+    assert os.stat(staged_leaf).st_ino != original_inode

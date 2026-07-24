@@ -120,3 +120,16 @@ def test_workspace_id_opens_entries_with_nofollow(tmp_path, monkeypatch):
     assert observed_flags
     assert all(flags & os.O_NOFOLLOW for flags in observed_flags)
     assert first == second
+
+
+def test_workspace_id_serialization_has_no_newline_delimiter_collision(tmp_path):
+    """Distinct symlink structures must not alias through textual delimiters."""
+    one = tmp_path / "one"
+    two = tmp_path / "two"
+    one.mkdir()
+    two.mkdir()
+    os.symlink("x\nb:symlink:y", str(one / "a"))
+    os.symlink("x", str(two / "a"))
+    os.symlink("y", str(two / "b"))
+
+    assert Workspace(str(one)).id != Workspace(str(two)).id

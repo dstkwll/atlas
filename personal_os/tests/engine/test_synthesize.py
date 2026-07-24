@@ -20,7 +20,7 @@ from personal_os.engine.contract.node import Budget, ProofObligationNode
 from personal_os.engine.contract.run_dir import new_run
 from personal_os.engine.core.scheduler import Scheduler
 from personal_os.engine.core.staging import stage
-from personal_os.engine.core.synthesize import synthesize
+from personal_os.engine.core.synthesize import _objective_from_journal, _scrub, synthesize
 from personal_os.engine.validators.hard_cli import HardCliValidator
 from personal_os.tests.engine.fixtures.broken_cli_fixture import fixture_root
 
@@ -228,3 +228,98 @@ def test_windows_unc_file_uri_and_spaced_posix_paths_are_scrubbed(tmp_path):
     assert report.count("<path>") >= 4
     for fragment in ("C:\\Users", "host\\share", "file://", "/Users/Dan", "My Project"):
         assert fragment not in report
+
+
+def _journal_receipt(rd, receipt_bytes):
+    handle = rd.put_artifact(receipt_bytes)
+    journal = Journal(rd.events_path, run_id=rd.run_id)
+    journal.append(
+        EventType.NODE_CREATED,
+        node_id="node",
+        payload={"status": "failed", "objective": "schema robustness"},
+    )
+    journal.append(
+        EventType.RECEIPT_WRITTEN,
+        node_id="node",
+        payload={"receipt_handle": handle.to_str()},
+    )
+
+
+def test_hash_valid_non_object_receipt_renders_unavailable(tmp_path):
+    rd = new_run(str(tmp_path))
+    _journal_receipt(rd, b"[]")
+
+    report = synthesize(rd, rd.events_path)
+
+    assert "Receipt unavailable" in report
+
+
+def test_receipts_with_non_collection_optional_fields_do_not_crash(tmp_path):
+    for malformed_field in ("artifact_hashes", "residual"):
+        rd = new_run(str(tmp_path / malformed_field))
+        receipt = {
+            "node_id": "node",
+            "validator_id": "hard_cli",
+            "validator_version": "1",
+            "strength": "hard",
+            "ran": True,
+            "passed": False,
+            "exit_codes": [1],
+            "artifact_hashes": {},
+            "residual": [],
+        }
+        receipt[malformed_field] = None
+        _journal_receipt(rd, json.dumps(receipt).encode("utf-8"))
+
+        report = synthesize(rd, rd.events_path)
+
+        assert "### node" in report
+        assert "- none recorded" in report
+
+
+def test_non_object_receipt_reference_renders_unavailable(tmp_path):
+    rd = new_run(str(tmp_path))
+    event = {
+        "event_id": "event-1",
+        "run_id": rd.run_id,
+        "type": EventType.RECEIPT_WRITTEN.value,
+        "node_id": "node",
+        "payload": ["not-an-object"],
+    }
+    with open(rd.events_path, "wb") as f:
+        f.write(json.dumps(event).encode("utf-8") + b"\n")
+
+    report = synthesize(rd, rd.events_path)
+
+    assert "Receipt unavailable" in report
+
+
+def test_objective_ignores_non_object_journal_events_and_payloads(tmp_path):
+    rd = new_run(str(tmp_path))
+    with open(rd.events_path, "wb") as f:
+        f.write(b"[]\n")
+        f.write(json.dumps({
+            "event_id": "event-1",
+            "run_id": rd.run_id,
+            "type": EventType.NODE_CREATED.value,
+            "node_id": "node",
+            "payload": [],
+        }).encode("utf-8") + b"\n")
+
+    assert (
+        _objective_from_journal(rd.events_path)
+        == "make brokencli reproducibly runnable"
+    )
+
+
+def test_path_scrubber_fully_replaces_supported_absolute_path_forms():
+    cases = (
+        "file:///tmp/My Project/secret.txt",
+        "file:///tmp/My%20Project/secret.txt",
+        "C:/Users/Dan/My Project/build.log",
+        r"C:\Users\Dan\x.log",
+        r"\\host\share\y",
+    )
+
+    for path in cases:
+        assert _scrub(path) == "<path>"

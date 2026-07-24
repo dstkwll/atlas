@@ -34,10 +34,10 @@ from personal_os.engine.contract.run_dir import ArtifactHandle, RunDir
 
 # Scrub patterns: timestamps plus common absolute path forms in free text.
 _ISO_TS = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[^\s\"]*")
-_FILE_URI = re.compile(r"(?i)\bfile://[^\s,;\"'`\)\]\}]+")
+_FILE_URI = re.compile(r"(?i)\bfile://[^\r\n,;\"'`\)\]\}]+")
 _UNC_PATH = re.compile(r"(?<!\\)\\\\[^\r\n,;\"'`\)\]\}]+")
 _WINDOWS_DRIVE_PATH = re.compile(
-    r"(?i)(?<![\w])(?:[a-z]:\\)[^\r\n,;\"'`\)\]\}]+"
+    r"(?i)(?<![\w])[a-z]:[\\/][^\r\n,;\"'`\)\]\}]+"
 )
 _POSIX_PATH = re.compile(r"(?<![\w/])/(?!/)[^\r\n,;\"'`\)\]\}]+")
 
@@ -127,7 +127,12 @@ def _objective_from_journal(journal_path: str) -> str:
                     ev = json.loads(raw.decode("utf-8"))
                 except (ValueError, UnicodeDecodeError):
                     continue
-                obj = (ev.get("payload") or {}).get("objective")
+                if not isinstance(ev, dict):
+                    continue
+                payload = ev.get("payload")
+                if not isinstance(payload, dict):
+                    continue
+                obj = payload.get("objective")
                 if obj:
                     return obj
     return "make brokencli reproducibly runnable"
@@ -155,14 +160,22 @@ def _load_verified_receipt(run_dir: RunDir, receipt_handle: str) -> Optional[dic
     if hashlib.sha256(blob).hexdigest() != handle.id:
         return None
     try:
-        return json.loads(blob.decode("utf-8"))
+        parsed = json.loads(blob.decode("utf-8"))
     except (ValueError, UnicodeDecodeError):
         return None
+    if not isinstance(parsed, dict):
+        return None
+    return parsed
 
 
 def _render_node_receipt(run_dir: RunDir, node_id: str, receipt_ref: dict) -> str:
     """Render one node's receipt block from the VERIFIED receipt (not journal)."""
-    receipt = _load_verified_receipt(run_dir, receipt_ref.get("receipt_handle", ""))
+    if isinstance(receipt_ref, dict):
+        receipt = _load_verified_receipt(
+            run_dir, receipt_ref.get("receipt_handle", "")
+        )
+    else:
+        receipt = None
     if receipt is None:
         # The journal's claimed passed/validator_id are UNTRUSTED — do not print
         # them as attestation. Degrade explicitly (sol-6/sol-7).
@@ -190,6 +203,8 @@ def _render_node_receipt(run_dir: RunDir, node_id: str, receipt_ref: dict) -> st
     # Referenced artifacts: deterministic presence status only (never raw
     # digests — captured stdout embeds abs paths so digests vary run-to-run).
     ref = receipt.get("artifact_hashes", {})
+    if not isinstance(ref, dict):
+        ref = {}
     all_present = True
     for handle_str in ref:
         try:
@@ -215,10 +230,17 @@ def _residuals(run_dir: RunDir, proj) -> List[str]:
     out = set()
     for node_id in proj.receipts:
         for receipt_ref in proj.receipts[node_id]:
-            receipt = _load_verified_receipt(run_dir, receipt_ref.get("receipt_handle", ""))
+            if not isinstance(receipt_ref, dict):
+                continue
+            receipt = _load_verified_receipt(
+                run_dir, receipt_ref.get("receipt_handle", "")
+            )
             if receipt is None:
                 continue
-            for r in receipt.get("residual", []):
+            residual = receipt.get("residual", [])
+            if not isinstance(residual, list):
+                residual = []
+            for r in residual:
                 if isinstance(r, dict):
                     out.add(_scrub(json.dumps(r, sort_keys=True)))
                 else:

@@ -18,6 +18,7 @@ hygiene (locked decision).
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import stat
 
@@ -86,14 +87,14 @@ class Workspace:
                         target = os.readlink(abs_p)
                     except OSError:
                         target = ""
-                    entries.append(f"{rel}:symlink:{target}")
+                    entries.append((rel, "symlink", target))
             for name in sorted(filenames):
                 abs_p = os.path.join(dirpath, name)
                 rel = os.path.relpath(abs_p, self.root).replace(os.sep, "/")
                 try:
                     before = os.lstat(abs_p)
                 except OSError:
-                    entries.append(f"{rel}:<unreadable>")
+                    entries.append((rel, "unreadable", ""))
                     continue
 
                 # Never open a known FIFO/device: even a read-only open can
@@ -101,7 +102,7 @@ class Workspace:
                 # to O_NOFOLLOW so classification and access are enforced by
                 # the kernel at the same pathname lookup.
                 if not (stat.S_ISREG(before.st_mode) or stat.S_ISLNK(before.st_mode)):
-                    entries.append(f"{rel}:<type:{stat.S_IFMT(before.st_mode):o}>")
+                    entries.append((rel, "type", f"{stat.S_IFMT(before.st_mode):o}"))
                     continue
 
                 fd = None
@@ -110,7 +111,7 @@ class Workspace:
                     fd = os.open(abs_p, flags)
                     opened = os.fstat(fd)
                     if not stat.S_ISREG(opened.st_mode):
-                        entries.append(f"{rel}:<type:{stat.S_IFMT(opened.st_mode):o}>")
+                        entries.append((rel, "type", f"{stat.S_IFMT(opened.st_mode):o}"))
                         continue
                     digest = hashlib.sha256()
                     while True:
@@ -118,25 +119,29 @@ class Workspace:
                         if not chunk:
                             break
                         digest.update(chunk)
-                    entries.append(f"{rel}:{digest.hexdigest()}")
+                    entries.append((rel, "file", digest.hexdigest()))
                 except OSError:
                     # O_NOFOLLOW rejects a symlink atomically. Inspect only to
                     # choose a stable representation; never retry a path open.
                     try:
                         current = os.lstat(abs_p)
                         if stat.S_ISLNK(current.st_mode):
-                            entries.append(f"{rel}:symlink:{os.readlink(abs_p)}")
+                            entries.append((rel, "symlink", os.readlink(abs_p)))
                         else:
                             entries.append(
-                                f"{rel}:<type:{stat.S_IFMT(current.st_mode):o}>"
+                                (rel, "type", f"{stat.S_IFMT(current.st_mode):o}")
                             )
                     except OSError:
-                        entries.append(f"{rel}:<unreadable>")
+                        entries.append((rel, "unreadable", ""))
                 finally:
                     if fd is not None:
                         os.close(fd)
-        for e in sorted(entries):
-            h.update(e.encode("utf-8"))
+        records = [
+            json.dumps(entry, ensure_ascii=True, separators=(",", ":"), sort_keys=False)
+            for entry in entries
+        ]
+        for record in sorted(records):
+            h.update(record.encode("utf-8"))
             h.update(b"\n")
         return h.hexdigest()
 

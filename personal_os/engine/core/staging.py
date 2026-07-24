@@ -22,6 +22,7 @@ import json
 import os
 import shutil
 import stat
+import uuid
 
 from personal_os.engine.contract.run_dir import ArtifactHandle, RunDir
 from personal_os.engine.contract.workspace import Workspace
@@ -76,6 +77,7 @@ def apply_patch(run_dir: RunDir, patch_handle: ArtifactHandle) -> str:
     root_fd = None
     parent_fd = None
     fd = None
+    tmpname = None
     data = content.encode("utf-8")
     try:
         root_fd = os.open(run_dir.staging_dir, directory_flags)
@@ -93,14 +95,12 @@ def apply_patch(run_dir: RunDir, patch_handle: ArtifactHandle) -> str:
                 os.close(parent_fd)
             parent_fd = child_fd
 
-        flags = (
-            os.O_WRONLY
-            | os.O_CREAT
-            | os.O_TRUNC
-            | os.O_NOFOLLOW
-            | getattr(os, "O_NONBLOCK", 0)
-        )
-        fd = os.open(leafname, flags, 0o644, dir_fd=parent_fd)
+        # Write a fresh inode and atomically install it. Opening the existing
+        # leaf with O_TRUNC would mutate every hard link to that inode,
+        # including links outside the containment wall.
+        tmpname = f".patch-{uuid.uuid4().hex}"
+        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW
+        fd = os.open(tmpname, flags, 0o644, dir_fd=parent_fd)
         if not stat.S_ISREG(os.fstat(fd).st_mode):
             raise ValueError(f"patch target is not a regular file: {target!r}")
         view = memoryview(data)
@@ -111,6 +111,24 @@ def apply_patch(run_dir: RunDir, patch_handle: ArtifactHandle) -> str:
                 raise OSError("patch write made no progress")
             total += written
         os.fsync(fd)
+        os.close(fd)
+        fd = None
+
+        try:
+            existing = os.lstat(leafname, dir_fd=parent_fd)
+        except FileNotFoundError:
+            existing = None
+        if existing is not None and stat.S_ISLNK(existing.st_mode):
+            raise ValueError(f"patch target is a symlink: {target!r}")
+
+        os.replace(
+            tmpname,
+            leafname,
+            src_dir_fd=parent_fd,
+            dst_dir_fd=parent_fd,
+        )
+        tmpname = None
+        os.fsync(parent_fd)
     except ValueError:
         raise
     except OSError as exc:
@@ -120,6 +138,11 @@ def apply_patch(run_dir: RunDir, patch_handle: ArtifactHandle) -> str:
     finally:
         if fd is not None:
             os.close(fd)
+        if tmpname is not None and parent_fd is not None:
+            try:
+                os.unlink(tmpname, dir_fd=parent_fd)
+            except FileNotFoundError:
+                pass
         if parent_fd is not None and parent_fd != root_fd:
             os.close(parent_fd)
         if root_fd is not None:
