@@ -78,6 +78,39 @@ class _RaisingWorker:
         raise RuntimeError("worker process exited")
 
 
+class _MalformedArtifactWorker:
+    """status='ok' with a RESOLVABLE but non-JSON patch artifact.
+
+    Conformance passes (a patch handle is present and resolves in-run), but the
+    payload is not a valid ``{target, content}`` JSON object, so ``apply_patch``
+    raises. This must terminalize as BLOCKED, never strand DISCHARGING.
+    """
+
+    def __init__(self, run_dir):
+        self._rd = run_dir
+
+    def execute(self, request):
+        h = self._rd.put_artifact(b"this is not json {")
+        return WorkResult(status="ok", artifact_handles=[h],
+                          evidence_proposals=[{"claim_id": "bad"}], usage={}, failure=None)
+
+
+def test_malformed_patch_payload_blocks_not_strands(tmp_path):
+    """A resolvable-but-malformed patch cannot leave the node in DISCHARGING."""
+    rd = new_run(str(tmp_path))
+    stage(fixture_root(), rd)
+    journal = Journal(rd.events_path, run_id=rd.run_id)
+
+    result = discharge(_node(), _MalformedArtifactWorker(rd), HardCliValidator(), rd, journal)
+
+    assert result.status is NodeStatus.BLOCKED
+    assert result.patched_ok is False
+    projection = replay(rd.events_path)
+    assert projection.node_status["leaf-1"] == NodeStatus.BLOCKED.value
+    # Core still minted a receipt (a terminal, durable outcome).
+    assert projection.receipts["leaf-1"]
+
+
 def test_discharge_hard_leaf_end_to_end(tmp_path):
     rd = new_run(str(tmp_path))
     stage(fixture_root(), rd)

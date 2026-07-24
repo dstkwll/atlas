@@ -102,12 +102,21 @@ def discharge(
             assert_workresult_contract(result, run_dir, require_patch_handle=True)
 
             # 3. Apply the proposed patch onto the staged tree (wall contains it).
+            #    A claimed-success worker can still hand Core a resolvable but
+            #    malformed patch payload (non-JSON bytes, missing target/content)
+            #    or a containment-violating target. That is a normal negative
+            #    outcome, not a reason to strand the durable lifecycle in
+            #    DISCHARGING: swallow the apply failure, leave patched_ok=False,
+            #    and let Core mint the negative receipt -> BLOCKED below.
             patch_handle = result.artifact_handles[0]
-            dest = apply_patch(run_dir, patch_handle)
-
-            # Core verifies the change actually landed (never trust the worker's
-            # self-report): re-read the staged file and compare it to the patch.
-            patched_ok = _verify_patch_landed(run_dir, patch_handle, dest)
+            try:
+                dest = apply_patch(run_dir, patch_handle)
+                # Core verifies the change actually landed (never trust the
+                # worker's self-report): re-read the staged file and compare it
+                # to the proposed patch content.
+                patched_ok = _verify_patch_landed(run_dir, patch_handle, dest)
+            except (ValueError, OSError):
+                patched_ok = False
 
     # 4. Core-minted validation.
     receipt = validator.validate(run_dir, node=node, config={})
