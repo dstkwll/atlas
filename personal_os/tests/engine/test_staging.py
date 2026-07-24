@@ -58,6 +58,21 @@ def test_stage_rejects_source_symlinks_without_dereferencing(tmp_path, target_ki
     assert not (os.path.lexists(staged_link) and not os.path.islink(staged_link))
 
 
+def test_stage_rejects_root_source_tree_symlink_without_materializing_bytes(tmp_path):
+    """The source_tree path itself must not be dereferenced when it is a link."""
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "secret.bin").write_bytes(b"outside-secret")
+    source_link = tmp_path / "source-link"
+    os.symlink(str(outside), str(source_link))
+    rd = new_run(str(tmp_path / "runs"))
+
+    with pytest.raises(ValueError, match="source_tree must not be a symlink"):
+        stage(str(source_link), rd)
+
+    assert not os.path.exists(os.path.join(rd.staging_dir, "secret.bin"))
+
+
 def test_apply_patch_edits_staged_tree(tmp_path):
     rd = new_run(str(tmp_path))
     staged = stage(fixture_root(), rd)

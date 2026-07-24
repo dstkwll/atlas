@@ -14,6 +14,7 @@ equals the Phase-1 leaf's (proven by Task 2.2 parity).
 
 from __future__ import annotations
 
+import json
 import os
 from dataclasses import dataclass
 from typing import Any, Dict, List
@@ -84,8 +85,41 @@ def refine(node, worker, run_dir, journal, attempt: int = 1) -> "RefineResult":
         objective=node.objective,
         contract=dict(node.done_contract),
     )
-    result = worker.execute(request)
-    assert_workresult_contract(result, run_dir)
+    try:
+        result = worker.execute(request)
+    except Exception:
+        # A detached refiner may fail without returning a WorkResult. Treat that
+        # as a normal negative outcome so the durable lifecycle is not stranded
+        # in REFINING.
+        result = None
+
+    if result is not None:
+        assert_workresult_contract(result, run_dir)
+
+    if result is None or result.status != "ok":
+        # Only a successful refiner result may reach proposal validation and
+        # child compilation. Core mints and persists the negative receipt before
+        # terminalizing the node, exactly as at the discharge worker seam.
+        receipt = AdmissibilityValidator().validate(
+            run_dir, node=node, config={"proposal": {}})
+        receipt_bytes = json.dumps(receipt.to_dict(), sort_keys=True).encode("utf-8")
+        receipt_handle = run_dir.put_artifact(receipt_bytes)
+        journal.append(
+            EventType.RECEIPT_WRITTEN,
+            node_id=node.id,
+            payload={
+                "receipt_handle": receipt_handle.to_str(),
+                "passed": receipt.passed,
+                "validator_id": receipt.validator_id,
+            },
+        )
+        journal.append(
+            EventType.NODE_STATUS,
+            node_id=node.id,
+            payload={"status": NodeStatus.BLOCKED.value,
+                     "rationale": "refiner_worker_failed"},
+        )
+        return RefineResult(admissible=False, children=[], receipt=receipt)
 
     # The refiner's proposal rides in the (untrusted) evidence_proposals; Core
     # extracts it as DATA and validates it before acting.

@@ -36,6 +36,9 @@ def stage(source_tree: str, run_dir: RunDir) -> str:
     symlinks are copied without dereferencing and then rejected: v0 fixtures
     must contain only plain files and directories.
     """
+    if stat.S_ISLNK(os.lstat(source_tree).st_mode):
+        raise ValueError(f"source_tree must not be a symlink: {source_tree!r}")
+
     staged = run_dir.staging_dir
     if os.path.isdir(staged) and os.listdir(staged):
         shutil.rmtree(staged)

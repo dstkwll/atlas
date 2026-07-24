@@ -105,6 +105,14 @@ class Scheduler:
         result = refine(top, self._refiner, self._rd, self._journal, attempt=attempt)
 
         if not result.admissible:
+            # Refine may have already terminalized a worker failure (or another
+            # malformed negative path) as BLOCKED. Preserve that Core-owned
+            # terminal status instead of reclassifying it from the depth budget.
+            durable_status = replay(self._rd.events_path).node_status.get(top.id)
+            if durable_status == NodeStatus.BLOCKED.value:
+                self._statuses[top.id] = NodeStatus.BLOCKED
+                return NodeStatus.BLOCKED
+
             # No admissible decomposition -> nothing to discharge. If the depth
             # budget is exhausted (can't refine deeper), it's a hard FAILED;
             # otherwise BLOCKED (no stronger refinement appeared).

@@ -120,6 +120,61 @@ def test_failed_worker_result_reaches_blocked_without_crashing(tmp_path):
     assert replay(rd.events_path).node_status[exec_ids[0]] == NodeStatus.BLOCKED.value
 
 
+def test_raising_refiner_reaches_blocked_with_core_receipt(tmp_path):
+    """A raised refiner failure is terminalized instead of escaping REFINING."""
+    class _RaisingRefiner:
+        def execute(self, request):
+            raise RuntimeError("refiner unavailable")
+
+    rd = new_run(str(tmp_path))
+    stage(fixture_root(), rd)
+    scheduler = Scheduler(
+        run_dir=rd, journal=Journal(rd.events_path, run_id=rd.run_id),
+        refiner=_RaisingRefiner(), worker=FakeWorker(rd),
+        hard_validator=HardCliValidator(),
+    )
+
+    outcome = scheduler.run(
+        _top(budget=Budget(max_depth=1, max_children=4, max_attempts=2))
+    )
+
+    projection = replay(rd.events_path)
+    assert outcome.top_status is NodeStatus.BLOCKED
+    assert projection.node_status["top"] == NodeStatus.BLOCKED.value
+    assert projection.receipts["top"]
+
+
+def test_failed_refiner_result_ignores_partial_admissible_proposal(tmp_path):
+    """Only an ok refiner result may reach selection and child compilation."""
+    from dataclasses import replace
+
+    class _FailedRefiner:
+        def __init__(self, delegate):
+            self.delegate = delegate
+
+        def execute(self, request):
+            successful = self.delegate.execute(request)
+            return replace(
+                successful,
+                status="failed",
+                failure={"message": "research incomplete"},
+            )
+
+    rd = new_run(str(tmp_path))
+    stage(fixture_root(), rd)
+    scheduler = Scheduler(
+        run_dir=rd, journal=Journal(rd.events_path, run_id=rd.run_id),
+        refiner=_FailedRefiner(FakeRefiner(rd)), worker=FakeWorker(rd),
+        hard_validator=HardCliValidator(),
+    )
+
+    outcome = scheduler.run(_top())
+
+    assert outcome.top_status is NodeStatus.BLOCKED
+    assert not any(node_id.endswith("-exec") for node_id in outcome.node_statuses)
+    assert replay(rd.events_path).receipts["top"]
+
+
 def test_budget_exhausted_branch_reaches_failed(tmp_path):
     # A top node that can only refine, with depth budget 0 -> the refiner's
     # children can't go deeper; an inadmissible refine leaves no exec child and
