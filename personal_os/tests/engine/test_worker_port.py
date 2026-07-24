@@ -27,8 +27,8 @@ def _req():
         attempt=1,
         objective="fix the CLI",
         contract={"kind": "cli_reproducible"},
-        input_handles=[ArtifactHandle("aaa")],
-        output_handles=[ArtifactHandle("bbb")],
+        input_handles=[ArtifactHandle("a" * 64)],
+        output_handles=[ArtifactHandle("b" * 64)],
         constraints={"deadline_s": 60, "no_external_actions": True},
     )
 
@@ -45,7 +45,7 @@ def test_workrequest_kind_is_harness_neutral_verb():
 def test_workresult_has_no_receipt_or_pass_bit():
     res = WorkResult(
         status="ok",
-        artifact_handles=[ArtifactHandle("ccc")],
+        artifact_handles=[ArtifactHandle("c" * 64)],
         evidence_proposals=[],
         usage={},
         failure=None,
@@ -59,7 +59,7 @@ def test_workresult_has_no_receipt_or_pass_bit():
 def test_workresult_round_trip():
     res = WorkResult(
         status="ok",
-        artifact_handles=[ArtifactHandle("ccc")],
+        artifact_handles=[ArtifactHandle("c" * 64)],
         evidence_proposals=[{"claim_id": "c1"}],
         usage={"tokens": 10},
         failure=None,

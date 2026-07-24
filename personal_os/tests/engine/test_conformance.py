@@ -33,7 +33,7 @@ def test_fake_worker_output_passes_oracle(tmp_path):
 
 def test_unresolvable_handle_fails_oracle(tmp_path):
     rd = new_run(str(tmp_path))
-    bad = WorkResult(status="ok", artifact_handles=[ArtifactHandle("nonexistent")],
+    bad = WorkResult(status="ok", artifact_handles=[ArtifactHandle("f" * 64)],
                      evidence_proposals=[], usage={}, failure=None)
     with pytest.raises(AssertionError):
         assert_workresult_contract(bad, rd)

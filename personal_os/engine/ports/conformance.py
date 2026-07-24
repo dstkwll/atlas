@@ -46,11 +46,11 @@ def assert_workresult_contract(
     handles = d.get("artifact_handles", [])
     assert isinstance(handles, list), "artifact_handles must be a list"
     for h in handles:
-        handle = ArtifactHandle.from_str(h) if isinstance(h, str) else h
         try:
+            handle = ArtifactHandle.from_str(h) if isinstance(h, str) else h
             run_dir.resolve_handle(handle)
-        except ValueError as exc:  # pragma: no cover - message only
-            raise AssertionError(f"artifact handle does not resolve: {exc}")
+        except ValueError as exc:
+            raise AssertionError(f"artifact handle invalid or does not resolve: {exc}")
 
     # 4. Evidence proposals are well-formed (and carry no self-certification).
     for ev in d.get("evidence_proposals", []):

@@ -84,3 +84,41 @@ def test_handle_round_trips_opaque(tmp_path):
     assert h2.id == h.id
     # The handle is opaque: not an absolute path.
     assert not h.to_str().startswith("/")
+
+
+def test_from_str_rejects_non_hex_id():
+    # F1 (VERIFIED security hole): a handle id must be exactly 64 lowercase hex
+    # chars. An absolute path or traversal id would let os.path.join escape the
+    # artifacts root.
+    for bad in ("artifact:/tmp/outside.json", "artifact:../escape",
+                "artifact:..", "artifact:", "artifact:ABC", "artifact:xyz",
+                "artifact:" + "a" * 63, "artifact:" + "a" * 65,
+                "artifact:" + "g" * 64):
+        with pytest.raises(ValueError):
+            ArtifactHandle.from_str(bad)
+
+
+def test_from_str_accepts_valid_sha256():
+    good = "artifact:" + "a" * 64
+    assert ArtifactHandle.from_str(good).id == "a" * 64
+
+
+def test_put_artifact_yields_valid_hex_handle(tmp_path):
+    rd = new_run(str(tmp_path))
+    h = rd.put_artifact(b"x")
+    # Round-trips through the strict validator.
+    assert ArtifactHandle.from_str(h.to_str()).id == h.id
+
+
+def test_resolve_handle_rejects_escape_id(tmp_path):
+    # Even if an attacker constructs an ArtifactHandle with a poisoned id
+    # directly, resolve_handle must not escape the artifacts dir.
+    rd = new_run(str(tmp_path))
+    outside = tmp_path / "outside.json"
+    outside.write_text("SECRET")
+    poisoned = ArtifactHandle(id=str(outside))  # absolute path as id
+    with pytest.raises(ValueError):
+        rd.resolve_handle(poisoned)
+    poisoned2 = ArtifactHandle(id="../../etc/passwd")
+    with pytest.raises(ValueError):
+        rd.resolve_handle(poisoned2)

@@ -17,11 +17,14 @@ from __future__ import annotations
 
 import hashlib
 import os
+import re
 import uuid
 from dataclasses import dataclass
 
 _HANDLE_PREFIX = "artifact:"
 _SUBDIRS = ("staging", "venv", "artifacts")
+# A content-address id is exactly a sha256 hex digest: 64 lowercase hex chars.
+_SHA256_RE = re.compile(r"[0-9a-f]{64}")
 
 
 @dataclass(frozen=True)
@@ -37,7 +40,13 @@ class ArtifactHandle:
     def from_str(cls, s: str) -> "ArtifactHandle":
         if not s.startswith(_HANDLE_PREFIX):
             raise ValueError(f"not an artifact handle: {s!r}")
-        return cls(id=s[len(_HANDLE_PREFIX):])
+        raw = s[len(_HANDLE_PREFIX):]
+        # F1 (security): the id MUST be exactly a 64-char lowercase hex sha256.
+        # Anything else (absolute path, `..`, wrong length, uppercase) could let
+        # os.path.join escape the artifacts root — reject it at construction.
+        if not _SHA256_RE.fullmatch(raw):
+            raise ValueError(f"invalid artifact id (not a sha256 hex): {raw!r}")
+        return cls(id=raw)
 
 
 class RunDir:
@@ -102,8 +111,19 @@ class RunDir:
         return ArtifactHandle(id=sha)
 
     def resolve_handle(self, handle: ArtifactHandle) -> str:
-        """Resolve a handle to an absolute path — only if THIS run stores it."""
+        """Resolve a handle to an absolute path — only if THIS run stores it.
+
+        Fail-closed containment: the id must be a valid sha256 hex AND the
+        resolved real path must stay inside artifacts_dir (defends against a
+        directly-constructed poisoned handle that bypassed ``from_str``).
+        """
+        if not _SHA256_RE.fullmatch(handle.id):
+            raise ValueError(f"invalid artifact id: {handle.id!r}")
         dest = os.path.join(self.artifacts_dir, handle.id)
+        real = os.path.realpath(dest)
+        root_prefix = os.path.realpath(self.artifacts_dir) + os.sep
+        if not real.startswith(root_prefix):
+            raise ValueError(f"handle escapes artifacts root: {handle.id!r}")
         if not os.path.exists(dest):
             raise ValueError(
                 f"handle {handle.to_str()!r} not present in run {self.run_id}"
