@@ -1,20 +1,24 @@
-"""Task 4.1 — deterministic report synthesis (whitelist projection).
+"""Task 4.1 (+F8 hardening) — deterministic report synthesis.
 
 ``synthesize(run_dir, journal_path)`` assembles a markdown report from ONLY
 receipted evidence, rendered through an explicit field WHITELIST so the output
-is deterministic and byte-identical across runs (invariant 11):
+is deterministic and byte-identical across runs (invariant 11).
 
-- **excluded:** wall-clock ``ts``/``accessed_at``, absolute paths, ``run_id``
-  (all vary run-to-run). Artifact handles are rendered as their content-address
-  ``artifact:<sha>`` which is stable for identical bytes.
-- **included:** objective, the node lifecycle (sorted), each HARD receipt's
-  validator id/version + pass status + exit codes + referenced artifact hashes,
-  and residual risks.
-
-Determinism is enforced by construction: sorted keys, no timestamps, no abs
-paths. If a referenced artifact is missing/hash-mismatched, the report degrades
-EXPLICITLY with a ``MISSING`` note (Skeptic D4) — it never emits a stale
-clean-looking report.
+F8 hardening (from the sol adversarial critique):
+- **Attestation derives from the VERIFIED receipt body, never journal metadata**
+  (sol-6): a forged ``RECEIPT_WRITTEN`` event claiming ``passed:true`` cannot
+  drive the report — validator id/version/pass/exit_codes all come from the
+  hash-verified receipt loaded once through ``_load_verified_receipt``.
+- **A single verified-receipt loader** resolves handles ONLY through
+  ``RunDir.resolve_handle`` (no raw ``os.path.join`` on a handle string — closes
+  the F1 escape here too) and hash-checks the bytes before use.
+- **Residuals come only from verified receipts** (sol-7) and are scrubbed of
+  absolute paths / ISO timestamps (sol-12) so a diagnostic string can't leak a
+  path or break determinism.
+- **A missing/unreadable journal produces a global DEGRADED banner** (sol-7),
+  never a clean-looking empty report.
+- **Receipts render in a stable order** derived from the rendered block, not
+  journal append order (sol-3).
 """
 
 from __future__ import annotations
@@ -22,56 +26,58 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-from typing import List
+import re
+from typing import List, Optional, Tuple
 
 from personal_os.engine.contract.journal import replay
-from personal_os.engine.contract.run_dir import RunDir
+from personal_os.engine.contract.run_dir import ArtifactHandle, RunDir
+
+# Scrub patterns: ISO-8601 timestamps and absolute POSIX paths.
+_ISO_TS = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[^\s\"]*")
+_ABS_PATH = re.compile(r"(?<![\w/])/(?:[\w.\-]+/)*[\w.\-]+")
 
 
 def synthesize(run_dir: RunDir, journal_path: str) -> str:
     """Render a deterministic markdown report for a run."""
-    proj = replay(journal_path)
     lines: List[str] = []
-
     lines.append("# Goal Engine Report")
     lines.append("")
 
-    # Objective — pulled from the top node's NODE_CREATED payload if present;
-    # fall back to a stable constant. (Objective is content, not wall-clock.)
-    objective = _objective_from_journal(journal_path)
+    # A missing/unreadable journal is a GLOBAL degraded state — never a clean
+    # empty report (sol-7).
+    if not os.path.exists(journal_path):
+        lines.append("## Status")
+        lines.append("**DEGRADED: no journal found for this run.**")
+        lines.append("")
+        return "\n".join(lines)
+
+    proj = replay(journal_path)
+
     lines.append("## Objective")
-    lines.append(objective)
+    lines.append(_scrub(_objective_from_journal(journal_path)))
     lines.append("")
 
-    # Node lifecycle — sorted for determinism, no timestamps.
     lines.append("## Node lifecycle")
     for node_id in sorted(proj.node_status):
-        lines.append(f"- {node_id}: {proj.node_status[node_id]}")
+        lines.append(f"- {_scrub(node_id)}: {proj.node_status[node_id]}")
     lines.append("")
 
-    # Evidence + validator receipts — only receipted nodes, sorted.
     lines.append("## Evidence")
     lines.append("Referencing only receipted evidence (content-addressed handles).")
     lines.append("")
 
+    # Validator receipts — attestation derived from the VERIFIED receipt body,
+    # rendered into stable blocks, then sorted by content for byte-determinism.
     lines.append("## Validator receipt")
+    blocks: List[str] = []
     for node_id in sorted(proj.receipts):
         for receipt_ref in proj.receipts[node_id]:
-            handle = receipt_ref.get("receipt_handle", "")
-            passed = receipt_ref.get("passed")
-            validator = receipt_ref.get("validator_id", "")
-            body, ok = _render_receipt(run_dir, handle)
-            lines.append(f"### {node_id}")
-            lines.append(f"- validator: {validator}")
-            lines.append(f"- passed: {passed}")
-            if ok:
-                lines.extend(body)
-            else:
-                lines.append("- receipt artifact: **MISSING or hash-mismatch** "
-                             "(report degraded; not a stale success)")
-            lines.append("")
+            blocks.append(_render_node_receipt(run_dir, node_id, receipt_ref))
+    for block in sorted(blocks):
+        lines.append(block)
+    lines.append("")
 
-    # Residual risks — a stable, whitelisted list.
+    # Residual risks — only from VERIFIED receipts, scrubbed + sorted.
     lines.append("## Residual risks")
     residuals = _residuals(run_dir, proj)
     if residuals:
@@ -84,19 +90,23 @@ def synthesize(run_dir: RunDir, journal_path: str) -> str:
     return "\n".join(lines)
 
 
+def _scrub(text: str) -> str:
+    """Strip absolute paths / ISO timestamps from a rendered string (sol-12)."""
+    text = _ISO_TS.sub("<ts>", str(text))
+    text = _ABS_PATH.sub("<path>", text)
+    return text
+
+
 def _objective_from_journal(journal_path: str) -> str:
     """Extract the objective deterministically (content, not wall-clock)."""
-    # v0: the objective is a fixed property of the goal; read the first
-    # NODE_CREATED payload's objective if present, else the known goal.
     if os.path.exists(journal_path):
-        with open(journal_path) as f:
-            for line in f:
-                line = line.strip()
-                if not line:
+        with open(journal_path, "rb") as f:
+            for raw in f.read().split(b"\n"):
+                if not raw.strip():
                     continue
                 try:
-                    ev = json.loads(line)
-                except json.JSONDecodeError:
+                    ev = json.loads(raw.decode("utf-8"))
+                except (ValueError, UnicodeDecodeError):
                     continue
                 obj = (ev.get("payload") or {}).get("objective")
                 if obj:
@@ -104,71 +114,86 @@ def _objective_from_journal(journal_path: str) -> str:
     return "make brokencli reproducibly runnable"
 
 
-def _render_receipt(run_dir: RunDir, receipt_handle: str):
-    """Render a receipt's whitelisted fields; (lines, ok)."""
-    if not receipt_handle:
-        return [], False
-    sha = receipt_handle.split(":", 1)[1]
-    path = os.path.join(run_dir.artifacts_dir, sha)
-    if not os.path.exists(path):
-        return [], False
-    with open(path, "rb") as f:
-        blob = f.read()
-    if hashlib.sha256(blob).hexdigest() != sha:
-        return [], False
-    try:
-        receipt = json.loads(blob.decode("utf-8"))
-    except (ValueError, UnicodeDecodeError):
-        return [], False
+def _load_verified_receipt(run_dir: RunDir, receipt_handle: str) -> Optional[dict]:
+    """Load a receipt ONLY if it resolves in-run and its bytes hash-verify.
 
-    lines: List[str] = []
+    Resolves strictly via ``RunDir.resolve_handle`` (no raw path join — closes
+    the F1 escape) and content-address checks the bytes. Returns the parsed
+    receipt dict, or ``None`` on any failure (missing/tampered/malformed).
+    """
+    if not receipt_handle:
+        return None
+    try:
+        handle = ArtifactHandle.from_str(receipt_handle)
+        path = run_dir.resolve_handle(handle)
+    except ValueError:
+        return None
+    try:
+        with open(path, "rb") as f:
+            blob = f.read()
+    except OSError:
+        return None
+    if hashlib.sha256(blob).hexdigest() != handle.id:
+        return None
+    try:
+        return json.loads(blob.decode("utf-8"))
+    except (ValueError, UnicodeDecodeError):
+        return None
+
+
+def _render_node_receipt(run_dir: RunDir, node_id: str, receipt_ref: dict) -> str:
+    """Render one node's receipt block from the VERIFIED receipt (not journal)."""
+    receipt = _load_verified_receipt(run_dir, receipt_ref.get("receipt_handle", ""))
+    lines: List[str] = [f"### {_scrub(node_id)}"]
+    if receipt is None:
+        # The journal's claimed passed/validator_id are UNTRUSTED — do not print
+        # them as attestation. Degrade explicitly (sol-6/sol-7).
+        lines.append("- receipt: **MISSING or hash-mismatch** "
+                     "(report degraded; journal metadata not trusted)")
+        return "\n".join(lines)
+
+    # All attestation fields come from the verified receipt body.
+    lines.append(f"- validator: {receipt.get('validator_id', '')}")
     lines.append(f"- validator_version: {receipt.get('validator_version', '')}")
     lines.append(f"- strength: {receipt.get('strength', '')}")
     lines.append(f"- ran: {receipt.get('ran')}")
+    lines.append(f"- passed: {receipt.get('passed')}")
     lines.append(f"- exit_codes: {receipt.get('exit_codes', [])}")
-    # Referenced artifacts: render a DETERMINISTIC presence status, never the
-    # raw content-address hashes — captured stdout embeds absolute venv paths,
-    # so its digest varies run-to-run (invariant 11). Verify each referenced
-    # artifact is present + unchanged and report only the resilience status.
+
+    # Referenced artifacts: deterministic presence status only (never raw
+    # digests — captured stdout embeds abs paths so digests vary run-to-run).
     ref = receipt.get("artifact_hashes", {})
     all_present = True
-    for ref_sha in ref.values():
-        ref_path = os.path.join(run_dir.artifacts_dir, ref_sha)
-        if not os.path.exists(ref_path):
+    for handle_str in ref:
+        try:
+            h = ArtifactHandle.from_str(handle_str)
+            p = run_dir.resolve_handle(h)
+            with open(p, "rb") as f:
+                if hashlib.sha256(f.read()).hexdigest() != h.id:
+                    all_present = False
+                    break
+        except (ValueError, OSError):
             all_present = False
             break
-        with open(ref_path, "rb") as f:
-            if hashlib.sha256(f.read()).hexdigest() != ref_sha:
-                all_present = False
-                break
     if all_present:
         lines.append("- referenced artifacts: all present and verified")
     else:
         lines.append("- referenced artifacts: **MISSING or hash-mismatch** "
                      "(report degraded; not a stale success)")
-    return lines, True
+    return "\n".join(lines)
 
 
 def _residuals(run_dir: RunDir, proj) -> List[str]:
-    """Collect residual statements from receipts (deterministic, sorted)."""
+    """Collect residual statements from VERIFIED receipts (scrubbed, sorted)."""
     out = set()
     for node_id in proj.receipts:
         for receipt_ref in proj.receipts[node_id]:
-            handle = receipt_ref.get("receipt_handle", "")
-            if not handle:
-                continue
-            sha = handle.split(":", 1)[1]
-            path = os.path.join(run_dir.artifacts_dir, sha)
-            if not os.path.exists(path):
-                continue
-            try:
-                with open(path) as f:
-                    receipt = json.load(f)
-            except (ValueError, OSError):
+            receipt = _load_verified_receipt(run_dir, receipt_ref.get("receipt_handle", ""))
+            if receipt is None:
                 continue
             for r in receipt.get("residual", []):
                 if isinstance(r, dict):
-                    out.add(json.dumps(r, sort_keys=True))
+                    out.add(_scrub(json.dumps(r, sort_keys=True)))
                 else:
-                    out.add(str(r))
+                    out.add(_scrub(str(r)))
     return sorted(out)

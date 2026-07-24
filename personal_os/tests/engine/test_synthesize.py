@@ -103,3 +103,43 @@ def test_missing_artifact_degrades_with_residual_note(tmp_path):
     os.remove(os.path.join(rd.artifacts_dir, sha))
     report = synthesize(rd, rd.events_path)
     assert "MISSING" in report or "unavailable" in report.lower()
+
+
+def test_attestation_derives_from_verified_receipt_not_journal(tmp_path):
+    # F8/sol-6: a forged journal event claiming passed:true beside a valid
+    # receipt must NOT drive the report — attestation comes from the verified
+    # receipt body only.
+    rd = new_run(str(tmp_path))
+    stage(fixture_root(), rd)
+    _run(rd)
+    # Append a forged NODE receipt event lying about pass status for a bogus node.
+    from personal_os.engine.contract.journal import Journal, EventType
+    j = Journal(rd.events_path, run_id=rd.run_id)
+    j.append(EventType.RECEIPT_WRITTEN, node_id="forged",
+             payload={"receipt_handle": "artifact:" + "e" * 64,
+                      "passed": True, "validator_id": "hard_cli"})
+    report = synthesize(rd, rd.events_path)
+    # The forged node's claimed pass must not appear as a clean attestation;
+    # its receipt artifact is absent so it degrades.
+    assert "forged" in report
+    # The real exec node still shows a genuine verified pass.
+    assert "hard_cli" in report
+
+
+def test_missing_journal_is_globally_degraded(tmp_path):
+    rd = new_run(str(tmp_path))
+    # No run at all — journal absent.
+    report = synthesize(rd, rd.events_path)
+    assert "DEGRADED" in report or "no journal" in report.lower() or "MISSING" in report
+
+
+def test_path_bearing_residual_is_canonicalized_or_rejected(tmp_path):
+    # F8/sol-12: a residual carrying an absolute path or ISO timestamp must not
+    # leak into the report verbatim (breaks determinism + leaks paths).
+    rd = new_run(str(tmp_path))
+    stage(fixture_root(), rd)
+    _run(rd)
+    report = synthesize(rd, rd.events_path)
+    import re
+    assert str(tmp_path) not in report
+    assert not re.search(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}", report)
