@@ -114,6 +114,27 @@ def test_resume_deleted_referenced_artifact_blocks(tmp_path):
     assert outcome.node_statuses[exec_id] is NodeStatus.BLOCKED
 
 
+def test_resume_blocks_when_certified_staged_output_changed(tmp_path):
+    # F12/sol-5: a changed STAGED output (the file the validator certified) must
+    # trip resume even if the receipt blob + referenced stdout artifacts are
+    # intact. The receipt binds the staged-tree hash (workspace_id); resume must
+    # re-hash the staged tree and BLOCK on mismatch.
+    rd = new_run(str(tmp_path))
+    stage(fixture_root(), rd)
+    _run_once(rd)
+    from personal_os.engine.contract.journal import replay as _replay
+    proj = _replay(rd.events_path)
+    exec_id = [n for n in proj.node_status
+               if proj.node_status[n] == NodeStatus.HARD_DISCHARGED.value][0]
+    # Tamper the certified staged tree AFTER discharge (leave receipt intact).
+    import os as _os
+    victim = _os.path.join(rd.staging_dir, "brokencli", "cli.py")
+    with open(victim, "a") as f:
+        f.write("\n# TAMPERED AFTER CERTIFICATION\n")
+    outcome = resume(rd, HardCliValidator())
+    assert outcome.node_statuses[exec_id] is NodeStatus.BLOCKED
+
+
 def test_resume_blocks_interrupted_discharging(tmp_path):
     # F11/sol-2: a crash mid-DISCHARGING leaves the node in a transitional
     # state. Resume must fail it closed to BLOCKED, never leave it DISCHARGING

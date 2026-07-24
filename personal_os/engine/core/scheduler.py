@@ -288,4 +288,19 @@ def _reverify_receipt(run_dir: RunDir, proj, node_id: str) -> bool:
         with open(ref_path, "rb") as f:
             if hashlib.sha256(f.read()).hexdigest() != ref_sha:
                 return False
+
+    # F12 (sol-5): re-verify the CERTIFIED STAGED OUTPUT, not just the receipt +
+    # stdout blobs. The receipt binds ``workspace_id`` = the hash of the staged
+    # tree at certification time. Re-hash the staged tree now; a changed/deleted
+    # staged target yields a different hash even if the receipt + stdout blobs
+    # are intact, so a stale HARD_DISCHARGED can't survive a tampered output.
+    bound_ws = receipt.get("workspace_id", "")
+    if bound_ws:
+        from personal_os.engine.contract.workspace import Workspace
+        try:
+            current_ws = Workspace(run_dir.staging_dir).id
+        except Exception:  # pragma: no cover - fail closed
+            return False
+        if current_ws != bound_ws:
+            return False
     return True
