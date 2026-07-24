@@ -84,3 +84,18 @@ def test_apply_patch_refuses_to_write_through_symlink(tmp_path):
         apply_patch(rd, h)
     # The outside target must NOT have been created/written.
     assert not outside.exists()
+
+
+def test_apply_patch_rejects_symlink_in_intermediate_component(tmp_path):
+    """Every directory component is opened descriptor-relative, without follow."""
+    rd = new_run(str(tmp_path))
+    staged = stage(fixture_root(), rd)
+    real_dir = os.path.join(staged, "real-dir")
+    os.mkdir(real_dir)
+    os.symlink(real_dir, os.path.join(staged, "linked-dir"))
+    h = _patch_handle(rd, "linked-dir/escaped.py", "PWNED = 1\n")
+
+    with pytest.raises(ValueError):
+        apply_patch(rd, h)
+
+    assert not os.path.exists(os.path.join(real_dir, "escaped.py"))

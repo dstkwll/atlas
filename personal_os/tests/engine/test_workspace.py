@@ -93,3 +93,30 @@ def test_workspace_id_does_not_follow_outward_file_symlink(tmp_path):
     id_after = Workspace(str(root)).id
     # The id must be stable against external file mutation (symlink not followed).
     assert id_before == id_after
+
+
+def test_workspace_id_opens_entries_with_nofollow(tmp_path, monkeypatch):
+    """Hashing must let the kernel reject a symlink-at-open race."""
+    root = tmp_path / "ws"
+    root.mkdir()
+    external = tmp_path / "external.txt"
+    external.write_text("outside-secret")
+    link = root / "raced.txt"
+    os.symlink(str(external), str(link))
+
+    real_open = os.open
+    observed_flags = []
+
+    def recording_open(path, flags, *args, **kwargs):
+        if os.fspath(path) == str(link):
+            observed_flags.append(flags)
+        return real_open(path, flags, *args, **kwargs)
+
+    monkeypatch.setattr(os, "open", recording_open)
+    first = Workspace(str(root)).id
+    external.write_text("changed-outside-secret")
+    second = Workspace(str(root)).id
+
+    assert observed_flags
+    assert all(flags & os.O_NOFOLLOW for flags in observed_flags)
+    assert first == second

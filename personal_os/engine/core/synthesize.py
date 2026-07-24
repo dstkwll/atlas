@@ -32,9 +32,14 @@ from typing import List, Optional, Tuple
 from personal_os.engine.contract.journal import replay
 from personal_os.engine.contract.run_dir import ArtifactHandle, RunDir
 
-# Scrub patterns: ISO-8601 timestamps and absolute POSIX paths.
+# Scrub patterns: timestamps plus common absolute path forms in free text.
 _ISO_TS = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[^\s\"]*")
-_ABS_PATH = re.compile(r"(?<![\w/])/(?:[\w.\-]+/)*[\w.\-]+")
+_FILE_URI = re.compile(r"(?i)\bfile://[^\s,;\"'`\)\]\}]+")
+_UNC_PATH = re.compile(r"(?<!\\)\\\\[^\r\n,;\"'`\)\]\}]+")
+_WINDOWS_DRIVE_PATH = re.compile(
+    r"(?i)(?<![\w])(?:[a-z]:\\)[^\r\n,;\"'`\)\]\}]+"
+)
+_POSIX_PATH = re.compile(r"(?<![\w/])/(?!/)[^\r\n,;\"'`\)\]\}]+")
 
 
 def synthesize(run_dir: RunDir, journal_path: str) -> str:
@@ -51,10 +56,23 @@ def synthesize(run_dir: RunDir, journal_path: str) -> str:
         lines.append("")
         return "\n".join(lines)
 
-    proj = replay(journal_path)
+    try:
+        proj = replay(journal_path)
+        objective = _objective_from_journal(journal_path)
+    except OSError:
+        lines.append("## Status")
+        lines.append("**DEGRADED: journal is unreadable for this run.**")
+        lines.append("")
+        return "\n".join(lines)
+
+    if proj.event_count == 0:
+        lines.append("## Status")
+        lines.append("**DEGRADED: journal is empty or has no replayable events.**")
+        lines.append("")
+        return "\n".join(lines)
 
     lines.append("## Objective")
-    lines.append(_scrub(_objective_from_journal(journal_path)))
+    lines.append(_scrub(objective))
     lines.append("")
 
     lines.append("## Node lifecycle")
@@ -93,7 +111,8 @@ def synthesize(run_dir: RunDir, journal_path: str) -> str:
 def _scrub(text: str) -> str:
     """Strip absolute paths / ISO timestamps from a rendered string (sol-12)."""
     text = _ISO_TS.sub("<ts>", str(text))
-    text = _ABS_PATH.sub("<path>", text)
+    for pattern in (_FILE_URI, _UNC_PATH, _WINDOWS_DRIVE_PATH, _POSIX_PATH):
+        text = pattern.sub("<path>", text)
     return text
 
 
@@ -144,15 +163,23 @@ def _load_verified_receipt(run_dir: RunDir, receipt_handle: str) -> Optional[dic
 def _render_node_receipt(run_dir: RunDir, node_id: str, receipt_ref: dict) -> str:
     """Render one node's receipt block from the VERIFIED receipt (not journal)."""
     receipt = _load_verified_receipt(run_dir, receipt_ref.get("receipt_handle", ""))
-    lines: List[str] = [f"### {_scrub(node_id)}"]
     if receipt is None:
         # The journal's claimed passed/validator_id are UNTRUSTED — do not print
         # them as attestation. Degrade explicitly (sol-6/sol-7).
+        lines = ["### Receipt unavailable"]
+        lines.append(f"- untrusted journal node reference: `{_scrub(node_id)}`")
         lines.append("- receipt: **MISSING or hash-mismatch** "
                      "(report degraded; journal metadata not trusted)")
         return "\n".join(lines)
 
     # All attestation fields come from the verified receipt body.
+    receipt_node_id = str(receipt.get("node_id", ""))
+    lines = [f"### {_scrub(receipt_node_id)}"]
+    if node_id != receipt_node_id:
+        lines.append(
+            "- **MISMATCH**: verified receipt node id differs from untrusted "
+            f"journal reference `{_scrub(node_id)}` (report degraded)"
+        )
     lines.append(f"- validator: {receipt.get('validator_id', '')}")
     lines.append(f"- validator_version: {receipt.get('validator_version', '')}")
     lines.append(f"- strength: {receipt.get('strength', '')}")

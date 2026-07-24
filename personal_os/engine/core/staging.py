@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import stat
 
 from personal_os.engine.contract.run_dir import ArtifactHandle, RunDir
 from personal_os.engine.contract.workspace import Workspace
@@ -60,35 +61,47 @@ def apply_patch(run_dir: RunDir, patch_handle: ArtifactHandle) -> str:
 
     ws = Workspace(run_dir.staging_dir)
     # resolve() fails closed on absolute / .. / symlink escape (invariant 12).
-    dest = ws.resolve(target)
+    ws.resolve(target)
+    relative = os.path.normpath(target)
+    if relative in ("", os.curdir):
+        raise ValueError(f"patch target must name a file: {target!r}")
+    components = relative.split(os.sep)
+    leafname = components.pop()
+    dest = os.path.join(run_dir.staging_dir, relative)
 
-    # F2 (TOCTOU): resolve() validated a real path, but a concurrent worker
-    # descendant could swap a component for an outward symlink before the write.
-    # Defend by (a) re-confirming no path component is a symlink right now, and
-    # (b) opening the LEAF with O_NOFOLLOW|O_CREAT|O_EXCL-or-truncate so the
-    # kernel itself refuses to follow a symlink at the target. The write can
-    # never land outside staging even under a racing symlink swap.
-    staging_root = os.path.realpath(run_dir.staging_dir)
-    parent = os.path.dirname(dest)
-    os.makedirs(parent, exist_ok=True)
+    if os.open not in os.supports_dir_fd or os.mkdir not in os.supports_dir_fd:
+        raise RuntimeError("descriptor-relative path operations are unavailable")
 
-    # Re-verify the parent (post-mkdir) still resolves inside staging.
-    real_parent = os.path.realpath(parent)
-    if real_parent != staging_root and not real_parent.startswith(staging_root + os.sep):
-        raise ValueError(f"patch parent escapes staging root: {target!r}")
-
-    flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC | getattr(os, "O_NOFOLLOW", 0)
+    directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    root_fd = None
+    parent_fd = None
+    fd = None
     data = content.encode("utf-8")
     try:
-        fd = os.open(dest, flags, 0o644)
-    except OSError as exc:
-        # O_NOFOLLOW raises ELOOP if the leaf is a symlink — a TOCTOU attempt.
-        raise ValueError(f"refusing to write through a symlink target: {target!r} ({exc})")
-    try:
-        # Final guard: the opened fd must be a regular file inside staging.
-        st = os.fstat(fd)
-        import stat as _stat
-        if not _stat.S_ISREG(st.st_mode):
+        root_fd = os.open(run_dir.staging_dir, directory_flags)
+        parent_fd = root_fd
+        for component in components:
+            try:
+                child_fd = os.open(component, directory_flags, dir_fd=parent_fd)
+            except FileNotFoundError:
+                try:
+                    os.mkdir(component, dir_fd=parent_fd)
+                except FileExistsError:
+                    pass
+                child_fd = os.open(component, directory_flags, dir_fd=parent_fd)
+            if parent_fd != root_fd:
+                os.close(parent_fd)
+            parent_fd = child_fd
+
+        flags = (
+            os.O_WRONLY
+            | os.O_CREAT
+            | os.O_TRUNC
+            | os.O_NOFOLLOW
+            | getattr(os, "O_NONBLOCK", 0)
+        )
+        fd = os.open(leafname, flags, 0o644, dir_fd=parent_fd)
+        if not stat.S_ISREG(os.fstat(fd).st_mode):
             raise ValueError(f"patch target is not a regular file: {target!r}")
         view = memoryview(data)
         total = 0
@@ -98,6 +111,17 @@ def apply_patch(run_dir: RunDir, patch_handle: ArtifactHandle) -> str:
                 raise OSError("patch write made no progress")
             total += written
         os.fsync(fd)
+    except ValueError:
+        raise
+    except OSError as exc:
+        raise ValueError(
+            f"refusing unsafe patch target component: {target!r} ({exc})"
+        ) from exc
     finally:
-        os.close(fd)
+        if fd is not None:
+            os.close(fd)
+        if parent_fd is not None and parent_fd != root_fd:
+            os.close(parent_fd)
+        if root_fd is not None:
+            os.close(root_fd)
     return dest

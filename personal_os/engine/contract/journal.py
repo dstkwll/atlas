@@ -56,6 +56,7 @@ class Journal:
         parent = os.path.dirname(os.path.abspath(path))
         if parent:
             os.makedirs(parent, exist_ok=True)
+        self._parent = parent
         # F5: fsync the parent directory once so the journal file's directory
         # entry is itself durable (a durable file with a non-durable dir entry
         # can vanish on crash).
@@ -100,7 +101,13 @@ class Journal:
         }
         data = (json.dumps(event, sort_keys=True) + "\n").encode("utf-8")
         with self._lock:
-            fd = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644)
+            flags = os.O_WRONLY | os.O_CREAT | os.O_APPEND
+            created = False
+            try:
+                fd = os.open(self.path, flags | os.O_EXCL, 0o644)
+                created = True
+            except FileExistsError:
+                fd = os.open(self.path, flags, 0o644)
             try:
                 view = memoryview(data)
                 total = 0
@@ -112,6 +119,8 @@ class Journal:
                 os.fsync(fd)
             finally:
                 os.close(fd)
+            if created:
+                self._fsync_parent_dir(self._parent)
         return event_id
 
 

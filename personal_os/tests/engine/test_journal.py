@@ -111,6 +111,30 @@ def test_append_returns_event_id(tmp_path):
     assert isinstance(eid, str) and eid
 
 
+def test_first_append_creates_durable_replayable_log(tmp_path, monkeypatch):
+    """The first append fsyncs the directory entry created by O_EXCL."""
+    path = tmp_path / "fresh" / "events.jsonl"
+    fsynced_parents = []
+    real_fsync_parent = Journal._fsync_parent_dir
+
+    def recording_fsync(parent):
+        fsynced_parents.append(parent)
+        real_fsync_parent(parent)
+
+    monkeypatch.setattr(Journal, "_fsync_parent_dir", staticmethod(recording_fsync))
+    journal = Journal(str(path), run_id="fresh-run")
+    fsynced_parents.clear()  # Ignore directory creation durability in __init__.
+    journal.append(
+        EventType.NODE_CREATED,
+        node_id="fresh-node",
+        payload={"status": "pending"},
+    )
+
+    assert path.exists()
+    assert replay(str(path)).node_status == {"fresh-node": "pending"}
+    assert fsynced_parents == [str(path.parent)]
+
+
 def test_unknown_event_type_rejected():
     with pytest.raises(ValueError):
         EventType("NOT_A_TYPE")

@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import stat
 
 # Path fragments that indicate a cloud-synced location (case-insensitive).
 _SYNCED_MARKERS = (
@@ -90,16 +91,50 @@ class Workspace:
                 abs_p = os.path.join(dirpath, name)
                 rel = os.path.relpath(abs_p, self.root).replace(os.sep, "/")
                 try:
-                    if os.path.islink(abs_p):
-                        # Do NOT follow: hash the link text, not the target.
-                        target = os.readlink(abs_p)
-                        entries.append(f"{rel}:symlink:{target}")
-                        continue
-                    with open(abs_p, "rb") as f:
-                        digest = hashlib.sha256(f.read()).hexdigest()
-                    entries.append(f"{rel}:{digest}")
-                except (OSError, IOError):
+                    before = os.lstat(abs_p)
+                except OSError:
                     entries.append(f"{rel}:<unreadable>")
+                    continue
+
+                # Never open a known FIFO/device: even a read-only open can
+                # block or have side effects. Symlinks are deliberately passed
+                # to O_NOFOLLOW so classification and access are enforced by
+                # the kernel at the same pathname lookup.
+                if not (stat.S_ISREG(before.st_mode) or stat.S_ISLNK(before.st_mode)):
+                    entries.append(f"{rel}:<type:{stat.S_IFMT(before.st_mode):o}>")
+                    continue
+
+                fd = None
+                try:
+                    flags = os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_NONBLOCK", 0)
+                    fd = os.open(abs_p, flags)
+                    opened = os.fstat(fd)
+                    if not stat.S_ISREG(opened.st_mode):
+                        entries.append(f"{rel}:<type:{stat.S_IFMT(opened.st_mode):o}>")
+                        continue
+                    digest = hashlib.sha256()
+                    while True:
+                        chunk = os.read(fd, 1024 * 1024)
+                        if not chunk:
+                            break
+                        digest.update(chunk)
+                    entries.append(f"{rel}:{digest.hexdigest()}")
+                except OSError:
+                    # O_NOFOLLOW rejects a symlink atomically. Inspect only to
+                    # choose a stable representation; never retry a path open.
+                    try:
+                        current = os.lstat(abs_p)
+                        if stat.S_ISLNK(current.st_mode):
+                            entries.append(f"{rel}:symlink:{os.readlink(abs_p)}")
+                        else:
+                            entries.append(
+                                f"{rel}:<type:{stat.S_IFMT(current.st_mode):o}>"
+                            )
+                    except OSError:
+                        entries.append(f"{rel}:<unreadable>")
+                finally:
+                    if fd is not None:
+                        os.close(fd)
         for e in sorted(entries):
             h.update(e.encode("utf-8"))
             h.update(b"\n")

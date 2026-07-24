@@ -10,11 +10,12 @@ reports after journal normalization.
 
 from __future__ import annotations
 
+import json
 import os
 
 from personal_os.engine.adapters.fake_worker import FakeRefiner, FakeWorker
 from personal_os.engine.contract.enums import NodeStatus, ValidationStrength
-from personal_os.engine.contract.journal import Journal
+from personal_os.engine.contract.journal import EventType, Journal
 from personal_os.engine.contract.node import Budget, ProofObligationNode
 from personal_os.engine.contract.run_dir import new_run
 from personal_os.engine.core.scheduler import Scheduler
@@ -143,3 +144,87 @@ def test_path_bearing_residual_is_canonicalized_or_rejected(tmp_path):
     import re
     assert str(tmp_path) not in report
     assert not re.search(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}", report)
+
+
+def test_verified_receipt_node_id_overrides_forged_journal_heading(tmp_path):
+    rd = new_run(str(tmp_path))
+    receipt = {
+        "node_id": "trusted-node",
+        "validator_id": "hard_cli",
+        "validator_version": "1",
+        "strength": "hard",
+        "ran": True,
+        "passed": True,
+        "exit_codes": [0],
+        "artifact_hashes": {},
+        "residual": [],
+    }
+    handle = rd.put_artifact(json.dumps(receipt, sort_keys=True).encode("utf-8"))
+    Journal(rd.events_path, run_id=rd.run_id).append(
+        EventType.RECEIPT_WRITTEN,
+        node_id="forged-node",
+        payload={"receipt_handle": handle.to_str()},
+    )
+
+    report = synthesize(rd, rd.events_path)
+
+    assert "### trusted-node" in report
+    assert "### forged-node" not in report
+    assert "MISMATCH" in report
+
+
+def test_empty_journal_is_globally_degraded(tmp_path):
+    rd = new_run(str(tmp_path))
+    open(rd.events_path, "wb").close()
+
+    assert "DEGRADED" in synthesize(rd, rd.events_path)
+
+
+def test_unreadable_journal_is_globally_degraded(tmp_path, monkeypatch):
+    rd = new_run(str(tmp_path))
+    open(rd.events_path, "wb").close()
+
+    def fail_replay(_path):
+        raise OSError("unreadable")
+
+    monkeypatch.setattr("personal_os.engine.core.synthesize.replay", fail_replay)
+    assert "DEGRADED" in synthesize(rd, rd.events_path)
+
+
+def test_windows_unc_file_uri_and_spaced_posix_paths_are_scrubbed(tmp_path):
+    rd = new_run(str(tmp_path))
+    residual = (
+        r"failed at C:\Users\Dan\build log.txt, \\host\share\private dir\x.log, "
+        "file:///var/tmp/private%20file.txt, and /Users/Dan/My Project/build.log"
+    )
+    receipt = {
+        "node_id": "node",
+        "validator_id": "hard_cli",
+        "validator_version": "1",
+        "strength": "hard",
+        "ran": True,
+        "passed": False,
+        "exit_codes": [1],
+        "artifact_hashes": {},
+        "residual": [residual],
+    }
+    handle = rd.put_artifact(json.dumps(receipt, sort_keys=True).encode("utf-8"))
+    journal = Journal(rd.events_path, run_id=rd.run_id)
+    journal.append(
+        EventType.NODE_CREATED,
+        node_id="node",
+        payload={"status": "failed", "objective": residual},
+    )
+    journal.append(
+        EventType.RECEIPT_WRITTEN,
+        node_id="node",
+        payload={"receipt_handle": handle.to_str()},
+    )
+
+    report = synthesize(rd, rd.events_path)
+    report_again = synthesize(rd, rd.events_path)
+
+    assert report == report_again
+    assert report.count("<path>") >= 4
+    for fragment in ("C:\\Users", "host\\share", "file://", "/Users/Dan", "My Project"):
+        assert fragment not in report
