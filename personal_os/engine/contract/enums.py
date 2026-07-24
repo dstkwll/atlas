@@ -97,3 +97,4 @@ class RationaleCode(str, Enum):
     NO_REFINEMENT_PROGRESS = "no_refinement_progress"
     NEEDS_HUMAN_INTERPRETATION = "needs_human_interpretation"
     RESUME_REVERIFY_FAILED = "resume_reverify_failed"
+    RESUME_INTERRUPTED_TRANSITION = "resume_interrupted_transition"

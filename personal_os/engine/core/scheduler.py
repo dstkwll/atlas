@@ -192,6 +192,21 @@ def resume(run_dir: RunDir, hard_validator) -> RunOutcome:
     for node_id, status_str in proj.node_status.items():
         statuses[node_id] = NodeStatus(status_str)
 
+    # F11 (sol-2): fail-closed on interrupted transitional states. A crash
+    # mid-DISCHARGING / mid-REFINING (or after RECEIPT_WRITTEN but before the
+    # terminal status) leaves the node in a non-terminal transitional state.
+    # Resume NEVER continues or infers success from an incomplete transition —
+    # it marks every such node BLOCKED with a recovery rationale.
+    _TRANSITIONAL = (NodeStatus.DISCHARGING, NodeStatus.REFINING)
+    for node_id, status in list(statuses.items()):
+        if status in _TRANSITIONAL:
+            statuses[node_id] = NodeStatus.BLOCKED
+            journal.append(
+                EventType.NODE_STATUS, node_id=node_id,
+                payload={"status": NodeStatus.BLOCKED.value,
+                         "rationale": RationaleCode.RESUME_INTERRUPTED_TRANSITION.value},
+            )
+
     # Re-verify every HARD_DISCHARGED node on the frontier (verification-only).
     for node_id, status in list(statuses.items()):
         if status is not NodeStatus.HARD_DISCHARGED:

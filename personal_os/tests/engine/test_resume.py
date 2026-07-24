@@ -15,7 +15,7 @@ import os
 
 from personal_os.engine.adapters.fake_worker import FakeRefiner, FakeWorker
 from personal_os.engine.contract.enums import NodeStatus
-from personal_os.engine.contract.journal import Journal, replay
+from personal_os.engine.contract.journal import Journal, replay, EventType
 from personal_os.engine.contract.node import Budget, ProofObligationNode
 from personal_os.engine.contract.enums import ValidationStrength
 from personal_os.engine.contract.run_dir import RunDir, new_run
@@ -112,6 +112,28 @@ def test_resume_deleted_referenced_artifact_blocks(tmp_path):
 
     outcome = resume(rd, HardCliValidator())
     assert outcome.node_statuses[exec_id] is NodeStatus.BLOCKED
+
+
+def test_resume_blocks_interrupted_discharging(tmp_path):
+    # F11/sol-2: a crash mid-DISCHARGING leaves the node in a transitional
+    # state. Resume must fail it closed to BLOCKED, never leave it DISCHARGING
+    # and never infer success.
+    rd = new_run(str(tmp_path))
+    journal = Journal(rd.events_path, run_id=rd.run_id)
+    journal.append(EventType.NODE_CREATED, node_id="top", payload={"status": "pending"})
+    journal.append(EventType.NODE_STATUS, node_id="top-exec",
+                   payload={"status": NodeStatus.DISCHARGING.value})
+    outcome = resume(rd, HardCliValidator())
+    assert outcome.node_statuses["top-exec"] is NodeStatus.BLOCKED
+
+
+def test_resume_blocks_interrupted_refining(tmp_path):
+    rd = new_run(str(tmp_path))
+    journal = Journal(rd.events_path, run_id=rd.run_id)
+    journal.append(EventType.NODE_STATUS, node_id="top",
+                   payload={"status": NodeStatus.REFINING.value})
+    outcome = resume(rd, HardCliValidator())
+    assert outcome.node_statuses["top"] is NodeStatus.BLOCKED
 
 
 def test_resume_does_not_consume_attempts(tmp_path):
