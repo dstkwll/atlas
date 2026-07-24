@@ -27,7 +27,7 @@ from personal_os.engine.contract.journal import Journal, replay
 from personal_os.engine.contract.node import Budget, ProofObligationNode
 from personal_os.engine.contract.enums import ValidationStrength
 from personal_os.engine.contract.run_dir import RunDir, new_run
-from personal_os.engine.core.acceptance import mark_done
+from personal_os.engine.core.acceptance import accept
 from personal_os.engine.core.scheduler import Scheduler, _find_top
 from personal_os.engine.core.staging import stage
 from personal_os.engine.core.synthesize import synthesize
@@ -102,29 +102,18 @@ def _cmd_accept(args) -> int:
 
     proj = replay(run_dir.events_path)
     top_id = _find_top(proj)
-    status_str = proj.node_status.get(top_id)
-    if status_str is None:
+    if proj.node_status.get(top_id) is None:
         print(f"error: top node not found in run {args.run_id}", file=sys.stderr)
         return 2
 
-    top = ProofObligationNode(
-        id=top_id, parent_id=None, objective="", done_contract={},
-        admissible_evidence=[], validator_ref=None,
-        validation_strength=ValidationStrength.HARD,
-        budget=Budget(max_depth=1, max_children=0, max_attempts=1),
-        status=NodeStatus(status_str), provenance={},
-    )
+    # F14: journal-authoritative acceptance — accept() re-reads the journal and
+    # gates through the single mark_done writer; no stale in-memory status.
     try:
-        done = mark_done(top)
+        new_status = accept(run_dir, top_id)
     except ValueError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 3
-
-    journal = Journal(run_dir.events_path, run_id=args.run_id)
-    from personal_os.engine.contract.journal import EventType
-    journal.append(EventType.NODE_STATUS, node_id=top_id,
-                   payload={"status": done.status.value})
-    print(f"top_status: {done.status.name}")
+    print(f"top_status: {new_status.name}")
     return 0
 
 

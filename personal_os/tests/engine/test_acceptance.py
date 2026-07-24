@@ -68,3 +68,38 @@ def test_done_has_exactly_one_writer_in_the_codebase():
                 writers.append(path)
     # The only real status setter is in acceptance.py.
     assert all("acceptance.py" in w for w in writers), writers
+
+
+def test_accept_run_is_journal_authoritative(tmp_path):
+    # F14/sol-3: accept() must re-read the journal itself, not trust a caller's
+    # in-memory status. A real AWAITING_ACCEPTANCE top in the journal accepts.
+    from personal_os.engine.contract.journal import Journal, EventType, replay
+    from personal_os.engine.contract.run_dir import new_run
+    from personal_os.engine.core.acceptance import accept
+
+    rd = new_run(str(tmp_path))
+    j = Journal(rd.events_path, run_id=rd.run_id)
+    j.append(EventType.NODE_CREATED, node_id="top", payload={"status": "pending"})
+    j.append(EventType.NODE_STATUS, node_id="top",
+             payload={"status": NodeStatus.AWAITING_ACCEPTANCE.value})
+    status = accept(rd, "top")
+    assert status is NodeStatus.DONE
+    # The DONE transition is journaled — a fresh replay sees DONE.
+    assert replay(rd.events_path).node_status["top"] == NodeStatus.DONE.value
+
+
+def test_accept_refuses_when_journal_says_blocked(tmp_path):
+    # If resume journaled the top BLOCKED, accept() must refuse even if an
+    # earlier AWAITING_ACCEPTANCE event exists (last-writer-wins from journal).
+    from personal_os.engine.contract.journal import Journal, EventType
+    from personal_os.engine.contract.run_dir import new_run
+    from personal_os.engine.core.acceptance import accept
+
+    rd = new_run(str(tmp_path))
+    j = Journal(rd.events_path, run_id=rd.run_id)
+    j.append(EventType.NODE_STATUS, node_id="top",
+             payload={"status": NodeStatus.AWAITING_ACCEPTANCE.value})
+    j.append(EventType.NODE_STATUS, node_id="top",
+             payload={"status": NodeStatus.BLOCKED.value})
+    with pytest.raises(ValueError):
+        accept(rd, "top")

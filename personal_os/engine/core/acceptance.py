@@ -15,8 +15,9 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from personal_os.engine.contract.enums import NodeStatus
-from personal_os.engine.contract.node import ProofObligationNode
+from personal_os.engine.contract.enums import NodeStatus, ValidationStrength
+from personal_os.engine.contract.node import Budget, ProofObligationNode
+from personal_os.engine.contract.run_dir import RunDir
 
 
 def mark_done(node: ProofObligationNode) -> ProofObligationNode:
@@ -30,3 +31,37 @@ def mark_done(node: ProofObligationNode) -> ProofObligationNode:
             f"mark_done requires AWAITING_ACCEPTANCE, got {node.status.value!r}"
         )
     return replace(node, status=NodeStatus.DONE)
+
+
+def accept(run_dir: RunDir, node_id: str) -> NodeStatus:
+    """Journal-authoritative acceptance (F14/sol-3): the ONLY safe accept path.
+
+    Re-reads the node's CURRENT status from the journal projection (never trusts
+    a caller-supplied in-memory node, which could be stale after a resume marked
+    the node BLOCKED), gates through ``mark_done`` (AWAITING_ACCEPTANCE only),
+    and appends the DONE transition itself. Returns the new status (DONE) or
+    raises ``ValueError`` if the journal's current state isn't acceptable.
+    """
+    # Local imports to avoid a contract<-core import cycle at module load.
+    from personal_os.engine.contract.journal import EventType, Journal, replay
+
+    proj = replay(run_dir.events_path)
+    status_str = proj.node_status.get(node_id)
+    if status_str is None:
+        raise ValueError(f"node {node_id!r} not found in run journal")
+
+    # Build a minimal node carrying ONLY the journal-authoritative status and
+    # gate it through the single mark_done writer.
+    current = ProofObligationNode(
+        id=node_id, parent_id=None, objective="", done_contract={},
+        admissible_evidence=[], validator_ref=None,
+        validation_strength=ValidationStrength.HARD,
+        budget=Budget(max_depth=1, max_children=0, max_attempts=1),
+        status=NodeStatus(status_str), provenance={},
+    )
+    done = mark_done(current)  # raises unless AWAITING_ACCEPTANCE
+
+    journal = Journal(run_dir.events_path, run_id=run_dir.run_id)
+    journal.append(EventType.NODE_STATUS, node_id=node_id,
+                   payload={"status": done.status.value})
+    return done.status
