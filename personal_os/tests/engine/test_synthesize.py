@@ -347,3 +347,39 @@ def test_non_string_receipt_handle_renders_unavailable(tmp_path):
     report = synthesize(rd, rd.events_path)
 
     assert "Receipt unavailable" in report
+
+
+def test_lifecycle_and_verified_validator_fields_are_scrubbed(tmp_path):
+    rd = new_run(str(tmp_path))
+    receipt = {
+        "node_id": "node",
+        "validator_id": "validator C:/Users/Dan/private.txt",
+        "validator_version": "file:///Users/Dan/My Project/version.txt",
+        "strength": "hard",
+        "ran": True,
+        "passed": True,
+        "exit_codes": [0],
+        "artifact_hashes": {},
+        "residual": [],
+    }
+    handle = rd.put_artifact(json.dumps(receipt, sort_keys=True).encode("utf-8"))
+    journal = Journal(rd.events_path, run_id=rd.run_id)
+    journal.append(
+        EventType.NODE_STATUS,
+        node_id="node",
+        payload={"status": "failed at C:/Users/Dan/status.txt"},
+    )
+    journal.append(
+        EventType.RECEIPT_WRITTEN,
+        node_id="node",
+        payload={"receipt_handle": handle.to_str()},
+    )
+
+    report = synthesize(rd, rd.events_path)
+
+    assert "C:/Users/Dan" not in report
+    assert "file://" not in report
+    assert "My Project" not in report
+    assert "- node: failed at <path>" in report
+    assert "- validator: validator <path>" in report
+    assert "- validator_version: <path>" in report

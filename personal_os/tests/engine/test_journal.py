@@ -170,3 +170,25 @@ def test_first_append_propagates_parent_directory_fsync_failure(
 
     with pytest.raises(OSError, match="directory fsync failed"):
         journal.append(EventType.NODE_CREATED, node_id="n1", payload={})
+
+
+def test_replay_skips_non_string_event_type_and_synthesis_degrades(tmp_path):
+    from personal_os.engine.contract.run_dir import new_run
+    from personal_os.engine.core.synthesize import synthesize
+
+    rd = new_run(str(tmp_path))
+    event = {
+        "event_id": "bad-type",
+        "run_id": rd.run_id,
+        "type": [],
+        "node_id": "node",
+        "payload": {"status": "pending"},
+    }
+    with open(rd.events_path, "w") as stream:
+        stream.write(json.dumps(event) + "\n")
+
+    projection = replay(rd.events_path)
+
+    assert projection.event_count == 0
+    assert projection.node_status == {}
+    assert "DEGRADED" in synthesize(rd, rd.events_path)

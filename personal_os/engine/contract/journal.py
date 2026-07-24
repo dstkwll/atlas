@@ -183,11 +183,13 @@ def replay(path: str) -> LifecycleProjection:
         eid = ev.get("event_id")
         if not isinstance(eid, str) or not eid or eid in seen:
             continue
+        etype = ev.get("type")
+        if not isinstance(etype, str):
+            continue
         seen.add(eid)
         proj.event_count += 1
 
         run_id = ev.get("run_id")
-        etype = ev.get("type")
         node_id = ev.get("node_id")
         payload = ev.get("payload")
         if not isinstance(run_id, str) or not run_id:

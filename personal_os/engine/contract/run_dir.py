@@ -18,6 +18,7 @@ from __future__ import annotations
 import hashlib
 import os
 import re
+import stat
 import uuid
 from dataclasses import dataclass
 
@@ -102,14 +103,41 @@ class RunDir:
         """Content-address ``data`` into ``artifacts/<sha256>`` (immutable)."""
         sha = hashlib.sha256(data).hexdigest()
         dest = os.path.join(self.artifacts_dir, sha)
-        if not os.path.exists(dest):
-            os.makedirs(self.artifacts_dir, exist_ok=True)
-            tmp = dest + ".tmp"
-            with open(tmp, "wb") as f:
-                f.write(data)
-                f.flush()
-                os.fsync(f.fileno())
+        if os.path.exists(dest):
+            return ArtifactHandle(id=sha)
+
+        os.makedirs(self.artifacts_dir, exist_ok=True)
+        tmp = os.path.join(self.artifacts_dir, f".tmp-{uuid.uuid4().hex}")
+        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW
+        fd = None
+        try:
+            fd = os.open(tmp, flags, 0o644)
+            if not stat.S_ISREG(os.fstat(fd).st_mode):
+                raise OSError("artifact temp path is not a regular file")
+            view = memoryview(data)
+            total = 0
+            while total < len(data):
+                written = os.write(fd, view[total:])
+                if written <= 0:
+                    raise OSError("artifact write made no progress")
+                total += written
+            os.fsync(fd)
+            os.close(fd)
+            fd = None
             os.replace(tmp, dest)
+            dir_fd = os.open(self.artifacts_dir, os.O_RDONLY)
+            try:
+                os.fsync(dir_fd)
+            finally:
+                os.close(dir_fd)
+        except Exception:
+            if fd is not None:
+                os.close(fd)
+            try:
+                os.unlink(tmp)
+            except FileNotFoundError:
+                pass
+            raise
         return ArtifactHandle(id=sha)
 
     def resolve_handle(self, handle: ArtifactHandle) -> str:

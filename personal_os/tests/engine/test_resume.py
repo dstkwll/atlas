@@ -242,3 +242,27 @@ def test_resume_does_not_consume_attempts(tmp_path):
     resume(rd, HardCliValidator())
     after = _attempts()
     assert after == before  # verification-only, no new attempts
+
+
+def test_resume_blocks_artifact_hash_key_value_mismatch(tmp_path):
+    rd = new_run(str(tmp_path))
+    stage(fixture_root(), rd)
+    _run_once(rd)
+    proj = replay(rd.events_path)
+    exec_id = [n for n in proj.node_status if n.endswith("-exec")][0]
+    receipt_handle = proj.receipts[exec_id][-1]["receipt_handle"]
+    with open(rd.resolve_handle(ArtifactHandle.from_str(receipt_handle))) as stream:
+        receipt = json.load(stream)
+    original_handle, original_sha = next(iter(receipt["artifact_hashes"].items()))
+    assert original_handle.split(":", 1)[1] == original_sha
+    receipt["artifact_hashes"] = {"artifact:" + "0" * 64: original_sha}
+    replacement = rd.put_artifact(json.dumps(receipt, sort_keys=True).encode("utf-8"))
+    Journal(rd.events_path, run_id=rd.run_id).append(
+        EventType.RECEIPT_WRITTEN,
+        node_id=exec_id,
+        payload={"receipt_handle": replacement.to_str()},
+    )
+
+    outcome = resume(rd, HardCliValidator())
+
+    assert outcome.node_statuses[exec_id] is NodeStatus.BLOCKED

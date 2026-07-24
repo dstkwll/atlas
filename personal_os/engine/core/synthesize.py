@@ -77,7 +77,7 @@ def synthesize(run_dir: RunDir, journal_path: str) -> str:
 
     lines.append("## Node lifecycle")
     for node_id in sorted(proj.node_status):
-        lines.append(f"- {_scrub(node_id)}: {proj.node_status[node_id]}")
+        lines.append(_scrub(f"- {node_id}: {proj.node_status[node_id]}"))
     lines.append("")
 
     lines.append("## Evidence")
@@ -193,8 +193,10 @@ def _render_node_receipt(run_dir: RunDir, node_id: str, receipt_ref: dict) -> st
             "- **MISMATCH**: verified receipt node id differs from untrusted "
             f"journal reference `{_scrub(node_id)}` (report degraded)"
         )
-    lines.append(f"- validator: {receipt.get('validator_id', '')}")
-    lines.append(f"- validator_version: {receipt.get('validator_version', '')}")
+    lines.append(_scrub(f"- validator: {receipt.get('validator_id', '')}"))
+    lines.append(
+        _scrub(f"- validator_version: {receipt.get('validator_version', '')}")
+    )
     lines.append(f"- strength: {receipt.get('strength', '')}")
     lines.append(f"- ran: {receipt.get('ran')}")
     lines.append(f"- passed: {receipt.get('passed')}")

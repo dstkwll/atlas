@@ -112,3 +112,22 @@ def test_execute_result_requires_at_least_one_patch_handle(tmp_path):
     )
     with pytest.raises(AssertionError):
         assert_workresult_contract(result, rd, require_patch_handle=True)
+
+
+def test_none_result_fails_with_documented_assertion(tmp_path):
+    rd = new_run(str(tmp_path))
+    with pytest.raises(AssertionError, match="WorkResult or dict"):
+        assert_workresult_contract(None, rd)
+
+
+def test_dict_artifact_handle_element_fails_with_documented_assertion(tmp_path):
+    rd = new_run(str(tmp_path))
+    malformed = {
+        "status": "ok",
+        "artifact_handles": [{}],
+        "evidence_proposals": [],
+        "usage": {},
+        "failure": None,
+    }
+    with pytest.raises(AssertionError, match="artifact handle must be"):
+        assert_workresult_contract(malformed, rd)

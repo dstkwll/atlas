@@ -174,3 +174,23 @@ def test_non_dict_candidate_failure_fails_closed(tmp_path):
         rd, node=None, config={"proposal": proposal},
     )
     assert receipt.passed is False
+
+
+def test_non_string_failure_class_fails_without_crashing(tmp_path):
+    rd = new_run(str(tmp_path))
+    proposal = _wellformed_proposal(rd)
+    proposal["candidate_failures"][0]["failure_class"] = []
+    receipt = AdmissibilityValidator().validate(
+        rd, node=None, config={"proposal": proposal},
+    )
+    assert receipt.passed is False
+
+
+def test_absolute_candidate_locator_fails(tmp_path):
+    rd = new_run(str(tmp_path))
+    proposal = _wellformed_proposal(rd)
+    proposal["candidate_failures"][0]["locator"] = "/etc/passwd"
+    receipt = AdmissibilityValidator().validate(
+        rd, node=None, config={"proposal": proposal},
+    )
+    assert receipt.passed is False

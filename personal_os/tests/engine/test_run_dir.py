@@ -127,3 +127,21 @@ def test_resolve_handle_rejects_escape_id(tmp_path):
     poisoned2 = ArtifactHandle(id="../../etc/passwd")
     with pytest.raises(ValueError):
         rd.resolve_handle(poisoned2)
+
+
+def test_put_artifact_does_not_follow_preplanted_temp_symlink(tmp_path):
+    import hashlib
+
+    rd = new_run(str(tmp_path))
+    data = b"contained payload"
+    digest = hashlib.sha256(data).hexdigest()
+    outside = tmp_path / "outside.txt"
+    outside.write_bytes(b"UNCHANGED")
+    os.symlink(str(outside), os.path.join(rd.artifacts_dir, digest + ".tmp"))
+
+    handle = rd.put_artifact(data)
+
+    assert outside.read_bytes() == b"UNCHANGED"
+    assert handle.id == digest
+    with open(rd.resolve_handle(handle), "rb") as stream:
+        assert stream.read() == data

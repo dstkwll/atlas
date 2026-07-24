@@ -337,8 +337,15 @@ def _reverify_receipt(run_dir: RunDir, proj, node_id: str) -> bool:
     for ref_handle, ref_sha in artifact_hashes.items():
         if not isinstance(ref_handle, str) or not isinstance(ref_sha, str):
             return False
-        ref_path = os.path.join(run_dir.artifacts_dir, ref_sha)
-        if not os.path.exists(ref_path):
+        try:
+            parsed = ArtifactHandle.from_str(ref_handle)
+        except (TypeError, ValueError):
+            return False
+        if parsed.id != ref_sha:
+            return False
+        try:
+            ref_path = run_dir.resolve_handle(parsed)
+        except (ValueError, KeyError):
             return False
         with open(ref_path, "rb") as f:
             if hashlib.sha256(f.read()).hexdigest() != ref_sha:

@@ -23,6 +23,7 @@ admissibility receipt can never discharge a HARD obligation.
 
 from __future__ import annotations
 
+import os
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
@@ -94,11 +95,17 @@ class AdmissibilityValidator:
             if not isinstance(cand, dict):
                 reasons.append("candidate failure is not a dict")
                 continue
-            if cand.get("failure_class") not in _VALID_FAILURE_CLASSES:
-                reasons.append(f"invalid failure_class: {cand.get('failure_class')!r}")
+            failure_class = cand.get("failure_class")
+            if (
+                not isinstance(failure_class, str)
+                or failure_class not in _VALID_FAILURE_CLASSES
+            ):
+                reasons.append(f"invalid failure_class: {failure_class!r}")
             locator = cand.get("locator")
             if not isinstance(locator, str) or not locator:
                 reasons.append("candidate failure missing/invalid locator")
+            elif os.path.isabs(locator):
+                reasons.append("candidate failure locator must be run-relative")
 
         # 4. Children trace to the parent.
         for child in _as_list(proposal.get("children")):

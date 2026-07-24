@@ -38,6 +38,9 @@ def assert_workresult_contract(
     When ``require_patch_handle`` is true, require at least one artifact handle
     before an EXECUTE caller can index or apply the proposed patch.
     """
+    assert isinstance(result, (WorkResult, dict)), (
+        "result must be a WorkResult or dict"
+    )
     d = result.to_dict() if isinstance(result, WorkResult) else dict(result)
 
     # 1. No self-certification anywhere.
@@ -54,6 +57,9 @@ def assert_workresult_contract(
     if require_patch_handle:
         assert handles, "EXECUTE result must include a patch artifact handle"
     for h in handles:
+        assert isinstance(h, (str, ArtifactHandle)), (
+            "artifact handle must be a string or ArtifactHandle"
+        )
         try:
             handle = ArtifactHandle.from_str(h) if isinstance(h, str) else h
             run_dir.resolve_handle(handle)
