@@ -101,3 +101,46 @@ def test_discharge_writes_receipt_artifact_before_event(tmp_path):
     # The referenced artifact is present on disk (fsynced before the event).
     sha = receipt_handle.split(":", 1)[1]
     assert os.path.exists(os.path.join(rd.artifacts_dir, sha))
+
+
+def test_failed_patch_landing_blocks_hard_discharge(tmp_path, monkeypatch):
+    """A passing receipt cannot discharge a patch Core did not verify."""
+    import importlib
+
+    discharge_module = importlib.import_module("personal_os.engine.core.discharge")
+    rd = new_run(str(tmp_path))
+    stage(fixture_root(), rd)
+    journal = Journal(rd.events_path, run_id=rd.run_id)
+    monkeypatch.setattr(discharge_module, "_verify_patch_landed",
+                        lambda *args: False)
+
+    result = discharge_module.discharge(
+        _node(), FakeWorker(rd), HardCliValidator(), rd, journal,
+    )
+
+    assert result.receipt.passed is True
+    assert result.patched_ok is False
+    assert result.status is NodeStatus.BLOCKED
+    assert replay(rd.events_path).node_status["leaf-1"] == NodeStatus.BLOCKED.value
+
+
+def test_discharge_request_attempt_follows_journal_count(tmp_path):
+    """Worker attempts are numbered from the durable journal ledger."""
+    class _CapturingWorker:
+        def __init__(self, delegate):
+            self.delegate = delegate
+            self.attempt = None
+
+        def execute(self, request):
+            self.attempt = request.attempt
+            return self.delegate.execute(request)
+
+    rd = new_run(str(tmp_path))
+    stage(fixture_root(), rd)
+    journal = Journal(rd.events_path, run_id=rd.run_id)
+    journal.append(EventType.ATTEMPT, node_id="leaf-1", payload={"attempt": 1})
+    worker = _CapturingWorker(FakeWorker(rd))
+
+    discharge(_node(), worker, HardCliValidator(), rd, journal)
+
+    assert worker.attempt == 2

@@ -9,9 +9,11 @@ branch (budget exhaustion).
 
 from __future__ import annotations
 
+import pytest
+
 from personal_os.engine.adapters.fake_worker import FakeRefiner, FakeWorker
 from personal_os.engine.contract.enums import NodeStatus, ValidationStrength
-from personal_os.engine.contract.journal import Journal, replay
+from personal_os.engine.contract.journal import EventType, Journal, replay
 from personal_os.engine.contract.node import Budget, ProofObligationNode
 from personal_os.engine.contract.run_dir import new_run
 from personal_os.engine.core.scheduler import Scheduler
@@ -155,3 +157,75 @@ def test_execution_child_routed_not_role_dispatched(tmp_path, monkeypatch):
     _scheduler(rd).run(_top())
     # The execution child id must have been passed through route().
     assert any(nid.endswith("-exec") for nid in routed_nodes), routed_nodes
+
+
+@pytest.mark.parametrize("status", [status for status in NodeStatus
+                                     if status is not NodeStatus.PENDING])
+def test_run_noops_without_journaling_for_non_schedulable_status(tmp_path, status):
+    """Terminal and transitional nodes retain their authoritative status."""
+    rd = new_run(str(tmp_path))
+    stage(fixture_root(), rd)
+    outcome = _scheduler(rd).run(_top(status=status))
+
+    assert outcome.top_status is status
+    assert replay(rd.events_path).event_count == 0
+
+
+def test_second_run_uses_terminal_journal_status_and_does_no_work(tmp_path):
+    """A stale PENDING object cannot restart a journal-terminal node."""
+    class _CountingPort:
+        def __init__(self, delegate):
+            self.delegate = delegate
+            self.calls = 0
+
+        def execute(self, request):
+            self.calls += 1
+            return self.delegate.execute(request)
+
+    rd = new_run(str(tmp_path))
+    stage(fixture_root(), rd)
+    refiner = _CountingPort(FakeRefiner(rd))
+    worker = _CountingPort(FakeWorker(rd))
+    sched = Scheduler(
+        run_dir=rd, journal=Journal(rd.events_path, run_id=rd.run_id),
+        refiner=refiner, worker=worker, hard_validator=HardCliValidator(),
+    )
+    stale_top = _top()
+    first = sched.run(stale_top)
+    assert first.top_status is NodeStatus.AWAITING_ACCEPTANCE
+    calls_before = (refiner.calls, worker.calls)
+    events_before = replay(rd.events_path).event_count
+
+    second = sched.run(stale_top)
+
+    assert second.top_status is NodeStatus.AWAITING_ACCEPTANCE
+    assert (refiner.calls, worker.calls) == calls_before
+    assert replay(rd.events_path).event_count == events_before
+
+
+def test_execution_child_attempt_cap_survives_restart(tmp_path):
+    """A journal-exhausted execution child cannot discharge again."""
+    class _CountingWorker:
+        calls = 0
+
+        def execute(self, request):
+            self.calls += 1
+            raise AssertionError("attempt-exhausted child reached worker")
+
+    rd = new_run(str(tmp_path))
+    stage(fixture_root(), rd)
+    journal = Journal(rd.events_path, run_id=rd.run_id)
+    journal.append(EventType.NODE_CREATED, node_id="top",
+                   payload={"status": NodeStatus.PENDING.value})
+    journal.append(EventType.ATTEMPT, node_id="top-exec", payload={"attempt": 1})
+    worker = _CountingWorker()
+    sched = Scheduler(
+        run_dir=rd, journal=journal, refiner=FakeRefiner(rd), worker=worker,
+        hard_validator=HardCliValidator(),
+    )
+
+    outcome = sched.run(_top())
+
+    assert outcome.node_statuses["top-exec"] is NodeStatus.FAILED
+    assert worker.calls == 0
+    assert replay(rd.events_path).attempt_counts["top-exec"] == 1

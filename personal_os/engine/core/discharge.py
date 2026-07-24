@@ -12,7 +12,8 @@ into a receipted result, with no recursion and no LLM assumption:
   5. **invariant 8 ordering:** store the receipt as a content-addressed
      artifact (fsync'd by ``put_artifact``) BEFORE appending the
      ``RECEIPT_WRITTEN`` journal event that references it,
-  6. set status ``HARD_DISCHARGED`` iff ``can_discharge_hard(receipt)``.
+  6. set status ``HARD_DISCHARGED`` iff the patch landed AND
+     ``can_discharge_hard(receipt)``.
 
 Core never trusts stdout: it re-resolves the patched target artifact / staged
 file to confirm the change actually landed (``patched_ok``).
@@ -28,7 +29,7 @@ import json
 from dataclasses import dataclass
 
 from personal_os.engine.contract.enums import NodeStatus
-from personal_os.engine.contract.journal import EventType, Journal
+from personal_os.engine.contract.journal import EventType, Journal, replay
 from personal_os.engine.contract.node import ProofObligationNode
 from personal_os.engine.contract.receipt import Receipt, can_discharge_hard
 from personal_os.engine.contract.run_dir import RunDir
@@ -69,16 +70,17 @@ def discharge(
     journal: Journal,
 ) -> DischargeResult:
     """Run the HARD leaf: port -> apply -> validate -> receipt -> journal."""
+    attempt = replay(run_dir.events_path).attempt_counts.get(node.id, 0) + 1
     journal.append(EventType.NODE_STATUS, node_id=node.id,
                    payload={"status": NodeStatus.DISCHARGING.value})
-    journal.append(EventType.ATTEMPT, node_id=node.id, payload={"attempt": 1})
+    journal.append(EventType.ATTEMPT, node_id=node.id, payload={"attempt": attempt})
 
     # 1-2. Ask the (untrusted) worker; validate its output shape before acting.
     request = WorkRequest(
         kind=WorkKind.EXECUTE,
         run_id=run_dir.run_id,
         node_id=node.id,
-        attempt=1,
+        attempt=attempt,
         objective=node.objective,
         contract=dict(node.done_contract),
     )
@@ -110,8 +112,8 @@ def discharge(
         },
     )
 
-    # 6. Status transition, gated by the single HARD predicate.
-    if can_discharge_hard(receipt):
+    # 6. Status transition: both proof-of-landing and the HARD receipt gate it.
+    if patched_ok and can_discharge_hard(receipt):
         status = NodeStatus.HARD_DISCHARGED
     else:
         status = NodeStatus.BLOCKED

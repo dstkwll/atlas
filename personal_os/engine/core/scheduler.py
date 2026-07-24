@@ -25,6 +25,7 @@ execution child actually HARD-discharged.
 
 from __future__ import annotations
 
+import dataclasses
 import os
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
@@ -34,7 +35,7 @@ from personal_os.engine.contract.enums import (
     RouterAction,
     ValidationStrength,
 )
-from personal_os.engine.contract.journal import EventType, Journal
+from personal_os.engine.contract.journal import EventType, Journal, replay
 from personal_os.engine.contract.node import Budget, ProofObligationNode
 from personal_os.engine.contract.run_dir import RunDir
 from personal_os.engine.core.discharge import discharge
@@ -66,23 +67,19 @@ class Scheduler:
                              payload={"status": status.value})
 
     def run(self, top: ProofObligationNode) -> RunOutcome:
-        # F13/sol-7: the attempt ledger is the JOURNAL, not zeroed in-memory
-        # provenance. Project the prior ATTEMPT tally for this node and inject
-        # it into provenance so the router's attempts-budget check is real
-        # across restarts (a node at its attempt cap can't silently re-run).
-        from personal_os.engine.contract.journal import replay as _replay
-        import dataclasses
-        prior = _replay(self._rd.events_path).attempt_counts.get(top.id, 0)
-        if prior:
-            prov = dict(top.provenance)
-            prov["attempts"] = max(int(prov.get("attempts", 0)), prior)
-            top = dataclasses.replace(top, provenance=prov)
-
-        self._journal.append(EventType.NODE_CREATED, node_id=top.id,
-                             payload={"status": top.status.value})
+        # The journal is authoritative for BOTH lifecycle and attempts. A stale
+        # caller object must not restart a node that the durable projection has
+        # already moved to a terminal or transitional state.
+        proj = replay(self._rd.events_path)
+        self._statuses = {
+            node_id: NodeStatus(status) for node_id, status in proj.node_status.items()
+        }
+        top = self._with_journal_state(top, proj)
+        action, rationale = route(top, proj)
+        if top.id not in proj.node_status and action is not RouterAction.NOOP:
+            self._journal.append(EventType.NODE_CREATED, node_id=top.id,
+                                 payload={"status": top.status.value})
         self._statuses[top.id] = top.status
-
-        action, rationale = route(top, LifecycleProjection())
 
         if action is RouterAction.REFINE:
             top_status = self._handle_refine(top)
@@ -91,9 +88,13 @@ class Scheduler:
         elif action is RouterAction.FAIL:
             top_status = NodeStatus.FAILED
             self._set(top.id, top_status)
-        else:  # ESCALATE
+        elif action is RouterAction.ESCALATE:
             top_status = NodeStatus.ESCALATED
             self._set(top.id, top_status)
+        elif action is RouterAction.NOOP:
+            top_status = top.status
+        else:
+            raise AssertionError(f"unhandled router action: {action}")
 
         return RunOutcome(top_status=top_status, node_statuses=dict(self._statuses))
 
@@ -116,20 +117,28 @@ class Scheduler:
         exec_discharged = False
         for child in result.children:
             child_id = child["id"]
-            self._journal.append(EventType.NODE_CREATED, node_id=child_id,
-                                 payload={"status": NodeStatus.PENDING.value})
+            proj = replay(self._rd.events_path)
+            if child_id not in proj.node_status:
+                self._journal.append(EventType.NODE_CREATED, node_id=child_id,
+                                     payload={"status": NodeStatus.PENDING.value})
+                self._statuses[child_id] = NodeStatus.PENDING
+            else:
+                self._statuses[child_id] = NodeStatus(proj.node_status[child_id])
             role = child.get("role")
             if role == "research":
                 # The research child's admissibility already passed (it IS the
                 # decomposition the refiner produced) -> ADMISSIBILITY_PASSED.
                 # This can NEVER discharge a HARD obligation (invariant 5).
-                self._set(child_id, NodeStatus.ADMISSIBILITY_PASSED)
+                if self._statuses[child_id] is NodeStatus.PENDING:
+                    self._set(child_id, NodeStatus.ADMISSIBILITY_PASSED)
             elif role == "execution":
                 # F10 (invariant 5): the ROUTER — not the role string — decides
                 # the verb. Build the node, ask route(), and only discharge if
                 # the router authorizes DISCHARGE. The scheduler never
                 # self-selects a verb from role.
-                node = self._build_execution_node(child)
+                node = self._with_journal_state(
+                    self._build_execution_node(child), replay(self._rd.events_path),
+                )
                 action, _rationale = route(node, self._projection())
                 if action is RouterAction.DISCHARGE:
                     status = self._discharge_node(node)
@@ -139,8 +148,14 @@ class Scheduler:
                     self._set(child_id, NodeStatus.FAILED)
                 elif action is RouterAction.ESCALATE:
                     self._set(child_id, NodeStatus.ESCALATED)
-                else:  # REFINE — no deeper recursion in v0 -> blocked
+                elif action is RouterAction.REFINE:
+                    # No deeper recursion in v0.
                     self._set(child_id, NodeStatus.BLOCKED)
+                elif action is RouterAction.NOOP:
+                    if node.status is NodeStatus.HARD_DISCHARGED:
+                        exec_discharged = True
+                else:
+                    raise AssertionError(f"unhandled router action: {action}")
 
         # A parent is eligible only if its execution child actually
         # HARD-discharged (a BLOCKED child cannot make it eligible — Skeptic E5).
@@ -156,6 +171,18 @@ class Scheduler:
         proj = LifecycleProjection()
         proj.node_status = {nid: st.value for nid, st in self._statuses.items()}
         return proj
+
+    @staticmethod
+    def _with_journal_state(
+        node: ProofObligationNode,
+        projection: LifecycleProjection,
+    ) -> ProofObligationNode:
+        """Return ``node`` with durable status and attempt count injected."""
+        provenance = dict(node.provenance)
+        provenance["attempts"] = projection.attempt_counts.get(node.id, 0)
+        status = NodeStatus(projection.node_status[node.id]) \
+            if node.id in projection.node_status else node.status
+        return dataclasses.replace(node, status=status, provenance=provenance)
 
     def _build_execution_node(self, child: Dict[str, Any]) -> ProofObligationNode:
         """Build a HARD execution node from a compiled child (does NOT discharge)."""
@@ -306,13 +333,14 @@ def _reverify_receipt(run_dir: RunDir, proj, node_id: str) -> bool:
     # tree at certification time. Re-hash the staged tree now; a changed/deleted
     # staged target yields a different hash even if the receipt + stdout blobs
     # are intact, so a stale HARD_DISCHARGED can't survive a tampered output.
-    bound_ws = receipt.get("workspace_id", "")
-    if bound_ws:
-        from personal_os.engine.contract.workspace import Workspace
-        try:
-            current_ws = Workspace(run_dir.staging_dir).id
-        except Exception:  # pragma: no cover - fail closed
-            return False
-        if current_ws != bound_ws:
-            return False
+    bound_ws = receipt.get("workspace_id")
+    if not isinstance(bound_ws, str) or not bound_ws:
+        return False
+    from personal_os.engine.contract.workspace import Workspace
+    try:
+        current_ws = Workspace(run_dir.staging_dir).id
+    except Exception:  # pragma: no cover - fail closed
+        return False
+    if current_ws != bound_ws:
+        return False
     return True

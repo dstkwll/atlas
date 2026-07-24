@@ -18,7 +18,7 @@ from personal_os.engine.contract.enums import NodeStatus
 from personal_os.engine.contract.journal import Journal, replay, EventType
 from personal_os.engine.contract.node import Budget, ProofObligationNode
 from personal_os.engine.contract.enums import ValidationStrength
-from personal_os.engine.contract.run_dir import RunDir, new_run
+from personal_os.engine.contract.run_dir import ArtifactHandle, RunDir, new_run
 from personal_os.engine.core.scheduler import Scheduler, resume
 from personal_os.engine.core.staging import stage
 from personal_os.engine.validators.hard_cli import HardCliValidator
@@ -132,6 +132,30 @@ def test_resume_blocks_when_certified_staged_output_changed(tmp_path):
     with open(victim, "a") as f:
         f.write("\n# TAMPERED AFTER CERTIFICATION\n")
     outcome = resume(rd, HardCliValidator())
+    assert outcome.node_statuses[exec_id] is NodeStatus.BLOCKED
+
+
+def test_resume_blocks_receipt_without_workspace_binding(tmp_path):
+    """A receipt missing its staged-tree binding fails closed."""
+    rd = new_run(str(tmp_path))
+    stage(fixture_root(), rd)
+    _run_once(rd)
+    proj = replay(rd.events_path)
+    exec_id = [n for n in proj.node_status
+               if proj.node_status[n] == NodeStatus.HARD_DISCHARGED.value][0]
+    old_handle = proj.receipts[exec_id][-1]["receipt_handle"]
+    with open(rd.resolve_handle(ArtifactHandle.from_str(old_handle)), "r") as stream:
+        receipt = json.load(stream)
+    receipt.pop("workspace_id")
+    replacement = rd.put_artifact(json.dumps(receipt, sort_keys=True).encode("utf-8"))
+    Journal(rd.events_path, run_id=rd.run_id).append(
+        EventType.RECEIPT_WRITTEN,
+        node_id=exec_id,
+        payload={"receipt_handle": replacement.to_str()},
+    )
+
+    outcome = resume(rd, HardCliValidator())
+
     assert outcome.node_statuses[exec_id] is NodeStatus.BLOCKED
 
 

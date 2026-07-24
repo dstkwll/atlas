@@ -88,13 +88,24 @@ def test_fail_when_attempts_exhausted():
     assert code is RationaleCode.NO_REFINEMENT_PROGRESS
 
 
-def test_escalate_at_acceptance_point_without_hard_oracle():
-    # A top node (no parent) that can't be discharged and whose objective needs
-    # human interpretation escalates rather than looping.
+def test_attempt_cap_precedes_hard_discharge():
+    """A HARD leaf at its attempt cap fails before another discharge."""
+    n = _node(
+        validator_ref="hard_cli",
+        budget=Budget(max_depth=3, max_children=0, max_attempts=1),
+        provenance={"depth": 0, "attempts": 1},
+    )
+    action, code = route(n, _proj())
+    assert action is RouterAction.FAIL
+    assert code is RationaleCode.NO_REFINEMENT_PROGRESS
+
+
+def test_awaiting_acceptance_is_noop():
+    """An existing acceptance point is terminal until explicit acceptance."""
     n = _node(parent_id=None, validator_ref=None,
               status=NodeStatus.AWAITING_ACCEPTANCE)
     action, code = route(n, _proj())
-    assert action is RouterAction.ESCALATE
+    assert action is RouterAction.NOOP
     assert code is RationaleCode.NEEDS_HUMAN_INTERPRETATION
 
 

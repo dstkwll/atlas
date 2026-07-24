@@ -6,12 +6,11 @@
 the scheduler AFTER the router decides.
 
 Decision order (deterministic):
-1. **FAIL / BUDGET_EXHAUSTED** — depth cap already reached (can't refine deeper).
-2. **FAIL / NO_REFINEMENT_PROGRESS** — attempts cap reached with no discharge.
+1. **NOOP** — any state other than PENDING is not schedulable.
+2. **FAIL / NO_REFINEMENT_PROGRESS** — attempts cap reached.
 3. **DISCHARGE / HARD_VALIDATOR_AVAILABLE** — a HARD validator_ref is present.
-4. **ESCALATE / NEEDS_HUMAN_INTERPRETATION** — at an acceptance point (a top
-   node with no HARD oracle) or explicitly awaiting acceptance.
-5. **REFINE / NO_VALIDATOR_YET** — otherwise, decompose (budget/depth allow).
+4. **FAIL / BUDGET_EXHAUSTED** — depth cap reached (can't refine deeper).
+5. **REFINE / NO_VALIDATOR_YET** — otherwise, decompose.
 
 Invariant 5 (3.1b): children being ADMISSIBILITY_PASSED never makes a parent
 route to DISCHARGE — discharge is gated purely on the node's own HARD
@@ -46,12 +45,7 @@ def route(
     # DONE, ESCALATED) or is mid-transition (DISCHARGING, REFINING — owned by
     # the in-flight op or by resume's fail-closed sweep) must never be re-routed
     # into DISCHARGE/ESCALATE. The router returns NOOP for these.
-    _NON_SCHEDULABLE = (
-        NodeStatus.HARD_DISCHARGED, NodeStatus.BLOCKED, NodeStatus.FAILED,
-        NodeStatus.DONE, NodeStatus.ESCALATED, NodeStatus.DISCHARGING,
-        NodeStatus.REFINING,
-    )
-    if node.status in _NON_SCHEDULABLE:
+    if node.status is not NodeStatus.PENDING:
         return RouterAction.NOOP, RationaleCode.NEEDS_HUMAN_INTERPRETATION
 
     has_hard_validator = (
@@ -59,9 +53,12 @@ def route(
         and node.validation_strength is ValidationStrength.HARD
     )
 
-    # 1. A HARD validator is available -> discharge (checked before FAIL on
-    #    attempts so a still-dischargeable node isn't prematurely failed; depth
-    #    exhaustion only blocks *refinement*, not a ready discharge).
+    # The durable attempt cap binds every operation, including a HARD leaf.
+    if attempts >= budget.max_attempts:
+        return RouterAction.FAIL, RationaleCode.NO_REFINEMENT_PROGRESS
+
+    # 1. A HARD validator is available -> discharge. Depth exhaustion only
+    #    blocks refinement, not a ready discharge.
     if has_hard_validator and node.status not in (
         NodeStatus.AWAITING_ACCEPTANCE,
     ):
@@ -79,9 +76,5 @@ def route(
     if depth >= budget.max_depth:
         return RouterAction.FAIL, RationaleCode.BUDGET_EXHAUSTED
 
-    # 4. Attempts exhausted with no discharge -> no-progress FAIL.
-    if attempts >= budget.max_attempts:
-        return RouterAction.FAIL, RationaleCode.NO_REFINEMENT_PROGRESS
-
-    # 5. Otherwise decompose.
+    # 4. Otherwise decompose.
     return RouterAction.REFINE, RationaleCode.NO_VALIDATOR_YET
