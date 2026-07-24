@@ -34,7 +34,7 @@ def test_node_status_members():
 
 def test_router_action_members():
     assert {a.name for a in RouterAction} == {
-        "DISCHARGE", "REFINE", "ESCALATE", "FAIL",
+        "DISCHARGE", "REFINE", "ESCALATE", "FAIL", "NOOP",
     }
 
 
@@ -49,7 +49,7 @@ def test_rationale_code_members():
     assert {r.name for r in RationaleCode} == {
         "NO_VALIDATOR_YET", "HARD_VALIDATOR_AVAILABLE", "BUDGET_EXHAUSTED",
         "NO_REFINEMENT_PROGRESS", "NEEDS_HUMAN_INTERPRETATION",
-        "RESUME_REVERIFY_FAILED",
+        "RESUME_REVERIFY_FAILED", "RESUME_INTERRUPTED_TRANSITION",
     }
 
 
