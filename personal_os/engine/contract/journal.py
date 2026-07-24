@@ -123,6 +123,9 @@ class LifecycleProjection:
     active_run_id: Optional[str] = None
     event_count: int = 0
     receipts: Dict[str, list] = field(default_factory=dict)
+    # F13: per-node ATTEMPT tally, so the attempt budget is enforceable from the
+    # journal (the ledger is the journal, not mutable in-memory provenance).
+    attempt_counts: Dict[str, int] = field(default_factory=dict)
 
 
 def replay(path: str) -> LifecycleProjection:
@@ -183,6 +186,9 @@ def replay(path: str) -> LifecycleProjection:
         elif etype == EventType.RECEIPT_WRITTEN.value:
             if node_id:
                 proj.receipts.setdefault(node_id, []).append(payload)
+        elif etype == EventType.ATTEMPT.value:
+            if node_id:
+                proj.attempt_counts[node_id] = proj.attempt_counts.get(node_id, 0) + 1
 
     # active_run_id = last started run with no terminal event.
     for run_id in reversed(started_runs):

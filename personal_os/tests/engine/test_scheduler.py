@@ -106,6 +106,25 @@ def test_budget_exhausted_branch_reaches_failed(tmp_path):
     assert outcome.top_status is NodeStatus.FAILED
 
 
+def test_run_refuses_to_rerun_attempt_exhausted_node(tmp_path):
+    # F13/sol-7: the attempt ledger is the JOURNAL. If a node already has
+    # ATTEMPT events >= max_attempts in the journal, a fresh run() must NOT
+    # start another attempt (the router sees the projected count, not a
+    # zeroed in-memory provenance).
+    from personal_os.engine.contract.journal import Journal, EventType
+    rd = new_run(str(tmp_path))
+    stage(fixture_root(), rd)
+    # Pre-seed the journal with an exhausted attempt ledger for the top.
+    j = Journal(rd.events_path, run_id=rd.run_id)
+    j.append(EventType.NODE_CREATED, node_id="top", payload={"status": "pending"})
+    j.append(EventType.ATTEMPT, node_id="top", payload={"attempt": 1})
+    top = _top(budget=Budget(max_depth=2, max_children=4, max_attempts=1))
+    outcome = _scheduler(rd).run(top)
+    # With attempts already at the cap, the run must FAIL (no-progress), not
+    # refine/discharge a second time.
+    assert outcome.top_status is NodeStatus.FAILED
+
+
 def test_run_is_journaled(tmp_path):
     rd = new_run(str(tmp_path))
     stage(fixture_root(), rd)

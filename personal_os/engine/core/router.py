@@ -41,6 +41,19 @@ def route(
     attempts = int(node.provenance.get("attempts", 0))
     budget = node.budget
 
+    # F13/sol-8: terminal + transitional states are NOT schedulable. A node that
+    # already reached a terminal outcome (HARD_DISCHARGED, BLOCKED, FAILED,
+    # DONE, ESCALATED) or is mid-transition (DISCHARGING, REFINING — owned by
+    # the in-flight op or by resume's fail-closed sweep) must never be re-routed
+    # into DISCHARGE/ESCALATE. The router returns NOOP for these.
+    _NON_SCHEDULABLE = (
+        NodeStatus.HARD_DISCHARGED, NodeStatus.BLOCKED, NodeStatus.FAILED,
+        NodeStatus.DONE, NodeStatus.ESCALATED, NodeStatus.DISCHARGING,
+        NodeStatus.REFINING,
+    )
+    if node.status in _NON_SCHEDULABLE:
+        return RouterAction.NOOP, RationaleCode.NEEDS_HUMAN_INTERPRETATION
+
     has_hard_validator = (
         node.validator_ref is not None
         and node.validation_strength is ValidationStrength.HARD

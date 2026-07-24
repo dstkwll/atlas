@@ -66,6 +66,18 @@ class Scheduler:
                              payload={"status": status.value})
 
     def run(self, top: ProofObligationNode) -> RunOutcome:
+        # F13/sol-7: the attempt ledger is the JOURNAL, not zeroed in-memory
+        # provenance. Project the prior ATTEMPT tally for this node and inject
+        # it into provenance so the router's attempts-budget check is real
+        # across restarts (a node at its attempt cap can't silently re-run).
+        from personal_os.engine.contract.journal import replay as _replay
+        import dataclasses
+        prior = _replay(self._rd.events_path).attempt_counts.get(top.id, 0)
+        if prior:
+            prov = dict(top.provenance)
+            prov["attempts"] = max(int(prov.get("attempts", 0)), prior)
+            top = dataclasses.replace(top, provenance=prov)
+
         self._journal.append(EventType.NODE_CREATED, node_id=top.id,
                              payload={"status": top.status.value})
         self._statuses[top.id] = top.status

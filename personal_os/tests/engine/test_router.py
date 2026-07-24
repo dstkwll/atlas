@@ -44,6 +44,25 @@ def test_discharge_when_hard_validator_available():
     assert code is RationaleCode.HARD_VALIDATOR_AVAILABLE
 
 
+def test_terminal_and_transitional_states_are_noop():
+    # F13/sol-8: a HARD node in a terminal or transitional state must NOT be
+    # routed back to DISCHARGE — only schedulable (PENDING) states discharge.
+    for terminal in (NodeStatus.HARD_DISCHARGED, NodeStatus.BLOCKED,
+                     NodeStatus.FAILED, NodeStatus.DONE, NodeStatus.DISCHARGING,
+                     NodeStatus.ESCALATED, NodeStatus.REFINING):
+        n = _node(validator_ref="hard_cli", status=terminal)
+        action, _ = route(n, _proj())
+        assert action is RouterAction.NOOP, f"{terminal} should be NOOP, got {action}"
+
+
+def test_terminal_top_not_escalated_again():
+    # A DONE/FAILED top must be NOOP, not ESCALATE-for-being-non-PENDING.
+    for terminal in (NodeStatus.DONE, NodeStatus.FAILED):
+        n = _node(parent_id=None, validator_ref=None, status=terminal)
+        action, _ = route(n, _proj())
+        assert action is RouterAction.NOOP, f"{terminal} top should be NOOP, got {action}"
+
+
 def test_refine_when_no_validator_yet_and_budget_allows():
     n = _node(validator_ref=None, provenance={"depth": 0, "attempts": 0})
     action, code = route(n, _proj())

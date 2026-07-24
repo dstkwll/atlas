@@ -121,6 +121,15 @@ def refine(node, worker, run_dir, journal) -> "RefineResult":
             "selected_failure": chosen,
         })
 
+    # F13/sol-10: enforce max_children BEFORE committing CHILDREN_ADDED. If the
+    # compiled child set exceeds the node's budget, fail closed (no children
+    # emitted, admissible=False) rather than silently overrunning the budget.
+    if len(children) > node.budget.max_children:
+        journal.append(EventType.NODE_STATUS, node_id=node.id,
+                       payload={"status": NodeStatus.BLOCKED.value,
+                                "rationale": "max_children_exceeded"})
+        return RefineResult(admissible=False, children=[], receipt=receipt)
+
     journal.append(EventType.CHILDREN_ADDED, node_id=node.id,
                    payload={"children": [c["id"] for c in children]})
 

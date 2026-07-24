@@ -26,6 +26,23 @@ def _top():
     )
 
 
+def test_refine_enforces_max_children(tmp_path):
+    # F13/sol-10: a node whose budget allows fewer children than refine would
+    # emit must fail closed (no children, not admissible), not overrun.
+    rd = new_run(str(tmp_path))
+    journal = Journal(rd.events_path, run_id=rd.run_id)
+    tight = ProofObligationNode(
+        id="top", parent_id=None, objective="make brokencli reproducibly runnable",
+        done_contract={}, admissible_evidence=[], validator_ref=None,
+        validation_strength=ValidationStrength.HARD,
+        budget=Budget(max_depth=2, max_children=1, max_attempts=2),
+        status=NodeStatus.PENDING, provenance={},
+    )
+    result = refine(tight, FakeRefiner(rd), rd, journal)
+    assert result.admissible is False
+    assert result.children == []
+
+
 def test_refine_emits_execution_child_matching_phase1_leaf(tmp_path):
     rd = new_run(str(tmp_path))
     journal = Journal(rd.events_path, run_id=rd.run_id)

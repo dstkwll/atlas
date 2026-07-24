@@ -48,12 +48,18 @@ class NodeStatus(str, Enum):
 
 
 class RouterAction(str, Enum):
-    """The four outcomes of the one per-node routing decision."""
+    """The outcomes of the one per-node routing decision.
+
+    The four active verbs plus NOOP — a node in a terminal or transitional
+    (resume-owned) state is not schedulable and the router returns NOOP rather
+    than illegally re-entering DISCHARGE/ESCALATE (F13/sol-8).
+    """
 
     DISCHARGE = "discharge"
     REFINE = "refine"
     ESCALATE = "escalate"
     FAIL = "fail"
+    NOOP = "noop"
 
 
 class FailureClass(str, Enum):
