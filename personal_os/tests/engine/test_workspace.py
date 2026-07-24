@@ -133,3 +133,12 @@ def test_workspace_id_serialization_has_no_newline_delimiter_collision(tmp_path)
     os.symlink("y", str(two / "b"))
 
     assert Workspace(str(one)).id != Workspace(str(two)).id
+
+
+def test_workspace_id_distinguishes_an_empty_directory(tmp_path):
+    empty = tmp_path / "empty"
+    with_subdir = tmp_path / "with-subdir"
+    empty.mkdir()
+    (with_subdir / "sub").mkdir(parents=True)
+
+    assert Workspace(str(empty)).id != Workspace(str(with_subdir)).id

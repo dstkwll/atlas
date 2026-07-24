@@ -78,16 +78,20 @@ class Workspace:
         entries = []
         for dirpath, dirnames, filenames in os.walk(self.root, followlinks=False):
             dirnames.sort()
-            # Record directory symlinks explicitly (walk won't descend them).
+            # Record every directory entry. Symlinks carry their target text;
+            # ordinary directories carry a typed empty payload so even an empty
+            # directory changes the canonical workspace structure.
             for name in sorted(dirnames):
                 abs_p = os.path.join(dirpath, name)
+                rel = os.path.relpath(abs_p, self.root).replace(os.sep, "/")
                 if os.path.islink(abs_p):
-                    rel = os.path.relpath(abs_p, self.root).replace(os.sep, "/")
                     try:
                         target = os.readlink(abs_p)
                     except OSError:
                         target = ""
                     entries.append((rel, "symlink", target))
+                else:
+                    entries.append((rel, "dir", ""))
             for name in sorted(filenames):
                 abs_p = os.path.join(dirpath, name)
                 rel = os.path.relpath(abs_p, self.root).replace(os.sep, "/")

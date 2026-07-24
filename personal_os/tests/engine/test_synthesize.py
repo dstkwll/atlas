@@ -323,3 +323,27 @@ def test_path_scrubber_fully_replaces_supported_absolute_path_forms():
 
     for path in cases:
         assert _scrub(path) == "<path>"
+
+
+def test_wrong_shape_journal_degrades_instead_of_crashing(tmp_path):
+    rd = new_run(str(tmp_path))
+    with open(rd.events_path, "wb") as stream:
+        stream.write(b"[]\n")
+
+    report = synthesize(rd, rd.events_path)
+
+    assert "DEGRADED" in report
+
+
+def test_non_string_receipt_handle_renders_unavailable(tmp_path):
+    rd = new_run(str(tmp_path))
+    journal = Journal(rd.events_path, run_id=rd.run_id)
+    journal.append(
+        EventType.RECEIPT_WRITTEN,
+        node_id="node",
+        payload={"receipt_handle": 1},
+    )
+
+    report = synthesize(rd, rd.events_path)
+
+    assert "Receipt unavailable" in report

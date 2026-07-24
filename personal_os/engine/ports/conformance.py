@@ -31,8 +31,13 @@ _FORBIDDEN_KEYS = {"receipt", "passed", "pass"}
 def assert_workresult_contract(
     result: Union[WorkResult, Dict[str, Any]],
     run_dir: RunDir,
+    require_patch_handle: bool = False,
 ) -> None:
-    """Assert ``result`` is a schema-valid, non-self-certifying WorkResult."""
+    """Assert ``result`` is a schema-valid, non-self-certifying WorkResult.
+
+    When ``require_patch_handle`` is true, require at least one artifact handle
+    before an EXECUTE caller can index or apply the proposed patch.
+    """
     d = result.to_dict() if isinstance(result, WorkResult) else dict(result)
 
     # 1. No self-certification anywhere.
@@ -46,6 +51,8 @@ def assert_workresult_contract(
     # 3. Artifact handles resolve inside the run.
     handles = d.get("artifact_handles", [])
     assert isinstance(handles, list), "artifact_handles must be a list"
+    if require_patch_handle:
+        assert handles, "EXECUTE result must include a patch artifact handle"
     for h in handles:
         try:
             handle = ArtifactHandle.from_str(h) if isinstance(h, str) else h
@@ -54,7 +61,9 @@ def assert_workresult_contract(
             raise AssertionError(f"artifact handle invalid or does not resolve: {exc}")
 
     # 4. Evidence proposals are well-formed (and carry no self-certification).
-    for ev in d.get("evidence_proposals", []):
+    evidence_proposals = d.get("evidence_proposals", [])
+    assert isinstance(evidence_proposals, list), "evidence_proposals must be a list"
+    for ev in evidence_proposals:
         assert isinstance(ev, dict), "evidence_proposal must be a dict"
         assert ev.get("claim_id"), "evidence_proposal missing claim_id"
         # Defense-in-depth: no forbidden self-certification key ANYWHERE in the

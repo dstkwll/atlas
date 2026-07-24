@@ -38,6 +38,8 @@ class ArtifactHandle:
 
     @classmethod
     def from_str(cls, s: str) -> "ArtifactHandle":
+        if not isinstance(s, str):
+            raise ValueError(f"artifact handle must be a string: {s!r}")
         if not s.startswith(_HANDLE_PREFIX):
             raise ValueError(f"not an artifact handle: {s!r}")
         raw = s[len(_HANDLE_PREFIX):]

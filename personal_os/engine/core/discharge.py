@@ -85,7 +85,7 @@ def discharge(
         contract=dict(node.done_contract),
     )
     result = worker.execute(request)
-    assert_workresult_contract(result, run_dir)
+    assert_workresult_contract(result, run_dir, require_patch_handle=True)
 
     # 3. Apply the proposed patch onto the staged tree (wall re-contains it).
     patch_handle = result.artifact_handles[0]

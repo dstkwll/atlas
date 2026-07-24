@@ -30,6 +30,7 @@ from personal_os.engine.contract import ENGINE_SCHEMA_VERSION
 from personal_os.engine.contract.enums import FailureClass, ValidationStrength
 from personal_os.engine.contract.receipt import Receipt
 from personal_os.engine.contract.run_dir import ArtifactHandle, RunDir
+from personal_os.engine.core.contract_compiler import LEAF_CONTRACT_FIELDS
 
 _VALID_FAILURE_CLASSES = {f.name for f in FailureClass}
 
@@ -85,17 +86,19 @@ class AdmissibilityValidator:
             self._require_resolves(run_dir, rec.get("log_handle"), reasons,
                                    "command record log_handle")
 
-        # 3. Candidate failures carry a valid FailureClass + a locator.
-        if not proposal.get("candidate_failures"):
+        # 3. Candidate failures are a non-empty list of well-formed records.
+        candidates = proposal.get("candidate_failures")
+        if not isinstance(candidates, list) or not candidates:
             reasons.append("missing candidate_failures")
-        for cand in _as_list(proposal.get("candidate_failures")):
+        for cand in _as_list(candidates):
             if not isinstance(cand, dict):
                 reasons.append("candidate failure is not a dict")
                 continue
             if cand.get("failure_class") not in _VALID_FAILURE_CLASSES:
                 reasons.append(f"invalid failure_class: {cand.get('failure_class')!r}")
-            if not cand.get("locator"):
-                reasons.append("candidate failure missing locator")
+            locator = cand.get("locator")
+            if not isinstance(locator, str) or not locator:
+                reasons.append("candidate failure missing/invalid locator")
 
         # 4. Children trace to the parent.
         for child in _as_list(proposal.get("children")):
@@ -112,6 +115,19 @@ class AdmissibilityValidator:
             reasons.append("missing coverage_map")
         if "residue" not in proposal:
             reasons.append("missing residue")
+
+        # 6. The execution scaffold must contain every compiler input except
+        # target, which Core deliberately derives from the selected failure.
+        execution_contract = proposal.get("execution_contract")
+        if not isinstance(execution_contract, dict):
+            reasons.append("missing/invalid execution_contract")
+        else:
+            required = set(LEAF_CONTRACT_FIELDS) - {"target"}
+            missing = required - set(execution_contract)
+            if missing:
+                reasons.append(
+                    f"execution_contract missing field(s): {sorted(missing)}"
+                )
 
         passed = not reasons
 

@@ -9,6 +9,8 @@ and rebuilds a ``LifecycleProjection`` (node_id -> status + active_run_id).
 from __future__ import annotations
 
 import json
+import os
+import stat
 
 import pytest
 
@@ -115,15 +117,17 @@ def test_first_append_creates_durable_replayable_log(tmp_path, monkeypatch):
     """The first append fsyncs the directory entry created by O_EXCL."""
     path = tmp_path / "fresh" / "events.jsonl"
     fsynced_parents = []
-    real_fsync_parent = Journal._fsync_parent_dir
+    real_fsync_parent = Journal._fsync_parent_dir_strict
 
     def recording_fsync(parent):
         fsynced_parents.append(parent)
         real_fsync_parent(parent)
 
-    monkeypatch.setattr(Journal, "_fsync_parent_dir", staticmethod(recording_fsync))
+    monkeypatch.setattr(
+        Journal, "_fsync_parent_dir_strict", staticmethod(recording_fsync),
+    )
     journal = Journal(str(path), run_id="fresh-run")
-    fsynced_parents.clear()  # Ignore directory creation durability in __init__.
+    fsynced_parents.clear()  # Ignore directory preparation in __init__.
     journal.append(
         EventType.NODE_CREATED,
         node_id="fresh-node",
@@ -138,3 +142,31 @@ def test_first_append_creates_durable_replayable_log(tmp_path, monkeypatch):
 def test_unknown_event_type_rejected():
     with pytest.raises(ValueError):
         EventType("NOT_A_TYPE")
+
+
+def test_replay_skips_valid_json_with_wrong_record_shape(tmp_path):
+    path = tmp_path / "events.jsonl"
+    path.write_text("[]\n")
+
+    projection = replay(str(path))
+
+    assert projection.event_count == 0
+    assert projection.node_status == {}
+
+
+def test_first_append_propagates_parent_directory_fsync_failure(
+    tmp_path, monkeypatch,
+):
+    path = tmp_path / "fresh" / "events.jsonl"
+    real_fsync = os.fsync
+
+    def fail_directory_fsync(fd):
+        if stat.S_ISDIR(os.fstat(fd).st_mode):
+            raise OSError("directory fsync failed")
+        return real_fsync(fd)
+
+    monkeypatch.setattr(os, "fsync", fail_directory_fsync)
+    journal = Journal(str(path), run_id="run-1")
+
+    with pytest.raises(OSError, match="directory fsync failed"):
+        journal.append(EventType.NODE_CREATED, node_id="n1", payload={})

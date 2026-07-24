@@ -17,6 +17,8 @@ from __future__ import annotations
 import json
 import os
 
+import pytest
+
 from personal_os.engine.adapters.fake_worker import FakeWorker
 from personal_os.engine.contract.enums import NodeStatus, ValidationStrength
 from personal_os.engine.contract.journal import EventType, Journal, replay
@@ -50,6 +52,14 @@ class _BadFakeWorker:
         h = self._rd.put_artifact(json.dumps(payload, sort_keys=True).encode())
         return WorkResult(status="ok", artifact_handles=[h],
                           evidence_proposals=[{"claim_id": "bad"}], usage={}, failure=None)
+
+
+class _EmptyHandleWorker:
+    """Returns an EXECUTE result with no proposed patch handle."""
+
+    def execute(self, request):
+        return WorkResult(status="ok", artifact_handles=[],
+                          evidence_proposals=[], usage={}, failure=None)
 
 
 def test_discharge_hard_leaf_end_to_end(tmp_path):
@@ -144,3 +154,12 @@ def test_discharge_request_attempt_follows_journal_count(tmp_path):
     discharge(_node(), worker, HardCliValidator(), rd, journal)
 
     assert worker.attempt == 2
+
+
+def test_discharge_rejects_missing_patch_handle_before_indexing(tmp_path):
+    rd = new_run(str(tmp_path))
+    stage(fixture_root(), rd)
+    journal = Journal(rd.events_path, run_id=rd.run_id)
+
+    with pytest.raises(AssertionError):
+        discharge(_node(), _EmptyHandleWorker(), HardCliValidator(), rd, journal)

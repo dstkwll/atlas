@@ -64,17 +64,23 @@ class Journal:
 
     @staticmethod
     def _fsync_parent_dir(parent: str) -> None:
+        """Best-effort parent fsync for directory preparation in ``__init__``."""
+        try:
+            Journal._fsync_parent_dir_strict(parent)
+        except OSError:
+            # Some filesystems disallow directory fsync during preparation.
+            pass
+
+    @staticmethod
+    def _fsync_parent_dir_strict(parent: str) -> None:
+        """Fsync ``parent``, propagating failures that weaken durability."""
         if not parent:
             return
+        dfd = os.open(parent, os.O_RDONLY)
         try:
-            dfd = os.open(parent, os.O_RDONLY)
-            try:
-                os.fsync(dfd)
-            finally:
-                os.close(dfd)
-        except OSError:
-            # Some filesystems disallow directory fsync; best-effort.
-            pass
+            os.fsync(dfd)
+        finally:
+            os.close(dfd)
 
     def append(
         self,
@@ -120,7 +126,7 @@ class Journal:
             finally:
                 os.close(fd)
             if created:
-                self._fsync_parent_dir(self._parent)
+                self._fsync_parent_dir_strict(self._parent)
         return event_id
 
 
@@ -172,8 +178,10 @@ def replay(path: str) -> LifecycleProjection:
         except json.JSONDecodeError:
             # A torn final line from a crash mid-write: ignore, not fatal.
             continue
+        if not isinstance(ev, dict):
+            continue
         eid = ev.get("event_id")
-        if not eid or eid in seen:
+        if not isinstance(eid, str) or not eid or eid in seen:
             continue
         seen.add(eid)
         proj.event_count += 1
@@ -181,7 +189,13 @@ def replay(path: str) -> LifecycleProjection:
         run_id = ev.get("run_id")
         etype = ev.get("type")
         node_id = ev.get("node_id")
-        payload = ev.get("payload") or {}
+        payload = ev.get("payload")
+        if not isinstance(run_id, str) or not run_id:
+            run_id = None
+        if not isinstance(node_id, str) or not node_id:
+            node_id = None
+        if not isinstance(payload, dict):
+            payload = {}
 
         if run_id and run_id not in started_runs:
             started_runs.append(run_id)

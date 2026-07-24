@@ -103,6 +103,11 @@ def test_from_str_accepts_valid_sha256():
     assert ArtifactHandle.from_str(good).id == "a" * 64
 
 
+def test_from_str_rejects_non_string_with_value_error():
+    with pytest.raises(ValueError):
+        ArtifactHandle.from_str(1)
+
+
 def test_put_artifact_yields_valid_hex_handle(tmp_path):
     rd = new_run(str(tmp_path))
     h = rd.put_artifact(b"x")

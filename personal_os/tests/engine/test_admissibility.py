@@ -34,6 +34,12 @@ def _wellformed_proposal(rd):
         ],
         "coverage_map": {"import_bug": "child-1"},
         "residue": ["may be other latent failures"],
+        "execution_contract": {
+            "objective": "make brokencli reproducibly runnable",
+            "install_cmd": "pip install --no-index --no-build-isolation .",
+            "run_cmd": "python -m brokencli.cli hello 8",
+            "test_cmd": "python -m unittest discover -p test_*.py",
+        },
     }
 
 
@@ -134,4 +140,37 @@ def test_non_string_handle_does_not_crash(tmp_path):
 def test_non_dict_proposal_does_not_crash(tmp_path):
     rd = new_run(str(tmp_path))
     receipt = AdmissibilityValidator().validate(rd, node=None, config={"proposal": "nope"})
+    assert receipt.passed is False
+
+
+def test_missing_execution_contract_fails_closed(tmp_path):
+    rd = new_run(str(tmp_path))
+    proposal = _wellformed_proposal(rd)
+    del proposal["execution_contract"]
+    receipt = AdmissibilityValidator().validate(
+        rd, node=None, config={"proposal": proposal},
+    )
+    assert receipt.passed is False
+
+
+def test_candidate_failures_wrong_collection_shape_fails_closed(tmp_path):
+    rd = new_run(str(tmp_path))
+    proposal = _wellformed_proposal(rd)
+    proposal["candidate_failures"] = {
+        "failure_class": "CLEAN_INSTALL_BLOCKER",
+        "locator": "brokencli/cli.py",
+    }
+    receipt = AdmissibilityValidator().validate(
+        rd, node=None, config={"proposal": proposal},
+    )
+    assert receipt.passed is False
+
+
+def test_non_dict_candidate_failure_fails_closed(tmp_path):
+    rd = new_run(str(tmp_path))
+    proposal = _wellformed_proposal(rd)
+    proposal["candidate_failures"] = ["not-a-candidate"]
+    receipt = AdmissibilityValidator().validate(
+        rd, node=None, config={"proposal": proposal},
+    )
     assert receipt.passed is False

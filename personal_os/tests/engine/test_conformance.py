@@ -89,3 +89,26 @@ def test_normal_result_with_nested_non_certification_payload_passes(tmp_path):
     )
 
     assert_workresult_contract(valid, rd)
+
+
+def test_non_list_evidence_proposals_fails_with_assertion(tmp_path):
+    rd = new_run(str(tmp_path))
+    malformed = {
+        "status": "ok",
+        "artifact_handles": [],
+        "evidence_proposals": None,
+        "usage": {},
+        "failure": None,
+    }
+    with pytest.raises(AssertionError):
+        assert_workresult_contract(malformed, rd)
+
+
+def test_execute_result_requires_at_least_one_patch_handle(tmp_path):
+    rd = new_run(str(tmp_path))
+    result = WorkResult(
+        status="ok", artifact_handles=[], evidence_proposals=[],
+        usage={}, failure=None,
+    )
+    with pytest.raises(AssertionError):
+        assert_workresult_contract(result, rd, require_patch_handle=True)

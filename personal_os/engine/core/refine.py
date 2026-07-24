@@ -104,16 +104,44 @@ def refine(node, worker, run_dir, journal, attempt: int = 1) -> "RefineResult":
          "objective": "inspect project + gather clean-run evidence"},
     ]
 
+    def block_malformed_proposal() -> "RefineResult":
+        """Fail closed if malformed data slips past the validator boundary."""
+        journal.append(
+            EventType.NODE_STATUS,
+            node_id=node.id,
+            payload={
+                "status": NodeStatus.BLOCKED.value,
+                "rationale": "malformed_admitted_refine_proposal",
+            },
+        )
+        return RefineResult(admissible=False, children=[], receipt=receipt)
+
     if receipt.passed:
-        chosen = select_failure(proposal.get("candidate_failures", []))
+        candidates = proposal.get("candidate_failures")
+        execution_contract = proposal.get("execution_contract")
+        if (
+            not isinstance(candidates, list)
+            or not candidates
+            or not all(isinstance(candidate, dict) for candidate in candidates)
+            or not isinstance(execution_contract, dict)
+        ):
+            return block_malformed_proposal()
+
+        try:
+            chosen = select_failure(candidates)
+            locator = chosen.get("locator")
+            if not isinstance(locator, str) or not locator:
+                return block_malformed_proposal()
+            contract_fields = dict(execution_contract)
+            contract_fields["target"] = locator
+            exec_contract = compile_leaf_contract(contract_fields)
+        except (KeyError, TypeError, ValueError):
+            return block_malformed_proposal()
         # Compile the execution child's contract FROM the selected evidenced
         # failure: the failure's run-relative locator BECOMES the contract
         # target (derived, never lifted from a preselected target). The refiner
         # supplies the command scaffold (install/run/test) as evidence; Core
         # binds the target to what selection actually chose.
-        contract_fields = dict(proposal["execution_contract"])
-        contract_fields["target"] = chosen["locator"]
-        exec_contract = compile_leaf_contract(contract_fields)
         children.append({
             "id": f"{node.id}-exec", "parent_id": node.id, "role": "execution",
             "objective": exec_contract["objective"],

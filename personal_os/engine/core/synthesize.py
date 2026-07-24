@@ -145,7 +145,7 @@ def _load_verified_receipt(run_dir: RunDir, receipt_handle: str) -> Optional[dic
     the F1 escape) and content-address checks the bytes. Returns the parsed
     receipt dict, or ``None`` on any failure (missing/tampered/malformed).
     """
-    if not receipt_handle:
+    if not isinstance(receipt_handle, str) or not receipt_handle:
         return None
     try:
         handle = ArtifactHandle.from_str(receipt_handle)
