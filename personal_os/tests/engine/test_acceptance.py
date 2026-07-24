@@ -58,12 +58,13 @@ def test_done_has_exactly_one_writer_in_the_codebase():
             path = os.path.join(root, fn)
             with open(path) as f:
                 text = f.read()
-            # An assignment/status transition to DONE (not the enum definition,
-            # not a docstring/comment mention).
+            # Any construction of the DONE status that gets assigned/returned:
+            # covers `status = NodeStatus.DONE`, `NodeStatus("done")`, and
+            # `replace(..., status=NodeStatus.DONE)`. Semantic, not just one
+            # pattern (P3 hardening).
             for m in re.finditer(r"status\s*=\s*NodeStatus\.DONE", text):
                 writers.append(path)
-            for m in re.finditer(r"NodeStatus\.DONE\b", text):
-                # allow: enum def (enums.py), acceptance.py writer, docstrings.
-                pass
+            for m in re.finditer(r'NodeStatus\(\s*["\']done["\']\s*\)', text):
+                writers.append(path)
     # The only real status setter is in acceptance.py.
     assert all("acceptance.py" in w for w in writers), writers
