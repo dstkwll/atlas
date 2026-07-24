@@ -90,13 +90,14 @@ class Scheduler:
         result = refine(top, self._refiner, self._rd, self._journal)
 
         if not result.admissible:
-            # No admissible decomposition -> nothing to discharge. Budget/depth
-            # decide FAILED vs BLOCKED; v0 marks BLOCKED (no stronger refinement).
-            top_status = NodeStatus.BLOCKED
-            # If depth budget is already spent, it's a hard FAIL instead.
-            if int(top.provenance.get("depth", 0)) >= top.budget.max_depth - 0 and \
-                    top.budget.max_depth <= 1:
+            # No admissible decomposition -> nothing to discharge. If the depth
+            # budget is exhausted (can't refine deeper), it's a hard FAILED;
+            # otherwise BLOCKED (no stronger refinement appeared).
+            depth = int(top.provenance.get("depth", 0))
+            if depth >= top.budget.max_depth - 1:
                 top_status = NodeStatus.FAILED
+            else:
+                top_status = NodeStatus.BLOCKED
             self._set(top.id, top_status)
             return top_status
 
@@ -216,7 +217,17 @@ def _find_top(proj) -> str:
 
 
 def _reverify_receipt(run_dir: RunDir, proj, node_id: str) -> bool:
-    """Cheaply re-verify a node's receipt: artifact present + hash unchanged."""
+    """Cheaply re-verify a node's receipt: blob + every referenced artifact.
+
+    Re-hashes (a) the receipt blob itself and (b) EVERY artifact the receipt
+    references in ``artifact_hashes`` (captured stdout/stderr/patch). All must be
+    present and content-address to their recorded hash. This is the spec's
+    "re-hash the receipted artifacts" — one level deeper than the blob alone, so
+    losing a referenced artifact (even with the receipt intact) trips re-verify.
+    """
+    import hashlib
+    import json as _json
+
     receipts = proj.receipts.get(node_id, [])
     if not receipts:
         return False
@@ -224,10 +235,24 @@ def _reverify_receipt(run_dir: RunDir, proj, node_id: str) -> bool:
     if not handle_str:
         return False
     sha = handle_str.split(":", 1)[1]
-    path = os.path.join(run_dir.artifacts_dir, sha)
-    if not os.path.exists(path):
+    blob_path = os.path.join(run_dir.artifacts_dir, sha)
+    if not os.path.exists(blob_path):
         return False
-    import hashlib
-    with open(path, "rb") as f:
-        actual = hashlib.sha256(f.read()).hexdigest()
-    return actual == sha
+    with open(blob_path, "rb") as f:
+        blob = f.read()
+    if hashlib.sha256(blob).hexdigest() != sha:
+        return False
+
+    # Re-hash every artifact the receipt references.
+    try:
+        receipt = _json.loads(blob.decode("utf-8"))
+    except (ValueError, UnicodeDecodeError):
+        return False
+    for ref_handle, ref_sha in receipt.get("artifact_hashes", {}).items():
+        ref_path = os.path.join(run_dir.artifacts_dir, ref_sha)
+        if not os.path.exists(ref_path):
+            return False
+        with open(ref_path, "rb") as f:
+            if hashlib.sha256(f.read()).hexdigest() != ref_sha:
+                return False
+    return True

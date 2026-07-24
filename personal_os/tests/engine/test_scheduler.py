@@ -103,7 +103,7 @@ def test_budget_exhausted_branch_reaches_failed(tmp_path):
         hard_validator=HardCliValidator(),
     )
     outcome = sched.run(_top(budget=Budget(max_depth=1, max_children=2, max_attempts=1)))
-    assert outcome.top_status in (NodeStatus.FAILED, NodeStatus.BLOCKED)
+    assert outcome.top_status is NodeStatus.FAILED
 
 
 def test_run_is_journaled(tmp_path):

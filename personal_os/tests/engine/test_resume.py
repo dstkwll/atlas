@@ -89,6 +89,31 @@ def test_resume_deleted_artifact_blocks_not_stale_done(tmp_path):
     assert proj2.node_status[exec_id] == NodeStatus.BLOCKED.value
 
 
+def test_resume_deleted_referenced_artifact_blocks(tmp_path):
+    # P2-3: even if the receipt BLOB is intact, deleting an artifact the receipt
+    # REFERENCES (a captured stdout/stderr/patch in receipt.artifact_hashes)
+    # must trip re-verify -> BLOCKED (not a stale success).
+    rd = new_run(str(tmp_path))
+    stage(fixture_root(), rd)
+    outcome0 = _run_once(rd)
+    exec_id = [n for n in outcome0.node_statuses if n.endswith("-exec")][0]
+
+    proj = replay(rd.events_path)
+    receipt_handle = proj.receipts[exec_id][0]["receipt_handle"]
+    sha = receipt_handle.split(":", 1)[1]
+    # Read the receipt JSON, pick a REFERENCED artifact hash, delete THAT (leave
+    # the receipt blob itself intact).
+    with open(os.path.join(rd.artifacts_dir, sha)) as f:
+        receipt = json.load(f)
+    referenced = list(receipt["artifact_hashes"].values())
+    assert referenced
+    victim = referenced[0]
+    os.remove(os.path.join(rd.artifacts_dir, victim))
+
+    outcome = resume(rd, HardCliValidator())
+    assert outcome.node_statuses[exec_id] is NodeStatus.BLOCKED
+
+
 def test_resume_does_not_consume_attempts(tmp_path):
     rd = new_run(str(tmp_path))
     stage(fixture_root(), rd)
