@@ -6,6 +6,6 @@ opaque artifact handles (never filesystem paths). The engine is never itself
 an agent: it decides control flow from *validated* data; LLMs are edge
 functions whose output is untrusted until Core validates it.
 
-See ``~/Documents/Stockwell/Personal/wiki/projects/goal-engine/design.md`` for
-the north-star architecture and ``decisions.md`` for the locked decisions.
+See the project's design + decisions notes (the north-star architecture and the
+locked decisions) for the full spec.
 """
