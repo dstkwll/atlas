@@ -108,3 +108,16 @@ def test_validator_internal_error_fails_closed_to_receipt(tmp_path):
     assert receipt.ran is True
     assert receipt.passed is False
     assert receipt.validator_id == "hard_cli"
+
+
+def test_bad_timeout_config_fails_closed_not_raises(tmp_path):
+    # F6/sol-5: a non-integer timeout_s (parsed BEFORE the old try block) must
+    # still produce a ran=True, passed=False receipt, not propagate ValueError.
+    rd = new_run(str(tmp_path))
+    stage(fixture_root(), rd)
+    v = HardCliValidator()
+    receipt = v.validate(rd, node=None, config={"timeout_s": "not-an-int"})
+    assert receipt is not None
+    assert receipt.ran is True
+    assert receipt.passed is False
+    assert receipt.validator_id == "hard_cli"

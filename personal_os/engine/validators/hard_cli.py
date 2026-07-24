@@ -83,27 +83,36 @@ class HardCliValidator:
         semantics deterministically).
         """
         config = config or {}
-        timeout_s = int(config.get("timeout_s", _DEFAULT_TIMEOUT))
-
         run_dir = workspace
-        staged = run_dir.staging_dir
-        venv_dir = os.path.join(run_dir.venv_dir, "hard_cli")
-        py = os.path.join(venv_dir, "bin", "python")
-        pip = os.path.join(venv_dir, "bin", "pip")
 
-        steps = [
-            ("venv", [sys.executable, "-m", "venv", venv_dir], os.getcwd()),
-            ("install", [pip, "install", "--no-index", "--no-build-isolation", staged], staged),
-            ("run", [py, "-m", "brokencli.cli", "hello", "8"], staged),
-            ("test", [py, "-m", "unittest", "discover", "-p", "test_*.py"], staged),
-        ]
-
+        # F6: initialize receipt accumulators FIRST, then do ALL fallible work
+        # (config parse, path construction, step build, execution) inside the
+        # guard — so even a bad timeout_s or path error mints a failed receipt
+        # rather than propagating (sol-5 / invariant 4).
         commands: List[str] = []
         exit_codes: List[int] = []
         artifact_hashes: Dict[str, str] = {}
         passed = True
+        workspace_id = ""
 
         try:
+            raw_timeout = config.get("timeout_s", _DEFAULT_TIMEOUT)
+            timeout_s = int(raw_timeout)
+            if timeout_s < 0:
+                raise ValueError(f"timeout_s must be >= 0, got {raw_timeout!r}")
+
+            staged = run_dir.staging_dir
+            venv_dir = os.path.join(run_dir.venv_dir, "hard_cli")
+            py = os.path.join(venv_dir, "bin", "python")
+            pip = os.path.join(venv_dir, "bin", "pip")
+
+            steps = [
+                ("venv", [sys.executable, "-m", "venv", venv_dir], os.getcwd()),
+                ("install", [pip, "install", "--no-index", "--no-build-isolation", staged], staged),
+                ("run", [py, "-m", "brokencli.cli", "hello", "8"], staged),
+                ("test", [py, "-m", "unittest", "discover", "-p", "test_*.py"], staged),
+            ]
+
             for label, cmd, cwd in steps:
                 commands.append(" ".join(cmd))
                 output, code = self._run_step(cmd, cwd, timeout_s)
@@ -117,7 +126,7 @@ class HardCliValidator:
             # workspace_id is the deterministic hash of the staged tree.
             workspace_id = Workspace(staged).id
         except Exception as exc:  # noqa: BLE001 - fail closed to a receipt
-            # ANY validator-internal error (OSError, hashing failure, etc.)
+            # ANY validator-internal error (OSError, bad config, hashing, etc.)
             # must still mint a ran=True, passed=False receipt — never a silent
             # None and never a propagated raw exception (invariant 4 / Task 1.4).
             try:
@@ -164,23 +173,51 @@ class HardCliValidator:
     def _run_step(cmd: List[str], cwd: str, timeout_s: int):
         """Run one subprocess with a hard timeout; return (combined_output, code).
 
-        A timeout is reported as exit code 124 with the partial output (never a
-        silent None). A missing executable is 127.
+        F7: the child is started in its OWN process group/session
+        (``start_new_session=True``); on timeout the ENTIRE group is killed, so
+        grandchildren spawned by pip/build/test can't survive and mutate the
+        staging/venv after a timeout receipt is minted. Output is captured as
+        BYTES and decoded explicitly as UTF-8 with replacement (locale-default
+        text mode can raise on undecodable output and lose the partial log).
+
+        A timeout is exit code 124 with the partial output; a missing
+        executable is 127. Never returns a silent None.
         """
+        import signal
+
         try:
-            proc = subprocess.run(
+            proc = subprocess.Popen(
                 cmd,
                 cwd=cwd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
-                timeout=timeout_s,
-                text=True,
+                start_new_session=True,  # new process group for group-kill
             )
-            return (proc.stdout or ""), proc.returncode
-        except subprocess.TimeoutExpired as exc:
-            partial = exc.output or ""
-            if isinstance(partial, bytes):
-                partial = partial.decode("utf-8", "replace")
-            return partial + f"\n[TIMEOUT after {timeout_s}s]", 124
         except FileNotFoundError as exc:
             return f"[missing executable: {exc}]", 127
+
+        try:
+            out_bytes, _ = proc.communicate(timeout=timeout_s)
+            text = (out_bytes or b"").decode("utf-8", "replace")
+            return text, proc.returncode
+        except subprocess.TimeoutExpired:
+            # Kill the WHOLE process group (child + any grandchildren).
+            HardCliValidator._kill_group(proc, signal)
+            try:
+                out_bytes, _ = proc.communicate(timeout=10)
+            except Exception:  # pragma: no cover - best effort drain
+                out_bytes = b""
+            text = (out_bytes or b"").decode("utf-8", "replace")
+            return text + f"\n[TIMEOUT after {timeout_s}s]", 124
+
+    @staticmethod
+    def _kill_group(proc, signal_mod) -> None:
+        """Best-effort kill of the child's entire process group."""
+        try:
+            pgid = os.getpgid(proc.pid)
+            os.killpg(pgid, signal_mod.SIGKILL)
+        except (ProcessLookupError, OSError, AttributeError):
+            try:
+                proc.kill()
+            except Exception:  # pragma: no cover - last-ditch
+                pass
