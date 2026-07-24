@@ -62,9 +62,42 @@ def apply_patch(run_dir: RunDir, patch_handle: ArtifactHandle) -> str:
     # resolve() fails closed on absolute / .. / symlink escape (invariant 12).
     dest = ws.resolve(target)
 
-    os.makedirs(os.path.dirname(dest), exist_ok=True)
-    with open(dest, "w") as f:
-        f.write(content)
-        f.flush()
-        os.fsync(f.fileno())
+    # F2 (TOCTOU): resolve() validated a real path, but a concurrent worker
+    # descendant could swap a component for an outward symlink before the write.
+    # Defend by (a) re-confirming no path component is a symlink right now, and
+    # (b) opening the LEAF with O_NOFOLLOW|O_CREAT|O_EXCL-or-truncate so the
+    # kernel itself refuses to follow a symlink at the target. The write can
+    # never land outside staging even under a racing symlink swap.
+    staging_root = os.path.realpath(run_dir.staging_dir)
+    parent = os.path.dirname(dest)
+    os.makedirs(parent, exist_ok=True)
+
+    # Re-verify the parent (post-mkdir) still resolves inside staging.
+    real_parent = os.path.realpath(parent)
+    if real_parent != staging_root and not real_parent.startswith(staging_root + os.sep):
+        raise ValueError(f"patch parent escapes staging root: {target!r}")
+
+    flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC | getattr(os, "O_NOFOLLOW", 0)
+    data = content.encode("utf-8")
+    try:
+        fd = os.open(dest, flags, 0o644)
+    except OSError as exc:
+        # O_NOFOLLOW raises ELOOP if the leaf is a symlink — a TOCTOU attempt.
+        raise ValueError(f"refusing to write through a symlink target: {target!r} ({exc})")
+    try:
+        # Final guard: the opened fd must be a regular file inside staging.
+        st = os.fstat(fd)
+        import stat as _stat
+        if not _stat.S_ISREG(st.st_mode):
+            raise ValueError(f"patch target is not a regular file: {target!r}")
+        view = memoryview(data)
+        total = 0
+        while total < len(data):
+            written = os.write(fd, view[total:])
+            if written <= 0:
+                raise OSError("patch write made no progress")
+            total += written
+        os.fsync(fd)
+    finally:
+        os.close(fd)
     return dest

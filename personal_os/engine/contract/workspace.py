@@ -62,20 +62,44 @@ class Workspace:
 
     @property
     def id(self) -> str:
-        """Deterministic hash of the canonicalized run-relative structure."""
+        """Deterministic hash of the canonicalized run-relative structure.
+
+        F3: lstat every entry and NEVER follow a symlink. A symlinked file is
+        hashed by its link TEXT (marked as a symlink), not by opening it — so
+        the id can never depend on content outside the containment wall, and an
+        external mutation can't change the workspace id. Directory symlinks are
+        also not traversed (``os.walk(followlinks=False)`` default) and are
+        recorded as symlink entries. Any stat/read race fails closed to a
+        stable sentinel rather than an attested outside-read.
+        """
         h = hashlib.sha256()
         entries = []
-        for dirpath, dirnames, filenames in os.walk(self.root):
+        for dirpath, dirnames, filenames in os.walk(self.root, followlinks=False):
             dirnames.sort()
+            # Record directory symlinks explicitly (walk won't descend them).
+            for name in sorted(dirnames):
+                abs_p = os.path.join(dirpath, name)
+                if os.path.islink(abs_p):
+                    rel = os.path.relpath(abs_p, self.root).replace(os.sep, "/")
+                    try:
+                        target = os.readlink(abs_p)
+                    except OSError:
+                        target = ""
+                    entries.append(f"{rel}:symlink:{target}")
             for name in sorted(filenames):
                 abs_p = os.path.join(dirpath, name)
                 rel = os.path.relpath(abs_p, self.root).replace(os.sep, "/")
                 try:
+                    if os.path.islink(abs_p):
+                        # Do NOT follow: hash the link text, not the target.
+                        target = os.readlink(abs_p)
+                        entries.append(f"{rel}:symlink:{target}")
+                        continue
                     with open(abs_p, "rb") as f:
                         digest = hashlib.sha256(f.read()).hexdigest()
+                    entries.append(f"{rel}:{digest}")
                 except (OSError, IOError):
-                    digest = ""
-                entries.append(f"{rel}:{digest}")
+                    entries.append(f"{rel}:<unreadable>")
         for e in sorted(entries):
             h.update(e.encode("utf-8"))
             h.update(b"\n")

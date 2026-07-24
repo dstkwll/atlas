@@ -74,3 +74,22 @@ def test_fail_closed_if_synced_trips_on_synced_root(tmp_path, monkeypatch):
 def test_fail_closed_if_synced_allows_plain_root(tmp_path):
     # A plain non-synced temp root does not trip the guard.
     fail_closed_if_synced(str(tmp_path))
+
+
+def test_workspace_id_does_not_follow_outward_file_symlink(tmp_path):
+    # F3/sol-8: a symlinked FILE inside the root must not be followed when
+    # hashing — otherwise the workspace id depends on external content and
+    # reads outside the containment wall. Changing the external target must NOT
+    # change the workspace id.
+    root = tmp_path / "ws"
+    root.mkdir()
+    (root / "real.txt").write_text("real")
+    external = tmp_path / "external.txt"
+    external.write_text("v1")
+    os.symlink(str(external), str(root / "link.txt"))
+
+    id_before = Workspace(str(root)).id
+    external.write_text("v2-CHANGED-EXTERNALLY")
+    id_after = Workspace(str(root)).id
+    # The id must be stable against external file mutation (symlink not followed).
+    assert id_before == id_after

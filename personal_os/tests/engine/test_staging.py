@@ -68,3 +68,19 @@ def test_apply_patch_rejects_absolute_target(tmp_path):
     h = _patch_handle(rd, "/etc/evil", "x = 1\n")
     with pytest.raises(ValueError):
         apply_patch(rd, h)
+
+
+def test_apply_patch_refuses_to_write_through_symlink(tmp_path):
+    # F2/sol-2: if the staged target path is (or becomes) a symlink pointing
+    # outside staging, the write must NOT follow it and land outside the wall.
+    rd = new_run(str(tmp_path))
+    staged = stage(fixture_root(), rd)
+    outside = tmp_path / "outside_target.py"
+    # Place a symlink INSIDE staging that points OUT of staging.
+    link_rel = "sneaky.py"
+    os.symlink(str(outside), os.path.join(staged, link_rel))
+    h = _patch_handle(rd, link_rel, "PWNED = 1\n")
+    with pytest.raises(ValueError):
+        apply_patch(rd, h)
+    # The outside target must NOT have been created/written.
+    assert not outside.exists()
