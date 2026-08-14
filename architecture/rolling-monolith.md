@@ -1,19 +1,21 @@
 # 00 — Architecture Governance and Continuity Protocol
 
 **Version introduced:** v0.4  
-**Snapshot date:** 2026-08-12  
-**Purpose:** Preserve architectural integrity as the project evolves across long conversations, different agents/sessions, external reference reviews, and eventually implementation in Git.
+**Snapshot date:** 2026-08-13  
+**Purpose:** Preserve architectural integrity as the project evolves across long conversations, different agents/sessions, external reference reviews, and Git-backed implementation.
 
 ---
 
 ## 1. Canonical-source rule
 
-The conversation is a reasoning workspace. It is **not** the canonical architecture.
+The Atlas repository on GitHub is the canonical artifact authority. `main` is the current canonical architecture state.
+
+Chat remains the primary architecture/design reasoning workspace. It is **not** the canonical architecture.
 
 The precedence order is:
 
 ```text
-versioned architecture documents
+architecture documents on `main`
         ↓
 recorded decisions / learnings
         ↓
@@ -22,11 +24,11 @@ current implementation once it exists
 conversation / model recollection
 ```
 
-When conversational recollection conflicts with the current canonical packet, the packet wins until intentionally amended.
+When conversational recollection or prompt text conflicts with the repository state on `main`, the repository wins until intentionally amended through the governance process.
 
 A consequential architectural answer must never rely on "I think earlier we meant..." when the relevant source documents can be read.
 
-> **Chat is the whiteboard. The versioned design packet is architectural truth. Git will eventually become the permanent artifact authority.**
+> **Chat is the whiteboard. Atlas on GitHub is the artifact authority, and `main` is architectural truth.**
 
 ---
 
@@ -228,7 +230,7 @@ Ask:
 
 ---
 
-## 9. Environment migration health check
+## 9. Environment and artifact-authority health check
 
 At every substantial architecture checkpoint, explicitly assess whether chat remains an appropriate primary design room.
 
@@ -268,17 +270,21 @@ Triggers include:
 - multiple concurrent writers need conflict-safe coordination;
 - artifact authority is ambiguous without repository history.
 
-### Current status at v0.4
+### `GIT_ACTIVE`
+
+Git is in use as the artifact and history authority while chat remains the primary reasoning interface. Architecture mutations occur on branches and are reviewed as diffs before human-controlled merge into `main`.
+
+### Current status
 
 ```text
-CHAT_NATIVE — approaching GIT_READY
+GIT_ACTIVE — chat remains the primary architecture/design reasoning interface
 ```
 
-Reasoning is still architecture-heavy and reconstructable from the canonical packet. However, Git will become increasingly valuable as soon as we begin specifying implementation interfaces/source layout or repeatedly updating the architecture across many files.
+Atlas has completed the artifact-authority transition anticipated by v0.4. The canonical architecture is the repository state on `main`; chat remains the primary venue for exploration, synthesis, and architecture/design reasoning.
 
 ---
 
-## 10. Immediate migration trigger
+## 10. Hidden-intent stop condition
 
 If a consequential discussion reaches:
 
@@ -290,38 +296,23 @@ That is evidence that chat history has become an unsafe hidden dependency.
 
 ---
 
-## 11. Recommended Git transition model
+## 11. Current Git operating model
 
-When migration becomes appropriate, preserve the conversational design room but move artifact authority into a repository:
+Atlas preserves the conversational design room while using Git as artifact authority:
 
 ```text
 Chat / architecture discussion
         ↓
-proposed delta
+explicitly accepted CHANGE
         ↓
 Git branch / patch
         ↓
 diff + architecture consistency review
         ↓
-merge into canonical architecture
+human-controlled merge into `main`
 ```
 
-Suggested eventual layout:
-
-```text
-factory-design/
-├── README.md
-├── architecture/
-│   ├── 00-architecture-governance.md
-│   ├── 01-principles.md
-│   └── ...
-├── references/
-│   └── upstreams.lock.yaml
-├── CHANGELOG.md
-└── implementation/   # only once implementation begins
-```
-
-The exact repository structure is a future implementation decision; the important change is that Git becomes the canonical history while chat remains the reasoning interface.
+Repository mutations are currently performed through coding agents such as Codex or through a manual Git workflow. Changes are made on branches, inspected as diffs, and reviewed through draft pull requests. Agents do not merge autonomously.
 
 ---
 
@@ -329,15 +320,15 @@ The exact repository structure is a future implementation decision; the importan
 
 When asked to continue this project:
 
-1. do not assume conversational memory is sufficient;
-2. locate/read `00-architecture-governance.md` first;
-3. identify the latest canonical snapshot/version;
-4. read the relevant modular docs or rolling monolith before material recommendations;
-5. respect recorded `ACCEPTED`, `DEFERRED`, `REJECTED`, and course-correction history;
-6. treat external repositories as candidate evidence only;
-7. propose deltas rather than rewriting architecture from memory;
-8. report the current migration-health status at substantial checkpoints;
-9. if implementation now materially constrains architecture, recommend moving artifact authority into Git.
+1. follow the root `AGENTS.md` operating contract;
+2. do not assume conversational memory is sufficient;
+3. locate/read `architecture/00-architecture-governance.md` first;
+4. identify the latest canonical snapshot/version;
+5. read the relevant modular docs or rolling monolith before material recommendations;
+6. respect recorded `ACCEPTED`, `DEFERRED`, `REJECTED`, and course-correction history;
+7. treat external repositories as candidate evidence only;
+8. propose deltas rather than rewriting architecture from memory;
+9. use a branch and draft PR for repository mutations, and never merge autonomously.
 
 > **The process is successful when a future agent can forget the conversation and still reconstruct the architecture, its rationale, and the legal way to evolve it from the repository/design packet alone.**
 
@@ -4008,7 +3999,7 @@ The implementation goal is therefore not “build another SSSF” or “install 
 
 **Purpose:** Preserve not only what the design currently says, but **how and why it changed**. This is intended to protect the project from recency bias, repeated rediscovery, and future agents mistaking superseded ideas for current commitments.
 
-**Snapshot date:** 2026-08-12
+**Snapshot date:** 2026-08-13
 
 ---
 
@@ -4509,11 +4500,31 @@ GIT_REQUIRED
 
 At v0.4 the project is **CHAT_NATIVE, approaching GIT_READY**. The transition should be driven by implementation/diff/concurrency needs rather than arbitrary conversation length.
 
+This historical status is superseded by L-009.
+
 ### Course-correction rule
 
 Future snapshots should never be regenerated wholesale from remembered conversation. They are created from the current canonical snapshot plus accepted deltas.
 
 This turns context compression from a potential architecture-loss event into a recoverable inconvenience: future agents are expected to re-read the canonical packet.
+
+---
+
+## L-009 — Git is now the artifact authority; agent instructions are shared repository state
+
+### Transition
+
+Atlas has completed the Git-authority transition anticipated by v0.4. The GitHub repository is now the canonical artifact authority, and `main` is the current canonical architecture state. Chat remains the primary architecture/design reasoning room.
+
+### Operating consequence
+
+Repository mutations are performed through coding agents such as Codex or a manual Git workflow, reviewed as branch diffs through draft pull requests, and merged only under human control.
+
+The root `AGENTS.md` is the shared operating contract for architecture and coding agents. Tool-specific files should point to that contract rather than creating competing instruction sets.
+
+### Standing result
+
+Future agents must ground material work in repository state, implement only explicitly accepted architecture changes, edit modular documents surgically before regenerating the rolling monolith, and stop when a request conflicts with current architecture or invariants.
 
 ---
 
@@ -5229,8 +5240,8 @@ Defer:
 
 # 19 — v0.4 Decisions — Architecture Governance and Migration Discipline
 
-**Snapshot date:** 2026-08-12  
-**Relationship to v0.3:** Additive process refinement. v0.4 does not change the core engineering methodology, runtime architecture, or roster/model policy. It defines how those architectures may safely evolve across long conversations and future Git-backed development.
+**Snapshot date:** 2026-08-13  
+**Relationship to v0.3:** Additive process refinement. v0.4 does not change the core engineering methodology, runtime architecture, or roster/model policy. It defines how those architectures may safely evolve across long conversations and Git-backed development.
 
 ## D-039 — Chat is a reasoning workspace, not the canonical architecture
 
@@ -5293,34 +5304,47 @@ Use:
 CHAT_NATIVE
 GIT_READY
 GIT_REQUIRED
+GIT_ACTIVE
 ```
 
 The classification is reassessed at substantial checkpoints.
 
-## D-046 — v0.4 status is `CHAT_NATIVE`, approaching `GIT_READY`
+## D-046 — Original v0.4 status was `CHAT_NATIVE`, approaching `GIT_READY`
 
-Current reasoning remains reconstructable from the packet and is primarily conceptual architecture work.
+At the original v0.4 snapshot, reasoning remained reconstructable from the packet and was primarily conceptual architecture work.
 
-Git should become the canonical artifact authority when implementation begins to constrain architecture, repository diffs/branches materially improve change review, or multiple writers need concurrent access.
+Git was to become the canonical artifact authority when implementation began to constrain architecture, repository diffs/branches materially improved change review, or multiple writers needed concurrent access. D-049 records that this transition has now occurred.
 
 ## D-047 — Hidden conversational intent is a stop condition
 
 If an important question cannot be resolved from canonical artifacts and requires uncertain reconstruction from old chat context, stop evolving that area until the missing intent is recovered and documented.
 
-## D-048 — Git migration does not require abandoning chat as the architecture room
+## D-048 — Git artifact authority does not require abandoning chat as the architecture room
 
-The preferred future model is:
+The operating model is:
 
 ```text
 chat reasoning
-→ proposed delta
+→ explicitly accepted CHANGE
 → Git branch/patch
 → diff/review
-→ canonical merge
+→ human-controlled canonical merge
 ```
 
-Git becomes artifact/history authority; conversational tools remain useful for synthesis and architectural reasoning.
+Git is the artifact/history authority; conversational tools remain useful for synthesis and architectural reasoning.
+
+## D-049 — Atlas on GitHub is now the canonical artifact authority
+
+The transition anticipated by v0.4 has occurred. `main` is the current canonical architecture state, while chat remains the primary architecture/design reasoning interface.
+
+## D-050 — Repository mutations use branch and pull-request review
+
+Coding agents such as Codex or a manual Git workflow may apply explicitly accepted changes on branches. The final diff is reviewed through a draft pull request, and agents never merge autonomously.
+
+## D-051 — `AGENTS.md` is the shared agent operating contract
+
+The repository-root `AGENTS.md` defines the concise shared rules for architecture and coding agents. Tool-specific compatibility files should import or point to it rather than duplicate a competing instruction set.
 
 ## v0.4 north star
 
-> **Preserve the architecture by making its evolution explicit, grounded, versioned, and reconstructable. Use chat for reasoning, canonical documents for truth, and migrate artifact authority into Git when implementation or collaboration makes repository history more reliable than packaged snapshots.**
+> **Preserve the architecture by making its evolution explicit, grounded, versioned, and reconstructable. Use chat for reasoning, `main` for canonical truth, and branches and pull requests for reviewable change.**
