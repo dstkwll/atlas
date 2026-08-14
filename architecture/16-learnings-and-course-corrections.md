@@ -2,7 +2,7 @@
 
 **Purpose:** Preserve not only what the design currently says, but **how and why it changed**. This is intended to protect the project from recency bias, repeated rediscovery, and future agents mistaking superseded ideas for current commitments.
 
-**Snapshot date:** 2026-08-12
+**Snapshot date:** 2026-08-13
 
 ---
 
@@ -503,8 +503,28 @@ GIT_REQUIRED
 
 At v0.4 the project is **CHAT_NATIVE, approaching GIT_READY**. The transition should be driven by implementation/diff/concurrency needs rather than arbitrary conversation length.
 
+This historical status is superseded by L-009.
+
 ### Course-correction rule
 
 Future snapshots should never be regenerated wholesale from remembered conversation. They are created from the current canonical snapshot plus accepted deltas.
 
 This turns context compression from a potential architecture-loss event into a recoverable inconvenience: future agents are expected to re-read the canonical packet.
+
+---
+
+## L-009 — Git is now the artifact authority; agent instructions are shared repository state
+
+### Transition
+
+Atlas has completed the Git-authority transition anticipated by v0.4. The GitHub repository is now the canonical artifact authority, and `main` is the current canonical architecture state. Chat remains the primary architecture/design reasoning room.
+
+### Operating consequence
+
+Repository mutations are performed through coding agents such as Codex or a manual Git workflow, reviewed as branch diffs through draft pull requests, and merged only under human control.
+
+The root `AGENTS.md` is the shared operating contract for architecture and coding agents. Tool-specific files should point to that contract rather than creating competing instruction sets.
+
+### Standing result
+
+Future agents must ground material work in repository state, implement only explicitly accepted architecture changes, edit modular documents surgically before regenerating the rolling monolith, and stop when a request conflicts with current architecture or invariants.
