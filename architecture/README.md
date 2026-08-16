@@ -18,3 +18,9 @@ For material changes:
 4. If accepted, update the modular documents surgically.
 5. Record decisions/course corrections where appropriate.
 6. Regenerate the rolling monolith and run a consistency audit.
+
+## Validate the rolling monolith
+
+Run `python3 tools/check_architecture.py` from the repository root. The validator
+checks that `rolling-monolith.md` exactly matches the numbered canonical
+architecture documents in filename order, including whitespace and newlines.
