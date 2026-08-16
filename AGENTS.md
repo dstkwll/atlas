@@ -14,8 +14,9 @@
 
 ## Validation and delivery
 
-- Work on a branch, inspect the final diff, open a draft PR, and never merge autonomously.
-- Before opening or updating a draft PR, record the validation commands and checks actually performed, their results, required behavior not directly verified, and remaining uncertainty or known limitations.
+- For repository mutations, work on a branch, inspect the final diff, open or update a draft PR, and never merge autonomously.
+- For read-only work such as review, do not create a branch, commit, or PR merely to perform the review. Report findings and verification evidence without modifying the repository.
+- For material work, report the validation commands and checks actually performed, their results, required behavior not directly verified, and remaining uncertainty or known limitations. When repository mutations are involved, record this evidence before opening or updating the draft PR.
 
 ## Architecture routing
 
