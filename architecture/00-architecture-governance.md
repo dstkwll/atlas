@@ -314,6 +314,12 @@ human-controlled merge into `main`
 
 Repository mutations are currently performed through coding agents such as Codex or through a manual Git workflow. Changes are made on branches, inspected as diffs, and reviewed through draft pull requests. Agents do not merge autonomously.
 
+### Agent operating-contract routing
+
+The repository-root `AGENTS.md` defines rules shared by builders, reviewers, and architecture agents. `architecture/AGENTS.md` layers architecture-evolution rules on top of that common contract and points back to this governance protocol rather than duplicating it.
+
+Agents should leave observable evidence by naming the governing files they consulted and the validation they actually performed, including required behavior that was not directly verified. Repository authority does not license silent reconciliation: apparent contradictions among authoritative sources must be reported with their locations unless the task explicitly authorizes resolving them.
+
 ---
 
 ## 12. Instructions for future agents/sessions
@@ -321,13 +327,14 @@ Repository mutations are currently performed through coding agents such as Codex
 When asked to continue this project:
 
 1. follow the root `AGENTS.md` operating contract;
-2. do not assume conversational memory is sufficient;
-3. locate/read `architecture/00-architecture-governance.md` first;
-4. identify the latest canonical snapshot/version;
-5. read the relevant modular docs or rolling monolith before material recommendations;
-6. respect recorded `ACCEPTED`, `DEFERRED`, `REJECTED`, and course-correction history;
-7. treat external repositories as candidate evidence only;
-8. propose deltas rather than rewriting architecture from memory;
-9. use a branch and draft PR for repository mutations, and never merge autonomously.
+2. for architecture work, also follow `architecture/AGENTS.md`;
+3. do not assume conversational memory is sufficient;
+4. locate/read `architecture/00-architecture-governance.md` first;
+5. identify the latest canonical snapshot/version;
+6. read the relevant modular docs or rolling monolith before material recommendations;
+7. respect recorded `ACCEPTED`, `DEFERRED`, `REJECTED`, and course-correction history;
+8. treat external repositories as candidate evidence only;
+9. propose deltas rather than rewriting architecture from memory;
+10. use a branch and draft PR for repository mutations, and never merge autonomously.
 
 > **The process is successful when a future agent can forget the conversation and still reconstruct the architecture, its rationale, and the legal way to evolve it from the repository/design packet alone.**

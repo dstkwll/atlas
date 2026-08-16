@@ -314,6 +314,12 @@ human-controlled merge into `main`
 
 Repository mutations are currently performed through coding agents such as Codex or through a manual Git workflow. Changes are made on branches, inspected as diffs, and reviewed through draft pull requests. Agents do not merge autonomously.
 
+### Agent operating-contract routing
+
+The repository-root `AGENTS.md` defines rules shared by builders, reviewers, and architecture agents. `architecture/AGENTS.md` layers architecture-evolution rules on top of that common contract and points back to this governance protocol rather than duplicating it.
+
+Agents should leave observable evidence by naming the governing files they consulted and the validation they actually performed, including required behavior that was not directly verified. Repository authority does not license silent reconciliation: apparent contradictions among authoritative sources must be reported with their locations unless the task explicitly authorizes resolving them.
+
 ---
 
 ## 12. Instructions for future agents/sessions
@@ -321,14 +327,15 @@ Repository mutations are currently performed through coding agents such as Codex
 When asked to continue this project:
 
 1. follow the root `AGENTS.md` operating contract;
-2. do not assume conversational memory is sufficient;
-3. locate/read `architecture/00-architecture-governance.md` first;
-4. identify the latest canonical snapshot/version;
-5. read the relevant modular docs or rolling monolith before material recommendations;
-6. respect recorded `ACCEPTED`, `DEFERRED`, `REJECTED`, and course-correction history;
-7. treat external repositories as candidate evidence only;
-8. propose deltas rather than rewriting architecture from memory;
-9. use a branch and draft PR for repository mutations, and never merge autonomously.
+2. for architecture work, also follow `architecture/AGENTS.md`;
+3. do not assume conversational memory is sufficient;
+4. locate/read `architecture/00-architecture-governance.md` first;
+5. identify the latest canonical snapshot/version;
+6. read the relevant modular docs or rolling monolith before material recommendations;
+7. respect recorded `ACCEPTED`, `DEFERRED`, `REJECTED`, and course-correction history;
+8. treat external repositories as candidate evidence only;
+9. propose deltas rather than rewriting architecture from memory;
+10. use a branch and draft PR for repository mutations, and never merge autonomously.
 
 > **The process is successful when a future agent can forget the conversation and still reconstruct the architecture, its rationale, and the legal way to evolve it from the repository/design packet alone.**
 
@@ -4520,11 +4527,35 @@ Atlas has completed the Git-authority transition anticipated by v0.4. The GitHub
 
 Repository mutations are performed through coding agents such as Codex or a manual Git workflow, reviewed as branch diffs through draft pull requests, and merged only under human control.
 
-The root `AGENTS.md` is the shared operating contract for architecture and coding agents. Tool-specific files should point to that contract rather than creating competing instruction sets.
+The root `AGENTS.md` is the shared repository-wide operating contract for architecture and coding agents. Architecture-specific evolution rules layer on top through `architecture/AGENTS.md`. Tool-specific files should point to the root contract rather than creating competing instruction sets.
 
 ### Standing result
 
 Future agents must ground material work in repository state, implement only explicitly accepted architecture changes, edit modular documents surgically before regenerating the rolling monolith, and stop when a request conflicts with current architecture or invariants.
+
+---
+
+## L-010 — Calibration Run 001 validated constraint layering and exposed contract-observability gaps
+
+### Evidence scope
+
+Calibration Run 001 was one manual execution-factory simulation. Its results are empirical evidence for refining the process, not proof that every future workflow must have the same shape.
+
+### Observations
+
+- The planning pipeline successfully constrained the implementer; the executor described the work as almost entirely implementation of an already-designed solution.
+- Behavioral, system-design, program-design, and execution-ticket constraints each materially reduced uncertainty.
+- Concrete acceptance tests and delivery checks were valuable, while repeated restatements of closed constraints added less value than one authoritative constraint section.
+- The rolling-monolith separator and absence of a prefix or suffix leaked into implementation because the derived-artifact format lacked an explicit authoritative definition.
+- Some externally observable process behavior was not tested at the actual public boundary, showing that acceptance contracts should be mapped to the appropriate validation boundary.
+- Execution-environment preflight caused more friction than product or design ambiguity.
+- The root agent contract mixed repository-wide execution rules with architecture-document evolution rules.
+
+### Accepted consequence
+
+The root contract now contains shared repository rules, while `architecture/AGENTS.md` contains architecture-specific evolution rules. Agents must name grounding sources, report what validation did and did not establish, and surface contradictions among authoritative sources rather than silently reconciling them.
+
+This refinement preserves the canonical-source rule and architecture governance. It does not establish an "execution first at all costs" mandate. Architecture work may still resolve contradictions, preserve rationale, clarify authority boundaries, record failure modes, and reduce future ambiguity; the existing features-pay-for-seams and current-problem tests remain the controls against speculative architecture.
 
 ---
 
@@ -5344,6 +5375,22 @@ Coding agents such as Codex or a manual Git workflow may apply explicitly accept
 ## D-051 — `AGENTS.md` is the shared agent operating contract
 
 The repository-root `AGENTS.md` defines the concise shared rules for architecture and coding agents. Tool-specific compatibility files should import or point to it rather than duplicate a competing instruction set.
+
+## D-052 — Agent operating contracts are layered by scope
+
+D-051 is refined: the repository-root `AGENTS.md` contains rules shared by builders, reviewers, and architecture agents, while `architecture/AGENTS.md` contains architecture-evolution rules layered on top. Tool-specific compatibility files continue to enter through the root contract rather than duplicating either layer.
+
+## D-053 — Agent grounding and validation evidence must be observable
+
+For material work, agents name the governing repository files they consulted. Before opening or updating a draft PR, they record validation actually performed, results, required behavior not directly verified, and remaining uncertainty or limitations.
+
+Agent reports remain evidence rather than lifecycle authority. This requirement improves traceability; it does not make agent self-certification authoritative.
+
+## D-054 — Repository authority permits explicit dissent, not silent reconciliation
+
+When authoritative repository sources appear to contradict one another, agents report the conflicting files and sections rather than silently choosing or reconciling them. If implementation would violate an approved contract or an approved assumption is false, agents stop, report the evidence and affected contract, and identify the smallest decision requiring reconsideration, using `DESIGN_BLOCKED` where appropriate.
+
+The canonical-source rule remains intact. This decision does not create an "execution first at all costs" mandate or weaken architecture governance; architecture may legitimately be refined to preserve rationale, clarify authority, record failure modes, reduce ambiguity, or resolve an explicitly authorized contradiction.
 
 ## v0.4 north star
 
