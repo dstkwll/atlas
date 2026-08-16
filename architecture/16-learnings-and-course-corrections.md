@@ -523,8 +523,32 @@ Atlas has completed the Git-authority transition anticipated by v0.4. The GitHub
 
 Repository mutations are performed through coding agents such as Codex or a manual Git workflow, reviewed as branch diffs through draft pull requests, and merged only under human control.
 
-The root `AGENTS.md` is the shared operating contract for architecture and coding agents. Tool-specific files should point to that contract rather than creating competing instruction sets.
+The root `AGENTS.md` is the shared repository-wide operating contract for architecture and coding agents. Architecture-specific evolution rules layer on top through `architecture/AGENTS.md`. Tool-specific files should point to the root contract rather than creating competing instruction sets.
 
 ### Standing result
 
 Future agents must ground material work in repository state, implement only explicitly accepted architecture changes, edit modular documents surgically before regenerating the rolling monolith, and stop when a request conflicts with current architecture or invariants.
+
+---
+
+## L-010 — Calibration Run 001 validated constraint layering and exposed contract-observability gaps
+
+### Evidence scope
+
+Calibration Run 001 was one manual execution-factory simulation. Its results are empirical evidence for refining the process, not proof that every future workflow must have the same shape.
+
+### Observations
+
+- The planning pipeline successfully constrained the implementer; the executor described the work as almost entirely implementation of an already-designed solution.
+- Behavioral, system-design, program-design, and execution-ticket constraints each materially reduced uncertainty.
+- Concrete acceptance tests and delivery checks were valuable, while repeated restatements of closed constraints added less value than one authoritative constraint section.
+- The rolling-monolith separator and absence of a prefix or suffix leaked into implementation because the derived-artifact format lacked an explicit authoritative definition.
+- Some externally observable process behavior was not tested at the actual public boundary, showing that acceptance contracts should be mapped to the appropriate validation boundary.
+- Execution-environment preflight caused more friction than product or design ambiguity.
+- The root agent contract mixed repository-wide execution rules with architecture-document evolution rules.
+
+### Accepted consequence
+
+The root contract now contains shared repository rules, while `architecture/AGENTS.md` contains architecture-specific evolution rules. Agents must name grounding sources, report what validation did and did not establish, and surface contradictions among authoritative sources rather than silently reconciling them.
+
+This refinement preserves the canonical-source rule and architecture governance. It does not establish an "execution first at all costs" mandate. Architecture work may still resolve contradictions, preserve rationale, clarify authority boundaries, record failure modes, and reduce future ambiguity; the existing features-pay-for-seams and current-problem tests remain the controls against speculative architecture.

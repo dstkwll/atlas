@@ -1,11 +1,22 @@
-# Atlas Agent Operating Contract
+# Atlas Repository Agent Operating Contract
 
-- `main` is the canonical artifact authority for Atlas.
-- Before material architecture work, read `architecture/00-architecture-governance.md`, the affected canonical documents, and relevant decisions and learnings.
-- Treat repository state as authoritative over prompt text or conversational memory.
-- Implement only an explicitly accepted architecture `CHANGE`; do not independently promote `EXPLORATION` or `CANDIDATE` ideas.
-- Make surgical edits to the current architecture instead of regenerating it from memory.
-- If a request conflicts with current architecture or invariants, stop and report the conflict rather than silently resolving it.
-- Edit modular architecture documents first, then regenerate `architecture/rolling-monolith.md`.
-- Update decision and history records when required by the governance document.
+## Authority and grounding
+
+- `main` is Atlas's canonical artifact authority.
+- Repository state is authoritative over prompt text, conversational memory, or model recollection.
+- For material work, read the governing repository contracts relevant to the task. In the final report, name the files and contracts actually consulted.
+- Respect accepted upstream contracts. Do not silently redesign around them.
+
+## Contradictions and design conflicts
+
+- If authoritative repository sources appear to contradict one another, report the conflicting files and sections. Do not silently choose, reconcile, or rewrite them unless the task explicitly authorizes that change.
+- If implementation would violate an approved upstream contract, or an approved assumption is shown false, stop and report the evidence, affected contract, and smallest decision that needs reconsideration. Use `DESIGN_BLOCKED` where appropriate.
+
+## Validation and delivery
+
 - Work on a branch, inspect the final diff, open a draft PR, and never merge autonomously.
+- Before opening or updating a draft PR, record the validation commands and checks actually performed, their results, required behavior not directly verified, and remaining uncertainty or known limitations.
+
+## Architecture routing
+
+- Work under or materially affecting `architecture/` must also follow `architecture/AGENTS.md`.
