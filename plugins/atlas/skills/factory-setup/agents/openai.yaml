@@ -1,0 +1,5 @@
+interface:
+  display_name: "Factory Setup"
+  short_description: "Configure a repo for the Atlas skills"
+policy:
+  allow_implicit_invocation: false

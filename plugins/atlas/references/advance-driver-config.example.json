@@ -1,0 +1,35 @@
+{
+  "workerLadder": {
+    "orchestrator": { "workerKind": "child-session", "model": "auto", "effort": "high" },
+    "tight-bounded-quick": { "workerKind": "sub-agent", "model": "auto", "effort": "low" },
+    "code-implement": { "workerKind": "child-session", "model": "auto", "effort": "medium" },
+    "design-prose-judgment": { "workerKind": "child-session", "model": "auto", "effort": "high" }
+  },
+  "phaseSkillMap": {
+    "grilling": "grill-with-docs",
+    "wayfinder": "wayfinder",
+    "spec": "to-spec",
+    "tickets": "to-tickets",
+    "implement": "implement",
+    "ship": "internal:ship"
+  },
+  "parallelism": {
+    "policy": "eligible-only",
+    "requireParallelSafe": true,
+    "codeOnly": true,
+    "requireNoHitl": true,
+    "integration": "sequential"
+  },
+  "leash": {
+    "default": "one-step"
+  },
+  "coverage": {
+    "fallback": "soft-advisory"
+  },
+  "receipt": {
+    "destination": "local-topic",
+    "fileName": "ship-receipt.md",
+    "write": "silent-on-green",
+    "prLink": "refresh-after-authorized-create"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "dstkwll",
+  "plugins": [
+    {
+      "name": "atlas",
+      "source": "./plugins/atlas",
+      "description": "Atlas software-factory skills: spec, tickets, implementation, review, and discovery.",
+      "version": "0.1.0"
+    }
+  ]
+}
