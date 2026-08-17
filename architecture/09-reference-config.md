@@ -8,7 +8,7 @@ It reflects the current decision to keep **workflow, governance, execution, envi
 version: 0.2
 
 artifacts:
-  planning_root: .planning
+  planning_root: .planning        # repository-relative, or an absolute path / planning repository
   permanent_docs: docs
   adr_path: docs/adr
   evidence_dir: evidence

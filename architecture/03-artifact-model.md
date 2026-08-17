@@ -3,7 +3,7 @@
 ## Recommended directory layout
 
 ```text
-.planning/
+<planning-root>/
 └── <feature-slug>/
     ├── run.yaml
     ├── 00-state.md
@@ -33,7 +33,30 @@
         └── 001-*.md
 ```
 
-`.planning/` is preferred over `docs/` because these are working engineering artifacts. Durable architectural knowledge may later graduate into `CONTEXT.md`, `docs/adr/`, or permanent documentation.
+## Planning root
+
+`<planning-root>` is resolved from configuration (`artifacts.planning_root`), not fixed by this document. It takes one of two forms:
+
+- **Repository-relative** — the default, `.planning/` inside the repository being changed. `.planning/` is preferred over `docs/` because these are working engineering artifacts. Durable architectural knowledge may later graduate into `CONTEXT.md`, `docs/adr/`, or permanent documentation.
+- **External** — an absolute path or a separate planning repository, shared by many code repositories.
+
+The external form exists because a change is not always confined to one repository. Where an organization has many small repositories rather than a monorepo, a single unit of work commonly spans several, and no one of them is an honest home for the artifacts describing it. Forcing such work into one repository's `.planning/` requires nominating an arbitrary owning repository, which misrepresents the change.
+
+An external planning root is a location with an access model, not merely a path. A root reachable only by its author cannot be referenced by collaborators; a shared planning repository can. Configuration therefore records the root, and no artifact records an absolute path that resolves differently for different readers.
+
+### `repos`
+
+A feature that affects more than one repository declares them. Each affected repository is named in the feature's `run.yaml` and mirrored into `00-state.md` frontmatter, so the question *which planning artifacts touched this repository* is answerable by query against the planning root rather than by search across repositories.
+
+### Consequences of an external root
+
+These are costs, not defects, and are accepted deliberately:
+
+- **Specification and code no longer share a commit.** With a repository-relative root, the approved contract and the change implementing it appear in one history; with an external root they do not. Correlation is by explicit reference, not by construction.
+- **Review loses ambient context.** A reviewer reading a pull request cannot see the contract unless the planning root is resolvable in their environment. Contract review therefore depends on configuration being correct wherever review runs.
+- **Atomicity is lost.** Repository-relative planning gives history, blame, and atomic spec-plus-code commits for free. An external root gives none of these unless it is itself version-controlled.
+
+Where a repository benefits from a permanent local record — a public repository, or one whose readers cannot reach the planning root — a decision may **graduate** into that repository as an ADR under `artifacts.adr_path`. Graduation is a deliberate act producing a durable record, not an automatic mirror of planning state.
 
 ---
 
@@ -53,7 +76,9 @@ Contains:
 - execution policy
 - model roles
 - artifact paths
+- resolved planning root
 - repository baseline
+- affected repositories (`repos`)
 
 Do not rely on changing global config to reconstruct historical behavior.
 
@@ -74,6 +99,10 @@ status: planning
 phase: program-design
 baseline: 89a1c732
 revision: 4
+
+repos:
+  - device-service
+  - job-scheduler
 
 gates:
   spec: approved
