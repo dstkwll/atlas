@@ -1,6 +1,6 @@
 # Advance driver configuration contract
 
-Per-user settings for the guided `/mp:advance` driver. This contract is **pinned ahead
+Per-user settings for the guided `/atlas:advance` driver. This contract is **pinned ahead
 of the driver implementation**: it fixes the schema, keys, and defaults now so the
 behavioral work (judge/drive seam, leash, worker orchestration, terminal ship rung) lands
 against a settled surface. `tests/Test-DriverConfig.ps1` holds the example below to this
@@ -47,7 +47,7 @@ internally through `grilling` or `wayfinder`. Exactly six string entries.
 | `wayfinder` | `wayfinder` |
 | `spec` | `to-spec` |
 | `tickets` | `to-tickets` |
-| `implement` | `implement` |
+| `implement` | `factory-implement` |
 | `ship` | `internal:ship` |
 
 ## `parallelism`

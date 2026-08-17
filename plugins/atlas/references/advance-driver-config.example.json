@@ -10,7 +10,7 @@
     "wayfinder": "wayfinder",
     "spec": "to-spec",
     "tickets": "to-tickets",
-    "implement": "implement",
+    "implement": "factory-implement",
     "ship": "internal:ship"
   },
   "parallelism": {

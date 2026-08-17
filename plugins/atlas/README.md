@@ -43,7 +43,7 @@ marketplace name `dstkwll`, so Codex resolves this plugin as `atlas@dstkwll`.
 | `factory-code-review` | upstream `code-review` |
 | `factory-implement` | upstream `implement` |
 | `factory-research-with-sources` | upstream `research` |
-| `factory-setup` | upstream `setup-matt-pocock-skills` |
+| `setup-atlas` | stub, deliberately unwritten |
 | `grill-with-docs` | upstream |
 | `grilling` | upstream |
 | `improve-codebase-architecture` | upstream |
@@ -53,9 +53,17 @@ marketplace name `dstkwll`, so Codex resolves this plugin as `atlas@dstkwll`.
 | `to-tickets` | upstream + folded overlay |
 | `wayfinder` | upstream |
 
-Four skills carry a `factory-` prefix because their bare names are generic enough to
+Three skills carry a `factory-` prefix because their bare names are generic enough to
 collide on hosts that flatten every skill into one namespace. The rest keep their
 upstream names, and cross-skill references were rewritten to match.
+
+Upstream's `triage` skill is **not** included: it is a maintainer's tool for inbound
+issues and external pull requests filed by other people, which is not how work reaches
+Atlas. Its **role vocabulary is retained** — `needs-triage`, `needs-info`,
+`ready-for-agent`, `ready-for-human`, `wontfix` — because `to-spec` and `to-tickets`
+write those roles onto tickets and `advance` reads them to decide whether a ticket is
+agent-ready or needs a human. Reconciling that vocabulary with Atlas's own ticket states
+belongs with the `advance` repointing work.
 
 ## Known gaps
 
@@ -64,8 +72,10 @@ This is an initial import, not a finished set. Outstanding work:
 - `advance` still resolves its driver config from `~/.copilot/config/mp-advance.json`
   and reads Obsidian vault topic folders. Both need repointing at Atlas's
   `.planning/<feature-slug>/` artifact layout.
-- `factory-setup` still carries upstream's GitHub/GitLab/local tracker branching and
-  the Workbench dev-workflow topic option. It should be trimmed to the Atlas layout.
+- `setup-atlas` is an empty stub. Upstream's `setup-matt-pocock-skills` was not ported:
+  it is built around choosing an external issue tracker and a triage label vocabulary,
+  neither of which Atlas uses, and subtracting those left a shape carrying assumptions
+  from the parts removed. Write it once the artifact layout it configures is settled.
 - Skill-to-stage assignment against `architecture/02-workflow.md` is deliberately not
   attempted here.
 - No installer. Each host reads the tree from its own configured location.

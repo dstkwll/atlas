@@ -1,7 +1,7 @@
 # Lifecycle evidence contract
 
-Runtime source of truth for the MP `/mp:advance` lifecycle judge over Workbench dev-workflow topics.
-`/mp:advance` reads this file before evaluating a transition or terminal ship-readiness
+Runtime source of truth for the MP `/atlas:advance` lifecycle judge over Workbench dev-workflow topics.
+`/atlas:advance` reads this file before evaluating a transition or terminal ship-readiness
 and applies **only** the requested or routed branch.
 
 This contract is versioned. The current `contractVersion` is `1`.
@@ -15,7 +15,7 @@ boundary as `spec`, `tickets`, `implementation`, or `ship`. The transition token
 accepted only as exact, unadvertised compatibility aliases.
 
 The terminal **ship-readiness judge** is implemented as the `internal:ship` target of
-`/mp:advance`. It judges one whole effort in place, writes no judge result, and on a
+`/atlas:advance`. It judges one whole effort in place, writes no judge result, and on a
 green verdict hands off to the separate `ship-receipt.md` persistence step.
 
 Advance is one skill with two halves: a read-only **judge** that produces the verdict and a
@@ -453,7 +453,7 @@ target.
 
 When the file is absent, use the entire documented default object. Absence is valid and never
 creates the file. On an interactive invocation, name the absent configuration before judging and
-offer the pivot as a numbered choice: run `/mp:setup-matt-pocock-skills`, which owns creation
+offer the pivot as a numbered choice: run `/atlas:setup-atlas`, which owns creation
 behind its own confirm-before-write gate, or continue on the documented defaults. Stop for that
 choice; this is a pre-judge exit that renders no board, alongside the numbered topic choice and
 `nothing to advance`. A decline proceeds on the complete defaults with no further prompting for
@@ -533,7 +533,7 @@ Read the acting skill from the selected map entry. Never derive a skill name fro
 the transition name, or a built-in lifecycle table. The one reserved value,
 `internal:ship`, selects the drive's internal terminal ship action instead of a skill. The
 default map therefore resolves grilling, Wayfinder, specification, tickets, implementation,
-and ship to `grill-with-docs`, `wayfinder`, `to-spec`, `to-tickets`, `implement`, and the
+and ship to `grill-with-docs`, `wayfinder`, `to-spec`, `to-tickets`, `factory-implement`, and the
 internal ship action, respectively. User-supplied valid skill values replace those defaults
 without changing the routing algorithm.
 
@@ -1640,7 +1640,7 @@ The `Recommendation` is the one exact-terms next step the board carries in prose
 
 ## Whole-effort ship-readiness vocabulary
 
-Applies to the `/mp:advance` terminal ship-readiness judge. It audits **one whole effort**,
+Applies to the `/atlas:advance` terminal ship-readiness judge. It audits **one whole effort**,
 not a transition, and it is the only live whole-effort judge in this contract. The judge
 writes nothing; a green verdict is followed by the separate ship-receipt persistence step
 below.

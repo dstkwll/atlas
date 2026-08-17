@@ -7,7 +7,7 @@ disable-model-invocation: true
 
 # Advance
 
-**Usage:** `/mp:advance [topic-slug|topic-path] [ticket-number]`
+**Usage:** `/atlas:advance [topic-slug|topic-path] [ticket-number]`
 
 Show where a dev-workflow MP topic stands and what to do next. Advance is one skill with two
 halves: a read-only **judge** that maps evidence to a PASS/BLOCKED verdict, and a **drive**
@@ -31,7 +31,7 @@ Read `~/.copilot/config/mp-advance.json` once and validate the whole object agai
 validate" in the evidence contract before resolving an acting target.
 
 When the file is absent on an interactive call, say so and offer the pivot as a numbered choice:
-run `/mp:setup-matt-pocock-skills` to create it from the documented example, or continue on the
+run `/atlas:setup-atlas` to create it from the documented example, or continue on the
 complete documented defaults that absence validly supplies. Stop for that choice before judging;
 this is a pre-judge exit that renders no board. Advance never creates the file itself.
 

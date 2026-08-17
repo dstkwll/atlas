@@ -1,0 +1,5 @@
+interface:
+  display_name: "Setup Atlas"
+  short_description: "Configure a repository for the Atlas skills"
+policy:
+  allow_implicit_invocation: false
