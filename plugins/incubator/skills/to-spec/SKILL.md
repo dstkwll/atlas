@@ -10,23 +10,26 @@ Compile a decision log into a **behavioural contract**: what must become true, w
 
 This is the last artifact written in the language of the problem. Everything after it — system design, program design, tickets — speaks the language of the solution. It is also where commitment begins: before this, changing course is free.
 
-Someone who will never build the thing must be able to read it and approve it.
+## The outside view
 
-## What may not appear
+Write every line from the **outside view**: what someone observes of the system without knowing how it is built. A requirement holds the outside view when a reader who has never seen the codebase can judge whether it is met.
 
-Class names. File layouts. Method signatures. Internal interfaces. Module structure. Test fixtures, harnesses, commands, or the name of the thing under test.
+> The outside view: "a feed request returns within 200ms at p95"
+> The inside view: "the `FeedCache` returns within 200ms"
 
-The test is not whether a detail is *true* — it is whether a reader must know the implementation to judge the requirement. "Responds within 200ms at p95" is behaviour. "The `FeedCache` returns within 200ms" is structure.
+Both may be true. Only the first can be judged by the person approving it, and only the first survives the implementation being replaced.
+
+When a detail feels necessary, it is usually a Stage 3 or Stage 4 decision arriving early — record it in `<run>/evidence/` and let the design stages own it.
 
 ## Steps
 
 ### 1. Read the decisions
 
-Read `<run>/10-decisions.md`. It is authoritative for what was decided and why — this stage does not re-litigate settled choices, and does not re-interview.
+Read `<run>/10-decisions.md`. It is authoritative for what was decided and why: treat every settled choice as given, and carry its reasoning forward rather than re-deriving it.
 
-Read the code where it helps establish what is currently true and what vocabulary the domain already uses. Implementation findings from that reading inform the requirements but never enter the contract; where they matter to later stages, write them to `<run>/evidence/` instead.
+Read the code where it helps establish what is currently true and what vocabulary the domain already uses — the **Current** half of every requirement comes from there. Keep what you learn about implementation in `<run>/evidence/`, where Stage 3 will want it.
 
-Where no decision log exists, say so and offer `discovery` rather than inventing decisions.
+Where no decision log exists, say so and offer `discovery`.
 
 ### 2. Judge whether the decisions are ready
 
@@ -57,6 +60,8 @@ Every requirement records `derived-from: D-NNN`, naming the decisions it rests o
 
 Identifiers are assigned once and never reused. A retired requirement's identifier stays retired.
 
+Done when **every decision in the log is accounted for** — as a requirement, as an exclusion with its reason, or as an open question. A decision that changed behaviour and appears nowhere is the omission this step exists to catch.
+
 ### 4. State what must never happen
 
 A contract of only positive obligations cannot forbid anything. Ask directly:
@@ -69,7 +74,9 @@ Then walk the edges of the requirements now that they are clear — vague requir
 
 **boundary · adjacency · empty · encoding · ordering · precision · idempotency · concurrency**
 
-Each edge resolves one of three ways: covered by an existing or new requirement, **dismissed with a stated reason**, or recorded as an open question. A dismissal with no reason is not a dismissal.
+Each edge resolves one of three ways: covered by an existing or new requirement, **dismissed with a stated reason**, or recorded as an open question. A dismissal states why the case cannot arise.
+
+Done when every category has been considered against every requirement, and each raised edge carries one of the three resolutions.
 
 ### 5. Classify what remains open
 
@@ -84,19 +91,19 @@ An unclassified open question is an invitation for a later stage to invent behav
 
 Before offering it for approval, read the draft as a reader who was not in the conversation:
 
-1. Does any requirement require implementation knowledge to judge? That is the leak this stage exists to prevent, and it is easiest to see in the acceptance clauses.
+1. Does every requirement hold the outside view? Acceptance clauses leak first.
 2. Does every requirement trace to a decision?
 3. Does every decision that changes behaviour appear as a requirement, an exclusion, or an open question?
 4. Do any two requirements contradict?
-5. Is every acceptance clause falsifiable — could an observation show it *unmet*?
+5. For each acceptance clause, name the observation that would show it unmet. A clause with no such observation is an aspiration.
 
-Then dispatch a subagent that has not seen the conversation to read `20-spec.md` cold and answer the same five questions. It proposes corrections; it does not invent requirements and does not approve.
+Then dispatch a subagent that has not seen the conversation to read `20-spec.md` and answer the same five questions — it holds the outside view by construction. It proposes corrections; the requirements stay yours and the approval stays the user's.
 
 ### 7. Get approval
 
-Present the spec and the open questions. Approval is the user's, on the file as written — not on a summary of it, and not on a score.
+Approval is the user's, on the file as written rather than on a summary of it. A blocking open question means the answer is no.
 
-A blocking open question means the answer is no. Approving with soft decisions still in play is allowed only where the risk is visible in the document and the user accepts it explicitly.
+Where a soft decision survives into an approved spec, the risk is visible in the document and the user accepts it explicitly.
 
 ## The artifact
 
@@ -104,9 +111,7 @@ A blocking open question means the answer is no. Approving with soft decisions s
 
 ## Amending an approved spec
 
-An approved spec is superseded, never quietly edited. Amend by revising the requirement in place with a new revision marker, and **invalidate what traced to it** — the designs and tickets carrying that identifier, not the whole spec.
-
-Scoping invalidation by identifier is what stable identifiers buy. Amending is then cheap enough to actually do, which is the only reason a spec stays true.
+Revise the changed requirement and bump its revision, then **invalidate by identifier** — the designs and tickets citing it, and nothing else. Scoping invalidation this way is what stable identifiers buy, and it keeps amending cheap enough to actually do, which is the only reason a spec stays true. See [`references/spec-file.md`](references/spec-file.md).
 
 ## Standing rules
 
