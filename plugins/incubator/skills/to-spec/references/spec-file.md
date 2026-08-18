@@ -11,9 +11,11 @@ The shape of `20-spec.md`. Written to be read by someone who will not build the 
 ```markdown
 ---
 run: <slug>
+version: 1
 status: draft | approved | superseded
-revision: 1
 approved: <YYYY-MM-DD or null>
+supersedes: <null, or the version this replaces>
+amends: <null, or the identifiers this version changed>
 derived-from: 10-decisions.md
 ---
 
@@ -26,11 +28,10 @@ What is wrong today, from the perspective of whoever suffers it. No solution.
 ## Requirements
 
 ### R-001 — <short name>
-**Current:** <what is true today>
-**Target:** <what must become true>
-**Acceptance:** <the observation that settles it; and what would falsify it>
+**Current:** <what is externally observable today>
+**Target:** <what must become externally observable>
+**Acceptance:** <the observation that settles it, under stated conditions; and what would falsify it>
 **Derived from:** D-003, D-007
-**Revision:** 1
 
 ### R-002 — <short name>
 ...
@@ -48,16 +49,25 @@ Negative acceptance criteria — what must never happen. Same form, same falsifi
 
 Externally observable limits and user-mandated conditions: budgets, deadlines, compatibility
 obligations, regulatory requirements, things that may not change. Technologies, schemas and
-internal structure are Stage 3–4 material and do not belong here.
+internal structure are Stage 3–4 material.
+
+### C-001 — <short name>
+**Constraint:** <the limit>
+**Derived from:** D-002
 
 ## Invariants
 
 What must hold true throughout, not merely at the end.
 
+### I-001 — <short name>
+**Holds:** <the condition, and when it is observable>
+**Derived from:** D-009
+
 ## Out of scope
 
-| Excluded | Why |
-|---|---|
+| ID | Excluded | Why | Derived from |
+|---|---|---|---|
+| X-001 | <the work> | <the reason> | D-014 |
 
 Reasons are required. Unexplained exclusions return later looking like oversights.
 
@@ -67,7 +77,9 @@ Reasons are required. Unexplained exclusions return later looking like oversight
 |---|---|---|
 | <the case> | boundary/adjacency/empty/encoding/ordering/precision/idempotency/concurrency | covered by R-00N · dismissed: <reason> · open: Q-00N |
 
-Categories with no applicable edge are omitted rather than listed as none.
+All eight categories appear, so that considering one and finding nothing is distinguishable
+from never considering it. A category with no applicable edge carries a row reading
+`none applicable — <why>`.
 
 ## Open questions
 
@@ -75,8 +87,10 @@ Categories with no applicable edge are omitted rather than listed as none.
 |---|---|---|---|
 | Q-001 | <question> | blocking · deferred | discovery · system design · program design |
 
-**Blocking** means the answer changes what must become true; the spec is not done while one
-stands. **Deferred** means the answer belongs to a later stage.
+**Blocking** means the answer changes what must become true; it routes to `discovery` and the
+spec is not done while one stands. **Deferred** means the answer belongs to a later stage; it
+routes to system or program design. Those pairings are the only valid ones — a blocking
+question routed to design is a decision being made by the wrong stage.
 
 ## Stories
 
@@ -86,16 +100,20 @@ carry no obligations — the requirements above do.
 
 ## Identifier rules
 
-`R-`, `P-` and `Q-` identifiers are assigned once, in order, and never reused. A retired
-requirement's identifier stays retired; a superseded one keeps its identifier and increments
-its revision.
-
-Downstream artifacts cite these identifiers, so an identifier that changes meaning silently
+`R-`, `P-`, `C-`, `I-`, `X-` and `Q-` identifiers are assigned once, in order, and never
+reused. Downstream artifacts cite them, so an identifier that changes meaning silently
 invalidates everything citing it.
 
-## Revising an approved spec
+A withdrawn item keeps its identifier and its heading, with its body replaced by
+`Withdrawn in version N — <why>`. The tombstone is what makes reuse visibly wrong.
 
-Bump the revision on the changed requirement, not the document. Record what was invalidated:
-the designs and tickets that cite that identifier, and nothing else.
+## Versions
 
-A spec whose `status` is `superseded` names its successor in the frontmatter.
+An approved spec is immutable: downstream work cites a version, so those bytes stay as
+approved. Amending writes a **new version** of the file with `version` incremented,
+`supersedes` naming the prior one, and `amends` listing the identifiers whose meaning changed.
+
+`amends` is the invalidation scope. The governance flow in
+`architecture/08-state-and-governance.md` recalculates the ticket graph and marks stale
+approvals from exactly that list — so an identifier left off it is work that silently keeps
+citing a requirement that no longer says what it said.

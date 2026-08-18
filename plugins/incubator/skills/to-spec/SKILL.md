@@ -17,9 +17,7 @@ Write every line from the **outside view**: what someone observes of the system 
 > The outside view: "a feed request returns within 200ms at p95"
 > The inside view: "the `FeedCache` returns within 200ms"
 
-Both may be true. Only the first can be judged by the person approving it, and only the first survives the implementation being replaced.
-
-When a detail feels necessary, it is usually a Stage 3 or Stage 4 decision arriving early — record it in `<run>/evidence/` and let the design stages own it.
+Both may be true; only the first can be judged by the person approving it, and only the first survives the implementation being replaced. A detail that feels necessary is usually a Stage 3 or Stage 4 decision arriving early — record it under the run's evidence directory and let the design stages own it.
 
 ## Steps
 
@@ -27,17 +25,17 @@ When a detail feels necessary, it is usually a Stage 3 or Stage 4 decision arriv
 
 Read `<run>/10-decisions.md`. It is authoritative for what was decided and why: treat every settled choice as given, and carry its reasoning forward rather than re-deriving it.
 
-Read the code where it helps establish what is currently true and what vocabulary the domain already uses — the **Current** half of every requirement comes from there. Keep what you learn about implementation in `<run>/evidence/`, where Stage 3 will want it.
+The log keeps reversals — a record carrying `status: superseded` was overturned, and the record naming it in `supersedes:` holds the live choice. Follow every chain to its end and compile only what stands there.
+
+Read the code where it helps establish what is currently true and what vocabulary the domain already uses — the **Current** half of every requirement comes from there. Keep what you learn about implementation under `artifacts.evidence_dir` — `evidence/` where that key is unset — beside the run, where Stage 3 will want it.
 
 Where no decision log exists, say so and offer `discovery`.
 
 ### 2. Judge whether the decisions are ready
 
-Readiness is about content, never age. A decision made months ago on a stable question is fine; one made yesterday on a question that has since shifted is not.
+Readiness is about content, never age: a decision made months ago on a stable question is fine, one made yesterday on a question that has since shifted is not.
 
-Return to `discovery` when a **missing or soft decision would change behaviour** — a requirement that cannot be written without guessing what was wanted. Do not guess and flag it; an outcome-changing gap goes back upstream.
-
-Unknowns that do not change behaviour may pass. They belong in the spec's open questions, classified in step 5.
+Return to `discovery` when a **missing or soft decision would change behaviour** — a requirement that cannot be written without guessing what was wanted. Unknowns that leave behaviour unchanged pass through to the spec's open questions, classified in step 5.
 
 ### 3. Write requirements as deltas
 
@@ -54,7 +52,7 @@ Acceptance names an **observable predicate and its counterexample** — what wou
 > ✗ The system should be fast
 > ✓ A feed request returns within 200ms at p95 under normal load; slower than that falsifies it
 
-Size each requirement as **one independently judgeable obligation or invariant**. Ticket compilation happens later and maps requirements to tickets many-to-many, so a requirement is not a unit of work — it is a unit of judgement.
+Size each requirement as **one independently judgeable obligation**. Ticket compilation maps requirements to tickets many-to-many later, so a requirement is a unit of judgement rather than a unit of work.
 
 Every requirement records `derived-from: D-NNN`, naming the decisions it rests on. A requirement tracing to no decision is either an undocumented decision — go and record it — or this stage inventing intent, which is the failure this pointer exists to prevent.
 
@@ -68,7 +66,7 @@ A contract of only positive obligations cannot forbid anything. Ask directly:
 
 > What could this silently become that nobody would want?
 
-Overproduce candidates, then keep only the ones specific to *this* work — routine engineering practice and standing policy belong elsewhere. Each kept prohibition becomes a **negative acceptance criterion**, phrased as observably as any other requirement.
+Overproduce candidates, then keep only those specific to *this* work — routine engineering practice and standing policy belong elsewhere. Each kept prohibition becomes a **negative acceptance criterion**, as observable as any requirement, and reaches the document through the log like everything else.
 
 Then walk the edges of the requirements now that they are clear — vague requirements have no edges worth probing:
 
@@ -103,7 +101,7 @@ Then dispatch a subagent that has not seen the conversation to read `20-spec.md`
 
 Approval is the user's, on the file as written rather than on a summary of it. A blocking open question means the answer is no.
 
-Where a soft decision survives into an approved spec, the risk is visible in the document and the user accepts it explicitly.
+A decision carrying low confidence may still be approved, provided its confidence is visible in the document and the user accepts it explicitly. That is a decision the user chose to make on thin ground — different from a decision that was never made, which step 2 already returned upstream.
 
 ## The artifact
 
@@ -111,7 +109,15 @@ Where a soft decision survives into an approved spec, the risk is visible in the
 
 ## Amending an approved spec
 
-Revise the changed requirement and bump its revision, then **invalidate by identifier** — the designs and tickets citing it, and nothing else. Scoping invalidation this way is what stable identifiers buy, and it keeps amending cheap enough to actually do, which is the only reason a spec stays true. See [`references/spec-file.md`](references/spec-file.md).
+An approved spec is an immutable contract: downstream work cites a version, so the approved bytes stay as approved. Amendment adds a new version rather than editing the old one, and `architecture/08-state-and-governance.md` owns the flow — proposed amendment, review policy, recalculated ticket graph, completed work checked for invalidation, stale approvals marked, execution resumed only after re-approval.
+
+What this stage contributes to that flow is **scope**: an amendment names the identifiers it changes, so invalidation reaches the designs and tickets citing those identifiers rather than everything downstream of the document. Scoping by identifier is what stable identifiers buy, and it keeps amending cheap enough to actually do — the only reason a spec stays true.
+
+See [`references/spec-file.md`](references/spec-file.md) for how a version records what it changed.
+
+## The Stage 5 seam
+
+`to-tickets` in this plugin cannot consume this spec: it reads a `## Work Items` section with identifiers like `R1` and stops when they are absent. Emitting those from here would put ticket-sized units back into a behavioural contract, so the break stands until Stage 5 is written. Say so rather than reshaping the spec to fit the legacy consumer.
 
 ## Standing rules
 
