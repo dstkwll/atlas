@@ -15,7 +15,7 @@ version: 1
 status: draft | approved | superseded
 approved: <YYYY-MM-DD or null>
 supersedes: <null, or the version this replaces>
-amends: <null, or the identifiers this version changed>
+amendment: <null, or the amendments/ record that produced this version>
 derived-from: 10-decisions.md
 ---
 
@@ -32,6 +32,8 @@ What is wrong today, from the perspective of whoever suffers it. No solution.
 **Target:** <what must become externally observable>
 **Acceptance:** <the observation that settles it, under stated conditions; and what would falsify it>
 **Derived from:** D-003, D-007
+**Confidence:** <omit, or `low — <what is thin about it>` where a low-confidence decision
+survives into the approved spec>
 
 ### R-002 — <short name>
 ...
@@ -75,7 +77,7 @@ Reasons are required. Unexplained exclusions return later looking like oversight
 
 | Edge | Category | Resolution |
 |---|---|---|
-| <the case> | boundary/adjacency/empty/encoding/ordering/precision/idempotency/concurrency | covered by R-00N · dismissed: <reason> · open: Q-00N |
+| <the case> | boundary/adjacency/empty/encoding/ordering/precision/idempotency/concurrency | covered by R-00N or P-00N · dismissed: <reason> · open: Q-00N |
 
 All eight categories appear, so that considering one and finding nothing is distinguishable
 from never considering it. A category with no applicable edge carries a row reading
@@ -104,16 +106,25 @@ carry no obligations — the requirements above do.
 reused. Downstream artifacts cite them, so an identifier that changes meaning silently
 invalidates everything citing it.
 
-A withdrawn item keeps its identifier and its heading, with its body replaced by
-`Withdrawn in version N — <why>`. The tombstone is what makes reuse visibly wrong.
+A withdrawn item leaves a **tombstone** so reuse is visibly wrong. A heading-backed item
+(`R-`, `P-`, `C-`, `I-`) keeps its heading with the body replaced by
+`Withdrawn in version N — <why>`. A row-backed item (`X-`, `Q-`) keeps its row with the
+remaining cells replaced by the same sentence.
 
 ## Versions
 
 An approved spec is immutable: downstream work cites a version, so those bytes stay as
-approved. Amending writes a **new version** of the file with `version` incremented,
-`supersedes` naming the prior one, and `amends` listing the identifiers whose meaning changed.
+approved. Amending writes a **new version** alongside it — `20-spec.v1.md` retained,
+`20-spec.md` holding the current version with `version` incremented and `supersedes` naming
+the prior one.
 
-`amends` is the invalidation scope. The governance flow in
-`architecture/08-state-and-governance.md` recalculates the ticket graph and marks stale
-approvals from exactly that list — so an identifier left off it is work that silently keeps
-citing a requirement that no longer says what it said.
+The amendment itself is a record under `amendments/`, whose required contents
+`architecture/03-artifact-model.md` defines: trigger and evidence, affected artifact and
+section, proposed change, impact on completed tickets, required re-review, approval. The
+spec's `amendment` field names that record.
+
+What this stage contributes is **the affected-section list stated as identifiers**. Naming
+`R-004, P-002` rather than "the caching requirements" gives the governance flow in
+`architecture/08-state-and-governance.md` a precise input when it recalculates the dependent
+ticket graph and marks stale approvals. It is an input to that calculation, not a substitute
+for it.

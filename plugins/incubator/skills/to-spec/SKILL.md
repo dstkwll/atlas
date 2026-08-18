@@ -17,7 +17,9 @@ Write every line from the **outside view**: what someone observes of the system 
 > The outside view: "a feed request returns within 200ms at p95"
 > The inside view: "the `FeedCache` returns within 200ms"
 
-Both may be true; only the first can be judged by the person approving it, and only the first survives the implementation being replaced. A detail that feels necessary is usually a Stage 3 or Stage 4 decision arriving early — record it under the run's evidence directory and let the design stages own it.
+Both may be true; only the first can be judged by the person approving it, and only the first survives the implementation being replaced.
+
+Five things belong to the design stages and reach the spec only as evidence: class names, file layouts, method signatures, internal interfaces, and implementation structure. Where one feels necessary, it is a Stage 3 or Stage 4 decision arriving early — record it under the run's evidence directory and let those stages own it.
 
 ## Steps
 
@@ -35,7 +37,9 @@ Where no decision log exists, say so and offer `discovery`.
 
 Readiness is about content, never age: a decision made months ago on a stable question is fine, one made yesterday on a question that has since shifted is not.
 
-Return to `discovery` when a **missing or soft decision would change behaviour** — a requirement that cannot be written without guessing what was wanted. Unknowns that leave behaviour unchanged pass through to the spec's open questions, classified in step 5.
+Return to `discovery` when a decision that would change behaviour is **missing or unsettled** — one you would have to guess at to write the requirement. Unknowns that leave behaviour unchanged pass through to the spec's open questions, classified in step 5.
+
+A decision that was *made* but carries low confidence is neither: it stands, and it is compiled. Carry its confidence onto the items that rest on it, so what the approval is resting on stays visible.
 
 ### 3. Write requirements as deltas
 
@@ -56,9 +60,9 @@ Size each requirement as **one independently judgeable obligation**. Ticket comp
 
 Every requirement records `derived-from: D-NNN`, naming the decisions it rests on. A requirement tracing to no decision is either an undocumented decision — go and record it — or this stage inventing intent, which is the failure this pointer exists to prevent.
 
-Identifiers are assigned once and never reused. A retired requirement's identifier stays retired.
+Every normative item carries an identifier by family — `R-` requirements, `P-` prohibitions, `C-` constraints, `I-` invariants, `X-` exclusions, `Q-` open questions. Identifiers are assigned once and never reused; a withdrawn item leaves a tombstone rather than freeing its identifier.
 
-Done when **every decision in the log is accounted for** — as a requirement, as an exclusion with its reason, or as an open question. A decision that changed behaviour and appears nowhere is the omission this step exists to catch.
+Done when **every decision in the log is accounted for** — as a requirement, prohibition, constraint or invariant, as an exclusion with its reason, or as an open question. A decision that changed behaviour and appears nowhere is the omission this step exists to catch.
 
 ### 4. State what must never happen
 
@@ -89,10 +93,10 @@ An unclassified open question is an invitation for a later stage to invent behav
 
 Before offering it for approval, read the draft as a reader who was not in the conversation:
 
-1. Does every requirement hold the outside view? Acceptance clauses leak first.
-2. Does every requirement trace to a decision?
-3. Does every decision that changes behaviour appear as a requirement, an exclusion, or an open question?
-4. Do any two requirements contradict?
+1. Does every normative item hold the outside view? Acceptance clauses leak first.
+2. Does every normative item trace to a decision that stands?
+3. Does every decision that changes behaviour appear somewhere — obligation, exclusion, or open question?
+4. Do any two normative items contradict?
 5. For each acceptance clause, name the observation that would show it unmet. A clause with no such observation is an aspiration.
 
 Then dispatch a subagent that has not seen the conversation to read `20-spec.md` and answer the same five questions — it holds the outside view by construction. It proposes corrections; the requirements stay yours and the approval stays the user's.
@@ -101,7 +105,7 @@ Then dispatch a subagent that has not seen the conversation to read `20-spec.md`
 
 Approval is the user's, on the file as written rather than on a summary of it. A blocking open question means the answer is no.
 
-A decision carrying low confidence may still be approved, provided its confidence is visible in the document and the user accepts it explicitly. That is a decision the user chose to make on thin ground — different from a decision that was never made, which step 2 already returned upstream.
+Where an item rests on a low-confidence decision, its `Confidence` field says so and the user accepts that explicitly. A decision made on thin ground is approvable; one never made was returned upstream in step 2.
 
 ## The artifact
 
@@ -111,13 +115,13 @@ A decision carrying low confidence may still be approved, provided its confidenc
 
 An approved spec is an immutable contract: downstream work cites a version, so the approved bytes stay as approved. Amendment adds a new version rather than editing the old one, and `architecture/08-state-and-governance.md` owns the flow — proposed amendment, review policy, recalculated ticket graph, completed work checked for invalidation, stale approvals marked, execution resumed only after re-approval.
 
-What this stage contributes to that flow is **scope**: an amendment names the identifiers it changes, so invalidation reaches the designs and tickets citing those identifiers rather than everything downstream of the document. Scoping by identifier is what stable identifiers buy, and it keeps amending cheap enough to actually do — the only reason a spec stays true.
+The amendment is its own record under `amendments/`, carrying what `architecture/03-artifact-model.md` requires of one. What this stage contributes to it is **the affected section stated as identifiers** — `R-004, P-002` rather than "the caching requirements" — so the flow has a precise input when it recalculates the dependent ticket graph. That precision is what stable identifiers buy, and it keeps amending cheap enough to actually do, which is the only reason a spec stays true.
 
-See [`references/spec-file.md`](references/spec-file.md) for how a version records what it changed.
+See [`references/spec-file.md`](references/spec-file.md) for how a version records its amendment.
 
 ## The Stage 5 seam
 
-`to-tickets` in this plugin cannot consume this spec: it reads a `## Work Items` section with identifiers like `R1` and stops when they are absent. Emitting those from here would put ticket-sized units back into a behavioural contract, so the break stands until Stage 5 is written. Say so rather than reshaping the spec to fit the legacy consumer.
+`to-tickets` in this plugin cannot consume this spec: it reads an enumerable `## Work Items` section and stops rather than publish when one is absent. Emitting ticket-sized work items from here would put them back into a behavioural contract, so the break stands until Stage 5 is written. Say so rather than reshaping the spec to fit the legacy consumer.
 
 ## Standing rules
 
