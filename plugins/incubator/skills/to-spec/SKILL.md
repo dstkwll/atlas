@@ -58,11 +58,16 @@ Acceptance names an **observable predicate and its counterexample** — what wou
 
 Size each requirement as **one independently judgeable obligation**. Ticket compilation maps requirements to tickets many-to-many later, so a requirement is a unit of judgement rather than a unit of work.
 
-Every requirement records `derived-from: D-NNN`, naming the decisions it rests on. A requirement tracing to no decision is either an undocumented decision — go and record it — or this stage inventing intent, which is the failure this pointer exists to prevent.
+Each records `derived-from: D-NNN`, naming the decisions it rests on. An item tracing to no decision is either an undocumented decision — go and record it — or this stage inventing intent, which is the failure this pointer exists to prevent.
 
-Every normative item carries an identifier by family — `R-` requirements, `P-` prohibitions, `C-` constraints, `I-` invariants, `X-` exclusions, `Q-` open questions. Identifiers are assigned once and never reused, because downstream artifacts cite them and one that changes meaning silently invalidates everything citing it.
+Every normative item carries an identifier by family, assigned in order and never reused — downstream artifacts cite them, and one that changes meaning silently invalidates everything citing it.
 
-A withdrawn item leaves a **tombstone** rather than freeing its identifier: a heading-backed item keeps its heading with the body replaced by `Withdrawn in version N — <why>`, a row-backed item keeps its row with the remaining cells replaced by the same sentence.
+| Family | Written as | Withdrawn item keeps |
+|---|---|---|
+| `R-` requirements, `P-` prohibitions, `C-` constraints, `I-` invariants | a heading | its heading, body replaced by `Withdrawn in version N — <why>` |
+| `X-` exclusions, `Q-` open questions | a table row | its row, remaining cells replaced by the same sentence |
+
+A withdrawn item leaves that **tombstone** rather than freeing its identifier.
 
 Done when **every decision in the log is accounted for** — as a requirement, prohibition, constraint or invariant, as an exclusion with its reason, or as an open question. A decision that changed behaviour and appears nowhere is the omission this step exists to catch.
 
@@ -78,7 +83,7 @@ Then walk the edges of the requirements now that they are clear — vague requir
 
 **boundary · adjacency · empty · encoding · ordering · precision · idempotency · concurrency**
 
-Each edge resolves one of three ways: covered by an existing or new requirement, **dismissed with a stated reason**, or recorded as an open question. A dismissal states why the case cannot arise.
+Each edge resolves one of three ways: covered by an existing or new requirement or prohibition, **dismissed with a stated reason**, or recorded as an open question. A dismissal states why the case cannot arise.
 
 Done when every category has been considered against every requirement, and each raised edge carries one of the three resolutions.
 
@@ -115,9 +120,11 @@ Where an item rests on a low-confidence decision, its `Confidence` field says so
 
 ## Amending an approved spec
 
-An approved spec is an immutable contract: downstream work cites a version, so the approved bytes stay as approved. Amendment writes a new version alongside the old — `20-spec.v1.md` retained, `20-spec.md` holding the current one — and `architecture/08-state-and-governance.md` owns the flow — proposed amendment, review policy, recalculated ticket graph, completed work checked for invalidation, stale approvals marked, execution resumed only after re-approval.
+An approved spec is an immutable contract: downstream work cites a version, so the approved bytes stay as approved. Amendment retains them as `20-spec.v1.md` and writes the new version to `20-spec.md`, incrementing `version`, setting `supersedes` to the retained version and `amendment` to the record that produced it.
 
-The amendment is its own record under `amendments/`, carrying what `architecture/03-artifact-model.md` requires of one. What this stage contributes to it is **the affected section stated as identifiers** — `R-004, P-002` rather than "the caching requirements" — so the flow has a precise input when it recalculates the dependent ticket graph. That precision is what stable identifiers buy, and it keeps amending cheap enough to actually do, which is the only reason a spec stays true.
+That record lives under `amendments/` and carries what `architecture/03-artifact-model.md` requires of one; `architecture/08-state-and-governance.md` owns the flow around it — review policy, recalculated ticket graph, completed work checked for invalidation, stale approvals marked, execution resumed only after re-approval.
+
+What this stage contributes is **the affected section stated as identifiers** — `R-004, P-002` rather than "the caching requirements" — so that flow has a precise input. That precision is what stable identifiers buy, and it keeps amending cheap enough to actually do, which is the only reason a spec stays true.
 
 ## The Stage 5 seam
 
