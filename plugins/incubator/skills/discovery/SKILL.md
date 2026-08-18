@@ -16,7 +16,7 @@ The specification stage reads this log. `to-spec` in this plugin does **not** �
 
 The **frontier** is every open question whose prerequisites are already settled — the questions answerable *now*, without guessing at answers not yet heard.
 
-Work in rounds. Ask the whole frontier in one round, numbered, each with a recommended answer. The user's replies settle those questions, which pushes the frontier outward and unblocks questions that depended on them. Recompute and ask the next round.
+Work in rounds: ask the whole frontier at once, numbered. The replies settle those questions, unblocking the ones that depended on them. Recompute, ask again.
 
 A question depending on another still open belongs to a later round. The run is done when the frontier is empty.
 
@@ -31,19 +31,15 @@ Each open question resolves by one of four routes, chosen by where its answer al
 | **explore** | In this codebase, already true | Dispatch a subagent to read it and report. |
 | **spike** | Nowhere yet | Invoke `spike`. The answer must be created by running an experiment. |
 
-Only **grill** questions go to the user. Finding facts is your job: dispatch rather than ask for anything you could look up yourself.
+Only **grill** questions go to the user. Finding facts is your job: dispatch rather than ask for anything you could look up.
 
-Dispatched routes do not block the round. A running investigation is an unsettled prerequisite, so only the questions downstream of it wait — ask the rest of the frontier now.
-
-An **explore** question answered by guessing is the most expensive failure available here, because every decision downstream inherits the guess. Read the code, or dispatch someone who will.
+Dispatched routes do not block the round — only the questions downstream of an investigation wait. An **explore** question answered by guessing is the most expensive failure here, because every decision downstream inherits the guess.
 
 ## Steps
 
 ### 1. Resume or open the run
 
-Read `<run>/10-decisions.md` if it exists. Continue from the open frontier recorded there; never re-ask a settled decision.
-
-If it does not exist, resolve the run directory and create it. See [`references/run-layout.md`](references/run-layout.md) for how the path is resolved and what the file starts as.
+Read `<run>/10-decisions.md` if it exists and continue from the open frontier recorded there, never re-asking a settled decision. Otherwise resolve the run directory and create it — see [`references/run-layout.md`](references/run-layout.md) for how the path resolves and what the file starts as.
 
 ### 2. Test whether the work is worth doing
 
@@ -89,11 +85,22 @@ Recompute the frontier after each round and return to step 4.
 
 ### 7. Grade the decisions
 
-Walk the decision log once the frontier is empty. For each record, judge what it actually contributed to the resolved design — load-bearing, minor, or irrelevant in hindsight — and append that grade to the record.
+Walk the log once the frontier is empty. Grade each record's actual contribution to the resolved design — load-bearing, minor, or irrelevant in hindsight — and append it to the record.
 
-Compare each grade against the confidence the record carries. A decision marked low-confidence that turned out load-bearing is the most useful entry in the log; so is a confident one that turned out not to matter.
+Compare each grade against the confidence the record carries: a low-confidence decision that turned out load-bearing is the most useful entry in the log, and so is a confident one that turned out not to matter.
 
 Close by naming the least confident decisions that survived, so the next stage knows where the design is softest.
+
+### 8. Have the log read cold
+
+The frontier was computed by the agent that ran the conversation, so an empty frontier is a checker's verdict on its own work. Dispatch a subagent that has not seen the conversation to read `10-decisions.md` and answer two questions:
+
+1. Does any decision open a consequence that no question addressed?
+2. Is any decision unsupported by its own stated reasoning?
+
+Brief it on the artifact, not the conclusions — it reads the log, never a summary of how the run went.
+
+**One pass, and it proposes rather than reopens.** Its output is a list the user accepts or declines; declining is itself a decision and gets a record. Accepting returns those questions to the frontier for one further round, which is not itself re-reviewed. A run closes on the user's word, not on a reviewer running out of objections.
 
 ## Standing rules
 
