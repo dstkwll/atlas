@@ -74,7 +74,7 @@ Lightweight statuses, not a lifecycle: `candidate` (may contribute to a canonica
 | `factory-code-review` | upstream `code-review` | Two-axis review of a diff | **candidate / reference** | Its Standards and Spec axes may contribute to Atlas review roles, but they are **not** equivalent to canonical contract-review plus design/quality-review semantics. |
 | `to-spec` | upstream | Specification authoring | **needs reconciliation** | Its specification shape mixes in implementation and design material that canonical Atlas separates across behavioral spec (Stage 2), system design (Stage 3), and program design (Stage 4). |
 | `to-tickets` | upstream | Ticket authoring | **needs reconciliation** | Retains issue-tracker and `.scratch/` assumptions. Not adapted to the canonical planning artifact model or to execution-compilation semantics. |
-| `advance` | Workbench-authored | Phase-boundary judge and driver | **candidate / reference — not control-plane authority** | Contains useful candidate ideas on evidence, criterion mapping, readiness, bounded workers, and orchestration UX. Its lifecycle, authority model, leash and ship semantics, and review semantics are **not** canonical Atlas behavior. |
+| `advance` | Workbench-authored | Phase-boundary judge and driver | **candidate / reference — not control-plane authority** | Contains useful candidate ideas on evidence, criterion mapping, readiness, bounded workers, and orchestration UX. Its lifecycle, authority model, leash and ship semantics, and review semantics are **not** canonical Atlas behavior. One observed defect is fixed in its evidence contract: see "Observed defects" below. |
 | `setup-atlas` | none — written here | Stub | **stand-in** | Deliberately empty; has no behavior. See its `SKILL.md`. |
 | `discovery` | written here | Stage 1 decision resolution, writing a durable decision log | **candidate** | Written against the canonical Stage 1 routing tree and the configurable planning root, but not exercised. Its decision-record shape is new and unproven. |
 | `codebase-design` | upstream | Design reasoning | candidate | Not audited. |
@@ -105,6 +105,25 @@ Currently explicit-only: `advance`, `discovery`, `factory-implement`, `factory-c
 **Unverified by host.** Copilot CLI and Hermes have no confirmed equivalent of these keys.
 Whether either silently ignores them, and therefore whether an explicit-only skill can be
 auto-invoked there, has not been tested. No cross-host normalization layer was built.
+
+## Observed defects
+
+Recorded because they were seen in a real run, not inferred from reading.
+
+**`advance` ship judge fabricated a Wayfinder map (fixed).** On an effort that reached
+specification through ordinary grilling rather than Wayfinder, the terminal ship-readiness
+judge required a topic-root `map.md` — the hardcoded subject identity of its
+`discovery-unclosed` gap — found none, and wrote one. A read-only judge manufactured the
+evidence it was judging.
+
+The contract already knew grilling efforts have no map: presence routing branches on
+`map.md`, and the `grilling-to-spec` branch states that ordinary grilling never requires
+Wayfinder. The ship judge simply did not consult that, and `discovery-unclosed` carried no
+applicability test. `references/lifecycle-evidence.md` now scopes the gap to efforts where
+`map.md` is present, and states that a judge never creates an artifact it requires.
+
+The general lesson is recorded in Atlas's canonical architecture, since it applies to every
+reviewer the architecture specifies, not only to this skill.
 
 ## Known gaps
 

@@ -1780,11 +1780,22 @@ An open, abandoned, or unobserved pull request is not one either. A commit that 
 branch does not contain is not one. A `none-required` claim without durable rationale is
 not one. Each is BLOCKED at the `Release` stage.
 
+### Discovery-path applicability
+
+An effort reaches specification by one of two discovery paths, and the ship judge establishes which before evaluating `discovery-unclosed`:
+
+- **Wayfinder-backed.** A topic-root `map.md` is present. `discovery-unclosed` applies, and is emitted when that map is not closed.
+- **Ordinary grilling.** No topic-root `map.md`. Wayfinder was never used, there is no discovery map to close, and `discovery-unclosed` is **not applicable** — never emitted, and its absence is never itself a gap.
+
+Presence of `map.md` is the whole test, matching "Presence routing", which selects `wayfinder-to-spec` or `grilling-to-spec` on the same file, and the `grilling-to-spec` branch, which requires no `map.md` because ordinary grilling never requires Wayfinder.
+
+**A judge never creates an artifact it requires.** The judge is read-only. A missing required artifact is reported as its gap code or, where the artifact is inapplicable to this effort's path, is not evaluated at all. Writing a `map.md`, a ticket, a spec, or any other routing or evidence artifact in order to satisfy a condition manufactures the evidence being judged and invalidates the verdict.
+
 ### Ship-readiness gap codes
 
 | Code | Subject identity | When |
 |---|---|---|
-| `discovery-unclosed` | The discovery artifact | Wayfinder discovery was used and is not closed |
+| `discovery-unclosed` | The discovery artifact | Wayfinder discovery was used and is not closed. **Applicable only when a topic-root `map.md` is present** — see "Discovery-path applicability" below |
 | `decision-unaccounted` | The specification decision | An intended decision is neither delivered nor durably out of scope |
 | `story-uncovered` | The user story | No ticket covers the story |
 | `decision-uncovered` | The specification decision | No ticket covers an implementation or testing decision |
@@ -1811,7 +1822,7 @@ stable identity available; never a class label, a count, a phase name, or a summ
 
 | Code | `subjectIdentity` is exactly |
 |---|---|
-| `discovery-unclosed` | `map.md` - the topic-root-relative path of the discovery map |
+| `discovery-unclosed` | `map.md` - the topic-root-relative path of the discovery map. Emitted only when that file is present |
 | `decision-unaccounted` | `<spec-file> <Section heading> #<ordinal>` |
 | `decision-uncovered` | `<spec-file> <Section heading> #<ordinal>`, spelled the same way `decision-unaccounted` spells it |
 | `story-uncovered` | `<spec-file> <Section heading> #<ordinal>` |
