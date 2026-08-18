@@ -31,7 +31,7 @@ Read `~/.copilot/config/mp-advance.json` once and validate the whole object agai
 validate" in the evidence contract before resolving an acting target.
 
 When the file is absent on an interactive call, say so and offer the pivot as a numbered choice:
-run `/incubator:setup-atlas` to create it from the documented example, or continue on the
+run `/atlas:setup-atlas` to create it from the documented example, or continue on the
 complete documented defaults that absence validly supplies. Stop for that choice before judging;
 this is a pre-judge exit that renders no board. Advance never creates the file itself.
 

@@ -1,5 +1,8 @@
 # incubator plugin
 
+> **The four skills written for Atlas — `discovery`, `to-spec`, `spike`, `setup-atlas` — moved
+> to the [`atlas`](../atlas/README.md) plugin. What remains here is forked material.**
+>
 > ## Status: incubation. Not canonical.
 >
 > This plugin contains **candidate, borrowed, transitional, and stand-in skills used to
@@ -78,12 +81,8 @@ Lightweight statuses, not a lifecycle: `candidate` (may contribute to a canonica
 |---|---|---|---|---|
 | `factory-implement` | upstream `implement` | Temporary implementation worker | **stand-in / candidate** | Its review-and-commit behavior has **not** been reconciled with the canonical executor → deterministic validators → contract reviewer → design/quality reviewer → controller-acceptance flow. It is **not** the canonical ticket factory or definition-of-done loop. |
 | `factory-code-review` | upstream `code-review` | Two-axis review of a diff | **candidate / reference** | Its Standards and Spec axes may contribute to Atlas review roles, but they are **not** equivalent to canonical contract-review plus design/quality-review semantics. |
-| `to-spec` | rewritten here | Decision log → behavioural contract (`20-spec.md`) | **candidate** | Rewritten against canonical Stage 2. The upstream skill was replaced rather than adapted: it synthesized from conversation, published to an issue tracker, and carried Implementation Decisions and test seams that Stage 2 forbids. Unexercised. |
 | `to-tickets` | upstream | Ticket authoring | **needs reconciliation — currently incompatible with `to-spec`** | Retains issue-tracker and `.scratch/` assumptions. Not adapted to the canonical planning artifact model or to execution-compilation semantics. **It reads a `## Work Items` section and identifiers of the form `R1`, and stops rather than publish when they are absent; the rewritten `to-spec` emits `## Requirements` and `R-001`.** The pipeline cannot advance from spec to tickets until Stage 5 is written. Emitting Work Items from Stage 2 would reintroduce ticket-sized units into the behavioural contract, so the break is left visible rather than papered over. |
 | `advance` | Workbench-authored | Phase-boundary judge and driver | **candidate / reference — not control-plane authority** | Contains useful candidate ideas on evidence, criterion mapping, readiness, bounded workers, and orchestration UX. Its lifecycle, authority model, leash and ship semantics, and review semantics are **not** canonical Atlas behavior. One observed defect is fixed in its evidence contract: see "Observed defects" below. |
-| `setup-atlas` | written here | Establishes the planning root and run placement | **candidate** | Written against the configurable planning root, with platform-native configuration locations for Windows and macOS/Linux. Collects only what a skill reads today; unexercised on either platform. |
-| `spike` | written here | Bounded experiments answering a decomposed question | **candidate** | Written against canonical `07-spikes-and-discovery.md`, with risk-ordered decomposition, comparison spikes, and next-spike selection adapted from Hermes's bundled `spike` (GSD lineage, MIT). Its side-effect categories are self-declared, not runtime-enforced; the approval gate is the control. Unexercised. |
-| `discovery` | written here | Stage 1 decision resolution, writing a durable decision log | **candidate** | Written against the canonical Stage 1 routing tree and the configurable planning root, but not exercised. Its decision-record shape is new and unproven. |
 | `codebase-design` | upstream | Design reasoning | candidate | Not audited. |
 | `diagnosing-bugs` | upstream | Debugging loop | candidate | Not audited. |
 | `domain-modeling` | upstream | Domain modeling | candidate | Not audited. |
@@ -105,13 +104,9 @@ readiness are marked explicit-invocation-only where the host supports it — Cla
 `disable-model-invocation: true` in frontmatter, and Codex's
 `policy.allow_implicit_invocation: false` in `agents/openai.yaml`.
 
-Currently explicit-only: `advance`, `discovery`, `factory-implement`, `factory-code-review`,
-`spike`, `to-spec`, `to-tickets`, `setup-atlas`, `grill-with-docs`,
+Currently explicit-only: `advance`, `factory-implement`, `factory-code-review`,
+`to-tickets`, `grill-with-docs`,
 `improve-codebase-architecture`, `wayfinder`.
-
-`discovery`, `to-spec`, `spike` and `setup-atlas` were written for Atlas rather than forked.
-They are candidates like everything else here — written against the canonical architecture,
-and unexercised.
 
 **Unverified by host.** Copilot CLI and Hermes have no confirmed equivalent of these keys.
 Whether either silently ignores them, and therefore whether an explicit-only skill can be

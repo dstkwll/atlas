@@ -453,7 +453,7 @@ target.
 
 When the file is absent, use the entire documented default object. Absence is valid and never
 creates the file. On an interactive invocation, name the absent configuration before judging and
-offer the pivot as a numbered choice: run `/incubator:setup-atlas`, which owns creation
+offer the pivot as a numbered choice: run `/atlas:setup-atlas`, which owns creation
 behind its own confirm-before-write gate, or continue on the documented defaults. Stop for that
 choice; this is a pre-judge exit that renders no board, alongside the numbered topic choice and
 `nothing to advance`. A decline proceeds on the complete defaults with no further prompting for
