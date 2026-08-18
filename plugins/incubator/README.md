@@ -78,7 +78,7 @@ Lightweight statuses, not a lifecycle: `candidate` (may contribute to a canonica
 |---|---|---|---|---|
 | `factory-implement` | upstream `implement` | Temporary implementation worker | **stand-in / candidate** | Its review-and-commit behavior has **not** been reconciled with the canonical executor → deterministic validators → contract reviewer → design/quality reviewer → controller-acceptance flow. It is **not** the canonical ticket factory or definition-of-done loop. |
 | `factory-code-review` | upstream `code-review` | Two-axis review of a diff | **candidate / reference** | Its Standards and Spec axes may contribute to Atlas review roles, but they are **not** equivalent to canonical contract-review plus design/quality-review semantics. |
-| `to-spec` | upstream | Specification authoring | **needs reconciliation** | Its specification shape mixes in implementation and design material that canonical Atlas separates across behavioral spec (Stage 2), system design (Stage 3), and program design (Stage 4). |
+| `to-spec` | rewritten here | Decision log → behavioural contract (`20-spec.md`) | **candidate** | Rewritten against canonical Stage 2. The upstream skill was replaced rather than adapted: it synthesized from conversation, published to an issue tracker, and carried Implementation Decisions and test seams that Stage 2 forbids. Unexercised. |
 | `to-tickets` | upstream | Ticket authoring | **needs reconciliation** | Retains issue-tracker and `.scratch/` assumptions. Not adapted to the canonical planning artifact model or to execution-compilation semantics. |
 | `advance` | Workbench-authored | Phase-boundary judge and driver | **candidate / reference — not control-plane authority** | Contains useful candidate ideas on evidence, criterion mapping, readiness, bounded workers, and orchestration UX. Its lifecycle, authority model, leash and ship semantics, and review semantics are **not** canonical Atlas behavior. One observed defect is fixed in its evidence contract: see "Observed defects" below. |
 | `setup-atlas` | written here | Establishes the planning root and run placement | **candidate** | Written against the configurable planning root, with platform-native configuration locations for Windows and macOS/Linux. Collects only what a skill reads today; unexercised on either platform. |
@@ -109,6 +109,10 @@ Currently explicit-only: `advance`, `discovery`, `factory-implement`, `factory-c
 `spike`, `to-spec`, `to-tickets`, `setup-atlas`, `grill-with-docs`,
 `improve-codebase-architecture`, `wayfinder`.
 
+`discovery`, `to-spec`, `spike` and `setup-atlas` were written for Atlas rather than forked.
+They are candidates like everything else here — written against the canonical architecture,
+and unexercised.
+
 **Unverified by host.** Copilot CLI and Hermes have no confirmed equivalent of these keys.
 Whether either silently ignores them, and therefore whether an explicit-only skill can be
 auto-invoked there, has not been tested. No cross-host normalization layer was built.
@@ -138,7 +142,8 @@ reviewer the architecture specifies, not only to this skill.
   reads Obsidian vault topic folders rather than an Atlas planning root.
 - Ticket-state vocabulary is upstream's (`needs-triage`, `ready-for-agent`,
   `ready-for-human`, `wontfix`), not Atlas's run and ticket states. Deliberately not
-  reconciled here.
+  reconciled here: `advance` reads that vocabulary and `to-tickets` writes it, so changing one
+  without the other breaks the loop. The rewritten `to-spec` no longer participates.
 - Skill-to-stage assignment against `architecture/02-workflow.md` is not attempted.
 - No installer. Each host reads the tree from its own configured location.
 - No host has loaded this tree. Manifest shapes match the documented formats; that is a

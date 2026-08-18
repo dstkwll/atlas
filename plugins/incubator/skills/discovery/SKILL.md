@@ -10,7 +10,7 @@ Work a fuzzy goal down to resolved decisions. Every decision, its options, and w
 
 This is the stage before specification. It produces **decisions and evidence**, not a specification and not code.
 
-No skill here owns the specification stage yet. `to-spec` is the nearest, and it reads this log when pointed at a run — but it publishes to an issue tracker rather than the planning root, so point it at the run explicitly and expect its output to land outside.
+`to-spec` reads this log and compiles it into the behavioural contract at `20-spec.md`. It does not re-interview, and it returns here when a missing or soft decision would change behaviour.
 
 ## The frontier
 

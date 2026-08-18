@@ -1,101 +1,117 @@
 ---
 name: to-spec
-description: Turn the current conversation into a spec and publish it to the project issue tracker — no interview, just synthesis of what you've already discussed.
+description: Write the behavioural contract — what must become true, and what must never happen — from a discovery run's decisions. Use after decisions are settled and before any design work, or when the user asks for a spec, requirements, or acceptance criteria.
 disable-model-invocation: true
 ---
 
-This skill takes the current conversation context and codebase understanding and produces a spec. Do NOT interview the user — just synthesize what you already know.
+# To spec
 
-This skill is unreconciled with Atlas's planning artifact model: it synthesizes from the
-conversation and publishes to an issue tracker rather than reading a run's decision log.
-Where a `discovery` run exists, read its `10-decisions.md` first and treat it as the
-authoritative record of what was decided.
+Compile a decision log into a **behavioural contract**: what must become true, what must never happen, and how anyone would know.
 
-Tracker and label configuration is not supplied by `setup-atlas`, which configures only the
-planning root. Supply it directly.
+This is the last artifact written in the language of the problem. Everything after it — system design, program design, tickets — speaks the language of the solution. It is also where commitment begins: before this, changing course is free.
 
-## Process
+Someone who will never build the thing must be able to read it and approve it.
 
-1. Explore the repo to understand the current state of the codebase, if you haven't already. Use the project's domain glossary vocabulary throughout the spec, and respect any ADRs in the area you're touching.
+## What may not appear
 
-2. Sketch out the seams at which you're going to test the feature. Existing seams should be preferred to new ones. Use the highest seam possible. If new seams are needed, propose them at the highest point you can. The fewer seams across the codebase, the better - the ideal number is one.
+Class names. File layouts. Method signatures. Internal interfaces. Module structure. Test fixtures, harnesses, commands, or the name of the thing under test.
 
-Check with the user that these seams match their expectations.
+The test is not whether a detail is *true* — it is whether a reader must know the implementation to judge the requirement. "Responds within 200ms at p95" is behaviour. "The `FeedCache` returns within 200ms" is structure.
 
-3. Write the spec using the template below, then publish it to the project issue tracker. Apply the `ready-for-agent` triage label - no need for additional triage.
+## Steps
 
-<spec-template>
+### 1. Read the decisions
 
-## Problem Statement
+Read `<run>/10-decisions.md`. It is authoritative for what was decided and why — this stage does not re-litigate settled choices, and does not re-interview.
 
-The problem that the user is facing, from the user's perspective.
+Read the code where it helps establish what is currently true and what vocabulary the domain already uses. Implementation findings from that reading inform the requirements but never enter the contract; where they matter to later stages, write them to `<run>/evidence/` instead.
 
-## Solution
+Where no decision log exists, say so and offer `discovery` rather than inventing decisions.
 
-The solution to the problem, from the user's perspective.
+### 2. Judge whether the decisions are ready
 
-## User Stories
+Readiness is about content, never age. A decision made months ago on a stable question is fine; one made yesterday on a question that has since shifted is not.
 
-A LONG, numbered list of user stories. Each user story should be in the format of:
+Return to `discovery` when a **missing or soft decision would change behaviour** — a requirement that cannot be written without guessing what was wanted. Do not guess and flag it; an outcome-changing gap goes back upstream.
 
-1. As an <actor>, I want a <feature>, so that <benefit>
+Unknowns that do not change behaviour may pass. They belong in the spec's open questions, classified in step 5.
 
-<user-story-example>
-1. As a mobile bank customer, I want to see balance on my accounts, so that I can make better informed decisions about my spending
-</user-story-example>
+### 3. Write requirements as deltas
 
-This list of user stories should be extremely extensive and cover all aspects of the feature.
+Each requirement carries a stable identifier and three parts:
 
-## Implementation Decisions
+| Part | Content |
+|---|---|
+| **Current** | What is true today |
+| **Target** | What must become true |
+| **Acceptance** | The observation that would settle whether it did |
 
-A list of implementation decisions that were made. This can include:
+Acceptance names an **observable predicate and its counterexample** — what would have to be seen for this to be satisfied, and what would falsify it. Not a fixture, not a command, not a test name.
 
-- The modules that will be built/modified
-- The interfaces of those modules that will be modified
-- Technical clarifications from the developer
-- Architectural decisions
-- Schema changes
-- API contracts
-- Specific interactions
+> ✗ The system should be fast
+> ✓ A feed request returns within 200ms at p95 under normal load; slower than that falsifies it
 
-Do NOT include specific file paths or code snippets. They may end up being outdated very quickly.
+Size each requirement as **one independently judgeable obligation or invariant**. Ticket compilation happens later and maps requirements to tickets many-to-many, so a requirement is not a unit of work — it is a unit of judgement.
 
-Exception: if a prototype produced a snippet that encodes a decision more precisely than prose can (state machine, reducer, schema, type shape), inline it within the relevant decision and note briefly that it came from a prototype. Trim to the decision-rich parts — not a working demo, just the important bits.
+Every requirement records `derived-from: D-NNN`, naming the decisions it rests on. A requirement tracing to no decision is either an undocumented decision — go and record it — or this stage inventing intent, which is the failure this pointer exists to prevent.
 
-## Testing Decisions
+Identifiers are assigned once and never reused. A retired requirement's identifier stays retired.
 
-A list of testing decisions that were made. Include:
+### 4. State what must never happen
 
-- A description of what makes a good test (only test external behavior, not implementation details)
-- Which modules will be tested
-- Prior art for the tests (i.e. similar types of tests in the codebase)
+A contract of only positive obligations cannot forbid anything. Ask directly:
 
-## Out of Scope
+> What could this silently become that nobody would want?
 
-A description of the things that are out of scope for this spec.
+Overproduce candidates, then keep only the ones specific to *this* work — routine engineering practice and standing policy belong elsewhere. Each kept prohibition becomes a **negative acceptance criterion**, phrased as observably as any other requirement.
 
-## Further Notes
+Then walk the edges of the requirements now that they are clear — vague requirements have no edges worth probing:
 
-Any further notes about the feature.
+**boundary · adjacency · empty · encoding · ordering · precision · idempotency · concurrency**
 
-</spec-template>
+Each edge resolves one of three ways: covered by an existing or new requirement, **dismissed with a stated reason**, or recorded as an open question. A dismissal with no reason is not a dismissal.
 
----
+### 5. Classify what remains open
 
-## Workbench extension: traceable work items
+Every unresolved question is one of two kinds, and saying which is the whole point:
 
-Every specification includes a substantive `## Work Items` section. Place it after
-User Stories and enumerate the complete declared delivery scope as ticket-sized units:
+- **Blocking** — the answer changes what must become true. It returns to `discovery`; the spec is not done.
+- **Deferred** — the answer belongs to system or program design. It is recorded and passed downstream.
 
-```markdown
-## Work Items
+An unclassified open question is an invitation for a later stage to invent behaviour.
 
-- **R1:** <one independently ticketable outcome>
-- **R2:** <one independently ticketable outcome>
-```
+### 6. Check the contract against itself
 
-Use unique `R` identifiers matching `R[1-9][0-9]*`. Assign each identifier once and
-keep it stable when revising the specification - change the description without
-renumbering existing units. Each description names a concrete, independently verifiable
-outcome rather than a layer, file list, or restatement of a user story. Add a new
-identifier for newly declared scope; never reuse a retired identifier for different work.
+Before offering it for approval, read the draft as a reader who was not in the conversation:
+
+1. Does any requirement require implementation knowledge to judge? That is the leak this stage exists to prevent, and it is easiest to see in the acceptance clauses.
+2. Does every requirement trace to a decision?
+3. Does every decision that changes behaviour appear as a requirement, an exclusion, or an open question?
+4. Do any two requirements contradict?
+5. Is every acceptance clause falsifiable — could an observation show it *unmet*?
+
+Then dispatch a subagent that has not seen the conversation to read `20-spec.md` cold and answer the same five questions. It proposes corrections; it does not invent requirements and does not approve.
+
+### 7. Get approval
+
+Present the spec and the open questions. Approval is the user's, on the file as written — not on a summary of it, and not on a score.
+
+A blocking open question means the answer is no. Approving with soft decisions still in play is allowed only where the risk is visible in the document and the user accepts it explicitly.
+
+## The artifact
+
+`<run>/20-spec.md`, resolved under the planning root — see [`../discovery/references/run-layout.md`](../discovery/references/run-layout.md). See [`references/spec-file.md`](references/spec-file.md) for its shape.
+
+## Amending an approved spec
+
+An approved spec is superseded, never quietly edited. Amend by revising the requirement in place with a new revision marker, and **invalidate what traced to it** — the designs and tickets carrying that identifier, not the whole spec.
+
+Scoping invalidation by identifier is what stable identifiers buy. Amending is then cheap enough to actually do, which is the only reason a spec stays true.
+
+## Standing rules
+
+**Decisions are upstream, design is downstream.** This stage compiles; it does not decide and it does not design. A question that wants a decision goes back; one that wants a design goes forward.
+
+**Stories are context, not contract.** Where user stories help a reader understand who wants what, write them — but requirements, constraints, invariants, prohibitions and exclusions carry the obligations. Stories are never the normative text.
+
+**Exclusions carry reasons.** Work deliberately out of scope is recorded with why, or it returns later looking like an oversight.
