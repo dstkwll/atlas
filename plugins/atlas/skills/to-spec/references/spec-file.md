@@ -33,6 +33,7 @@ What is wrong today, from the perspective of whoever suffers it. No solution.
 **Acceptance:** <the observation that settles it, under stated conditions; and what would falsify it>
 **Derived from:** D-003, D-007
 **Confidence:** <omit, or `low — <what is thin about it>`; available to every family below>
+**Reopens if:** <omit, or the condition from the decision that would put this back in play>
 
 ### R-002 — <short name>
 ...

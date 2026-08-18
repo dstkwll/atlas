@@ -54,6 +54,8 @@ as though they had argued it.>
 
 Filling `contribution` at the grading pass is the one in-place edit a settled record receives; every other change supersedes. A reversed decision is never edited or deleted. Set its `status: superseded`, append a new record with `supersedes: D-007`, and state in the new record what changed. The reversal is the interesting part of the log.
 
+**Both edits, or neither.** A later record that narrows, replaces or overrides an earlier one carries `supersedes:` in its own frontmatter *and* flips the earlier record's `status`. Saying it in prose alone leaves the earlier record reading `settled`, and a consumer following the fields — which is what `to-spec` does — compiles the reversed choice as live. Prose is for the human; the fields are the contract.
+
 ## Open frontier
 
 Rewritten at every round boundary — the map a resuming session reads:

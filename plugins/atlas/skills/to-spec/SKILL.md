@@ -40,7 +40,9 @@ Return to `discovery` before drafting when a decision that would change behaviou
 
 A gap that only surfaces once drafting is under way is recorded as a blocking question rather than abandoning the draft. Finish the spec, mark it blocking, and take it back with the draft in hand — the draft is what makes the gap legible.
 
-A decision that was *made* but carries low confidence is neither: it stands, and it is compiled. Carry its confidence onto the items that rest on it, so what the approval is resting on stays visible.
+So a spec can be complete and unapprovable at once: everything written, one question still open, `status: draft`. That is the intended end state of such a run, not a half-finished job.
+
+A decision that was *made* but carries low confidence is neither: it stands, and it is compiled. Carry its `Confidence` onto the items that rest on it, and the decision's reopening condition into their `Reopens if` — that condition is where the risk actually lives, and the spec is where someone will look for it later.
 
 ### 3. Write requirements as deltas
 
@@ -61,14 +63,7 @@ Size each requirement as **one independently judgeable obligation**. Ticket comp
 
 Each records `derived-from: D-NNN`, naming the decisions it rests on. An item tracing to no decision is either an undocumented decision — go and record it — or this stage inventing intent, which is the failure this pointer exists to prevent.
 
-Every normative item carries an identifier by family, assigned in order and never reused — downstream artifacts cite them, and one that changes meaning silently invalidates everything citing it.
-
-| Family | Written as | Withdrawn item keeps |
-|---|---|---|
-| `R-` requirements, `P-` prohibitions, `C-` constraints, `I-` invariants | a heading | its heading, body replaced by `Withdrawn in version N — <why>` |
-| `X-` exclusions, `Q-` open questions | a table row | its row, remaining cells replaced by the same sentence |
-
-A withdrawn item leaves that **tombstone** rather than freeing its identifier.
+Every normative item carries an identifier by family — `R-` requirements, `P-` prohibitions, `C-` constraints, `I-` invariants, `X-` exclusions, `Q-` open questions — assigned in order and never reused, because downstream artifacts cite them and one that changes meaning silently invalidates everything citing it.
 
 Not every decision becomes an obligation. One settled because the outcome is impossible — a platform that cannot do the thing at all — has no observation that could falsify it, and writing it as a prohibition produces a clause that is trivially always true. That decision is an **exclusion** carrying the reason.
 
@@ -90,9 +85,11 @@ Now that the requirements are clear — vague requirements have no edges worth p
 
 **boundary · adjacency · empty · encoding · ordering · precision · idempotency · concurrency**
 
+Ask of each category what it would mean *here*, not of every requirement in turn — the unit is the distinct case, not the pair. An import that copies files raises **empty** (a card with no new files), **ordering** (two cards imported out of sequence), **idempotency** (the same card twice) and **concurrency** (two cards at once) as four cases, not as thirty-two.
+
 Each edge resolves one of three ways: covered by an existing or new requirement or prohibition, **dismissed with a stated reason**, or recorded as an open question. A dismissal states why the case cannot arise.
 
-Done when every category has been considered against every requirement, and each raised edge carries one of the three resolutions.
+Done when every category has been considered and each raised edge carries a resolution. A category that raises nothing carries a row saying so — considered-and-empty and never-considered must not look alike.
 
 ### 6. Classify what remains open
 
@@ -126,6 +123,8 @@ Where any item rests on a low-confidence decision, its `Confidence` field says s
 `<run>/20-spec.md`, resolved under the planning root — see [`../discovery/references/run-layout.md`](../discovery/references/run-layout.md). See [`references/spec-file.md`](references/spec-file.md) for its shape.
 
 ## Amending an approved spec
+
+A withdrawn item keeps its identifier and leaves a **tombstone** in place — a heading-backed item keeps its heading with the body replaced by `Withdrawn in version N — <why>`, a row-backed item keeps its row with the remaining cells replaced by the same sentence. That is what makes reuse visibly wrong.
 
 An approved spec is immutable — downstream work cites a version, so those bytes stay as approved. Amendment retains them as `20-spec.v1.md` and writes the new version to `20-spec.md`, incrementing `version`, setting `supersedes` to the retained version and `amendment` to the record that produced it. That record lives under `amendments/`, shaped by `architecture/03-artifact-model.md`, inside the flow `architecture/08-state-and-governance.md` owns.
 
