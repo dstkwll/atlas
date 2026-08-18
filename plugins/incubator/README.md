@@ -76,6 +76,7 @@ Lightweight statuses, not a lifecycle: `candidate` (may contribute to a canonica
 | `to-tickets` | upstream | Ticket authoring | **needs reconciliation** | Retains issue-tracker and `.scratch/` assumptions. Not adapted to the canonical planning artifact model or to execution-compilation semantics. |
 | `advance` | Workbench-authored | Phase-boundary judge and driver | **candidate / reference — not control-plane authority** | Contains useful candidate ideas on evidence, criterion mapping, readiness, bounded workers, and orchestration UX. Its lifecycle, authority model, leash and ship semantics, and review semantics are **not** canonical Atlas behavior. |
 | `setup-atlas` | none — written here | Stub | **stand-in** | Deliberately empty; has no behavior. See its `SKILL.md`. |
+| `discovery` | written here | Stage 1 decision resolution, writing a durable decision log | **candidate** | Written against the canonical Stage 1 routing tree and the configurable planning root, but not exercised. Its decision-record shape is new and unproven. |
 | `codebase-design` | upstream | Design reasoning | candidate | Not audited. |
 | `diagnosing-bugs` | upstream | Debugging loop | candidate | Not audited. |
 | `domain-modeling` | upstream | Domain modeling | candidate | Not audited. |
@@ -97,8 +98,8 @@ readiness are marked explicit-invocation-only where the host supports it — Cla
 `disable-model-invocation: true` in frontmatter, and Codex's
 `policy.allow_implicit_invocation: false` in `agents/openai.yaml`.
 
-Currently explicit-only: `advance`, `factory-implement`, `factory-code-review`, `to-spec`,
-`to-tickets`, `setup-atlas`, `grill-with-docs`, `improve-codebase-architecture`,
+Currently explicit-only: `advance`, `discovery`, `factory-implement`, `factory-code-review`,
+`to-spec`, `to-tickets`, `setup-atlas`, `grill-with-docs`, `improve-codebase-architecture`,
 `wayfinder`.
 
 **Unverified by host.** Copilot CLI and Hermes have no confirmed equivalent of these keys.
