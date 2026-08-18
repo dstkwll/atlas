@@ -2,7 +2,7 @@
 
 The required shape of every entry in `10-decisions.md`. Appended the moment a question settles, never batched to the end of the run.
 
-The log is read twice: by the specification stage, which needs what was decided, and by a later reader studying how decisions get made. The second reader is why options not taken, reasoning, and confidence are required — a record of the choice alone teaches nothing about the choosing, and one too thin to reconstruct the moment is worth less than one that repeats itself.
+The log is read twice: by whatever writes the specification, which needs what was decided, and by a later reader studying how decisions get made. The second reader is why options not taken, reasoning, and confidence are required — a record of the choice alone teaches nothing about the choosing, and one too thin to reconstruct the moment is worth less than one that repeats itself.
 
 ## Shape
 

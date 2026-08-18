@@ -10,7 +10,7 @@ Work a fuzzy goal down to resolved decisions. Every decision, its options, and w
 
 This is the stage before specification. It produces **decisions and evidence**, not a specification and not code.
 
-The specification stage reads this log. `to-spec` in this plugin does **not** — it synthesizes from conversation and publishes to an issue tracker, unreconciled with the planning artifact model. Hand it the decision log explicitly, or expect it to ignore the run.
+No skill here owns the specification stage yet. `to-spec` is the nearest, and it reads this log when pointed at a run — but it publishes to an issue tracker rather than the planning root, so point it at the run explicitly and expect its output to land outside.
 
 ## The frontier
 

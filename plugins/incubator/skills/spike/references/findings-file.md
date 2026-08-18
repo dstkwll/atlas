@@ -1,6 +1,6 @@
 # Findings file
 
-One file per spike, under the run's spikes directory — `artifacts.spikes_dir` beneath the planning root, resolved as `discovery/references/run-layout.md` describes. Never hardcode a path.
+One file per spike, under `artifacts.spikes_dir` beneath the planning root — `spikes/` where that key is unset. The planning root resolves as `../../discovery/references/run-layout.md` describes. Never hardcode a path; where no run exists, ask.
 
 ```markdown
 ---

@@ -33,7 +33,7 @@ Present the table and ask whether to run all of them in this order. Let the user
 
 ### 2. Design the experiments
 
-For each spike, two to five experiments in the shape the findings template below sets out: claim, method as working commands rather than pseudocode, side effects, and — the field that separates a spike from poking at things — **what output would validate and what would invalidate, both written before the run**.
+For each spike, two to five experiments in the shape the findings file sets out: claim, method as working commands rather than pseudocode, side effects, and — the field that separates a spike from poking at things — **what output would validate and what would invalidate, both written before the run**.
 
 Where a spike has real choice of approach, surface the candidates first — tool, maturity, what each costs — pick one, and say why. Where two are genuinely credible, that is a comparison spike, not a coin flip. Skip this for pure logic with no external dependency.
 
@@ -60,6 +60,8 @@ One directory per spike, standalone, hardcoded. Preference order for the artifac
 
 Avoid package management, build tooling, containers, and config systems unless the question is about them. It is a spike.
 
+Comparison spikes that both need real work and can run independently are dispatched in parallel; the head-to-head is written here, not by either of them.
+
 **Depth over speed.** One happy-path run is not a verdict. Push the edge cases, and follow anything surprising — a verdict is only worth what the investigation behind it was worth.
 
 ### 5. Record as you go
@@ -76,10 +78,11 @@ The overall verdict follows the per-experiment results:
 
 First rule that matches wins:
 
-1. Experiments contradict each other → `MIXED`
-2. Any `INVALIDATED` → `INVALIDATED`, and the failure mode is the headline
-3. Any `PARTIAL` → `PARTIAL`
-4. All `VALIDATED` → `VALIDATED`
+1. No experiment produced a verdict → no overall verdict. Say what blocked the run.
+2. Two experiments testing the same sub-claim reached opposite verdicts → `MIXED`, and reconciling them is the next question
+3. Any `INVALIDATED` → `INVALIDATED`, and the failure mode is the headline
+4. Any `PARTIAL` → `PARTIAL`
+5. All `VALIDATED` → `VALIDATED`
 
 Then state, in this order: what the spike now knows, what it does **not** know, and what it implies for the decision that prompted it.
 
@@ -87,9 +90,7 @@ An `INVALIDATED` verdict is a successful spike. It cost an experiment to learn s
 
 ## Findings file
 
-One file per spike, under the run's spikes directory — `artifacts.spikes_dir` beneath the planning root, resolved as `discovery/references/run-layout.md` describes. Never hardcode a path.
-
-See [`references/findings-file.md`](references/findings-file.md) for its shape.
+One file per spike, under the run's spikes directory. See [`references/findings-file.md`](references/findings-file.md) for where it goes and what shape it takes.
 
 ## Standing rules
 

@@ -1,6 +1,6 @@
 ---
 name: setup-atlas
-description: Configure a machine for the Atlas skills — where planning artifacts live, and how runs are placed under that root. Run once per machine before the other skills are used.
+description: Configure a machine for the Atlas skills — establish where planning artifacts live. Run once per machine before the other skills are used.
 disable-model-invocation: true
 ---
 
@@ -47,6 +47,7 @@ Check whether the working directory is inside a git repository, and name it — 
 ### 2. Ask for the planning root
 
 Repository-relative `.planning/`, or an external absolute path. Lead with a recommendation — repository-relative where a single repository is the obvious scope — so it can be accepted in a word.
+
 Skip any question the environment has already settled. Where the working directory is a repository and the user names no external root, the answer is repository-relative and the question need not be asked.
 
 ### 3. Confirm before writing
@@ -55,7 +56,9 @@ Show the exact configuration to be written and the path it goes to, using that p
 
 Report and stop if an external root does not exist or is not readable. This skill does not create the root.
 
-Warn if an external planning root sits inside a synchronized folder such as OneDrive, iCloud Drive, or Dropbox. Synchronized planning artifacts are a legitimate choice; concurrent edits from two machines are the risk, and the user should make that trade knowingly.
+Stop if the configuration path resolves inside a synchronized folder such as OneDrive, iCloud Drive, or Dropbox. A synchronized configuration carries one machine's absolute planning root onto another where it does not resolve — a hard breakage, not a trade-off.
+
+Warn, and continue, if the planning root itself sits inside one. Synchronized planning artifacts are a legitimate choice; concurrent edits from two machines are the risk, and any absolute path recorded inside them still breaks across machines. The user makes that trade knowingly.
 
 ### 4. Write the configuration
 
@@ -64,9 +67,12 @@ artifacts:
   planning_root: .planning        # or an absolute path
 ```
 
+Other `artifacts` keys are left unset and fall back to the defaults in
+`architecture/09-reference-config.md` — `evidence/` and `spikes/` beneath the run.
+
 Report the path written and where the next run will land. Placement of an individual run
 under an external root is a per-run judgement, not configuration — see
-`discovery/references/run-layout.md`.
+`../discovery/references/run-layout.md`.
 
 ## Standing rules
 
