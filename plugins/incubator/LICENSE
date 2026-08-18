@@ -1,8 +1,14 @@
-Matt Pocock's skills are licensed under the MIT License and are vendored here
-verbatim under vendor/. The original license and copyright follow.
+Portions of this incubation skill set derive from Matt Pocock's agent skills
+(https://github.com/mattpocock/skills), which are licensed under the MIT License.
+They reached Atlas through the Workbench `mp` plugin and its adaptation of that
+upstream work.
 
-The Workbench packaging around them (sync.config.json, scripts/, plugin.json,
-this repackaging) is the work of the Workbench maintainers.
+Atlas carries them as a hard fork rather than a pristine vendored tree: the
+upstream sync machinery was deliberately dropped, and these skill files are
+directly editable source that has been modified. See README.md for the pinned
+upstream commit and the extent of the divergence.
+
+The original MIT copyright and license notice follows.
 
 --------------------------------------------------------------------------------
 
