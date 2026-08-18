@@ -36,8 +36,9 @@ Where no decision log exists, say so and offer `discovery`.
 ### 2. Judge whether the decisions are ready
 
 Readiness is about content, never age: a decision made months ago on a stable question is fine, one made yesterday on a question that has since shifted is not.
+Return to `discovery` before drafting when a decision that would change behaviour is **missing or unsettled** — one you would have to guess at to write the requirement. Unknowns that leave behaviour unchanged pass through to the spec's open questions, classified in step 6.
 
-Return to `discovery` when a decision that would change behaviour is **missing or unsettled** — one you would have to guess at to write the requirement. Unknowns that leave behaviour unchanged pass through to the spec's open questions, classified in step 5.
+A gap that only surfaces once drafting is under way is recorded as a blocking question rather than abandoning the draft. Finish the spec, mark it blocking, and take it back with the draft in hand — the draft is what makes the gap legible.
 
 A decision that was *made* but carries low confidence is neither: it stands, and it is compiled. Carry its confidence onto the items that rest on it, so what the approval is resting on stays visible.
 
@@ -69,6 +70,8 @@ Every normative item carries an identifier by family, assigned in order and neve
 
 A withdrawn item leaves that **tombstone** rather than freeing its identifier.
 
+Not every decision becomes an obligation. One settled because the outcome is impossible — a platform that cannot do the thing at all — has no observation that could falsify it, and writing it as a prohibition produces a clause that is trivially always true. That decision is an **exclusion** carrying the reason.
+
 Done when **every decision in the log is accounted for** — as a requirement, prohibition, constraint or invariant, as an exclusion with its reason, or as an open question. A decision that changed behaviour and appears nowhere is the omission this step exists to catch.
 
 ### 4. State what must never happen
@@ -77,9 +80,13 @@ A contract of only positive obligations cannot forbid anything. Ask directly:
 
 > What could this silently become that nobody would want?
 
-Overproduce candidates, then keep only those specific to *this* work — routine engineering practice and standing policy belong elsewhere. Each kept prohibition becomes a **negative acceptance criterion**, as observable as any requirement, and reaches the document through the log like everything else.
+Overproduce candidates, then keep only those specific to *this* work — routine engineering practice and standing policy belong elsewhere. Each kept prohibition becomes a **negative acceptance criterion**, as observable as any requirement.
 
-Then walk the edges of the requirements now that they are clear — vague requirements have no edges worth probing:
+A prohibition the log implies — "don't hold anything back" implying that no interim message may be delayed — cites the decision that implies it. One the log does not support at all is an unrecorded decision: take it back to `discovery` rather than writing it here.
+
+### 5. Walk the edges
+
+Now that the requirements are clear — vague requirements have no edges worth probing — test each against every category:
 
 **boundary · adjacency · empty · encoding · ordering · precision · idempotency · concurrency**
 
@@ -87,7 +94,7 @@ Each edge resolves one of three ways: covered by an existing or new requirement 
 
 Done when every category has been considered against every requirement, and each raised edge carries one of the three resolutions.
 
-### 5. Classify what remains open
+### 6. Classify what remains open
 
 Every unresolved question is one of two kinds, and saying which is the whole point:
 
@@ -96,7 +103,7 @@ Every unresolved question is one of two kinds, and saying which is the whole poi
 
 An unclassified open question is an invitation for a later stage to invent behaviour.
 
-### 6. Check the contract against itself
+### 7. Check the contract against itself
 
 Before offering it for approval, read the draft as a reader who was not in the conversation:
 
@@ -108,11 +115,11 @@ Before offering it for approval, read the draft as a reader who was not in the c
 
 Then dispatch a subagent that has not seen the conversation to read `20-spec.md` and answer the same five questions — it holds the outside view by construction. It proposes corrections; the requirements stay yours and the approval stays the user's.
 
-### 7. Get approval
+### 8. Get approval
 
 Approval is the user's, on the file as written rather than on a summary of it. A blocking open question means the answer is no.
 
-Where an item rests on a low-confidence decision, its `Confidence` field says so and the user accepts that explicitly. A decision made on thin ground is approvable; one never made was returned upstream in step 2.
+Where any item rests on a low-confidence decision, its `Confidence` field says so and the user accepts that explicitly. A decision made on thin ground is approvable; one never made was returned upstream in step 2.
 
 ## The artifact
 
@@ -120,20 +127,14 @@ Where an item rests on a low-confidence decision, its `Confidence` field says so
 
 ## Amending an approved spec
 
-An approved spec is an immutable contract: downstream work cites a version, so the approved bytes stay as approved. Amendment retains them as `20-spec.v1.md` and writes the new version to `20-spec.md`, incrementing `version`, setting `supersedes` to the retained version and `amendment` to the record that produced it.
+An approved spec is immutable — downstream work cites a version, so those bytes stay as approved. Amendment retains them as `20-spec.v1.md` and writes the new version to `20-spec.md`, incrementing `version`, setting `supersedes` to the retained version and `amendment` to the record that produced it. That record lives under `amendments/`, shaped by `architecture/03-artifact-model.md`, inside the flow `architecture/08-state-and-governance.md` owns.
 
-That record lives under `amendments/` and carries what `architecture/03-artifact-model.md` requires of one; `architecture/08-state-and-governance.md` owns the flow around it — review policy, recalculated ticket graph, completed work checked for invalidation, stale approvals marked, execution resumed only after re-approval.
-
-What this stage contributes is **the affected section stated as identifiers** — `R-004, P-002` rather than "the caching requirements" — so that flow has a precise input. That precision is what stable identifiers buy, and it keeps amending cheap enough to actually do, which is the only reason a spec stays true.
-
-## The Stage 5 seam
-
-`to-tickets` in this plugin cannot consume this spec: it reads an enumerable `## Work Items` section and stops rather than publish when one is absent. Emitting ticket-sized work items from here would put them back into a behavioural contract, so the break stands until Stage 5 is written. Say so rather than reshaping the spec to fit the legacy consumer.
+What this stage contributes is **the affected section stated as identifiers** — `R-004, P-002` rather than "the caching requirements" — so that flow has a precise input when it recalculates what is stale.
 
 ## Standing rules
 
 **Decisions are upstream, design is downstream.** This stage compiles; it does not decide and it does not design. A question that wants a decision goes back; one that wants a design goes forward.
 
-**Stories are context, not contract.** Where user stories help a reader understand who wants what, write them — but requirements, constraints, invariants, prohibitions and exclusions carry the obligations. Stories are never the normative text.
+**Stories are context, not contract.** Write them where they help a reader understand who wants what; the normative families carry the obligations.
 
 **Exclusions carry reasons.** Work deliberately out of scope is recorded with why, or it returns later looking like an oversight.

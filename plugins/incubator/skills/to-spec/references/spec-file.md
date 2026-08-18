@@ -32,8 +32,7 @@ What is wrong today, from the perspective of whoever suffers it. No solution.
 **Target:** <what must become externally observable>
 **Acceptance:** <the observation that settles it, under stated conditions; and what would falsify it>
 **Derived from:** D-003, D-007
-**Confidence:** <omit, or `low — <what is thin about it>` where a low-confidence decision
-survives into the approved spec>
+**Confidence:** <omit, or `low — <what is thin about it>`; available to every family below>
 
 ### R-002 — <short name>
 ...
@@ -45,7 +44,7 @@ Negative acceptance criteria — what must never happen. Same form, same falsifi
 ### P-001 — <short name>
 **Must never:** <the outcome nobody wants>
 **Acceptance:** <the observation that would show it happening>
-**Derived from:** D-011
+**Derived from:** D-011 — cite the decision that implies it, not only one that states it
 
 ## Constraints
 
