@@ -1,0 +1,22 @@
+{
+  "name": "incubator",
+  "description": "Atlas incubation skills: borrowed, candidate, and stand-in skills used to develop Atlas. Not canonical implementations of the Atlas architecture.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Dan Stockwell"
+  },
+  "keywords": [
+    "skills",
+    "engineering",
+    "incubation",
+    "candidate",
+    "atlas"
+  ],
+  "category": "development",
+  "tags": [
+    "skills",
+    "incubation",
+    "noncanonical"
+  ],
+  "skills": "skills/"
+}

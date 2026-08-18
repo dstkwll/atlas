@@ -1,0 +1,5 @@
+interface:
+  display_name: "Advance"
+  short_description: "Judge a phase boundary and report readiness"
+policy:
+  allow_implicit_invocation: false

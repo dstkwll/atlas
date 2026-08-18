@@ -1,6 +1,6 @@
 # Advance driver configuration contract
 
-Per-user settings for the guided `/atlas:advance` driver. This contract is **pinned ahead
+Per-user settings for the guided `/incubator:advance` driver. This contract is **pinned ahead
 of the driver implementation**: it fixes the schema, keys, and defaults now so the
 behavioral work (judge/drive seam, leash, worker orchestration, terminal ship rung) lands
 against a settled surface. `tests/Test-DriverConfig.ps1` holds the example below to this

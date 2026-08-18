@@ -2,9 +2,9 @@
   "name": "dstkwll",
   "plugins": [
     {
-      "name": "atlas",
-      "source": "./plugins/atlas",
-      "description": "Atlas software-factory skills: spec, tickets, implementation, review, and discovery.",
+      "name": "incubator",
+      "source": "./plugins/incubator",
+      "description": "Atlas incubation skills: borrowed, candidate, and stand-in skills used to develop Atlas. Not canonical implementations of the Atlas architecture.",
       "version": "0.1.0"
     }
   ]
