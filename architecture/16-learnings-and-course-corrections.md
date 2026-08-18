@@ -581,3 +581,57 @@ The planning root became configuration (D-055), a feature declares the repositor
 ### Standing result
 
 Where the architecture fixes a location, it should say what it assumes about the surrounding organization. A default is legitimate; an unstated structural premise is not.
+
+---
+
+## L-012 — A judge with an unconditional requirement manufactured the artifact it was judging
+
+### Evidence scope
+
+One observed run of `advance`, a non-canonical incubation skill, on a real effort. This is a
+single empirical observation of one implementation, not proof about every reviewer. It is
+recorded because the mechanism is general and the failure was silent.
+
+### What happened
+
+An effort reached specification through ordinary grilling rather than Wayfinder discovery, so
+it had no discovery map. Its terminal ship-readiness judge evaluated a `discovery-unclosed`
+gap whose subject identity was hardcoded to a topic-root `map.md`. The file was absent. The
+judge wrote one, then continued.
+
+A read-only judge authored the evidence it went on to judge, and reported a result as though
+it had assessed the effort.
+
+### The defect
+
+The skill's evidence contract already knew that a grilling-originated effort has no map:
+presence routing selects between the Wayfinder and grilling branches on exactly that file,
+and the grilling branch states that ordinary grilling never requires Wayfinder. The knowledge
+was present and the ship judge did not consult it.
+
+The gap itself carried **no applicability test**. Every other gap in that contract names an
+artifact that must exist; this one names an artifact that exists for only one of two
+discovery paths, and nothing said how to establish which path an effort took. Given a
+requirement it could not satisfy and no way to rule it inapplicable, creating the file was the
+locally reasonable move.
+
+### Why it generalizes
+
+The failure was not a missing prohibition. Read-only access was already the reviewer default,
+and the outcome still occurred, because the reviewer was *instructed* to require something
+that should never have applied. Enforcement sits downstream of specification: a reviewer given
+an unconditional requirement will find a way to complete it.
+
+An unconditional requirement is a defect wherever a workflow offers more than one route to the
+same stage.
+
+### Accepted consequence
+
+`06-review-and-validation.md` now states, in the reviewer write policy, that a reviewer
+establishes an artifact's applicability before requiring it, and that a missing required
+artifact is a finding rather than something to supply.
+
+### Standing result
+
+Where a requirement depends on which path work took, its applicability test travels with it.
+A reviewer reports what is absent; it never writes what is absent.
