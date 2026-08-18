@@ -99,32 +99,3 @@ question routed to design is a decision being made by the wrong stage.
 Optional, non-normative. Written where they help a reader understand who wants what. They
 carry no obligations — the requirements above do.
 ```
-
-## Identifier rules
-
-`R-`, `P-`, `C-`, `I-`, `X-` and `Q-` identifiers are assigned once, in order, and never
-reused. Downstream artifacts cite them, so an identifier that changes meaning silently
-invalidates everything citing it.
-
-A withdrawn item leaves a **tombstone** so reuse is visibly wrong. A heading-backed item
-(`R-`, `P-`, `C-`, `I-`) keeps its heading with the body replaced by
-`Withdrawn in version N — <why>`. A row-backed item (`X-`, `Q-`) keeps its row with the
-remaining cells replaced by the same sentence.
-
-## Versions
-
-An approved spec is immutable: downstream work cites a version, so those bytes stay as
-approved. Amending writes a **new version** alongside it — `20-spec.v1.md` retained,
-`20-spec.md` holding the current version with `version` incremented and `supersedes` naming
-the prior one.
-
-The amendment itself is a record under `amendments/`, whose required contents
-`architecture/03-artifact-model.md` defines: trigger and evidence, affected artifact and
-section, proposed change, impact on completed tickets, required re-review, approval. The
-spec's `amendment` field names that record.
-
-What this stage contributes is **the affected-section list stated as identifiers**. Naming
-`R-004, P-002` rather than "the caching requirements" gives the governance flow in
-`architecture/08-state-and-governance.md` a precise input when it recalculates the dependent
-ticket graph and marks stale approvals. It is an input to that calculation, not a substitute
-for it.

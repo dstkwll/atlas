@@ -60,7 +60,9 @@ Size each requirement as **one independently judgeable obligation**. Ticket comp
 
 Every requirement records `derived-from: D-NNN`, naming the decisions it rests on. A requirement tracing to no decision is either an undocumented decision — go and record it — or this stage inventing intent, which is the failure this pointer exists to prevent.
 
-Every normative item carries an identifier by family — `R-` requirements, `P-` prohibitions, `C-` constraints, `I-` invariants, `X-` exclusions, `Q-` open questions. Identifiers are assigned once and never reused; a withdrawn item leaves a tombstone rather than freeing its identifier.
+Every normative item carries an identifier by family — `R-` requirements, `P-` prohibitions, `C-` constraints, `I-` invariants, `X-` exclusions, `Q-` open questions. Identifiers are assigned once and never reused, because downstream artifacts cite them and one that changes meaning silently invalidates everything citing it.
+
+A withdrawn item leaves a **tombstone** rather than freeing its identifier: a heading-backed item keeps its heading with the body replaced by `Withdrawn in version N — <why>`, a row-backed item keeps its row with the remaining cells replaced by the same sentence.
 
 Done when **every decision in the log is accounted for** — as a requirement, prohibition, constraint or invariant, as an exclusion with its reason, or as an open question. A decision that changed behaviour and appears nowhere is the omission this step exists to catch.
 
@@ -113,11 +115,9 @@ Where an item rests on a low-confidence decision, its `Confidence` field says so
 
 ## Amending an approved spec
 
-An approved spec is an immutable contract: downstream work cites a version, so the approved bytes stay as approved. Amendment adds a new version rather than editing the old one, and `architecture/08-state-and-governance.md` owns the flow — proposed amendment, review policy, recalculated ticket graph, completed work checked for invalidation, stale approvals marked, execution resumed only after re-approval.
+An approved spec is an immutable contract: downstream work cites a version, so the approved bytes stay as approved. Amendment writes a new version alongside the old — `20-spec.v1.md` retained, `20-spec.md` holding the current one — and `architecture/08-state-and-governance.md` owns the flow — proposed amendment, review policy, recalculated ticket graph, completed work checked for invalidation, stale approvals marked, execution resumed only after re-approval.
 
 The amendment is its own record under `amendments/`, carrying what `architecture/03-artifact-model.md` requires of one. What this stage contributes to it is **the affected section stated as identifiers** — `R-004, P-002` rather than "the caching requirements" — so the flow has a precise input when it recalculates the dependent ticket graph. That precision is what stable identifiers buy, and it keeps amending cheap enough to actually do, which is the only reason a spec stays true.
-
-See [`references/spec-file.md`](references/spec-file.md) for how a version records its amendment.
 
 ## The Stage 5 seam
 
