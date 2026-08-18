@@ -1,6 +1,6 @@
 ---
 name: spike
-description: Answer a question by running a bounded experiment, when inspection and research cannot settle it. Use when feasibility, performance, interoperability, concurrency, or actual runtime behaviour is the open question, or when discovery routes a question here.
+description: Answer a question by running a bounded experiment, when inspection and research cannot settle it. Use when feasibility, performance, interoperability, concurrency, or actual runtime behaviour is the open question, when comparing two approaches empirically, or when discovery routes a question here.
 disable-model-invocation: true
 ---
 
@@ -10,56 +10,78 @@ A bounded experiment whose output is **knowledge**, not production code.
 
 Reach for a spike when the answer exists nowhere yet — not in the user's head, not in documentation, not in this codebase. It has to be created by observing behaviour.
 
-The discipline that makes a spike worth running: **what would count as a negative result is written down before anything runs.** An experiment that cannot come back negative has measured nothing.
+Two disciplines make a spike worth running. **What would count as a negative result is written down before anything runs** — an experiment that cannot come back negative has measured nothing. And **the output is something the user can drive**: a spike whose only evidence is a log line saying "it works" has not been felt by anyone.
 
 ## Steps
 
-### 1. State the hypothesis
+### 1. Decompose into spikes, ordered by risk
 
-One claim, in Given/When/Then form:
+Break the question into two to five independent feasibility questions. Each is one spike, and each gets a Given/When/Then hypothesis:
 
 > **Given** <preconditions and system state>
 > **When** <the action or change>
 > **Then** <the expected observable outcome>
 
-A question too broad for a single Given/When/Then is too broad to spike — narrow it. A question that splits into two unrelated claims is two spikes.
+Present them as a table with a risk column, then **order by risk: the spike most likely to kill the idea runs first.** There is no point proving the easy parts if the hard part fails.
 
-Where the spike was routed here by `discovery`, the hypothesis restates that question. Where it was invoked directly, agree the hypothesis with the user before continuing.
+Two shapes:
+
+- **Standard** — one approach answering one question.
+- **Comparison** — one question, competing approaches, sharing a number with letter suffixes (`002a`, `002b`). Build them back to back and close with a head-to-head table.
+
+A question too broad for a single Given/When/Then is too broad to spike. Skip decomposition only when the question already arrives as one spike — including when `discovery` routed a single narrow question here.
+
+Present the table and ask whether to run all of them in this order. Let the user drop, reorder, or reframe before anything is written.
 
 ### 2. Design the experiments
 
-Two to five experiments that together test the hypothesis. Each carries four things, and the third is what makes this a spike rather than a session of poking at things:
+For each spike, two to five experiments. Each carries four things, and the third is what separates a spike from poking at things:
 
 | Field | Content |
 |---|---|
 | **Claim** | The sub-claim this experiment tests |
 | **Method** | Working commands or code, not pseudocode |
-| **Verdict criteria** | What output would **validate**, and what output would **invalidate**. Both, stated concretely, before running |
+| **Verdict criteria** | What output would **validate**, and what output would **invalidate**. Both, concretely, before running |
 | **Side effects** | `read-only`, or the specific mutations it performs |
 
-Where experiments are sequenced — a later one depending on an earlier verdict — say so explicitly.
+Where a spike has real choice of approach, surface the candidates first — tool, maturity, what each costs — pick one, and say why. Where two are genuinely credible, that is a comparison spike, not a coin flip. Skip this for pure logic with no external dependency.
 
-State the bounds before running: the maximum scope, whether production code may be written (`prohibited`, `optional`, or `candidate`), and what happens to the artifacts afterward (`discard`, `preserve_evidence`, or `candidate_for_rework`).
+State the bounds before running: maximum scope, whether production code may be written (`prohibited`, `optional`, or `candidate`), and what happens to the artifacts afterward (`discard`, `preserve_evidence`, or `candidate_for_rework`).
 
 ### 3. Get approval before running anything with side effects
 
-Present the plan: hypothesis, experiments, verdict criteria, bounds. Then stop.
+Present the plan: hypotheses, experiments, verdict criteria, bounds. Then stop.
 
 `read-only` experiments — reads, greps, queries, and writes confined to the spike's own directory — run once the plan is approved.
 
 Anything else names its side effects and gets its own confirmation immediately before it runs. Where an experiment's category is uncertain, treat it as having side effects.
 
-**The plan is the gate.** No runtime enforces these categories; the declaration is self-policed, which is exactly why the plan is approved as a whole before any of it runs.
+**The plan is the gate.** No runtime enforces these categories; the declaration is self-policed, which is exactly why the whole plan is approved before any of it runs.
 
-### 4. Run and record as you go
+### 4. Build something the user can drive
 
-Record each experiment's method, actual output, and verdict in the findings file at the moment it completes. A run whose output is summarized from memory afterward is worth less than one written down as it happened.
+One directory per spike, standalone, hardcoded. Preference order for the artifact:
 
-Per-experiment verdict: `VALIDATED`, `INVALIDATED`, or `PARTIAL`, each with the concrete evidence — output excerpts, file paths, error strings, measured numbers.
+1. A runnable command that takes input and prints observable output
+2. A single HTML page demonstrating the behaviour
+3. A small server with one endpoint
+4. A test exercising the question with recognizable assertions
+
+Avoid package management, build tooling, containers, and config systems unless the question is about them. It is a spike.
+
+**Depth over speed.** One happy-path run is not a verdict. Push the edge cases, and follow anything surprising — a verdict is only worth what the investigation behind it was worth.
+
+Where two comparison spikes both need real work and can run independently, dispatch them in parallel and write the head-to-head yourself.
+
+### 5. Record as you go
+
+Record each experiment's method, actual output, and verdict at the moment it completes. A run summarized from memory afterward is worth less than one written down as it happened.
+
+Per-experiment verdict: `VALIDATED`, `INVALIDATED`, or `PARTIAL`, each with concrete evidence — output excerpts, file paths, error strings, measured numbers.
 
 An experiment that fails to run is not an `INVALIDATED` hypothesis. It is a broken experiment: fix it, or record that the method could not be executed and say what that leaves unknown.
 
-### 5. Synthesize the verdict
+### 6. Synthesize the verdict
 
 The overall verdict follows the per-experiment results:
 
@@ -73,6 +95,17 @@ The overall verdict follows the per-experiment results:
 Then state, in this order: what the spike now knows, what it does **not** know, and what it implies for the decision that prompted it.
 
 An `INVALIDATED` verdict is a successful spike. It cost an experiment to learn something that would otherwise have cost an implementation.
+
+### 7. Name what to spike next
+
+When spikes already exist and the question is what to run next, walk them and look for what nobody proved:
+
+- **Integration risk** — two spikes validated independently that touch the same resource.
+- **Data handoff** — one spike's output assumed compatible with another's input, never demonstrated.
+- **Assumed capability** — something the design relies on that no spike has exercised.
+- **A different angle** on anything `PARTIAL` or `INVALIDATED`.
+
+Propose two to four as Given/When/Then and let the user pick.
 
 ## Findings file
 
@@ -116,8 +149,12 @@ date: 2026-08-16
 **What remains unknown:** <what the spike did not settle, including anything an
 experiment failed to test>
 
+**Surprises:** <anything the investigation turned up that nobody was looking for>
+
 **Implication:** <what the decision that prompted this should do with it>
 ```
+
+A comparison spike closes with a head-to-head table across the dimensions that actually differed, and names a winner for this use case rather than in the abstract.
 
 ## Standing rules
 
@@ -125,6 +162,6 @@ experiment failed to test>
 
 **Report the number you measured.** Not the number you expected, not a rounded impression of it. Where a measurement is noisy, say how noisy.
 
-**Throwaway code stays throwaway.** Spike code is named so a reader can see what it is, and it does not migrate into production because it happens to work. What survives a spike is the finding; the code is evidence, retained or discarded per the declared bound.
+**Throwaway code stays throwaway.** Spike code is named so a reader can see what it is, and it does not migrate into production because it happens to work. A spike that takes two days to clean up was a bad spike. What survives is the finding; the code is evidence, retained or discarded per the declared bound.
 
 **A spike answers its question and stops.** Adjacent things worth knowing become follow-up questions for whoever routed here, not extra experiments in this run.

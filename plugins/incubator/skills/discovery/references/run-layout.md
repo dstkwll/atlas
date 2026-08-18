@@ -4,9 +4,10 @@ Where a discovery run writes, and what its file starts as.
 
 ## Resolving the run directory
 
-The planning root is configured, not fixed — see `architecture/03-artifact-model.md`. Read
-`artifacts.planning_root` from `~/.atlas/config.yaml`, written by `setup-atlas`. A run
-directory sits under that root, and `discovery` never invents a path outside it.
+The planning root is configured, not fixed — see `architecture/03-artifact-model.md`. Read `artifacts.planning_root` from the configuration `setup-atlas` writes — on Windows
+`%APPDATA%\atlas\config.yaml`, elsewhere `$XDG_CONFIG_HOME/atlas/config.yaml` or
+`~/.config/atlas/config.yaml`, falling back to `~/.atlas/config.yaml`. A run directory sits
+under that root, and `discovery` never invents a path outside it.
 
 Where the root is repository-relative, a run is `<planning-root>/<slug>/` and the project
 level below does not apply.

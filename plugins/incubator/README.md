@@ -40,6 +40,12 @@ These skills derive from [Matt Pocock's agent skills](https://github.com/mattpoc
 (MIT, see [`LICENSE`](./LICENSE)), vendored into the Workbench `mp` plugin at upstream
 commit `84fdeffd12f2ee307994d1eb6feb48173b6e0502` and forked here.
 
+`spike` additionally adapts structure — risk-ordered decomposition, comparison spikes with a
+head-to-head close, the interactable-artifact preference, and next-spike selection — from
+Hermes Agent's bundled `spike` skill, itself adapted from the GSD project's `/gsd-spike`
+workflow (MIT © 2025 Lex Christopherson, [gsd-build/get-shit-done](https://github.com/gsd-build/get-shit-done)).
+No text was copied; the borrowing is at the level of workflow shape.
+
 **This is a hard fork.** Upstream sync machinery — the pristine `vendor/` tree, the
 `sync.config.json` manifest, the rename overlay, and the PowerShell build — was
 deliberately dropped. Skills are hand-editable source, not build output. Workbench overlay
@@ -75,8 +81,8 @@ Lightweight statuses, not a lifecycle: `candidate` (may contribute to a canonica
 | `to-spec` | upstream | Specification authoring | **needs reconciliation** | Its specification shape mixes in implementation and design material that canonical Atlas separates across behavioral spec (Stage 2), system design (Stage 3), and program design (Stage 4). |
 | `to-tickets` | upstream | Ticket authoring | **needs reconciliation** | Retains issue-tracker and `.scratch/` assumptions. Not adapted to the canonical planning artifact model or to execution-compilation semantics. |
 | `advance` | Workbench-authored | Phase-boundary judge and driver | **candidate / reference — not control-plane authority** | Contains useful candidate ideas on evidence, criterion mapping, readiness, bounded workers, and orchestration UX. Its lifecycle, authority model, leash and ship semantics, and review semantics are **not** canonical Atlas behavior. One observed defect is fixed in its evidence contract: see "Observed defects" below. |
-| `setup-atlas` | written here | Establishes the planning root and run placement | **candidate** | Written against the configurable planning root. Collects only what a skill reads today; unexercised. |
-| `spike` | written here | Bounded experiment answering one hypothesis | **candidate** | Written against canonical `07-spikes-and-discovery.md`. Its side-effect categories are self-declared, not runtime-enforced; the approval gate is the control. Unexercised. |
+| `setup-atlas` | written here | Establishes the planning root and run placement | **candidate** | Written against the configurable planning root, with platform-native configuration locations for Windows and macOS/Linux. Collects only what a skill reads today; unexercised on either platform. |
+| `spike` | written here | Bounded experiments answering a decomposed question | **candidate** | Written against canonical `07-spikes-and-discovery.md`, with risk-ordered decomposition, comparison spikes, and next-spike selection adapted from Hermes's bundled `spike` (GSD lineage, MIT). Its side-effect categories are self-declared, not runtime-enforced; the approval gate is the control. Unexercised. |
 | `discovery` | written here | Stage 1 decision resolution, writing a durable decision log | **candidate** | Written against the canonical Stage 1 routing tree and the configurable planning root, but not exercised. Its decision-record shape is new and unproven. |
 | `codebase-design` | upstream | Design reasoning | candidate | Not audited. |
 | `diagnosing-bugs` | upstream | Debugging loop | candidate | Not audited. |
