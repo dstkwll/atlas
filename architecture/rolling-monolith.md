@@ -901,9 +901,23 @@ The external form exists because a change is not always confined to one reposito
 
 An external planning root is a location with an access model, not merely a path. A root reachable only by its author cannot be referenced by collaborators; a shared planning repository can. Configuration therefore records the root, and no artifact records an absolute path that resolves differently for different readers.
 
+**An external root resolves to an already-usable local filesystem path.** Configuration names a directory that exists and is readable when a run begins. Cloning, authentication, fetch and push lifecycle, synchronization, remote locking, conflict resolution, and repository provisioning are **outside this architecture**. Where the planning root happens to be a checkout of a shared repository, keeping that checkout current is the operator's responsibility, not the factory's. The contract here concerns artifact location and reference semantics, not remote repository management.
+
 ### `repos`
 
 A feature that affects more than one repository declares them. Each affected repository is named in the feature's `run.yaml` and mirrored into `00-state.md` frontmatter, so the question *which planning artifacts touched this repository* is answerable by query against the planning root rather than by search across repositories.
+
+`repos` is **descriptive planning metadata**. It records what a body of work concerns. It grants no access, and it does not widen any agent's write scope.
+
+### Planning scope is not execution scope
+
+One planning effort may describe work spanning several repositories. Factory execution remains **repository-scoped**:
+
+- An executable run operates against **one resolved repository and worktree**, with **one repository baseline**.
+- Execution compilation may associate or partition tickets by target repository where a planning effort spans several, so that each executable ticket names its target unambiguously.
+- Cross-repository atomic execution, synchronized branches, coordinated integration, multi-repository rollback, and multi-pull-request transaction semantics are **not** capabilities of this architecture. A planning effort spanning several repositories is executed as several repository-scoped runs.
+
+The planning root and the execution scope are separate concerns. Widening the first does not widen the second.
 
 ### Consequences of an external root
 
@@ -2531,9 +2545,11 @@ This is useful, but the CLI command itself is **not** a V1 requirement unless re
 
 ### D-004 — Use Markdown files on disk as primary planning contracts
 
-**Decision:** Specs/designs/tickets live in a repo-local working planning directory rather than GitHub Issues as the canonical store.
+**Decision:** Specs, designs, and tickets live as filesystem-backed Markdown under the configured planning root rather than GitHub Issues as the canonical store. The default planning root is repository-relative `.planning/`; an external root is permitted where explicitly configured.
 
 **Why:** Local files are portable, inspectable, versionable, agent-friendly, and usable without external tracker coupling.
+
+**Refined by:** D-055 governs the location portion of this decision. The choice of filesystem-backed Markdown over an issue tracker is unchanged.
 
 ---
 
@@ -5464,7 +5480,7 @@ v0.5 addresses one question the earlier versions answered by assumption: **where
 
 Every prior version assumed one run, one repository — the planning directory sitting beside the code it describes. That assumption is correct for a monorepo and wrong for an organization of many small repositories, where a single unit of work commonly spans several and none of them is an honest home for the artifacts describing it.
 
-This version makes the planning root a configured value with two legitimate forms, and records what is lost by choosing the second.
+This version makes the planning root a configured value with two legitimate forms, records what is lost by choosing the second, and draws an explicit boundary: planning may span repositories, execution does not.
 
 ---
 
@@ -5491,6 +5507,7 @@ This exists so that *which planning artifacts touched this repository* is answer
 
 ---
 
+
 ## D-057 — The costs of an external planning root are accepted, not denied
 
 Choosing an external root gives up properties the repository-relative arrangement provides for free:
@@ -5514,6 +5531,10 @@ Two consequences:
 
 This constrains the design without requiring shared-root machinery to be built. The single-author case is the one that must work; the shared case is the one that must not be foreclosed.
 
+**Configuration resolves to an already-usable local filesystem root.** An external planning root is a directory that exists and is readable when a run begins. This architecture takes no responsibility for cloning, authentication, fetch and push lifecycle, synchronization, remote locking, conflict resolution, or repository provisioning. Where the root is a checkout of a shared repository, keeping it current is the operator's concern.
+
+Those responsibilities may be earned later if a real implementation requires them. At this stage the contract is about artifact location and reference semantics, not remote repository management.
+
 ---
 
 ## D-059 — Decisions may graduate into a repository as ADRs
@@ -5526,6 +5547,20 @@ The planning root remains authoritative. A graduated ADR is a durable local reco
 
 ---
 
+## D-060 — Planning scope is not execution scope
+
+A planning effort may span several repositories. Factory execution does not.
+
+An executable run operates against one resolved repository and worktree, against one repository baseline. Where a planning effort spans several repositories, it is executed as several repository-scoped runs, and execution compilation may associate or partition tickets by target repository so that each executable ticket names its target unambiguously.
+
+Cross-repository atomic execution, synchronized branches, coordinated integration, multi-repository rollback, and multi-pull-request transaction semantics are **not** capabilities of this architecture and are not introduced by v0.5.
+
+This is stated because it would otherwise be inferred. Widening where artifacts live is not an argument for widening what a run may touch, and "features pay for seams" applies with full force: no multi-repository orchestration seam has been paid for.
+
+Runtime state under `.factory/` remains scoped to the repository a run executes against. Planning artifacts may sit outside that repository; runtime state does not.
+
+---
+
 ## v0.5 north star
 
-> **The artifact layout is fixed; its location is configured. Where work spans repositories, the planning root spans them too — and what that costs is written down rather than assumed away.**
+> **The artifact layout is fixed; its location is configured. Where work spans repositories, the planning root spans them too — while execution stays repository-scoped, and what that costs is written down rather than assumed away.**

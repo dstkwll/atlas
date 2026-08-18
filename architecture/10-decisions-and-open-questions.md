@@ -28,9 +28,11 @@
 
 ### D-004 — Use Markdown files on disk as primary planning contracts
 
-**Decision:** Specs/designs/tickets live in a repo-local working planning directory rather than GitHub Issues as the canonical store.
+**Decision:** Specs, designs, and tickets live as filesystem-backed Markdown under the configured planning root rather than GitHub Issues as the canonical store. The default planning root is repository-relative `.planning/`; an external root is permitted where explicitly configured.
 
 **Why:** Local files are portable, inspectable, versionable, agent-friendly, and usable without external tracker coupling.
+
+**Refined by:** D-055 governs the location portion of this decision. The choice of filesystem-backed Markdown over an issue tracker is unchanged.
 
 ---
 
