@@ -2,9 +2,7 @@
 
 The required shape of every entry in `10-decisions.md`. Appended the moment a question settles, never batched to the end of the run.
 
-The log is read twice: by `to-spec`, which needs what was decided, and by a later reader studying how decisions get made. The second reader is why options not taken, reasoning, and confidence are required rather than optional — a record of the choice alone teaches nothing about the choosing.
-
-Verbosity is correct here. A record too thin to reconstruct the moment is worth less than one that repeats itself.
+The log is read twice: by the specification stage, which needs what was decided, and by a later reader studying how decisions get made. The second reader is why options not taken, reasoning, and confidence are required — a record of the choice alone teaches nothing about the choosing, and one too thin to reconstruct the moment is worth less than one that repeats itself.
 
 ## Shape
 
@@ -15,7 +13,7 @@ Verbosity is correct here. A record too thin to reconstruct the moment is worth 
 id: D-007
 route: grill              # grill | research | explore | spike
 status: settled           # settled | superseded
-decided: 2026-08-16
+decided: <YYYY-MM-DD>
 origin: user              # user | accepted-recommendation
 confidence: medium        # high | medium | low
 unblocked: [D-011, D-012]
@@ -54,11 +52,11 @@ as though they had argued it.>
 
 ## Superseding
 
-A reversed decision is never edited or deleted. Set its `status: superseded`, append a new record with `supersedes: D-007`, and state in the new record what changed. The reversal is the interesting part of the log.
+Filling `contribution` at the grading pass is the one in-place edit a settled record receives; every other change supersedes. A reversed decision is never edited or deleted. Set its `status: superseded`, append a new record with `supersedes: D-007`, and state in the new record what changed. The reversal is the interesting part of the log.
 
 ## Open frontier
 
-`10-decisions.md` carries one live section listing every unsettled question, its route, and what it is blocked by. It is the map a resuming session reads, and it is rewritten at every round boundary:
+Rewritten at every round boundary — the map a resuming session reads:
 
 ```markdown
 ## Open frontier
@@ -70,4 +68,4 @@ A reversed decision is never edited or deleted. Set its `status: superseded`, ap
 | Q11 — <question> | grill | Q8 |
 ```
 
-Questions with no blocker are the frontier. An empty table ends the run.
+Questions with no blocker are the frontier; an empty table ends the run.

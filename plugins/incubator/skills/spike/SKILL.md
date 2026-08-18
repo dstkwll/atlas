@@ -10,8 +10,6 @@ A bounded experiment whose output is **knowledge**, not production code.
 
 Reach for a spike when the answer exists nowhere yet — not in the user's head, not in documentation, not in this codebase. It has to be created by observing behaviour.
 
-Two disciplines make a spike worth running. **What would count as a negative result is written down before anything runs** — an experiment that cannot come back negative has measured nothing. And **the output is something the user can drive**: a spike whose only evidence is a log line saying "it works" has not been felt by anyone.
-
 ## Steps
 
 ### 1. Decompose into spikes, ordered by risk
@@ -29,20 +27,13 @@ Two shapes:
 - **Standard** — one approach answering one question.
 - **Comparison** — one question, competing approaches, sharing a number with letter suffixes (`002a`, `002b`). Build them back to back and close with a head-to-head table.
 
-A question too broad for a single Given/When/Then is too broad to spike. Skip decomposition only when the question already arrives as one spike — including when `discovery` routed a single narrow question here.
+A question too broad for a single Given/When/Then is too broad to spike; one that already arrives narrow — as when `discovery` routes it here — is a single spike and skips decomposition.
 
 Present the table and ask whether to run all of them in this order. Let the user drop, reorder, or reframe before anything is written.
 
 ### 2. Design the experiments
 
-For each spike, two to five experiments. Each carries four things, and the third is what separates a spike from poking at things:
-
-| Field | Content |
-|---|---|
-| **Claim** | The sub-claim this experiment tests |
-| **Method** | Working commands or code, not pseudocode |
-| **Verdict criteria** | What output would **validate**, and what output would **invalidate**. Both, concretely, before running |
-| **Side effects** | `read-only`, or the specific mutations it performs |
+For each spike, two to five experiments in the shape the findings template below sets out: claim, method as working commands rather than pseudocode, side effects, and — the field that separates a spike from poking at things — **what output would validate and what would invalidate, both written before the run**.
 
 Where a spike has real choice of approach, surface the candidates first — tool, maturity, what each costs — pick one, and say why. Where two are genuinely credible, that is a comparison spike, not a coin flip. Skip this for pure logic with no external dependency.
 
@@ -71,8 +62,6 @@ Avoid package management, build tooling, containers, and config systems unless t
 
 **Depth over speed.** One happy-path run is not a verdict. Push the edge cases, and follow anything surprising — a verdict is only worth what the investigation behind it was worth.
 
-Where two comparison spikes both need real work and can run independently, dispatch them in parallel and write the head-to-head yourself.
-
 ### 5. Record as you go
 
 Record each experiment's method, actual output, and verdict at the moment it completes. A run summarized from memory afterward is worth less than one written down as it happened.
@@ -85,76 +74,22 @@ An experiment that fails to run is not an `INVALIDATED` hypothesis. It is a brok
 
 The overall verdict follows the per-experiment results:
 
-| Per-experiment verdicts | Overall |
-|---|---|
-| All `VALIDATED` | `VALIDATED` |
-| Any `INVALIDATED` | `INVALIDATED` — the failure mode is the headline |
-| `VALIDATED` and `PARTIAL` mixed | `PARTIAL` |
-| Experiments contradict each other | `MIXED` |
+First rule that matches wins:
+
+1. Experiments contradict each other → `MIXED`
+2. Any `INVALIDATED` → `INVALIDATED`, and the failure mode is the headline
+3. Any `PARTIAL` → `PARTIAL`
+4. All `VALIDATED` → `VALIDATED`
 
 Then state, in this order: what the spike now knows, what it does **not** know, and what it implies for the decision that prompted it.
 
 An `INVALIDATED` verdict is a successful spike. It cost an experiment to learn something that would otherwise have cost an implementation.
 
-### 7. Name what to spike next
-
-When spikes already exist and the question is what to run next, walk them and look for what nobody proved:
-
-- **Integration risk** — two spikes validated independently that touch the same resource.
-- **Data handoff** — one spike's output assumed compatible with another's input, never demonstrated.
-- **Assumed capability** — something the design relies on that no spike has exercised.
-- **A different angle** on anything `PARTIAL` or `INVALIDATED`.
-
-Propose two to four as Given/When/Then and let the user pick.
-
 ## Findings file
 
-One file per spike, at `<run>/spikes/<name>/findings.md`. Where the spike runs outside a discovery run, ask where it belongs rather than choosing a path.
+One file per spike, under the run's spikes directory — `artifacts.spikes_dir` beneath the planning root, resolved as `discovery/references/run-layout.md` describes. Never hardcode a path.
 
-```markdown
----
-spike: <name>
-hypothesis: <one line>
-verdict: VALIDATED | INVALIDATED | PARTIAL | MIXED
-production_code: prohibited | optional | candidate
-retention: discard | preserve_evidence | candidate_for_rework
-date: 2026-08-16
----
-
-# Spike: <the question>
-
-## Hypothesis
-**Given** <preconditions>, **When** <action>, **Then** <expected outcome>.
-
-## Experiments
-
-### 1 — <name>
-**Claim:** <sub-claim>
-**Side effects:** read-only | <named mutations>
-**Verdict criteria:** validates if <concrete>; invalidates if <concrete>
-**Method:**
-```
-<commands or code, as run>
-```
-**Output:** <what actually came back>
-**Verdict:** VALIDATED | INVALIDATED | PARTIAL
-**Evidence:** <excerpt, path, number>
-
-## Findings
-
-**Verdict:** <overall>
-
-**What this establishes:** <the claim now supported, and how strongly>
-
-**What remains unknown:** <what the spike did not settle, including anything an
-experiment failed to test>
-
-**Surprises:** <anything the investigation turned up that nobody was looking for>
-
-**Implication:** <what the decision that prompted this should do with it>
-```
-
-A comparison spike closes with a head-to-head table across the dimensions that actually differed, and names a winner for this use case rather than in the abstract.
+See [`references/findings-file.md`](references/findings-file.md) for its shape.
 
 ## Standing rules
 

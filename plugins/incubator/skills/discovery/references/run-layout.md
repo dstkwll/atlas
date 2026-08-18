@@ -12,8 +12,7 @@ under that root, and `discovery` never invents a path outside it.
 Where the root is repository-relative, a run is `<planning-root>/<slug>/` and the project
 level below does not apply.
 
-Where the root is external and `artifacts.run_placement` is `project`, and the work belongs
-to an existing project:
+Where the root is external and the work belongs to an existing project:
 
 ```
 <planning-root>/<project>/runs/<YYYY-MM>-<slug>/
@@ -38,7 +37,7 @@ for this run alone. Never default to a path.
 <run>/10-decisions.md
 ```
 
-`20-spec.md` and everything after it belong to later stages. Evidence produced by a dispatched research or explore route lands in `<run>/evidence/`; a spike writes to `<run>/spikes/<name>/`.
+Everything after it belongs to later stages. Evidence from a dispatched research or explore route lands under `artifacts.evidence_dir`; a spike writes under `artifacts.spikes_dir`. Both are configured, not hardcoded.
 
 ## `10-decisions.md` at creation
 
@@ -47,7 +46,7 @@ for this run alone. Never default to a path.
 run: <slug>
 project: <project or null>
 status: discovery
-opened: 2026-08-16
+opened: <YYYY-MM-DD>
 repos: []
 ---
 
@@ -61,6 +60,6 @@ repos: []
 ## Decisions
 ```
 
-`repos` names every repository the work is expected to affect. It is descriptive planning metadata: it records what the work concerns, grants no access, and does not imply that execution spans those repositories. Leave it empty until the work's reach is known, and fill it as decisions establish scope.
+`repos` names every repository the work is expected to affect — descriptive metadata that grants no access and does not imply execution spans them. Starts empty; step 5 fills it as decisions establish scope.
 
 Records append under `## Decisions` in the order they settle. The open frontier table is rewritten at every round boundary.
