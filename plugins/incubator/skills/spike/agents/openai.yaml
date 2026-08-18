@@ -1,0 +1,5 @@
+interface:
+  display_name: "Spike"
+  short_description: "Answer a question by running a bounded experiment"
+policy:
+  allow_implicit_invocation: false

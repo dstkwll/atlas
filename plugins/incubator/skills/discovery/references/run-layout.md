@@ -4,9 +4,15 @@ Where a discovery run writes, and what its file starts as.
 
 ## Resolving the run directory
 
-The planning root is configured, not fixed — see `architecture/03-artifact-model.md`. A run directory sits under it, and `discovery` never invents a path outside it.
+The planning root is configured, not fixed — see `architecture/03-artifact-model.md`. Read
+`artifacts.planning_root` from `~/.atlas/config.yaml`, written by `setup-atlas`. A run
+directory sits under that root, and `discovery` never invents a path outside it.
 
-Where the work belongs to an existing project:
+Where the root is repository-relative, a run is `<planning-root>/<slug>/` and the project
+level below does not apply.
+
+Where the root is external and `artifacts.run_placement` is `project`, and the work belongs
+to an existing project:
 
 ```
 <planning-root>/<project>/runs/<YYYY-MM>-<slug>/
@@ -20,7 +26,8 @@ Where it has no natural parent — a one-off change, an experiment belonging to 
 
 When it is unclear which applies, place the run under a project. Promoting it later is a move; splitting a project that grew around the wrong run is not.
 
-Ask for the planning root when configuration does not supply one. Never default to a path.
+Where no configuration exists, say so and offer `setup-atlas`, or take a root the user names
+for this run alone. Never default to a path.
 
 ## Files
 

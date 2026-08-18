@@ -75,7 +75,8 @@ Lightweight statuses, not a lifecycle: `candidate` (may contribute to a canonica
 | `to-spec` | upstream | Specification authoring | **needs reconciliation** | Its specification shape mixes in implementation and design material that canonical Atlas separates across behavioral spec (Stage 2), system design (Stage 3), and program design (Stage 4). |
 | `to-tickets` | upstream | Ticket authoring | **needs reconciliation** | Retains issue-tracker and `.scratch/` assumptions. Not adapted to the canonical planning artifact model or to execution-compilation semantics. |
 | `advance` | Workbench-authored | Phase-boundary judge and driver | **candidate / reference — not control-plane authority** | Contains useful candidate ideas on evidence, criterion mapping, readiness, bounded workers, and orchestration UX. Its lifecycle, authority model, leash and ship semantics, and review semantics are **not** canonical Atlas behavior. One observed defect is fixed in its evidence contract: see "Observed defects" below. |
-| `setup-atlas` | none — written here | Stub | **stand-in** | Deliberately empty; has no behavior. See its `SKILL.md`. |
+| `setup-atlas` | written here | Establishes the planning root and run placement | **candidate** | Written against the configurable planning root. Collects only what a skill reads today; unexercised. |
+| `spike` | written here | Bounded experiment answering one hypothesis | **candidate** | Written against canonical `07-spikes-and-discovery.md`. Its side-effect categories are self-declared, not runtime-enforced; the approval gate is the control. Unexercised. |
 | `discovery` | written here | Stage 1 decision resolution, writing a durable decision log | **candidate** | Written against the canonical Stage 1 routing tree and the configurable planning root, but not exercised. Its decision-record shape is new and unproven. |
 | `codebase-design` | upstream | Design reasoning | candidate | Not audited. |
 | `diagnosing-bugs` | upstream | Debugging loop | candidate | Not audited. |
@@ -84,7 +85,7 @@ Lightweight statuses, not a lifecycle: `candidate` (may contribute to a canonica
 | `grill-with-docs` | upstream | Grilling against documents | candidate | Not audited. |
 | `grilling` | upstream | Frontier-ordered interview | candidate | Not audited. |
 | `improve-codebase-architecture` | upstream | Architecture improvement | reference | Not audited. |
-| `prototype` | upstream | Throwaway artifact to react to | candidate | Not audited. |
+| `prototype` | upstream | Throwaway artifact to react to | candidate | Overlaps `spike` in name only: `prototype` builds an artifact to react to and its verdict is a taste judgment; `spike` runs experiments against a hypothesis with verdict criteria declared beforehand. Otherwise not audited. |
 | `tdd` | upstream | Red-green-refactor loop | candidate | Not audited. |
 | `wayfinder` | upstream | Multi-session decision map | candidate | Not audited. |
 
@@ -99,8 +100,8 @@ readiness are marked explicit-invocation-only where the host supports it — Cla
 `policy.allow_implicit_invocation: false` in `agents/openai.yaml`.
 
 Currently explicit-only: `advance`, `discovery`, `factory-implement`, `factory-code-review`,
-`to-spec`, `to-tickets`, `setup-atlas`, `grill-with-docs`, `improve-codebase-architecture`,
-`wayfinder`.
+`spike`, `to-spec`, `to-tickets`, `setup-atlas`, `grill-with-docs`,
+`improve-codebase-architecture`, `wayfinder`.
 
 **Unverified by host.** Copilot CLI and Hermes have no confirmed equivalent of these keys.
 Whether either silently ignores them, and therefore whether an explicit-only skill can be
