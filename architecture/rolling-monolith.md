@@ -907,14 +907,16 @@ An external planning root is a location with an access model, not merely a path.
 
 A feature that affects more than one repository declares them. Each affected repository is named in the feature's `run.yaml` and mirrored into `00-state.md` frontmatter, so the question *which planning artifacts touched this repository* is answerable by query against the planning root rather than by search across repositories.
 
-`repos` is **descriptive planning metadata**. It records what a body of work concerns. It grants no access, and it does not widen any agent's write scope.
+The planning effort also preserves the relevant baseline for **each** affected repository. The architecture does not freeze a larger multi-repository schema here; the invariant is the pair itself — repository identity plus the baseline against which that repository was planned. Without one baseline per repository, later compilation cannot tell which version of each codebase the approved design describes.
+
+`repos` and their planning baselines are **descriptive planning metadata**. They record what a body of work concerns. They grant no access, and they do not widen any agent's write scope.
 
 ### Planning scope is not execution scope
 
 One planning effort may describe work spanning several repositories. Factory execution remains **repository-scoped**:
 
-- An executable run operates against **one resolved repository and worktree**, with **one repository baseline**.
-- Execution compilation may associate or partition tickets by target repository where a planning effort spans several, so that each executable ticket names its target unambiguously.
+- Each executable ticket identifies exactly one target repository unambiguously. Compilation may partition a multi-repository planning effort into repository-scoped ticket sets; it may not leave target selection to the executor.
+- An executable factory run and its immutable run manifest resolve **one repository, one worktree, and that repository's baseline**. The baseline is the corresponding repository-baseline pair preserved by planning.
 - Cross-repository atomic execution, synchronized branches, coordinated integration, multi-repository rollback, and multi-pull-request transaction semantics are **not** capabilities of this architecture. A planning effort spanning several repositories is executed as several repository-scoped runs.
 
 The planning root and the execution scope are separate concerns. Widening the first does not widen the second.
@@ -948,8 +950,8 @@ Contains:
 - model roles
 - artifact paths
 - resolved planning root
-- repository baseline
 - affected repositories (`repos`)
+- planning baseline for each affected repository
 
 Do not rely on changing global config to reconstruct historical behavior.
 
@@ -2267,21 +2269,33 @@ The architecture should make these answers emergent from stored evidence rather 
 
 ---
 
-# 09 — Illustrative Reference Configuration
+# 09 — Reference Configuration
 
-This is intentionally illustrative rather than a frozen schema.
+Most of this document is intentionally illustrative rather than a frozen schema. It tests how **workflow, governance, execution, environment, and roster** remain separate dimensions, with optional presets for convenience.
 
-It reflects the current decision to keep **workflow, governance, execution, environment, and roster separate**, with optional presets for convenience.
+One interface is stable in V1 because the planning skills already consume it:
+
+```yaml
+artifacts:
+  planning_root: .planning
+```
+
+`artifacts.planning_root` is a supported configuration key. Its value remains configurable per machine:
+
+- a repository-relative path, resolved from the repository root;
+- or an absolute path / already-usable local checkout of a planning repository.
+
+The default is `.planning`. Changing the key or its resolution semantics requires an explicit version or migration rather than an illustrative edit.
+
+The layout beneath a run is fixed by `03-artifact-model.md`. In particular, evidence lives at `<run>/evidence/` and spikes at `<run>/spikes/`; they are not separate configuration knobs in V1. Other keys below remain illustrative until a real consumer earns and stabilizes them.
 
 ```yaml
 version: 0.2
 
 artifacts:
-  planning_root: .planning        # repository-relative, or an absolute path / planning repository
+  planning_root: .planning        # stable V1 interface; value remains configurable
   permanent_docs: docs
   adr_path: docs/adr
-  evidence_dir: evidence
-  spikes_dir: spikes
 
 factory:
   state_root: .factory/runs
@@ -5566,11 +5580,11 @@ The default is unchanged deliberately. An external root is a considered departur
 
 ## D-056 — A feature declares the repositories it affects
 
-A feature affecting more than one repository names them in `run.yaml`, mirrored into `00-state.md` frontmatter as `repos`.
+A feature affecting more than one repository names them in `run.yaml`, mirrored into `00-state.md` frontmatter as `repos`. The planning effort preserves the relevant baseline for each named repository, so every affected codebase is tied to the version the approved planning artifacts describe. This decision fixes the semantic requirement — repository identity paired with its planning baseline — without prematurely freezing a larger multi-repository schema.
 
 This exists so that *which planning artifacts touched this repository* is answerable by query against a single planning root, rather than by search across every repository. Without it, an external root makes the reverse lookup impossible; with it, the external root answers a question the repository-relative arrangement cannot answer at all — a change spanning five repositories has one record, not five partial ones.
 
-`repos` is descriptive. It does not grant access, and it does not widen any builder's write scope.
+The repository declarations and baselines are descriptive. They do not grant access, and they do not widen any builder's write scope.
 
 ---
 
@@ -5618,13 +5632,25 @@ The planning root remains authoritative. A graduated ADR is a durable local reco
 
 A planning effort may span several repositories. Factory execution does not.
 
-An executable run operates against one resolved repository and worktree, against one repository baseline. Where a planning effort spans several repositories, it is executed as several repository-scoped runs, and execution compilation may associate or partition tickets by target repository so that each executable ticket names its target unambiguously.
+Each executable ticket identifies its target repository unambiguously; target selection is not deferred to the executor. Where a planning effort spans several repositories, compilation may partition tickets into repository-scoped sets. Each executable factory run and its immutable run manifest then resolve exactly one target repository, one worktree, and that repository's preserved planning baseline.
 
 Cross-repository atomic execution, synchronized branches, coordinated integration, multi-repository rollback, and multi-pull-request transaction semantics are **not** capabilities of this architecture and are not introduced by v0.5.
 
 This is stated because it would otherwise be inferred. Widening where artifacts live is not an argument for widening what a run may touch, and "features pay for seams" applies with full force: no multi-repository orchestration seam has been paid for.
 
 Runtime state under `.factory/` remains scoped to the repository a run executes against. Planning artifacts may sit outside that repository; runtime state does not.
+
+---
+
+## D-061 — The V1 configuration interface stabilizes only the planning root
+
+`artifacts.planning_root` is a supported V1 configuration key. The key and its resolution semantics are stable enough for planning skills to consume; changing either requires an explicit configuration version or migration rather than an edit to an illustrative example.
+
+Its **value remains configurable per machine**. A repository-relative value resolves from the repository root; an absolute value names an already-usable local directory or checkout. The default remains `.planning`.
+
+Only the root location is configurable. The artifact layout beneath a run remains fixed by `03-artifact-model.md`: evidence lives at `<run>/evidence/`, spikes at `<run>/spikes/`, and other run artifacts retain their prescribed names. `evidence_dir` and `spikes_dir` are therefore not V1 configuration interfaces.
+
+The remainder of `09-reference-config.md` stays illustrative until a real consumer earns and stabilizes another key. This keeps the current interface small: freeze what has callers, not the whole design sketch.
 
 ---
 

@@ -50,14 +50,16 @@ An external planning root is a location with an access model, not merely a path.
 
 A feature that affects more than one repository declares them. Each affected repository is named in the feature's `run.yaml` and mirrored into `00-state.md` frontmatter, so the question *which planning artifacts touched this repository* is answerable by query against the planning root rather than by search across repositories.
 
-`repos` is **descriptive planning metadata**. It records what a body of work concerns. It grants no access, and it does not widen any agent's write scope.
+The planning effort also preserves the relevant baseline for **each** affected repository. The architecture does not freeze a larger multi-repository schema here; the invariant is the pair itself — repository identity plus the baseline against which that repository was planned. Without one baseline per repository, later compilation cannot tell which version of each codebase the approved design describes.
+
+`repos` and their planning baselines are **descriptive planning metadata**. They record what a body of work concerns. They grant no access, and they do not widen any agent's write scope.
 
 ### Planning scope is not execution scope
 
 One planning effort may describe work spanning several repositories. Factory execution remains **repository-scoped**:
 
-- An executable run operates against **one resolved repository and worktree**, with **one repository baseline**.
-- Execution compilation may associate or partition tickets by target repository where a planning effort spans several, so that each executable ticket names its target unambiguously.
+- Each executable ticket identifies exactly one target repository unambiguously. Compilation may partition a multi-repository planning effort into repository-scoped ticket sets; it may not leave target selection to the executor.
+- An executable factory run and its immutable run manifest resolve **one repository, one worktree, and that repository's baseline**. The baseline is the corresponding repository-baseline pair preserved by planning.
 - Cross-repository atomic execution, synchronized branches, coordinated integration, multi-repository rollback, and multi-pull-request transaction semantics are **not** capabilities of this architecture. A planning effort spanning several repositories is executed as several repository-scoped runs.
 
 The planning root and the execution scope are separate concerns. Widening the first does not widen the second.
@@ -91,8 +93,8 @@ Contains:
 - model roles
 - artifact paths
 - resolved planning root
-- repository baseline
 - affected repositories (`repos`)
+- planning baseline for each affected repository
 
 Do not rely on changing global config to reconstruct historical behavior.
 
