@@ -14,7 +14,7 @@ Reach for a spike when the answer exists nowhere yet — not in the user's head,
 
 ### 1. Decompose into spikes, ordered by risk
 
-Break the question into two to five independent feasibility questions. Each is one spike, and each gets a Given/When/Then hypothesis:
+Break the question into two to five independent feasibility questions. Each is one spike. Each carries the `date` it ran and states its `hypothesis` as Given/When/Then:
 
 > **Given** <preconditions and system state>
 > **When** <the action or change>

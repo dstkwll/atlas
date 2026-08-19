@@ -139,6 +139,8 @@ Where any item rests on a low-confidence decision, its `Confidence` field says s
 
 ## Amending an approved spec
 
+Approval sets `status: approved` and writes the `approved` date. Until then it stays `draft`.
+
 A withdrawn item keeps its identifier and leaves a **tombstone** in place — a heading-backed item keeps its heading with the body replaced by `Withdrawn in version N — <why>`, a row-backed item keeps its row with the remaining cells replaced by the same sentence. That is what makes reuse visibly wrong.
 
 An approved spec is immutable — downstream work cites a version, so those bytes stay as approved. Amendment retains them as `20-spec.v1.md` and writes the new version to `20-spec.md`, incrementing `version`, setting `supersedes` to the retained version and `amendment` to the record that produced it. That record lives under `amendments/`, shaped by `architecture/03-artifact-model.md`, inside the flow `architecture/08-state-and-governance.md` owns.

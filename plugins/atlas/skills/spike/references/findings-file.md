@@ -1,6 +1,6 @@
 # Findings file
 
-One file per spike, under `artifacts.spikes_dir` beneath the planning root — `spikes/` where that key is unset. The planning root resolves as `../../discovery/references/run-layout.md` describes. Never hardcode a path; where no run exists, ask.
+One file per spike, under `artifacts.spikes_dir` **beneath the run** — `spikes/` where that key is unset. Both directory keys resolve relative to the run, never to the planning root; `../../discovery/references/run-layout.md` is the authority. Never hardcode a path; where no run exists, ask.
 
 ```markdown
 ---
@@ -15,6 +15,8 @@ date: <YYYY-MM-DD>
 # Spike: <the question>
 
 ## Bounds
+
+**Dispatched by:** <the run, and the decision id that raised this question — or standalone>
 
 **Production code:** none | <what may survive, and where>
 **Retention:** <what happens to the experiment afterwards>

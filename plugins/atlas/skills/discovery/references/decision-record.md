@@ -12,6 +12,7 @@ The log is read twice: by whatever writes the specification, which needs what wa
 ```yaml
 id: D-007
 route: grill              # grill | research | explore | spike
+findings: null            # spike route only: path to the findings file it produced
 status: settled           # settled | superseded
 decided: <YYYY-MM-DD>
 origin: user-originated   # user-originated | user-rejected | accepted-recommendation | agent-resolved
@@ -42,7 +43,7 @@ as though they had argued it.>
 
 ## Fields that carry weight
 
-**`origin`** records where the choice came from. `user-originated` — they answered outside the options offered. `user-rejected` — they were given a recommendation and took a different option, or supplied one of their own; record what was recommended as well as what was chosen, because the rejection is the most informative thing in the record. `accepted-recommendation` — they took what was recommended. `agent-resolved` — an explore or research question settled by finding the answer, never put to the user at all.
+**`origin`** records where the choice came from. `user-originated` — they answered outside the options offered. `user-rejected` — they were given a recommendation and took a different option, or supplied one of their own; record what was recommended as well as what was chosen, because the rejection is the most informative thing in the record. `accepted-recommendation` — they took what was recommended. `agent-resolved` — an explore, research or spike question settled by finding or measuring the answer, never put to the user as a choice.
 
 All four are legitimate; conflating them is not. Every grill question arrives with a recommended answer, so a log that does not distinguish them attributes the agent's judgement to the user.
 

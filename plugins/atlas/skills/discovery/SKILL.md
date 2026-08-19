@@ -73,17 +73,19 @@ Dispatch the research, explore, and spike questions in the same round. Then wait
 
 Supply options the user had not considered, and argue against the ones they had.
 
+The run's own frontmatter records the `project` it belongs to, or null where it has none, and the date it `opened`. See [`references/run-layout.md`](references/run-layout.md) for where the run directory sits.
+
 ### 5. Record every decision as it is made
 
-Append a decision record the moment a question settles — before the next round, not at the end of the run — carrying `status: settled` and the `decided` date. See [`references/decision-record.md`](references/decision-record.md) for the required shape.
+Append a decision record the moment a question settles — before the next round, not at the end of the run. Each carries an `id` assigned in order and never reused, since later artifacts cite it; the `route` that settled it; `status: settled`; and the `decided` date. See [`references/decision-record.md`](references/decision-record.md) for the required shape.
 
 A record holds why the question needed deciding, the options with the case for each, what you recommended, what was chosen, the reasoning in the user's own words, and what would reopen it. The options not taken and the reopening condition are the two a later reader needs most and the two easiest to skip.
 
-`origin` is a required field, and it distinguishes four cases: the user originated the answer, rejected your recommendation for a different one, accepted it, or the question never reached them because you resolved it by reading. A log that blurs these teaches a reader your judgement wearing the user's name — and a rejected recommendation, recorded alongside what was rejected, is the most informative record in the log.
+`origin` is a required field, and it distinguishes four cases: the user originated the answer, rejected your recommendation for a different one, accepted it, or the question never reached them because you resolved it by reading or by measuring. A spike-routed record names the `findings` file it produced, so the pair is navigable from either end. A log that blurs these teaches a reader your judgement wearing the user's name — and a rejected recommendation, recorded alongside what was rejected, is the most informative record in the log.
 
 Reversing a settled decision writes a new record carrying `supersedes:` and flips the old one to `status: superseded`. Both edits, or a consumer following the fields compiles the reversed choice as live.
 
-Update the open frontier in the same edit: settled questions leave it, unblocked ones join it. Where a decision establishes which repositories the work touches, add them to the run's `repos` frontmatter in the same edit.
+Update the open frontier in the same edit: settled questions leave it, and the ones it unblocks — named in its `unblocked` field — join it. Where a decision establishes which repositories the work touches, record them in the run's `repos` frontmatter in the same edit.
 
 ### 6. Repeat until the frontier is empty
 
