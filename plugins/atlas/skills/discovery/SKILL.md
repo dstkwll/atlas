@@ -18,7 +18,9 @@ The **frontier** is every open question whose prerequisites are already settled 
 
 Work in rounds: ask the whole frontier at once, numbered. The replies settle those questions, unblocking the ones that depended on them. Recompute, ask again.
 
-A question depending on another still open belongs to a later round. The run is done when the frontier is empty.
+Each question carries its options and a recommended answer. Where you have no recommendation worth the name, say so and ask for the instinct first — a manufactured recommendation on a question you cannot judge is worse than none, and the answer to a question asked honestly is usually the sharpest one in the round.
+
+A question depending on another still open belongs to a later round and names what it waits on in `blocked_by`. The run is done when the frontier is empty.
 
 ## Where the answer lives
 
@@ -73,9 +75,13 @@ Supply options the user had not considered, and argue against the ones they had.
 
 ### 5. Record every decision as it is made
 
-Append a decision record the moment a question settles — before the next round, not at the end of the run. See [`references/decision-record.md`](references/decision-record.md) for the required shape.
+Append a decision record the moment a question settles — before the next round, not at the end of the run — carrying `status: settled` and the `decided` date. See [`references/decision-record.md`](references/decision-record.md) for the required shape.
+
+A record holds why the question needed deciding, the options with the case for each, what you recommended, what was chosen, the reasoning in the user's own words, and what would reopen it. The options not taken and the reopening condition are the two a later reader needs most and the two easiest to skip.
 
 Whether the user originated a choice or accepted your recommendation is a required field. A log that blurs the two teaches a reader your judgement wearing the user's name.
+
+Reversing a settled decision writes a new record carrying `supersedes:` and flips the old one to `status: superseded`. Both edits, or a consumer following the fields compiles the reversed choice as live.
 
 Update the open frontier in the same edit: settled questions leave it, unblocked ones join it. Where a decision establishes which repositories the work touches, add them to the run's `repos` frontmatter in the same edit.
 

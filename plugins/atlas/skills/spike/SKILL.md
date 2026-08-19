@@ -62,6 +62,8 @@ Avoid package management, build tooling, containers, and config systems unless t
 
 Comparison spikes that both need real work and can run independently are dispatched in parallel; the head-to-head is written here, not by either of them.
 
+The approved plan declares two things the findings file then records: `production_code`, whether anything written here may survive into the product, and `retention`, what happens to the experiment afterwards. Both are decided before running, because deciding after is deciding with a result in hand.
+
 **Depth over speed.** One happy-path run is not a verdict. Push the edge cases, and follow anything surprising — a verdict is only worth what the investigation behind it was worth.
 
 ### 5. Record as you go
