@@ -79,7 +79,7 @@ Append a decision record the moment a question settles — before the next round
 
 A record holds why the question needed deciding, the options with the case for each, what you recommended, what was chosen, the reasoning in the user's own words, and what would reopen it. The options not taken and the reopening condition are the two a later reader needs most and the two easiest to skip.
 
-Whether the user originated a choice or accepted your recommendation is a required field. A log that blurs the two teaches a reader your judgement wearing the user's name.
+`origin` is a required field, and it distinguishes four cases: the user originated the answer, rejected your recommendation for a different one, accepted it, or the question never reached them because you resolved it by reading. A log that blurs these teaches a reader your judgement wearing the user's name — and a rejected recommendation, recorded alongside what was rejected, is the most informative record in the log.
 
 Reversing a settled decision writes a new record carrying `supersedes:` and flips the old one to `status: superseded`. Both edits, or a consumer following the fields compiles the reversed choice as live.
 

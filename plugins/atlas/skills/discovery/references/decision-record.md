@@ -14,7 +14,7 @@ id: D-007
 route: grill              # grill | research | explore | spike
 status: settled           # settled | superseded
 decided: <YYYY-MM-DD>
-origin: user              # user | accepted-recommendation
+origin: user-originated   # user-originated | user-rejected | accepted-recommendation | agent-resolved
 confidence: medium        # high | medium | low
 unblocked: [D-011, D-012]
 blocked_by: [D-003]
@@ -42,7 +42,9 @@ as though they had argued it.>
 
 ## Fields that carry weight
 
-**`origin`** separates a choice the user originated from one where they accepted a recommendation. Both are legitimate; conflating them is not. Every grill question arrives with a recommended answer, so a log that does not distinguish them attributes the agent's judgement to the user.
+**`origin`** records where the choice came from. `user-originated` — they answered outside the options offered. `user-rejected` — they were given a recommendation and took a different option, or supplied one of their own; record what was recommended as well as what was chosen, because the rejection is the most informative thing in the record. `accepted-recommendation` — they took what was recommended. `agent-resolved` — an explore or research question settled by finding the answer, never put to the user at all.
+
+All four are legitimate; conflating them is not. Every grill question arrives with a recommended answer, so a log that does not distinguish them attributes the agent's judgement to the user.
 
 **`confidence`** is the decider's, not the agent's, and it is checked at the grading pass. Low-confidence decisions that turn out load-bearing are the highest-value entries in the log.
 

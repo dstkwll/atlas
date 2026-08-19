@@ -85,7 +85,22 @@ Now that the requirements are clear — vague requirements have no edges worth p
 
 **boundary · adjacency · empty · encoding · ordering · precision · idempotency · concurrency**
 
-Ask of each category what it would mean *here*, not of every requirement in turn — the unit is the distinct case, not the pair. An import that copies files raises **empty** (a card with no new files), **ordering** (two cards imported out of sequence), **idempotency** (the same card twice) and **concurrency** (two cards at once) as four cases, not as thirty-two.
+Ask of each category what it would mean *here*, not of every requirement in turn — the unit is the distinct case, not the pair. Twelve requirements against eight categories is eight questions, not ninety-six.
+
+Worked, for a requirement that files are copied from a card to an archive:
+
+| Category | The question it asks here | Outcome |
+|---|---|---|
+| boundary | a file exactly at the size or age limit | covered by R-003 |
+| adjacency | a file just inside and just outside the retention window | new requirement |
+| empty | a card holding no new files | new requirement — the run must report, not fail |
+| encoding | filenames with non-ASCII characters | dismissed: the archive stores bytes and never parses names |
+| ordering | two cards imported out of sequence | dismissed: each import is independent |
+| precision | timestamps at second versus sub-second resolution | open question |
+| idempotency | the same card imported twice | covered by R-005 |
+| concurrency | two cards mounted at once | new prohibition |
+
+Three of those existed already, three became new items, one was dismissed with its reason, one stayed open. That distribution is normal.
 
 Each edge resolves one of three ways: covered by an existing or new requirement or prohibition, **dismissed with a stated reason**, or recorded as an open question. A dismissal states why the case cannot arise.
 

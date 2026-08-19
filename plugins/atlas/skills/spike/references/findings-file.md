@@ -14,6 +14,13 @@ date: <YYYY-MM-DD>
 
 # Spike: <the question>
 
+## Bounds
+
+**Production code:** none | <what may survive, and where>
+**Retention:** <what happens to the experiment afterwards>
+
+Both are set when the plan is approved, before anything runs.
+
 ## Hypothesis
 **Given** <preconditions>, **When** <action>, **Then** <expected outcome>.
 
@@ -28,12 +35,12 @@ date: <YYYY-MM-DD>
 <commands or code, as run>
 ```
 **Output:** <what actually came back>
-**Verdict:** VALIDATED | INVALIDATED | PARTIAL
+**Verdict:** VALIDATED | INVALIDATED | PARTIAL | COULD-NOT-RUN
 **Evidence:** <excerpt, path, number>
 
 ## Findings
 
-**Verdict:** <overall>
+**Verdict:** VALIDATED | INVALIDATED | PARTIAL | MIXED | none — <what blocked the run>
 
 **What this establishes:** <the claim now supported, and how strongly>
 
