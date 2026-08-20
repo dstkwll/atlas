@@ -315,8 +315,9 @@ def verified_state(run_dir: Path) -> tuple[dict[str, Any], dict[str, Any]]:
     if control.get("run") != effective.get("run"):
         raise ControlError("control run identity mismatch")
     stages = effective.get("stages", [])
-    if set(control.get("gates", {})) != set(stages) or control.get("phase") not in stages:
-        raise ControlError("control.json gates/phase do not match effective run stages")
+    controlled_stages = {stage for stage in stages if stage in CANDIDATES}
+    if set(control.get("gates", {})) != controlled_stages or control.get("phase") not in stages:
+        raise ControlError("control.json gates/phase do not match the Stage 0–2 run boundary")
     allowed_gate_states = {"PENDING", "AGENT_APPROVED", "HUMAN_APPROVED", "REJECTED", "STALE"}
     if any(value not in allowed_gate_states for value in control["gates"].values()):
         raise ControlError("control.json gate state is invalid")
@@ -434,7 +435,7 @@ def initialize(run_dir: Path) -> str:
         "effective_config_hash": canonical_hash(config),
         "effective_config_revision": 0,
         "accepted_amendment_count": 0,
-        "gates": {stage: "PENDING" for stage in stages},
+        "gates": {stage: "PENDING" for stage in stages if stage in CANDIDATES},
         "blocked_reason": None,
         "acceptances": {"discovery": None, "spec": None},
     }

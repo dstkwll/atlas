@@ -29,7 +29,7 @@ Invoke explicitly as `atlas:<skill>`.
 
 ## Planning authority
 
-Feature-root `control.json` is the only authoritative mutable Stage 0–2 state. `00-state.md` is a generated projection and is never read for legality. The controller preserves exact-byte `run.yaml` tamper detection, holds a run-local single-writer lock, and replaces only `control.json` atomically. Projection regeneration is best-effort after commit.
+Feature-root `control.json` is the only authoritative mutable Stage 0–2 state. Its mutable gate map contains only selected discovery and specification boundaries; immutable `run.yaml` retains later-stage and conditional policy. After specification acceptance, `phase` may name the next selected stage, where this controller fails closed and hands off without creating later-stage gate state. `00-state.md` is a generated projection and is never read for legality. The controller preserves exact-byte `run.yaml` tamper detection, holds a run-local single-writer lock, and replaces only `control.json` atomically. Projection regeneration is best-effort after commit.
 
 Producers leave candidates at `status: draft` and record readiness only. Discovery and specification require `AGENT_REVIEW` or `HUMAN`; `AUTO` is unavailable because both boundaries include semantic acceptance. Agent review consumes a structured read-only envelope bound to run identity and candidate version/hash. Fresh-context reviewer independence is an invocation responsibility in V1; the controller does not authenticate reviewer identity. The controller validates mechanics and authority evidence but does not grade prose.
 

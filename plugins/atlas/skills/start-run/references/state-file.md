@@ -17,8 +17,7 @@ Initialization creates this shape:
   "accepted_amendment_count": 0,
   "gates": {
     "discovery": "PENDING",
-    "spec": "PENDING",
-    "program_design": "PENDING"
+    "spec": "PENDING"
   },
   "blocked_reason": null,
   "acceptances": {
@@ -27,6 +26,8 @@ Initialization creates this shape:
   }
 }
 ```
+
+`gates` contains mutable state only for selected boundaries this Stage 0–2 controller implements: discovery and specification. `run.yaml` retains all later-stage and conditional policy. After specification acceptance, `phase` may name the next selected stage while `gates` remains unchanged; that phase is a fail-closed handoff to its owning controller.
 
 Each accepted candidate replaces its stage's current binding:
 

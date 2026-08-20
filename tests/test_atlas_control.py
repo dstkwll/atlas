@@ -257,6 +257,7 @@ class AtlasControlTests(unittest.TestCase):
             self.assertEqual((control["phase"], control["revision"]), ("discovery", 1))
             self.assertEqual(control["base_run_sha256"], sha256(run / "run.yaml"))
             self.assertEqual(control["acceptances"], {"discovery": None, "spec": None})
+            self.assertEqual(control["gates"], {"discovery": "PENDING", "spec": "PENDING"})
             self.assertTrue((run / "00-state.md").is_file())
 
     def test_initialize_requires_authority_only_for_stage02_boundaries(self):
@@ -352,12 +353,24 @@ class AtlasControlTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             control = read_control(run)
             self.assertEqual((control["phase"], control["revision"]), ("program_design", 3))
+            self.assertEqual(
+                control["gates"],
+                {"discovery": "HUMAN_APPROVED", "spec": "HUMAN_APPROVED"},
+            )
             self.assertEqual(set(control["acceptances"]), {"discovery", "spec"})
             self.assertEqual(
                 [control["acceptances"][stage]["authority"] for stage in ("discovery", "spec")],
                 ["HUMAN", "HUMAN"],
             )
             self.assertEqual(discovery["candidate_sha256"], sha256(run / "10-decisions.md"))
+
+            before_handoff = (run / "control.json").read_bytes()
+            handoff = run_cli("check", "--run", run)
+            self.assertNotEqual(handoff.returncode, 0)
+            handoff_report = json.loads(handoff.stdout)
+            self.assertEqual(handoff_report["verdict"], "BLOCKED")
+            self.assertIn("outside the Stage 0–2 controller", handoff_report["gaps"][0]["problem"])
+            self.assertEqual((run / "control.json").read_bytes(), before_handoff)
 
     def test_spec_requires_normative_identifier_and_rejects_explicit_blocker(self):
         variants = {

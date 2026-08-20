@@ -69,6 +69,30 @@ class SkillSeamHardeningTests(unittest.TestCase):
                 findings = SEAMS.cross_skill_contracts(skills)
                 self.assertTrue(any(expected in message for _, message in findings))
 
+    def test_packaged_boundary_review_carries_every_stage_semantic_question(self):
+        review_path = (
+            ROOT / "plugins" / "atlas" / "skills" / "control-run" / "references" / "boundary-review.md"
+        )
+        canonical_path = ROOT / "architecture" / "06-review-and-validation.md"
+        review = " ".join(review_path.read_text(encoding="utf-8").lower().split())
+        canonical = " ".join(canonical_path.read_text(encoding="utf-8").lower().split())
+        semantic_questions = (
+            "does the artifact state the real problem",
+            "important consequences, contradictions, or scope questions",
+            "decisions supported well enough to specify from",
+            "cold read's findings receive a real disposition",
+            "does each requirement describe externally observable behavior",
+            "preserve discovery intent without inventing new intent",
+            "material behavioral consequences missing or contradictory",
+            "acceptance outcomes genuinely observable",
+        )
+        for phrase in semantic_questions:
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, canonical)
+                self.assertIn(phrase, review)
+        self.assertIn("every material gap", review)
+        self.assertIn("must not repair", review)
+
     def test_immutable_run_mutation_is_detected_but_negation_is_not(self):
         for sentence, expected in (
             ("Revise run.yaml with the new scope.", True),

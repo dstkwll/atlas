@@ -25,7 +25,7 @@ A producer's `gate_ready: true` is necessary but never sufficient to advance.
 Discovery and specification permit only:
 
 - `HUMAN`: after mechanical PASS, present the candidate and obtain explicit human approval.
-- `AGENT_REVIEW`: after mechanical PASS, dispatch a fresh read-only semantic reviewer and persist its exact envelope using [`references/boundary-review.md`](references/boundary-review.md). The reviewer never repairs the candidate or state. V1 adds no reviewer identity, signature, or authentication service: fresh-context independence is the invoker's responsibility, while the controller proves only schema and current run/version/hash binding. Never synthesize the envelope in the producer context.
+- `AGENT_REVIEW`: after mechanical PASS, dispatch a fresh read-only semantic reviewer with [`references/boundary-review.md`](references/boundary-review.md). Require it to apply every semantic question listed there for the current stage, judge all questions before choosing PASS or BLOCKED, and report every material gap without repair. Persist its exact envelope. V1 adds no reviewer identity, signature, or authentication service: fresh-context independence is the invoker's responsibility, while the controller proves only schema and current run/version/hash binding. Never synthesize the envelope in the producer context.
 
 `AUTO` is unavailable for these semantic boundaries. Do not reinterpret it as agent approval. A future mechanical-only AUTO boundary would record `AUTO_PASSED`, never `AGENT_APPROVED`.
 

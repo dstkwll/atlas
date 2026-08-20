@@ -967,7 +967,10 @@ Purpose:
 It records only the current planning phase and revision, gate outcomes, the immutable intake
 hash/effective amendment revision, and accepted candidate version/hash provenance. The
 controller replaces this one JSON file atomically. It is not execution runtime state and does
-not contain ticket ownership, attempts, retries, or repository-scoped factory events.
+not contain ticket ownership, attempts, retries, or repository-scoped factory events. Its mutable
+`gates` map contains only selected discovery and specification boundaries. Immutable `run.yaml`
+retains later-stage and conditional policy; after specification acceptance, `phase` may name the
+next selected stage without creating mutable state for that stage.
 
 An accepted discovery or specification remains in its prescribed artifact path. Acceptance
 records its current version and content hash in `control.json`; V1 does not create a second
@@ -5833,7 +5836,10 @@ The remainder of `09-reference-config.md` stays illustrative until a real consum
 `<planning-root>/<feature>/control.json` is the sole authoritative mutable planning state for
 Stages 0–2. `00-state.md` is its generated human projection. The planning snapshot is distinct
 from repository-scoped execution state under `.factory/runs/` and contains no execution
-attempt, ownership, retry, ticket, or event machinery.
+attempt, ownership, retry, ticket, or event machinery. Its mutable gate state is limited to the
+selected discovery and specification boundaries this controller implements. Later-stage and
+conditional gate policy remains immutable in `run.yaml`; advancing `phase` to the next selected
+stage is a handoff, not acquisition of that stage's mutable state.
 
 The controller atomically replaces this one JSON file under a run-local single-writer lock.
 Atomic replacement prevents a torn file but cannot prevent two processes that both read revision
