@@ -2,7 +2,8 @@
 
 ## Durable contracts vs runtime protocol
 
-Markdown remains ideal for decisions, behavioral specification, system design, program design, vertical tickets, amendments, and durable evidence summaries.
+Markdown remains ideal for decisions, the living product PRD, system design, program design,
+vertical tickets, amendments, and durable evidence summaries.
 
 Phase-to-phase communication should use typed, schema-validated envelopes.
 
@@ -46,10 +47,12 @@ Deterministic code consumes these envelopes and decides which state transition i
 ## Planning control state before execution
 
 Stages 0–2 use `<planning-root>/<feature>/control.json` as their machine-canonical planning
-state. It records only planning phase/gate outcomes and version/hash provenance. This closes
-the pre-execution authority gap for a planning effort that may span repositories without
-putting repository-scoped execution state in the planning root. `00-state.md` is generated
-from this file and is never transition authority.
+state. It records only planning phase/gate outcomes and version/hash provenance. In v0.6 the
+accepted product-contract candidate is `20-prd.md`, and its `derived_from` field binds the exact
+`10-decisions.md` version/hash product closure reconciled. This closes the pre-execution
+authority gap for a planning effort that may span repositories without putting repository-scoped
+execution state in the planning root. `00-state.md` is generated from this file and is never
+transition authority.
 
 ## Machine-canonical runtime state
 

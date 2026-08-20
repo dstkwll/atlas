@@ -709,3 +709,32 @@ execution-framework selection remain separate decisions.
 External prior art can expose a missing local distinction even when the proposed attribution is
 wrong. Borrow the verified mechanisms, preserve the contrast that sharpened the design, and do not
 import the source's hierarchy or prompt-first control model merely to obtain those ideas.
+
+---
+
+## L-015 — The separate discovery-to-spec translation pass was weaker than explicit product closure
+
+### Evidence scope
+
+Two-model review of the living-PRD redesign, grounded in the accepted Stage 0–2 control contracts
+and the observed limits of non-authoritative reviewer freshness.
+
+### What changed
+
+Atlas had been carrying two ideas at once: discovery should settle intent before engineering
+design, and a later translation from discovery into specification might catch omissions
+incidentally. Review showed that the translation pass was not a proven independent review and
+that its strongest incidental value could be replaced more explicitly.
+
+### Accepted consequence
+
+Discovery now continuously authors both `10-decisions.md` and `20-prd.md`, and exits through one
+product-closure boundary. Closure requires the complete PRD-alignment retrospective, exact
+`derived_from` binding to the current decision log, a regenerated `20-prd.html` projection, and
+fresh semantic acceptance. The retrospective checks are exhaustive over identifiers and
+best-effort over meaning.
+
+### Standing result
+
+Use deterministic cross-checking where the architecture can prove it, and say plainly where it
+cannot. Reviewer freshness and read order remain procedural discipline, not authenticated state.

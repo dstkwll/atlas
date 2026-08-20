@@ -12,6 +12,9 @@
 
 ### D-002 — Planning is a compiler pipeline, not one giant planning activity
 
+**Refined by:** D-066 and D-067 collapse the former discovery-to-spec translation into one
+discovery producer with a separate product-closure boundary before engineering design.
+
 **Decision:** Separate decision discovery, behavioral spec, system design, program design, and execution compilation.
 
 **Why:** Each stage resolves a different class of uncertainty and prevents repeated redesign at increasingly detailed levels.

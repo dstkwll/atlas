@@ -25,7 +25,7 @@ These should run before LLM review so reviewers spend reasoning tokens on ambigu
 
 Required for things deterministic checks cannot fully judge:
 
-- contract/spec compliance
+- contract/product-contract compliance
 - architecture drift
 - maintainability
 - unnecessary complexity
@@ -52,7 +52,7 @@ Question:
 Checks:
 
 - ticket acceptance
-- relevant spec sections
+- relevant product-contract sections
 - relevant system/program-design sections
 - missing behavior
 - scope creep
@@ -174,47 +174,48 @@ A reviewer given an unconditional requirement — an artifact named as required 
 Two consequences for specifying any reviewer:
 
 - **Requirements that depend on which path the work took carry their applicability test with them.** Where a workflow offers alternative routes to the same stage, an artifact produced by only one route is conditional on evidence that the route was taken, and its absence on the other route is not a gap.
-- **A required artifact that is absent is a finding.** The reviewer reports it and stops. It never writes a routing artifact, an evidence file, a ticket, or a specification in order to satisfy its own condition.
+- **A required artifact that is absent is a finding.** The reviewer reports it and stops. It never writes a routing artifact, an evidence file, a ticket, or a product contract in order to satisfy its own condition.
 
 Observed in a real run of a non-canonical skill; recorded as L-012. The mechanism generalizes to any reviewer this architecture specifies.
 
 ---
 
-## Stage 1–2 boundary contracts
+## Discovery product-closure boundary
 
-Both boundary judges are read-only and return `PASS` or `BLOCKED`. A blocked result reports
-all material gaps found in that pass; each gap names the affected artifact and the exact stage
-and action that can resume it. `BLOCKED` returns to the producer without changing authoritative
-state. A producer-authored completion flag is evidence that the attempt
-ended, never proof that the boundary passed.
-
-### Discovery → specification
+The discovery exit boundary is product closure. Its judge is read-only and returns `PASS` or
+`BLOCKED`. A blocked result reports all material gaps found in that pass; each gap names the
+affected artifact and the exact stage and action that can resume it. `BLOCKED` returns to the
+producer without changing authoritative state. A producer-authored completion flag is evidence
+that the attempt ended, never proof that product closure passed.
 
 **Mechanical checks:** candidate identity and version match the planning run; required decision
 identifiers and record fields are present and unique; declared repository scope matches the
 effective intake; the open-frontier structure contains no unresolved entry; cold-read evidence
-is recorded; intake is not stale.
+is recorded and dispositioned; intake is not stale; the required PRD-alignment retrospective
+contains exactly one row for every live decision; every `NORMATIVE` decision maps to current PRD
+identifiers; every `NO_NORMATIVE_EFFECT` decision has a reason and maps to none; every normative
+PRD item cites one or more live decisions; the mappings agree in both directions; `20-prd.md`
+`derived_from` binds the exact current `10-decisions.md` version/hash; and `20-prd.html` declares
+the current Markdown source/hash. These checks are exhaustive over identifiers and best-effort
+over meaning.
 
-**Semantic questions:** does the artifact state the real problem; are important consequences,
-contradictions, or scope questions still unresolved; are decisions supported well enough to
-specify from; did the cold read's findings receive a real disposition?
+**Semantic questions, in order:**
 
-Failure resumes at discovery in `10-decisions.md`. Because the semantic questions are part of
-this boundary, acceptance authority is `AGENT_REVIEW` or `HUMAN` in this revision.
+1. Does the decision record state and support the real problem?
+2. Are important consequences, contradictions, or scope questions still unresolved?
+3. Are decisions supported well enough to justify the product contract?
+4. Did every cold-read finding receive a real disposition?
+5. Does each PRD obligation describe externally observable behavior?
+6. Are acceptance outcomes genuinely observable?
+7. Does any live decision carry a normative consequence the PRD omits or understates?
+8. Does the PRD assert an obligation that its cited decisions do not actually support?
+9. Is any `NO_NORMATIVE_EFFECT` reason false or evasive?
 
-### Specification → next selected design stage
-
-**Mechanical checks:** candidate identity and version match the planning run; required sections
-and normative identifiers exist and are unique; every decision reference resolves to the
-accepted discovery version/hash; no blocking open question remains; the specification does not
-contain implementation-ticket or internal code-shape fields.
-
-**Semantic questions:** does each requirement describe externally observable behavior; does the
-spec preserve discovery intent without inventing new intent; are material behavioral
-consequences missing or contradictory; are acceptance outcomes genuinely observable?
-
-Failure resumes at specification in `20-spec.md`. Because the semantic questions are part of
-this boundary, acceptance authority is `AGENT_REVIEW` or `HUMAN` in this revision.
+Failure resumes at discovery in `10-decisions.md` and `20-prd.md`. Because the semantic questions
+are part of this boundary, acceptance authority is `AGENT_REVIEW` or `HUMAN` in this revision.
+Reviewer freshness and read order remain procedural requirements: the controller can enforce
+schema, binding, and artifact identity, but it cannot authenticate who read first or how fresh a
+review context really was.
 
 ---
 
@@ -224,7 +225,7 @@ Ticket-level correctness is insufficient.
 
 After all tickets:
 
-1. full behavioral/spec compliance
+1. full product-contract compliance
 2. architecture drift across combined change
 3. program-design drift
 4. cross-ticket interactions
@@ -241,7 +242,7 @@ Human review can occur at different points based on governance profile.
 
 Potential gates:
 
-- spec approval
+- product-closure approval
 - system design approval
 - program design approval
 - ticket graph approval
