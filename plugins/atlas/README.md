@@ -15,7 +15,7 @@ Unlike the [`incubator`](../incubator/README.md) plugin beside it, nothing here 
 | `spike` | dispatched from discovery | a findings file under the run's spikes directory |
 | `to-spec` | 2 — behavioural specification | `20-spec.md`, the behavioural contract |
 
-Invocations read `atlas:<skill>` — `atlas:discovery`, `atlas:to-spec`. Codex resolves the plugin as `atlas@dstkwll`.
+Invocations read `atlas:<skill>` — `atlas:discovery`, `atlas:to-spec`. Codex resolves the plugin as `atlas@dstkwll`. In Copilot CLI, invoke the slash command explicitly: a natural-language prompt naming `setup-atlas` loaded the plugin but selected the wrong built-in skill, while `/atlas:setup-atlas` dispatched correctly.
 
 ## Install with Copilot CLI
 
