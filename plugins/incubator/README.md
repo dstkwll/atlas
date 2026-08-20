@@ -1,16 +1,18 @@
 # incubator plugin
 
 > **First-party Atlas skills live in the [`atlas`](../atlas/README.md) plugin. What remains
-> here is forked material.**
+> here is noncanonical incubation material.**
 >
 > ## Status: incubation. Not canonical.
 >
 > This plugin contains **candidate, borrowed, transitional, and stand-in skills used to
-> develop Atlas**. They are executable experiments, not architectural authority.
+> develop Atlas**. They are executable experiments or source-pinned references, not architectural
+> authority.
 >
 > - These are **not** canonical implementations of Atlas workflow, artifacts, or authority.
-> - They **intentionally retain** Workbench, Matt Pocock, and other upstream assumptions.
-> - They exist to be **used as stand-ins** while Atlas behavior is designed and calibrated.
+> - Forked entries may **intentionally retain** Workbench, Matt Pocock, and other upstream assumptions.
+> - They exist to be **used as stand-ins or read as references** while Atlas behavior is designed
+>   and calibrated.
 > - **`architecture/` is authoritative** whenever there is a conflict.
 > - Behavior in this plugin is **not evidence** that the Atlas architecture has accepted
 >   that behavior.
@@ -37,7 +39,7 @@ Canonical architecture is never edited to make an imported skill fit.
 
 ## Provenance
 
-These skills derive from [Matt Pocock's agent skills](https://github.com/mattpocock/skills)
+Most carried skills derive from [Matt Pocock's agent skills](https://github.com/mattpocock/skills)
 (MIT, see [`LICENSE`](./LICENSE)), vendored into the Workbench `mp` plugin at upstream
 commit `84fdeffd12f2ee307994d1eb6feb48173b6e0502` and forked here.
 
@@ -47,6 +49,12 @@ deliberately dropped. Skills are hand-editable source, not build output. Workben
 text that previously layered on at build time is folded into the skill bodies it belonged
 to. **Merging future upstream changes is a manual diff against the pinned commit above**,
 by choice.
+
+`autoprompt` is different: it is an Atlas-authored **reference card**, not a vendored runtime.
+It records source inspection of [Spielewoy/autoprompt-skill](https://github.com/Spielewoy/autoprompt-skill)
+at commit `1a195165c5e54ce33fc357425a0b3af7a8dae96f` (MIT observed there). No upstream
+Autoprompt prompt, role, framework, installer, runtime, image, or other source file is copied into
+this plugin.
 
 ## Layout
 
@@ -74,6 +82,7 @@ Lightweight statuses, not a lifecycle: `candidate` (may contribute to a canonica
 
 | Skill | Origin | Current role | Status | Known Atlas conflict |
 |---|---|---|---|---|
+| `autoprompt` | Atlas-authored reference to Spielewoy Autoprompt | Source-pinned prior-art inspection | **reference / needs-reconciliation** | Upstream ships neither a GitHub Copilot CLI adapter nor a Hermes adapter. Its VS Code package targets a different host, and this card does not reproduce the 25-role recursive runtime. It must not be treated as executable Autoprompt or as Atlas authority. |
 | `factory-implement` | upstream `implement` | Temporary implementation worker | **stand-in / candidate** | Its review-and-commit behavior has **not** been reconciled with the canonical executor → deterministic validators → contract reviewer → design/quality reviewer → controller-acceptance flow. It is **not** the canonical ticket factory or definition-of-done loop. |
 | `factory-code-review` | upstream `code-review` | Two-axis review of a diff | **candidate / reference** | Its Standards and Spec axes may contribute to Atlas review roles, but they are **not** equivalent to canonical contract-review plus design/quality-review semantics. |
 | `to-tickets` | upstream | Ticket authoring | **needs reconciliation — currently incompatible with `to-spec`** | Retains issue-tracker and `.scratch/` assumptions. Not adapted to the canonical planning artifact model or to execution-compilation semantics. **It reads a `## Work Items` section and identifiers of the form `R1`, and stops rather than publish when they are absent; the rewritten `to-spec` emits `## Requirements` and `R-001`.** The pipeline cannot advance from spec to tickets until Stage 5 is written. Emitting Work Items from Stage 2 would reintroduce ticket-sized units into the behavioural contract, so the break is left visible rather than papered over. |
@@ -99,7 +108,7 @@ readiness are marked explicit-invocation-only where the host supports it — Cla
 `disable-model-invocation: true` in frontmatter, and Codex's
 `policy.allow_implicit_invocation: false` in `agents/openai.yaml`.
 
-Currently explicit-only: `advance`, `factory-implement`, `factory-code-review`,
+Currently explicit-only: `autoprompt`, `advance`, `factory-implement`, `factory-code-review`,
 `to-tickets`, `grill-with-docs`,
 `improve-codebase-architecture`, `wayfinder`.
 
@@ -136,5 +145,14 @@ reviewer the architecture specifies, not only to this skill.
   without the other breaks the loop. The rewritten `to-spec` no longer participates.
 - Skill-to-stage assignment against `architecture/02-workflow.md` is not attempted.
 - No installer. Each host reads the tree from its own configured location.
-- No host has loaded this tree. Manifest shapes match the documented formats; that is a
-  static check, not a runtime one.
+- The `autoprompt` reference has dated **discovery-only** smoke coverage: Copilot CLI `1.0.80`
+  reported it through `copilot skill list`; Hermes reported it as local/enabled through
+  `hermes skills list`, and `skill_view(name='autoprompt')` loaded its linked source map. Invocation
+  policy was not exercised, so explicit-only enforcement on both hosts remains unverified. No claim
+  is made that either host can run upstream Autoprompt. Other manifest shapes remain static checks
+  rather than full-plugin runtime proof.
+- Upstream's `vscode` provider targets VS Code 1.133+ with Copilot Chat 0.61. It is not a
+  GitHub Copilot CLI package and must not be installed as if those hosts were interchangeable.
+- No Hermes Autoprompt adapter exists. A real adapter must prove the upstream compatibility
+  checklist — including named workers, recursion, failure delivery, lifecycle, and real-host
+  install/invocation/repair/uninstall tests — before this reference can become executable.
