@@ -607,7 +607,7 @@ class AtlasControlTests(unittest.TestCase):
             blocked = run_cli("initialize", "--run", run)
 
             self.assertNotEqual(blocked.returncode, 0)
-            self.assertIn("run.yaml gates", blocked.stderr)
+            self.assertIn("discovery gate must exist exactly when discovery is selected", blocked.stderr)
 
     def test_product_closure_uses_prd_candidate_without_requiring_spec_artifact(self):
         with tempfile.TemporaryDirectory() as td:

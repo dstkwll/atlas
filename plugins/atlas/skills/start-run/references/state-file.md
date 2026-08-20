@@ -2,7 +2,7 @@
 
 `control.json` is the only authoritative mutable Stage 0–2 state. `00-state.md` is generated for humans and is never read to decide legality.
 
-Initialization creates this shape:
+When discovery is selected, initialization creates this shape:
 
 ```json
 {
@@ -26,6 +26,8 @@ Initialization creates this shape:
 ```
 
 `gates` contains mutable state only for the selected discovery product-closure boundary this Stage 0–2 controller implements. `run.yaml` retains all later-stage and conditional policy. After discovery acceptance, `phase` may name the next selected stage while `gates` remains unchanged; that phase is a fail-closed handoff to its owning controller.
+
+When discovery is omitted, initialization sets `phase` to the first selected downstream stage and writes empty `gates` and `acceptances` maps. That omission has conceptual `NOT_REQUIRED` semantics and grants no approval. A pre-existing `20-prd.md` may coexist with either branch, but initialization never accepts it; selected discovery must reconcile and judge reused PRD material normally.
 
 Each accepted candidate replaces its stage's current binding:
 

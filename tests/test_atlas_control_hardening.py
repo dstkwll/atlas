@@ -104,10 +104,9 @@ class AtlasControlHardeningTests(unittest.TestCase):
             self.assertIn("base run.yaml byte hash mismatch", result.stderr)
             self.assertEqual(read_control(run)["revision"], 1)
 
-    def test_initialize_rejects_legacy_or_bypassing_stage_orders(self):
+    def test_initialize_rejects_legacy_or_malformed_stage_orders(self):
         cases = {
             "legacy-spec": ["discovery", "spec", "program_design"],
-            "discovery-bypass": ["program_design", "discovery"],
             "non-string": ["discovery", 7],
         }
         for name, stages in cases.items():
@@ -126,6 +125,99 @@ class AtlasControlHardeningTests(unittest.TestCase):
                 self.assertNotEqual(result.returncode, 0)
                 self.assertIn("stages", result.stderr)
                 self.assertFalse((run / "control.json").exists())
+
+    def test_initialize_supports_selected_or_omitted_discovery(self):
+        cases = {
+            "selected": {
+                "stages": ["discovery", "program_design"],
+                "gates": {"discovery": "PENDING"},
+                "acceptances": {"discovery": None},
+                "phase": "discovery",
+            },
+            "omitted": {
+                "stages": ["program_design", "tickets"],
+                "gates": {},
+                "acceptances": {},
+                "phase": "program_design",
+            },
+        }
+        for name, expected in cases.items():
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                config = run_config()
+                config["stages"] = expected["stages"]
+                if name == "omitted":
+                    config["gates"].pop("discovery")
+                config["recommendation"]["gates"] = config["gates"]
+                (run / "run.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+
+                initialized = run_cli("initialize", "--run", run)
+
+                self.assertEqual(initialized.returncode, 0, initialized.stderr)
+                control = read_control(run)
+                self.assertEqual(control["phase"], expected["phase"])
+                self.assertEqual(control["gates"], expected["gates"])
+                self.assertEqual(control["acceptances"], expected["acceptances"])
+                if name == "omitted":
+                    checked = run_cli("check", "--run", run)
+                    self.assertNotEqual(checked.returncode, 0)
+                    self.assertIn("outside the Stage", checked.stdout)
+                    self.assertIn("use the next-stage controller", checked.stdout)
+
+    def test_initialize_allows_a_preexisting_prd_without_accepting_it(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            config = run_config()
+            (run / "run.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+            (run / "20-prd.md").write_text("# Reused but untrusted PRD\n", encoding="utf-8")
+            before = (run / "20-prd.md").read_bytes()
+
+            initialized = run_cli("initialize", "--run", run)
+
+            self.assertEqual(initialized.returncode, 0, initialized.stderr)
+            control = read_control(run)
+            self.assertEqual(control["phase"], "discovery")
+            self.assertEqual(control["gates"], {"discovery": "PENDING"})
+            self.assertEqual(control["acceptances"], {"discovery": None})
+            self.assertEqual((run / "20-prd.md").read_bytes(), before)
+            checked = run_cli("check", "--run", run)
+            self.assertNotEqual(checked.returncode, 0)
+            self.assertEqual(read_control(run)["acceptances"], {"discovery": None})
+
+    def test_discovery_gate_exists_exactly_when_discovery_is_selected(self):
+        cases = {
+            "selected-without-gate": (["discovery", "program_design"], False),
+            "omitted-with-gate": (["program_design", "tickets"], True),
+        }
+        for name, (stages, keep_discovery_gate) in cases.items():
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                config = run_config()
+                config["stages"] = stages
+                if not keep_discovery_gate:
+                    config["gates"].pop("discovery")
+                config["recommendation"]["gates"] = config["gates"]
+                (run / "run.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+
+                result = run_cli("initialize", "--run", run)
+
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("discovery gate must exist exactly when discovery is selected", result.stderr)
+                self.assertFalse((run / "control.json").exists())
+
+    def test_selected_discovery_remains_the_first_phase(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            config = run_config()
+            config["stages"] = ["program_design", "discovery"]
+            config["recommendation"]["gates"] = config["gates"]
+            (run / "run.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+
+            result = run_cli("initialize", "--run", run)
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("selected discovery must be the first stage", result.stderr)
+            self.assertFalse((run / "control.json").exists())
 
     def test_candidate_version_rejects_yaml_boolean_before_state_mutation(self):
         with tempfile.TemporaryDirectory() as td:

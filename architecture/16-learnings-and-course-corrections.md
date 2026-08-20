@@ -693,9 +693,10 @@ inspection showed an asymmetric result:
 - evidence-local repair and selective workflow depth were already explicit in Atlas;
 - an uncertainty-axis router and earliest trustworthy semantic entry are **not** implemented by
   Autoprompt, whose invoked missions still enter its minimum roadmap/reviewer topology;
-- fresh architecture review corrected an overstatement about Atlas itself: the shipped initializer
-  rejects pre-existing discovery/amendment state but allows a pre-existing `20-spec.md`. The rule
-  must therefore govern acceptance authority, not pretend every candidate file postdates control.
+- fresh architecture review corrected an overstatement about Atlas itself: initialization may
+  coexist with a prescribed candidate (`20-prd.md` in the current vocabulary) without accepting it.
+  The rule must therefore govern acceptance authority, not pretend every candidate file postdates
+  control.
 
 ### Accepted consequence
 

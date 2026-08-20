@@ -113,9 +113,10 @@ It records only the current planning phase and revision, gate outcomes, the immu
 hash/effective amendment revision, and accepted candidate version/hash provenance. The
 controller replaces this one JSON file atomically. It is not execution runtime state and does
 not contain ticket ownership, attempts, retries, or repository-scoped factory events. Its mutable
-`gates` map contains only selected discovery boundaries. Immutable `run.yaml` retains later-stage
-and conditional policy; after product closure acceptance, `phase` may name the
-next selected stage without creating mutable state for that stage.
+`gates` map contains the discovery boundary only when selected. Immutable `run.yaml` retains
+later-stage and conditional policy. When discovery is omitted, `phase` begins at the first selected
+downstream stage with no mutable gate; after product closure acceptance, `phase` may likewise name
+the next selected stage without creating mutable state for that stage.
 
 An accepted discovery/product-closure candidate remains in its prescribed artifact path.
 Acceptance records its current version and content hash in `control.json`; V1 does not create a

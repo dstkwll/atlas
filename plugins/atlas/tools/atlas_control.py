@@ -266,21 +266,24 @@ def validate_run(config: dict[str, Any]) -> None:
         or not stages
         or any(not isinstance(stage, str) or not stage.strip() for stage in stages)
         or len(stages) != len(set(stages))
-        or stages[0] != "discovery"
         or "spec" in stages
     ):
-        raise ControlError("run.yaml stages must be a unique string list beginning with discovery and may not contain legacy spec")
+        raise ControlError("run.yaml stages must be a non-empty unique string list and may not contain legacy spec")
     gates = config.get("gates")
     if (
         not isinstance(gates, dict)
-        or "discovery" not in gates
         or "spec" in gates
     ):
-        raise ControlError("run.yaml gates must cover discovery and may not contain legacy spec")
+        raise ControlError("run.yaml gates must be a map and may not contain legacy spec")
+    discovery_selected = "discovery" in stages
+    if discovery_selected and stages[0] != "discovery":
+        raise ControlError("selected discovery must be the first stage")
+    if discovery_selected != ("discovery" in gates):
+        raise ControlError("run.yaml discovery gate must exist exactly when discovery is selected")
     for stage, policy in gates.items():
         if not isinstance(policy, dict) or not isinstance(policy.get("authority"), str):
             raise ControlError(f"run.yaml gate policy is malformed: {stage}")
-    if "discovery" in stages and gates["discovery"].get("authority") not in {"AGENT_REVIEW", "HUMAN"}:
+    if discovery_selected and gates["discovery"].get("authority") not in {"AGENT_REVIEW", "HUMAN"}:
         raise ControlError("the semantic discovery boundary requires AGENT_REVIEW or HUMAN")
     root = config.get("planning_root")
     if not isinstance(root, dict) or set(root) != {"source", "mode", "path"}:
@@ -337,10 +340,16 @@ def load_control(run_dir: Path) -> dict[str, Any]:
         raise ControlError("control.json is not a map")
     if set(control) != CONTROL_FIELDS:
         raise ControlError("control.json fields do not match version-1 schema")
+    gates = control.get("gates")
     acceptances = control.get("acceptances")
-    if not isinstance(acceptances, dict) or set(acceptances) != set(CANDIDATES) or any(
-        record is not None and (not isinstance(record, dict) or set(record) != ACCEPTANCE_FIELDS)
-        for record in acceptances.values()
+    if (
+        not isinstance(gates, dict)
+        or not isinstance(acceptances, dict)
+        or set(acceptances) != set(gates)
+        or any(
+            record is not None and (not isinstance(record, dict) or set(record) != ACCEPTANCE_FIELDS)
+            for record in acceptances.values()
+        )
     ):
         raise ControlError("control.json acceptances are malformed")
     if (
@@ -800,8 +809,8 @@ def initialize(run_dir: Path) -> str:
         raise ControlError("control.json already exists")
     config = load_run(run_dir)
     validate_run(config)
-    if managed_path(run_dir, DECISIONS_FILE).exists() or managed_path(run_dir, PRD_FILE).exists() or amendment_paths(run_dir):
-        raise ControlError("initialize must run before discovery or amendments")
+    if managed_path(run_dir, DECISIONS_FILE).exists() or amendment_paths(run_dir):
+        raise ControlError("initialize must run before decision records or amendments")
     stages = config["stages"]
     control = {
         "version": 1,
@@ -815,7 +824,7 @@ def initialize(run_dir: Path) -> str:
         "accepted_amendment_count": 0,
         "gates": {stage: "PENDING" for stage in stages if stage in CANDIDATES},
         "blocked_reason": None,
-        "acceptances": {"discovery": None},
+        "acceptances": {stage: None for stage in stages if stage in CANDIDATES},
     }
     commit(run_dir, control)
     return "initialized control.json revision 1"

@@ -94,6 +94,21 @@ class SkillSeamHardeningTests(unittest.TestCase):
 
             self.assertTrue(any("intake-correction" in message for _, message in findings))
 
+    def test_start_run_hands_off_from_the_actual_first_phase(self):
+        text = (ROOT / "plugins" / "atlas" / "skills" / "start-run" / "SKILL.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("When discovery is selected", text)
+        self.assertIn("If the first phase is `discovery`, offer `atlas:discovery`", text)
+        self.assertIn("Otherwise, hand off to the owner of the actual first phase", text)
+
+    def test_stage_admission_architecture_matches_the_initializer(self):
+        text = (ROOT / "architecture" / "02-workflow.md").read_text(encoding="utf-8")
+        normalized = " ".join(text.split())
+        self.assertNotIn("This does not change the shipped Stage 0–2 initializer", normalized)
+        self.assertIn("When discovery is selected, initialization creates its mutable gate", normalized)
+        self.assertIn("When discovery is omitted, initialization creates no discovery gate or acceptance", normalized)
+
     def test_packaged_boundary_review_carries_the_exact_nine_product_closure_questions(self):
         review_path = (
             ROOT / "plugins" / "atlas" / "skills" / "control-run" / "references" / "boundary-review.md"
