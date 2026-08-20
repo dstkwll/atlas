@@ -1,0 +1,19 @@
+{
+  "name": "atlas",
+  "description": "Atlas pipeline skills: machine setup, run intake and control, decision discovery, behavioural specification, and bounded experiments. Written against the Atlas architecture in this repository.",
+  "version": "0.1.0",
+  "keywords": [
+    "skills",
+    "engineering",
+    "specification",
+    "discovery",
+    "atlas"
+  ],
+  "category": "development",
+  "tags": [
+    "skills",
+    "atlas",
+    "pipeline"
+  ],
+  "skills": "skills/"
+}

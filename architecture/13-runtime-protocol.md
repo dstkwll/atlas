@@ -43,6 +43,14 @@ Phase-to-phase communication should use typed, schema-validated envelopes.
 
 Deterministic code consumes these envelopes and decides which state transition is legal.
 
+## Planning control state before execution
+
+Stages 0–2 use `<planning-root>/<feature>/control.json` as their machine-canonical planning
+state. It records only planning phase/gate outcomes and version/hash provenance. This closes
+the pre-execution authority gap for a planning effort that may span repositories without
+putting repository-scoped execution state in the planning root. `00-state.md` is generated
+from this file and is never transition authority.
+
 ## Machine-canonical runtime state
 
 Suggested runtime layout:
@@ -59,6 +67,10 @@ Suggested runtime layout:
 ```
 
 A generated `<planning-root>/<feature>/00-state.md` may remain useful as a projection, but it is not authoritative for attempt counts, active ownership, retry state, or exact state transitions.
+
+`control.json` does not replace this execution protocol. Once compiled work executes, each
+repository-scoped factory run owns its `run.json`, events, envelopes, evidence, and logs under
+that repository's `.factory/runs/` directory.
 
 ## Runtime state vs engineering truth
 

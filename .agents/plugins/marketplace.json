@@ -1,0 +1,17 @@
+{
+  "name": "dstkwll",
+  "plugins": [
+    {
+      "name": "atlas",
+      "source": "./plugins/atlas",
+      "description": "Atlas pipeline skills written against the architecture in this repository: machine setup, run intake and control, decision discovery, behavioural specification, and bounded experiments.",
+      "version": "0.1.0"
+    },
+    {
+      "name": "incubator",
+      "source": "./plugins/incubator",
+      "description": "Atlas incubation skills: borrowed, candidate, and stand-in skills used to develop Atlas. Not canonical implementations of the Atlas architecture.",
+      "version": "0.1.0"
+    }
+  ]
+}

@@ -16,6 +16,11 @@ Prefer one deterministic state authority responsible for:
 
 Agents produce evidence/proposals; the state machine applies valid transitions.
 
+For pre-execution Stages 0–2, that authority is the feature-root `control.json`. The
+controller changes it through one atomic file replacement and may then regenerate
+`00-state.md` as a projection. Repository-scoped `.factory/runs/` state begins with execution
+and remains a separate domain.
+
 ---
 
 ## Suggested high-level run states
@@ -66,6 +71,7 @@ The deterministic runner owns transition legality.
 ```text
 NOT_REQUIRED
 PENDING
+AUTO_PASSED
 AGENT_APPROVED
 HUMAN_APPROVED
 REJECTED
@@ -74,15 +80,26 @@ STALE
 
 A gate can become `STALE` if an upstream amendment invalidates its prior approval.
 
+`AUTO_PASSED` means a boundary explicitly declared mechanical-only and all of its
+deterministic prerequisites passed. It never means an agent reviewed the artifact. Discovery
+and behavioral specification are not mechanical-only boundaries in this revision.
+
 ---
 
 ## Approved artifacts are versioned contracts
 
-Once an artifact passes its gate, downstream work should reference an immutable approved version/hash.
+Once an artifact passes its gate, downstream work references its accepted version and content
+hash from `control.json`.
 
 This prevents:
 
 > “The design changed while ticket 3 was executing and nobody knows which version the implementation targeted.”
+
+Stages 0–2 do not create duplicate approved copies, acceptance-history ledgers, or separate
+receipt files. The prescribed candidate path remains the artifact, and any change after
+acceptance requires a version increment and a new gate decision. `control.json` preserves the
+current acceptance binding for each stage (version, hash, authority, date, and review reference
+when applicable). Reopening marks that binding stale; the next acceptance replaces it.
 
 ---
 
@@ -98,6 +115,12 @@ When execution discovers an invalid upstream assumption:
 6. already-completed work is checked for invalidation;
 7. stale approvals are explicitly marked;
 8. execution resumes only after valid re-approval.
+
+The narrower Stage 0–2 case is an intake correction discovered before execution. It is an
+ordered `amendments/NNN-*.md` record using machine-parseable frontmatter. Applying it updates
+only `control.json`'s amendment count and effective-configuration hash. Re-reading `run.yaml`
+plus the ordered amendments must reproduce that hash. No separate amendment ledger or hash
+chain exists in this revision.
 
 ---
 
@@ -153,7 +176,13 @@ Changing global settings later must not retroactively alter an active/historical
 
 ## Recovery and crash safety
 
-The system should be restartable from on-disk state.
+The system should be restartable from on-disk state, with recovery machinery proportional to
+the current write boundary.
+
+For Stages 0–2 the controller has one authoritative mutable file. It writes a temporary
+`control.json` beside the current one and atomically replaces it. A run-local single-writer
+lock prevents two processes from committing from the same revision. Because no authoritative
+transition spans several files, V1 has no transaction journal or replay protocol here.
 
 On restart:
 

@@ -79,7 +79,8 @@ workflows:
 governance:
   exploratory:
     gates:
-      spec: AUTO
+      discovery: AGENT_REVIEW
+      spec: AGENT_REVIEW
       system_design: AUTO
       program_design: AGENT_REVIEW
       tickets: AUTO
@@ -88,6 +89,7 @@ governance:
 
   standard:
     gates:
+      discovery: HUMAN
       spec: HUMAN
       system_design: HUMAN_IF_CHANGED
       program_design: HUMAN
@@ -97,6 +99,7 @@ governance:
 
   high_assurance:
     gates:
+      discovery: HUMAN
       spec: HUMAN
       system_design: HUMAN
       program_design: HUMAN
@@ -106,6 +109,7 @@ governance:
 
   autonomous:
     gates:
+      discovery: AGENT_REVIEW
       spec: AGENT_REVIEW
       system_design: AGENT_REVIEW
       program_design: AGENT_REVIEW

@@ -635,3 +635,38 @@ artifact is a finding rather than something to supply.
 
 Where a requirement depends on which path work took, its applicability test travels with it.
 A reviewer reports what is absent; it never writes what is absent.
+
+---
+
+## L-013 — The first executable planning gate exposed three responsibilities, not one controller
+
+### Evidence scope
+
+One Stage 0–2 implementation in draft PR #5, followed by adversarial tests and independent
+review. The controller worked, but implementation pressure exposed architecture the prose had
+left unresolved.
+
+### What happened
+
+The implementation correctly removed lifecycle authority from producer skills, then made one
+program responsible for semantic artifact grading, approval provenance, multi-file state,
+recovery, and legal transitions. Hardening that surface produced locking, transaction journals,
+approved copies, receipt ledgers, and hash chains before a real Stage 0–2 run had earned them.
+
+### Accepted consequence
+
+Stages 0–2 separate producer completion, read-only boundary judgment, configured acceptance
+authority, and deterministic transition recording. Planning state uses one machine-canonical
+`control.json`; `00-state.md` is a projection. Approval provenance is version/hash metadata in
+that snapshot rather than copied artifacts, and the controller grades no prose.
+
+The judge/drive seam from incubator `advance` is accepted as a **concept donor only**. Its
+Workbench routing, leash, worker, ticket, and ship machinery remain non-canonical.
+
+### Standing result
+
+A mechanism already implemented has not earned itself. Keep deterministic machinery only when
+a concrete current failure requires it and a materially simpler design does not survive that
+failure. One explicitly retained exclusion mechanism is the run lock: atomic replacement
+prevents torn state but not two revision-N writers overwriting each other, and a check
+immediately before replace has the same race.

@@ -6,6 +6,7 @@
 <planning-root>/
 └── <feature-slug>/
     ├── run.yaml
+    ├── control.json
     ├── 00-state.md
     ├── 10-decisions.md
     ├── 20-spec.md
@@ -100,37 +101,55 @@ Do not rely on changing global config to reconstruct historical behavior.
 
 ---
 
+## `control.json`
+
+Purpose:
+
+> Machine-canonical planning-control state for Stages 0–2.
+
+It records only the current planning phase and revision, gate outcomes, the immutable intake
+hash/effective amendment revision, and accepted candidate version/hash provenance. The
+controller replaces this one JSON file atomically. It is not execution runtime state and does
+not contain ticket ownership, attempts, retries, or repository-scoped factory events. Its mutable
+`gates` map contains only selected discovery and specification boundaries. Immutable `run.yaml`
+retains later-stage and conditional policy; after specification acceptance, `phase` may name the
+next selected stage without creating mutable state for that stage.
+
+An accepted discovery or specification remains in its prescribed artifact path. Acceptance
+records its current version and content hash in `control.json`; V1 does not create a second
+approved copy or retain a separate acceptance history. Reopening leaves that binding visible
+while stale and requires the producer to increment the candidate version; the next acceptance
+replaces it.
+
+---
+
 ## `00-state.md`
 
 Purpose:
 
-> Human-readable state mirror, with machine-parseable frontmatter.
+> Generated human-readable projection of `control.json`.
 
-Example:
+Example projection:
 
 ```yaml
 ---
+source: control.json
 feature: async-device-jobs
 status: planning
-phase: program-design
-baseline: 89a1c732
-revision: 4
-
-repos:
-  - device-service
-  - job-scheduler
+phase: specification
+revision: 3
 
 gates:
-  spec: approved
-  system_design: approved
-  program_design: in_review
-  tickets: pending
+  discovery: AGENT_APPROVED
+  specification: PENDING
 
-active_ticket: null
+blocked_reason: null
 ---
 ```
 
-Authoritative machine state may eventually live in a structured state file/database, but a boring on-disk representation is useful for observability and recovery.
+The controller may regenerate this projection after a successful transition, but never reads
+it to decide transition legality. If projection and `control.json` disagree, `control.json`
+wins and the projection is stale.
 
 ---
 
@@ -315,6 +334,15 @@ Example:
 
 This allows deterministic routing without requiring code to parse prose sentiment.
 
+For a Stage 1 or Stage 2 `AGENT_REVIEW` gate, the invoker persists the read-only judge's
+structured output as `reviews/<stage>-v<version>.json`. It binds `run`, `stage`, candidate
+`version` and SHA-256, `verdict: PASS|BLOCKED`, and an array of gaps; each gap includes a stable
+code, artifact, problem, and resume stage/action. A PASS envelope has no gaps. The controller
+validates and hashes this envelope but never asks it to modify the artifact or state. V1 does not
+add authenticated reviewer identities or signatures: the invoker must obtain the envelope from
+a fresh read-only context, while the controller enforces only schema and current run/version/hash
+binding. This limitation is explicit rather than implying cryptographic independence.
+
 ---
 
 ## `amendments/`
@@ -331,3 +359,8 @@ A change in an approved contract should produce an explicit amendment containing
 - approval
 
 The system may later fold approved amendments back into canonical documents, but provenance should remain visible.
+
+For Stages 0–2, an accepted intake correction uses the existing ordered
+`amendments/NNN-*.md` form with machine-parseable frontmatter. `control.json` records the
+accepted amendment count and resulting effective-configuration hash. V1 does not add a
+separate amendment ledger, per-amendment receipt file, or hash chain.

@@ -1,0 +1,5 @@
+interface:
+  display_name: "Discovery"
+  short_description: "Resolve open decisions before specification"
+policy:
+  allow_implicit_invocation: false

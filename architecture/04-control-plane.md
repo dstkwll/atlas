@@ -164,7 +164,12 @@ Possible files:
 
 ### `AUTO`
 
-Output can advance immediately once deterministic prerequisites are satisfied.
+Output can advance immediately once deterministic prerequisites are satisfied **only when the
+boundary contract declares no semantic acceptance question**. A successful automatic gate is
+recorded as `AUTO_PASSED`, never `AGENT_APPROVED`.
+
+Stage 1 discovery and Stage 2 behavioral specification both require semantic acceptance in
+this revision, so their configured authority is `AGENT_REVIEW` or `HUMAN`, not `AUTO`.
 
 ### `AGENT_REVIEW`
 
@@ -206,6 +211,24 @@ program_design:
 ```
 
 The human becomes the decision authority rather than the primary bug finder.
+
+### Stage 0–2 boundary seam
+
+For discovery and behavioral specification, keep four responsibilities distinct:
+
+```text
+producer completes a candidate
+  → read-only boundary judge returns PASS/BLOCKED with all gaps and resume points
+  → PASS goes to the configured authority; BLOCKED returns to the producer without mutation
+  → deterministic controller records one legal acceptance or explicit HUMAN rejection
+```
+
+The producer's completion claim is input, not acceptance. The judge reads only evidence for
+that boundary and never edits the candidate or planning state. Objective structure and
+cross-reference checks may be deterministic; semantic completeness is judged by a fresh
+reviewer under `AGENT_REVIEW`, or by the human under `HUMAN`. The controller validates the
+candidate identity/hash, the applicable judge or human authority, and transition legality; it
+does not grade prose.
 
 ---
 
