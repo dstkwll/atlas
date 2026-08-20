@@ -1,0 +1,6 @@
+interface:
+  display_name: "Atlas Control Run"
+  short_description: "Apply one gate and advance run state"
+  default_prompt: "Use $control-run to evaluate the current Atlas gate and apply at most one state transition."
+policy:
+  allow_implicit_invocation: false

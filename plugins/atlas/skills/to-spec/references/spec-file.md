@@ -13,10 +13,15 @@ The shape of `20-spec.md`. Written to be read by someone who will not build the 
 run: <slug>
 version: 1
 status: draft | approved | superseded
+gate_ready: false
 approved: <YYYY-MM-DD or null>
-supersedes: <null, or the version this replaces>
-amendment: <null, or the amendments/ record that produced this version>
+approved_authority: <AUTO | HUMAN | null>
+approved_copy: <run-relative immutable copy or null>
+approved_sha256: <SHA-256 of approved copy or null>
+supersedes: null
+amendment: null
 derived-from: 10-decisions.md
+effective_config_revision: <copied from 00-state.md>
 ---
 
 # Spec — <title>
@@ -99,3 +104,5 @@ question routed to design is a decision being made by the wrong stage.
 Optional, non-normative. Written where they help a reader understand who wants what. They
 carry no obligations — the requirements above do.
 ```
+
+The currently implemented Stage 0–2 route accepts exactly this initial candidate schema: `version` is `1`, and `supersedes` and `amendment` remain null. A future specification-amendment transition may define non-null provenance only when deterministic control can create and validate it against an immutable predecessor receipt; this plugin does not guess that future representation.

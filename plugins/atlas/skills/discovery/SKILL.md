@@ -20,7 +20,7 @@ Work in rounds: ask the whole frontier at once, numbered. The replies settle tho
 
 Each question carries its options and a recommended answer. Where you have no recommendation worth the name, say so and ask for the instinct first — a manufactured recommendation on a question you cannot judge is worse than none, and the answer to a question asked honestly is usually the sharpest one in the round.
 
-A question depending on another still open belongs to a later round and names what it waits on in `blocked_by`. The run is done when the frontier is empty.
+A question depending on another still open belongs to a later round and names what it waits on in `blocked_by`. Discovery is ready for its configured gate when the frontier is empty and the bounded cold read is resolved; the skill does not advance its own phase.
 
 ## Where the answer lives
 
@@ -41,11 +41,15 @@ Dispatched routes do not block the round — only the questions downstream of an
 
 ### 1. Resume or open the run
 
-Read `<run>/10-decisions.md` if it exists and continue from the open frontier recorded there, never re-asking a settled decision. Otherwise resolve the run directory and create it — see [`references/run-layout.md`](references/run-layout.md) for how the path resolves and what the file starts as.
+Resolve a run already created by `atlas:start-run`, then reconstruct effective intake from immutable `run.yaml` plus accepted `amendments/run-config-NNN.yaml`, and read mutable `00-state.md`. Discovery must be selected by the effective run and be the current phase. If intake is absent or state does not name the latest accepted effective-config revision, stop and return to Stage 0 rather than manufacturing it here; an artifact's stale marker follows the explicit recovery rule below.
+
+If an existing decision log has `intake_stale: true` and state now names a later `effective_config_revision`, revalidate every persisted scope finding against the effective `repos` repository-baseline pairs. Clear `intake_stale`, copy the current `effective_config_revision`, and resume only when every affected repository and baseline is represented. Otherwise leave both fields unchanged and return to Stage 0. This explicit revalidation is the only recovery path; elapsed time or the presence of an amendment is not proof.
+
+Read `<run>/10-decisions.md` if it exists and continue from the open frontier recorded there, never re-asking a settled decision. If it names an `approved_copy`, verify `approved_sha256`; edit the working file only after deterministic `atlas:control-run` has legally reopened it as a new draft version. Otherwise create only that file inside the existing run. See [`references/run-layout.md`](references/run-layout.md) for the fixed location and initial shape.
 
 ### 2. Test whether the work is worth doing
 
-Two challenges before any question is asked. Either can end the run, and both outcomes are legitimate results — record either as the run's first decision.
+Two challenges before any question is asked. Either can justify a recommendation to stop, and both outcomes are legitimate results — record either as the run's first decision and present the recommendation to the discovery gate named in `run.yaml`.
 
 **The problem test.** Name the problem in the words of whoever has it. Then: what happens if nothing is built? Is there a framing under which this problem dissolves or belongs to something else?
 
@@ -73,19 +77,19 @@ Dispatch the research, explore, and spike questions in the same round. Then wait
 
 Supply options the user had not considered, and argue against the ones they had.
 
-The run's own frontmatter records the `project` it belongs to, or null where it has none, and the date it `opened`. See [`references/run-layout.md`](references/run-layout.md) for where the run directory sits.
+The log's frontmatter records its `run`, quoted canonical `opened` date, `repos`, and `effective_config_revision` values from effective intake and state. It owns the boolean `intake_stale` and `gate_ready` fields plus `cold_read`; these are readiness evidence, not workflow state. The initial and reopened frontmatter schemas are exact and reject extra fields. A reopened draft additionally retains the controller-written `supersedes` path naming the active immutable approved discovery copy. See [`references/run-layout.md`](references/run-layout.md) for both exact shapes and the fixed run location.
 
 ### 5. Record every decision as it is made
 
 Append a decision record the moment a question settles — before the next round, not at the end of the run. Each carries an `id` assigned in order and never reused, since later artifacts cite it; the `route` that settled it; `status: settled`; and the `decided` date. See [`references/decision-record.md`](references/decision-record.md) for the required shape.
 
-A record holds why the question needed deciding, the options with the case for each, what you recommended, what was chosen, the reasoning in the user's own words, and what would reopen it. The options not taken and the reopening condition are the two a later reader needs most and the two easiest to skip.
+A record holds why the question needed deciding, the options with the case for each, what you recommended, what was chosen, the decider's reasoning, and what would reopen it. Preserve the user's own words when they decided; cite the evidence when research, exploration, or a spike resolved it. The options not taken and the reopening condition are the two a later reader needs most and the two easiest to skip.
 
 `origin` is a required field, and it distinguishes four cases: the user originated the answer, rejected your recommendation for a different one, accepted it, or the question never reached them because you resolved it by reading or by measuring. A spike-routed record names the `findings` file it produced, so the pair is navigable from either end. A log that blurs these teaches a reader your judgement wearing the user's name — and a rejected recommendation, recorded alongside what was rejected, is the most informative record in the log.
 
-Reversing a settled decision writes a new record carrying `supersedes:` and flips the old one to `status: superseded`. Both edits, or a consumer following the fields compiles the reversed choice as live.
+Inside a draft, reversing a settled decision writes a new record carrying `supersedes:` and flips the old one to `status: superseded`. Both edits, or a consumer following the fields compiles the reversed choice as live. If discovery was already approved, first invoke `atlas:control-run` to apply the legal `spec -> discovery` reopen; its deterministic program preserves the approved copy and creates a versioned working draft before this skill edits it.
 
-Update the open frontier in the same edit: settled questions leave it, and the ones it unblocks — named in its `unblocked` field — join it. Where a decision establishes which repositories the work touches, record them in the run's `repos` frontmatter in the same edit.
+Update the open frontier in the same edit: settled questions leave it, and its `unblocked` field records the ones that join. Where a decision reveals a repository or baseline absent from effective intake, record the scope finding, set `intake_stale: true` and `gate_ready: false`, and leave immutable intake unchanged; then route to `atlas:control-run mark-stale` with the persisted reason. Its deterministic transition blocks the run and names the next amendment; return to Stage 0 before progression.
 
 ### 6. Repeat until the frontier is empty
 
@@ -97,7 +101,7 @@ Walk the log once the frontier is empty. Grade each record's actual contribution
 
 Compare each grade against the confidence the record carries: a low-confidence decision that turned out load-bearing is the most useful entry in the log, and so is a confident one that turned out not to matter.
 
-Close by naming the least confident decisions that survived, so the next stage knows where the design is softest.
+Finish the readiness evidence by naming the least confident decisions that survived, so the configured discovery gate knows where the design is softest.
 
 ### 8. Have the log read cold
 
@@ -108,7 +112,11 @@ The frontier was computed by the agent that ran the conversation, so an empty fr
 
 Brief it on the artifact, not the conclusions — it reads the log, never a summary of how the run went.
 
-**One pass, and it proposes rather than reopens.** Its output is a list the user accepts or declines; declining is itself a decision and gets a record. Accepting returns those questions to the frontier for one further round, which is not itself re-reviewed. A run closes on the user's word, not on a reviewer running out of objections.
+**One pass, and it proposes rather than reopens.** Route each finding by where its answer lives: factual gaps return to research, exploration, or spike; preference and trade-off gaps return to grill. Record the resulting decision. Findings that survive their route return to the frontier for one further round, which is not itself re-reviewed.
+
+When that round is complete, set `cold_read: complete` and `gate_ready: true` while leaving `status: draft`. Keep candidate `version` as a positive integer starting at 1; a deterministic reopen increments it for the next working draft. Report the file and name the effective policy at `gates.discovery`, including its `authority` and operands. Route to `atlas:control-run`; it evaluates that policy, applies the gate outcome, marks approval, and advances the phase. This skill never marks itself approved or advances to specification.
+
+`approved`, `approved_authority`, `approved_copy`, and `approved_sha256` must remain null while discovery authors the candidate. Only deterministic `tools/atlas_control.py` writes those approval-receipt fields.
 
 ## Standing rules
 
@@ -117,3 +125,5 @@ Brief it on the artifact, not the conclusions — it reads the log, never a summ
 **Decisions are the output.** Not a specification, not a requirements document, not code. Writing a specification here duplicates the stage that owns it and invites the two to drift.
 
 **Backtrack in the open.** When a later answer invalidates a settled decision, say so, supersede that record with a new one naming what changed, and return the reopened question to the frontier. Superseded records stay — the reversal is the interesting part.
+
+**Policy owns progression.** Read gate authority from immutable intake. Human conversation may supply grill decisions, but that does not silently turn every stage boundary into a human gate.

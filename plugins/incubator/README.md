@@ -1,7 +1,7 @@
 # incubator plugin
 
-> **The four skills written for Atlas — `discovery`, `to-spec`, `spike`, `setup-atlas` — moved
-> to the [`atlas`](../atlas/README.md) plugin. What remains here is forked material.**
+> **First-party Atlas skills live in the [`atlas`](../atlas/README.md) plugin. What remains
+> here is forked material.**
 >
 > ## Status: incubation. Not canonical.
 >
@@ -41,12 +41,6 @@ These skills derive from [Matt Pocock's agent skills](https://github.com/mattpoc
 (MIT, see [`LICENSE`](./LICENSE)), vendored into the Workbench `mp` plugin at upstream
 commit `84fdeffd12f2ee307994d1eb6feb48173b6e0502` and forked here.
 
-`spike` additionally adapts structure — risk-ordered decomposition, comparison spikes with a
-head-to-head close, the interactable-artifact preference, and next-spike selection — from
-Hermes Agent's bundled `spike` skill, itself adapted from the GSD project's `/gsd-spike`
-workflow (MIT © 2025 Lex Christopherson, [gsd-build/get-shit-done](https://github.com/gsd-build/get-shit-done)).
-No text was copied; the borrowing is at the level of workflow shape.
-
 **This is a hard fork.** Upstream sync machinery — the pristine `vendor/` tree, the
 `sync.config.json` manifest, the rename overlay, and the PowerShell build — was
 deliberately dropped. Skills are hand-editable source, not build output. Workbench overlay
@@ -68,8 +62,9 @@ plugins/incubator/
 The Codex marketplace index lives at
 [`.agents/plugins/marketplace.json`](../../.agents/plugins/marketplace.json), and the Copilot
 CLI marketplace index at [`.github/plugin/marketplace.json`](../../.github/plugin/marketplace.json).
-Both use the marketplace name `dstkwll`; install `incubator` separately from `atlas` while
-their skill names overlap.
+Both use the marketplace name `dstkwll`. The two plugins have no duplicate skill names in
+this revision and can be installed side by side; their namespace prefixes still preserve the
+trust distinction.
 
 ## Candidate status
 

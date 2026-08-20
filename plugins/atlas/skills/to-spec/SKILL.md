@@ -25,20 +25,22 @@ Five things belong to the design stages and reach the spec only as evidence: cla
 
 ### 1. Read the decisions
 
-Read `<run>/10-decisions.md`. It is authoritative for what was decided and why: treat every settled choice as given, and carry its reasoning forward rather than re-deriving it.
+Read immutable `run.yaml`, accepted `amendments/run-config-NNN.yaml`, and mutable `00-state.md` first. Reconstruct effective intake in amendment order. Record `effective_config_revision` in the spec from state. Specification must be selected by the effective run and be the current phase. Read the resolved policy from effective `gates.spec`, including `authority` and all operands; if intake is missing, revisions disagree, or state has not legally advanced from discovery, stop rather than treating invocation as approval.
+
+Read `<run>/10-decisions.md` and require `status: approved`; `approved_copy` must resolve to a run-contained file and `approved_sha256` must verify its exact bytes. Read that immutable approved copy as the authoritative contract for what was decided and why; never compile from the mutable top-level working file after its hash check.
 
 The log keeps reversals — a record carrying `status: superseded` was overturned, and the record naming it in `supersedes:` holds the live choice. Follow every chain to its end and compile only what stands there.
 
 Read the code where it helps establish what is currently true and what vocabulary the domain already uses — the **Current** half of every requirement comes from there. Keep what you learn about implementation under `<run>/evidence/`, where Stage 3 will want it. The run layout is fixed; only the planning root above it is configurable.
 
-Where no decision log exists, say so and offer `discovery`.
+Where no decision log exists, say so and offer `atlas:discovery`; where no run exists, offer `atlas:start-run`.
 
 ### 2. Judge whether the decisions are ready
 
 Readiness is about content, never age: a decision made months ago on a stable question is fine, one made yesterday on a question that has since shifted is not.
-Return to `discovery` before drafting when a decision that would change behaviour is **missing or unsettled** — one you would have to guess at to write the requirement. Unknowns that leave behaviour unchanged pass through to the spec's open questions, classified in step 6.
+When a decision that would change behaviour is **missing or unsettled** before drafting — one you would have to guess at to write the requirement — route to `atlas:control-run` with a concrete reopen reason. Its deterministic `reopen --to discovery` transition marks approvals stale and returns the current phase legally. Unknowns that leave behaviour unchanged pass through to the spec's open questions, classified in step 6.
 
-A gap that only surfaces once drafting is under way is recorded as a blocking question rather than abandoning the draft. Finish the spec, mark it blocking, and take it back with the draft in hand — the draft is what makes the gap legible.
+A gap that only surfaces once drafting is under way is recorded as a blocking question rather than abandoning the draft. Finish the spec, leave `gate_ready: false`, and route the persisted reason to `atlas:control-run` for the same legal reopen — the draft is what makes the gap legible.
 
 So a spec can be complete and unapprovable at once: everything written, one question still open, `status: draft`. That is the intended end state of such a run, not a half-finished job.
 
@@ -117,7 +119,7 @@ An unclassified open question is an invitation for a later stage to invent behav
 
 ### 7. Check the contract against itself
 
-Before offering it for approval, read the draft as a reader who was not in the conversation:
+Before declaring it ready for its configured gate, read the draft as a reader who was not in the conversation:
 
 1. Does every normative item hold the outside view? Acceptance clauses leak first.
 2. Does every normative item trace to a decision that stands?
@@ -125,13 +127,17 @@ Before offering it for approval, read the draft as a reader who was not in the c
 4. Do any two normative items contradict?
 5. For each acceptance clause, name the observation that would show it unmet. A clause with no such observation is an aspiration.
 
-Then dispatch a subagent that has not seen the conversation to read `20-spec.md` and answer the same five questions — it holds the outside view by construction. It proposes corrections; the requirements stay yours and the approval stays the user's.
+Then dispatch a subagent that has not seen the conversation to read `20-spec.md` and answer the same five questions — it holds the outside view by construction. It proposes corrections; the producing skill decides whether they are defects, while the configured gate owns progression.
 
-### 8. Get approval
+### 8. Report gate readiness
 
-Approval is the user's, on the file as written rather than on a summary of it. A blocking open question means the answer is no.
+Leave the artifact at `status: draft` and present the file itself, not a summary, with its readiness evidence and the resolved policy from effective `gates.spec`. Set `gate_ready: true` only when no blocking open question or contract defect remains; otherwise leave it false and return to discovery.
 
-Where any item rests on a low-confidence decision, its `Confidence` field says so and the user accepts that explicitly. A decision made on thin ground is approvable; one never made was returned upstream in step 2.
+Route a gate-ready draft to `atlas:control-run`. That control-plane skill applies the policy, marks approval, and advances mutable state; this skill does not.
+
+Where any item rests on a low-confidence decision, its `Confidence` field says so for the configured authority to judge explicitly. A decision made on thin ground can still pass a gate; one never made was returned upstream in step 2.
+
+The control plane invokes the resolved authority — AUTO, AGENT_REVIEW, HUMAN, CONDITIONAL, or HUMAN_IF_CHANGED — and applies the gate state and phase transition. This skill never marks its own output approved.
 
 ## The artifact
 
@@ -139,11 +145,13 @@ Where any item rests on a low-confidence decision, its `Confidence` field says s
 
 ## Amending an approved spec
 
-Approval sets `status: approved` and writes the `approved` date. Until then it stays `draft`.
+A valid control-plane gate outcome sets `status: approved` and writes the `approved` date. Until then it stays `draft`.
+
+While authoring, `approved`, `approved_authority`, `approved_copy`, and `approved_sha256` must remain null. Only deterministic `tools/atlas_control.py` writes those approval-receipt fields; this skill reads and verifies the discovery receipt but never manufactures one for the specification.
 
 A withdrawn item keeps its identifier and leaves a **tombstone** in place — a heading-backed item keeps its heading with the body replaced by `Withdrawn in version N — <why>`, a row-backed item keeps its row with the remaining cells replaced by the same sentence. That is what makes reuse visibly wrong.
 
-An approved spec is immutable — downstream work cites a version, so those bytes stay as approved. Amendment retains them as `20-spec.v1.md` and writes the new version to `20-spec.md`, incrementing `version`, setting `supersedes` to the retained version and `amendment` to the record that produced it. That record lives under `amendments/`, shaped by `architecture/03-artifact-model.md`, inside the flow `architecture/08-state-and-governance.md` owns.
+An approved spec is immutable in the controller-written `approved/spec-r<state-revision>.md` copy whose SHA-256 is recorded in the top-level receipt. In the currently implemented candidate contract, `version` must be `1`, `supersedes` must be null, and `amendment` must be null. A future specification-amendment transition is not implemented in this plugin; when added, it must preserve that approved copy and define deterministic predecessor/amendment provenance under the flow owned by `architecture/08-state-and-governance.md`. Until then, this skill and controller reject non-null values rather than inventing that future schema.
 
 What this stage contributes is **the affected section stated as identifiers** — `R-004, P-002` rather than "the caching requirements" — so that flow has a precise input when it recalculates what is stale.
 
@@ -154,3 +162,5 @@ What this stage contributes is **the affected section stated as identifiers** �
 **Stories are context, not contract.** Write them where they help a reader understand who wants what; the normative families carry the obligations.
 
 **Exclusions carry reasons.** Work deliberately out of scope is recorded with why, or it returns later looking like an oversight.
+
+**Policy owns progression.** Read gate authority from immutable intake; never infer it from the fact that a human invoked this skill or discussed the draft.

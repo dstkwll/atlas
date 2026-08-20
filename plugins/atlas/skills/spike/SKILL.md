@@ -29,7 +29,7 @@ Two shapes:
 
 A question too broad for a single Given/When/Then is too broad to spike; one that already arrives narrow — as when `discovery` routes it here — is a single spike and skips decomposition.
 
-Present the table and ask whether to run all of them in this order. Let the user drop, reorder, or reframe before anything is written.
+Write the proposed order into the findings artifact before execution and present it so the controlling workflow can reframe it. This plan is readiness evidence, not a stage gate owned by the skill.
 
 ### 2. Design the experiments
 
@@ -39,15 +39,15 @@ Where a spike has real choice of approach, surface the candidates first — tool
 
 State the bounds before running: maximum scope, whether production code may be written (`prohibited`, `optional`, or `candidate`), and what happens to the artifacts afterward (`discard`, `preserve_evidence`, or `candidate_for_rework`).
 
-### 3. Get approval before running anything with side effects
+### 3. Separate workflow authority from side-effect consent
 
-Present the plan: hypotheses, experiments, verdict criteria, bounds. Then stop.
+Read immutable `run.yaml`, accepted `amendments/run-config-NNN.yaml`, and mutable `00-state.md`; reconstruct effective intake and verify the spike was explicitly invoked or routed by an active discovery decision. Present the plan: hypotheses, experiments, verdict criteria, and bounds. The effective run policy owns workflow authority; this skill neither creates a new human gate nor changes gate state.
 
-`read-only` experiments — reads, greps, queries, and writes confined to the spike's own directory — run once the plan is approved.
+`read-only` experiments — reads, searches, queries, and writes confined to the spike's own directory — may run under that valid invocation or route once their criteria and bounds are predeclared.
 
-Anything else names its side effects and gets its own confirmation immediately before it runs. Where an experiment's category is uncertain, treat it as having side effects.
+Anything else names its side effects and gets its own explicit confirmation immediately before it runs, regardless of the run's governance posture. Where an experiment's category is uncertain, treat it as having side effects.
 
-**The plan is the gate.** No runtime enforces these categories; the declaration is self-policed, which is exactly why the whole plan is approved before any of it runs.
+Workflow gates and action consent answer different questions: policy decides who may advance the work; confirmation authorizes a named external mutation. Neither substitutes for the other.
 
 ### 4. Build something the user can drive
 
@@ -62,7 +62,7 @@ Avoid package management, build tooling, containers, and config systems unless t
 
 Comparison spikes that both need real work and can run independently are dispatched in parallel; the head-to-head is written here, not by either of them.
 
-The approved plan declares two things the findings file then records: `production_code`, whether anything written here may survive into the product, and `retention`, what happens to the experiment afterwards. Both are decided before running, because deciding after is deciding with a result in hand.
+The predeclared plan records two things in the findings file: `production_code`, whether anything written here may survive into the product, and `retention`, what happens to the experiment afterwards. Both are decided before running, because deciding after is deciding with a result in hand.
 
 **Depth over speed.** One happy-path run is not a verdict. Push the edge cases, and follow anything surprising — a verdict is only worth what the investigation behind it was worth.
 
@@ -103,3 +103,5 @@ One file per spike, under the run's spikes directory. See [`references/findings-
 **Throwaway code stays throwaway.** Spike code is named so a reader can see what it is, and it does not migrate into production because it happens to work. A spike that takes two days to clean up was a bad spike. What survives is the finding; the code is evidence, retained or discarded per the declared bound.
 
 **A spike answers its question and stops.** Adjacent things worth knowing become follow-up questions for whoever routed here, not extra experiments in this run.
+
+**Policy owns progression.** The findings return to the routing decision; this skill reports a verdict and never marks discovery or any later phase approved.

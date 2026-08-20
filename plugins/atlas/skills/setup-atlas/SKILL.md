@@ -40,7 +40,7 @@ An external root must already exist and be readable. This configuration names a 
 
 Read the configuration file, checking the platform-native path and then `~/.atlas/config.yaml`. Report what is already configured, and where it was found.
 
-A configured machine needs no setup. Say so and stop rather than re-asking settled questions.
+A configured machine needs no root rewrite. Say so and skip to the controller-dependency check rather than re-asking settled questions.
 
 Check whether the working directory is inside a git repository, and name it — it decides which root form to recommend.
 
@@ -69,9 +69,19 @@ artifacts:
 
 This is the only V1 artifact-location setting. `evidence/` and `spikes/` are fixed beneath each run by `architecture/03-artifact-model.md`; setup does not configure them.
 
-Report the path written and where the next run will land. Placement of an individual run
-under an external root is a per-run judgement, not configuration — see
-`../discovery/references/run-layout.md`.
+Report the path written. Every run will land at `<planning-root>/<feature-slug>/`; `atlas:start-run` chooses and validates the slug. An external root changes only the configured root, never the layout beneath it.
+
+### 5. Verify the deterministic controller dependency
+
+The installed plugin includes `tools/atlas_control.py`, the sole writer for authoritative post-intake state transitions. It requires Python 3.9 or newer and PyYAML. Verify with the platform-native Python launcher:
+
+```shell
+python3 -c "import sys, yaml; assert sys.version_info >= (3, 9)"
+```
+
+On Windows, use `py -3 -c "import sys, yaml; assert sys.version_info >= (3, 9)"`. If Python or PyYAML is missing, stop and explain that discovery can still write a draft but Atlas cannot legally advance state. Offer the exact installation command (`python3 -m pip install pyyaml` or `py -3 -m pip install pyyaml`) and run it only after explicit approval; installing a package is an external side effect.
+
+Report whether the controller dependency is ready. Never pretend a missing dependency is optional.
 
 ## Standing rules
 

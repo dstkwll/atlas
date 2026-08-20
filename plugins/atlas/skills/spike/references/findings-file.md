@@ -1,6 +1,6 @@
 # Findings file
 
-One file per spike under `<run>/spikes/`. The run layout is fixed and `../../discovery/references/run-layout.md` is the authority; only the planning root above the run is configurable. Where no run exists, ask.
+One file per spike under `<run>/spikes/`. The run layout is fixed and `../../discovery/references/run-layout.md` is the authority; only the planning root above the run is configurable. Where no Stage 0 run exists, offer `start-run`.
 
 ```markdown
 ---
@@ -16,12 +16,12 @@ date: <YYYY-MM-DD>
 
 ## Bounds
 
-**Dispatched by:** <the run, and the decision id that raised this question — or standalone>
+**Dispatched by:** <the run, and the decision id that raised this question — or direct invocation within the run>
 
 **Production code:** none | <what may survive, and where>
 **Retention:** <what happens to the experiment afterwards>
 
-Both are set when the plan is approved, before anything runs.
+Both are predeclared before anything runs.
 
 ## Hypothesis
 **Given** <preconditions>, **When** <action>, **Then** <expected outcome>.

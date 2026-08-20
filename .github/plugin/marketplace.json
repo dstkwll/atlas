@@ -11,7 +11,7 @@
     {
       "name": "atlas",
       "source": "./plugins/atlas",
-      "description": "Atlas pipeline skills written against the architecture in this repository: decision discovery, behavioural specification, bounded experiment, and setup.",
+      "description": "Atlas pipeline skills written against the architecture in this repository: machine setup, run intake and control, decision discovery, behavioural specification, and bounded experiments.",
       "version": "0.1.0"
     },
     {
