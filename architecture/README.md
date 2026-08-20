@@ -6,7 +6,7 @@ The numbered documents are authoritative. `rolling-monolith.md` is generated fro
 
 ## Current baseline
 
-**v0.4** established architecture-governance and continuity rules on top of the prior factory, runtime, and model-policy design.
+**v0.5** made the planning root configurable, on top of v0.4's architecture-governance and continuity rules and the prior factory, runtime, and model-policy design.
 
 ## Change discipline
 

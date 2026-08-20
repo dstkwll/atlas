@@ -58,6 +58,8 @@ builder:
   approve_gate: false
 ```
 
+The `.planning/**` deny rule covers a repository-relative planning root. Where the planning root is external, it lies outside the builder's repository write scope entirely and is denied by that scope rather than by an explicit rule. A builder is never granted write access to the planning root under either arrangement: the artifacts it is judged against are not writable by it.
+
 V1 may enforce this using **repository-state comparison and rollback/failure** rather than a perfect preventive filesystem sandbox.
 
 The important invariant is that unauthorized mutation does not silently become accepted output.

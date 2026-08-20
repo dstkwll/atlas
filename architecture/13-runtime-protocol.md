@@ -58,7 +58,7 @@ Suggested runtime layout:
       logs/
 ```
 
-A generated `.planning/<feature>/00-state.md` may remain useful as a projection, but it is not authoritative for attempt counts, active ownership, retry state, or exact state transitions.
+A generated `<planning-root>/<feature>/00-state.md` may remain useful as a projection, but it is not authoritative for attempt counts, active ownership, retry state, or exact state transitions.
 
 ## Runtime state vs engineering truth
 

@@ -150,7 +150,7 @@ Possible files:
 ```text
 ~/.factory/config.yaml
 <repo>/.factory/config.yaml
-<repo>/.planning/<feature>/run.yaml
+<planning-root>/<feature>/run.yaml
 <repo>/.factory/runs/<run-id>/run-manifest.json
 ```
 
