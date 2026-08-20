@@ -1,0 +1,6 @@
+repository=https://github.com/Spielewoy/autoprompt-skill
+commit=1a195165c5e54ce33fc357425a0b3af7a8dae96f
+version=1.0.3
+license=MIT
+inspected=2026-08-20
+status=reference-only; no Copilot CLI or Hermes runtime adapter

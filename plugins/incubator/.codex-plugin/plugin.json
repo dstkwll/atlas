@@ -1,6 +1,6 @@
 {
   "name": "incubator",
-  "description": "Atlas incubation skills: borrowed, candidate, and stand-in skills used to develop Atlas. Not canonical implementations of the Atlas architecture.",
-  "version": "0.1.0",
+  "description": "Atlas incubation skills: borrowed, candidate, stand-in, and source-pinned reference skills used to develop Atlas. Not canonical implementations of the Atlas architecture.",
+  "version": "0.2.0",
   "skills": "skills/"
 }

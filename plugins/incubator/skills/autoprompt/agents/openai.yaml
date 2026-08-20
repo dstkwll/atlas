@@ -1,0 +1,5 @@
+interface:
+  display_name: "Autoprompt Reference"
+  short_description: "Inspect pinned Autoprompt prior art"
+policy:
+  allow_implicit_invocation: false
