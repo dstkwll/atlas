@@ -86,6 +86,7 @@ Purpose:
 Contains:
 
 - selected workflow depth
+- resolved ordered stages, including the earliest producer stage
 - selected governance profile
 - explicit overrides
 - risk classification

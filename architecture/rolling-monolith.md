@@ -551,6 +551,7 @@ Input:
 Output:
 
 - recommended workflow depth
+- recommended first producer stage within that workflow
 - recommended governance profile
 - structured risk assessment
 - resolved run configuration after human acceptance/override
@@ -582,6 +583,23 @@ Conditional gates:
 ```
 
 The resolved run configuration is snapshotted into the planning directory and becomes part of the run's audit trail.
+
+Stage selection and boundary acceptance are different decisions. Stage 0 always initializes and
+classifies the run, but the first **producer** action may occur later in the pipeline:
+
+- If the selected workflow does not require an artifact boundary, that boundary is conceptually
+  `NOT_REQUIRED`. Its omission is not an approval.
+- If a required upstream artifact already exists, producing it again may be unnecessary, but the
+  artifact must pass that stage's ordinary boundary judge and configured authority before downstream
+  admission. Reuse may skip production; it never skips acceptance.
+
+The classifier therefore recommends the earliest admissible producer stage, while the control plane
+proves any required upstream contracts before allowing work to begin there.
+
+This does not change the shipped Stage 0–2 initializer. It rejects pre-existing discovery and
+amendment state before `control.json`; a pre-existing `20-spec.md` may coexist with initialization,
+but receives no acceptance from that fact. Any reused candidate at a prescribed artifact path remains
+untrusted until it passes the ordinary judge/authority path.
 
 ---
 
@@ -943,6 +961,7 @@ Purpose:
 Contains:
 
 - selected workflow depth
+- resolved ordered stages, including the earliest producer stage
 - selected governance profile
 - explicit overrides
 - risk classification
@@ -1235,6 +1254,7 @@ Without it, one skill might ask for human approval, another might auto-advance, 
 The control plane centralizes:
 
 - workflow depth;
+- stage admission;
 - governance / gate authority;
 - execution policy;
 - environment policy;
@@ -1354,6 +1374,26 @@ roster: frontier
 ```
 
 Do not create combinatorial named profiles for every possible combination.
+
+---
+
+## Stage selection and boundary admission
+
+The selected workflow determines which semantic artifact boundaries are required. It does not grant
+approval to artifacts merely because a later starting point is convenient.
+
+Two cases are intentionally distinct:
+
+1. **Boundary not selected:** the artifact is not required by this workflow. Its gate is conceptually
+   `NOT_REQUIRED`; no approval is implied or fabricated.
+2. **Required artifact already exists:** its production step may be reused, but the artifact must pass
+   the same boundary contract and configured authority as a newly produced candidate. Only the
+   resulting accepted version/hash binding permits downstream admission.
+
+This keeps “skip work we do not need” separate from “trust work that already exists.” It also keeps
+semantic routing orthogonal to later execution-framework selection: Stage 0 chooses which approved
+contracts the run needs; Stages 5–7 may later choose how implementation work executes. A library of
+execution playbooks is deferred until those stages have a concrete consumer.
 
 ---
 
@@ -2256,6 +2296,14 @@ STALE
 
 A gate can become `STALE` if an upstream amendment invalidates its prior approval.
 
+`NOT_REQUIRED` means the selected workflow does not include that boundary. It is not a successful
+gate outcome and must never be used for required material reused from before the run. Reused required
+material still follows the ordinary judge/authority path. In current Stages 0–2 that means
+`AGENT_APPROVED` or `HUMAN_APPROVED`; a future mechanical-only boundary may use `AUTO_PASSED`. The
+Stage 0–2 `control.json.gates` map continues to contain only selected mutable boundaries; omission
+because a boundary was not selected has `NOT_REQUIRED` semantics without manufacturing an approval
+record.
+
 `AUTO_PASSED` means a boundary explicitly declared mechanical-only and all of its
 deterministic prerequisites passed. It never means an agent reviewed the artifact. Discovery
 and behavioral specification are not mechanical-only boundaries in this revision.
@@ -2708,6 +2756,9 @@ This is useful, but the CLI command itself is **not** a V1 requirement unless re
 ---
 
 ### D-005 — Separate workflow depth from governance profile
+
+**Refined by:** D-065 distinguishes a boundary omitted by workflow selection from a required
+pre-existing artifact that still needs ordinary acceptance.
 
 **Decision:** Model the amount of planning decomposition independently from how much authority the factory receives.
 
@@ -3507,7 +3558,7 @@ These are preserved as reference ideas, not implementation commitments.
 
 **Purpose:** Preserve the implementation provenance behind the architecture so that implementation can begin from known, working or at least concrete upstream patterns rather than re-inventing every mechanism from a blank page.
 
-**Snapshot date:** 2026-08-12
+**Snapshot date:** 2026-08-20
 
 This is not a dependency list and it is not an instruction to wholesale-fork any repository. It is a **subsystem donor map**: which source demonstrates a useful mechanism, what we intend to reuse or adapt, what concrete files should be re-read before implementation, and which parts of the upstream design we explicitly do **not** want.
 
@@ -4032,6 +4083,64 @@ Ringer does **not** become a new architectural pillar or swarm-first execution r
 
 ---
 
+# 12. Spielewoy — Autoprompt Skill
+
+- Repository: https://github.com/Spielewoy/autoprompt-skill
+- Inspected commit: `1a195165c5e54ce33fc357425a0b3af7a8dae96f`
+- License observed at that commit: **MIT**
+
+## Why it matters
+
+Autoprompt is a substantial multi-provider orchestration protocol wrapped in a defensive npm
+installer. Its most useful evidence for Atlas is not the size of its role hierarchy; it is the
+concrete treatment of compact handoffs, retained evidence, targeted repair, execution-framework
+routing, and final goal checking. Source inspection also provides a valuable contrast: every invoked
+mission still enters Autoprompt's roadmap topology, so it does **not** implement Atlas's
+evidence-backed earliest-stage admission rule.
+
+Most orchestration semantics are model-interpreted. Executable enforcement is strongest in
+installation/manifest handling, the optional Claude workflow runtime and supervisors, and Prime's
+native dispatcher. Treat protocol prose and runtime authority as different evidence classes.
+
+## Borrow map
+
+| Facet | Action | Maturity | How it maps to our design |
+|---|---|---|---|
+| Hash/length/nonce-bound pointers instead of repeated mission prose | **CONCEPT** | **IMPLEMENTATION_REFERENCE** | Revisit for Stage 5 ticket handoffs and Stage 7 worker envelopes; preserve Atlas's own artifact authority. |
+| Retain accepted evidence and repair only named rejected items | **CONCEPT** | **ACCEPTED_PRINCIPLE** | Reinforces boundary-local repair and targeted invalidation already present in Atlas. |
+| Useful-first decomposition into dependency-safe lanes | **REFERENCE** | **IMPLEMENTATION_REFERENCE** | Revisit while designing the Stage 5 ticket compiler; Atlas already requires vertical slices, so borrow only mechanics that sharpen ownership/dependency output. |
+| Separate category, optional playbook tag, and task/depth tier | **ADAPT** | **DEFERRED** | Useful input when execution-framework selection is designed for Stages 5–7; do not make it the semantic-stage router. |
+| Narrow `apply` framework after the mandatory roadmap gate | **REFERENCE** | **OBSERVED** | Contrast case showing that detailed execution planning can be conditional, but not semantic-stage admission; Atlas's admission proof remains separate. |
+| Independent final goal check against the original mission | **ADAPT** | **DEFERRED** | Revisit for Stage 9 whole-feature validation after the execution factory exists. |
+| Provider payload generation, manifests, receipts, and scoped uninstall | **REFERENCE** | **DEFERRED** | Useful only if Atlas later ships across several hosts; no current packaging seam is earned. |
+
+## Concrete upstream areas to re-read
+
+- `agents/contracts/autoprompt.contract.json` — canonical persona/framework inventory.
+- `agents/contracts/generic.md` — provider-neutral protocol.
+- `agents/contracts/frameworks/README.md` and `apply.md` — framework routing and narrow path.
+- `agents/claude/SKILL.md`, `GATES.md`, and `MODES.md` — ordinary prompt-level conductor contract.
+- `agents/claude/workflow/autoprompt-gate.js` — executable Claude workflow runtime when invoked.
+- `agents/claude/workflow/autoprompt-ledger-check.js` and `supervisor.sh` — provenance validation and relaunch mechanics.
+- `agents/prime/extensions/autoprompt.ts` and `agents/prime/skills/autoprompt/src/autoprompt/__init__.py` — strongest native topology/binding enforcement.
+- `bin/autoprompt.cjs`, `scripts/install/`, and `scripts/runtime-payload.cjs` — installer and provider lifecycle.
+
+## Explicitly do not import
+
+- **REJECT:** prompt-defined orchestration as authoritative lifecycle control.
+- **REJECT:** a mandatory roadmap/reviewer topology for every mission, including work whose required upstream contracts already exist.
+- **REJECT:** the 25-persona, five-level hierarchy as Atlas's default organization.
+- **REJECT:** a second three-file governance ledger alongside Atlas's authoritative planning and execution state.
+- **REJECT:** Autoprompt's universal 95% changed-line coverage floor and broad mandatory review topology as Atlas defaults; Atlas applies its own contract/risk policy.
+- **DEFERRED:** custom relaunch supervisors, provider installers, and generated provider packages until a current Atlas use case earns them.
+
+## Likely implementation role
+
+**Secondary donor for:** compact worker envelopes, evidence-preserving repair, execution-framework
+selection, and final mission closure. **Not a runtime base and not the semantic-stage router.**
+
+---
+
 # Cross-source implementation map
 
 This is the most useful implementation-time view: **for each subsystem we plan to build, where should the engineer look first?**
@@ -4046,12 +4155,14 @@ This is the most useful implementation-time view: **for each subsystem we plan t
 | System design | HumanLayer WSFF | Maciej gist, Groundwork solution-design | New skill using concepts |
 | Program design | HumanLayer WSFF | Maciej gist, Pocock architecture principles | New skill using concepts |
 | Vertical ticket compiler | Pocock `to-tickets` | HumanLayer vertical slices | Fork/adapt heavily |
+| Stage admission | Our workflow/gate contracts | Autoprompt `apply` as a contrast case | Required pre-existing artifacts pass ordinary acceptance; unselected boundaries are `NOT_REQUIRED` |
 | Ticket execution engine | SSSF | Superpowers SDD | Adapt SSSF runtime around our ticket contract |
 | Deterministic validators | SSSF | Superpowers verification, PlanF3 validation concept | Reuse pattern, repo-specific commands |
 | Validator baseline preflight | Ringer | — | Adapt early; catch broken checks before worker attempts |
 | Contract review | Pocock code-review + Superpowers spec review | SSSF reviewer phase | New bounded reviewer role |
 | Design/quality review | Pocock + Superpowers | Groundwork ops-review conditional | New bounded reviewer roles |
 | Runtime envelopes | SSSF / Inkwell | — | Reuse schema pattern, define our types |
+| Compact worker handoffs | Our accepted artifact bindings | Autoprompt pointer envelopes | Revisit at Stage 5/7; pointers never become authority themselves |
 | Machine run state | Masterplan | Warren, Inkwell run_record, SSSF tracing | JSON/JSONL V1; single authoritative controller |
 | Resume/recovery | Masterplan | Warren failure/recovery records, Inkwell lifecycle state | Defer advanced recovery; adapt deterministic next-action logic when needed |
 | Workcell runtime | Superpowers worktrees | Inkwell; Warren RuntimeProvider when a second runtime appears | **Local worktree V1. No generalized provider seam yet.** |
@@ -4187,6 +4298,7 @@ upstreams:
 | HumanLayer WSFF | Not intended as code baseline | **Very high** for design philosophy |
 | Groundwork | Low–Medium as code baseline | Medium–High for selected practices |
 | PlanF3 | Low | Medium for a handful of local ideas |
+| Autoprompt | Low as a wholesale runtime base; medium as a later execution-protocol reference | Medium–High for compact handoffs, repair, and framework-selection concepts |
 | Maciej gist | Not a code baseline | Medium–High as a concrete abstraction checklist |
 
 The confidence labels describe **fit to our architecture**, not overall quality or popularity.
@@ -4207,6 +4319,7 @@ It combines:
 - **Inkwell's supervisor/workcell/trust boundary**,
 - **Warren's seam discipline, event trust, configuration freezing, and production-runtime failure history**,
 - **Ringer's role/task-shape telemetry, model identity taxonomy, and evidence-informed staffing feedback loop**,
+- **Autoprompt's compact handoffs, evidence-preserving repair, and execution-framework prior art**,
 - plus selected evidence/review ideas from Groundwork and PlanF3.
 
 The implementation goal is therefore not “build another SSSF” or “install all these skills.” It is:
@@ -4219,7 +4332,7 @@ The implementation goal is therefore not “build another SSSF” or “install 
 
 **Purpose:** Preserve not only what the design currently says, but **how and why it changed**. This is intended to protect the project from recency bias, repeated rediscovery, and future agents mistaking superseded ideas for current commitments.
 
-**Snapshot date:** 2026-08-13
+**Snapshot date:** 2026-08-20
 
 ---
 
@@ -4670,6 +4783,7 @@ The reference repositories are therefore treated as:
 - **Masterplan:** durable-state/resume donor;
 - **Warren:** production-runtime failure-history and future control-plane donor;
 - **Ringer:** model-identity / roster-telemetry / validator-preflight reference donor;
+- **Autoprompt:** compact-handoff / evidence-preserving-repair / execution-framework reference donor;
 - **Groundwork / PlanF3 / Maciej gist:** selective idea/checklist donors.
 
 No single repository is the architecture.
@@ -4887,6 +5001,44 @@ a concrete current failure requires it and a materially simpler design does not 
 failure. One explicitly retained exclusion mechanism is the run lock: atomic replacement
 prevents torn state but not two revision-N writers overwriting each other, and a check
 immediately before replace has the same race.
+
+---
+
+## L-014 — Autoprompt mostly reinforced existing rules; the missing rule was stage admission
+
+### Evidence scope
+
+Source inspection of `Spielewoy/autoprompt-skill` at commit
+`1a195165c5e54ce33fc357425a0b3af7a8dae96f`, including its canonical contracts, generated provider
+packages, installer/runtime code, and a separate proposal applying its ideas to Atlas.
+
+### What changed under source comparison
+
+The proposal attributed several useful ideas to Autoprompt: uncertainty-aware stage routing,
+boundary-local repair, useful-first decomposition, compact handoffs, and evidence reuse. Source
+inspection showed an asymmetric result:
+
+- compact pointer handoffs, retained evidence, named repair loops, framework axes, and a final goal
+  check are genuine Autoprompt prior art;
+- evidence-local repair and selective workflow depth were already explicit in Atlas;
+- an uncertainty-axis router and earliest trustworthy semantic entry are **not** implemented by
+  Autoprompt, whose invoked missions still enter its minimum roadmap/reviewer topology;
+- fresh architecture review corrected an overstatement about Atlas itself: the shipped initializer
+  rejects pre-existing discovery/amendment state but allows a pre-existing `20-spec.md`. The rule
+  must therefore govern acceptance authority, not pretend every candidate file postdates control.
+
+### Accepted consequence
+
+Atlas records Autoprompt in the borrow map and makes one missing rule explicit: a boundary omitted by
+the selected workflow is `NOT_REQUIRED`, while a required pre-existing artifact may skip production
+but still passes its ordinary acceptance boundary. Semantic-stage admission and later
+execution-framework selection remain separate decisions.
+
+### Standing result
+
+External prior art can expose a missing local distinction even when the proposed attribution is
+wrong. Borrow the verified mechanisms, preserve the contrast that sharpened the design, and do not
+import the source's hierarchy or prompt-first control model merely to obtain those ideas.
 
 ---
 
@@ -5731,11 +5883,11 @@ The canonical-source rule remains intact. This decision does not create an "exec
 
 # 20 — v0.5 Decisions
 
-v0.5 addresses one question the earlier versions answered by assumption: **where planning artifacts live.**
+v0.5 began by addressing one question the earlier versions answered by assumption: **where planning artifacts live.**
 
 Every prior version assumed one run, one repository — the planning directory sitting beside the code it describes. That assumption is correct for a monorepo and wrong for an organization of many small repositories, where a single unit of work commonly spans several and none of them is an honest home for the artifacts describing it.
 
-This version makes the planning root a configured value with two legitimate forms, records what is lost by choosing the second, and draws an explicit boundary: planning may span repositories, execution does not.
+This version makes the planning root a configured value with two legitimate forms, records what is lost by choosing the second, and draws an explicit boundary: planning may span repositories, execution does not. Later Stage 0–2 implementation reconciliation added D-062 through D-065: one machine-canonical planning snapshot, truthful approval provenance, and explicit stage-admission semantics. Those decisions refine planning control without changing the version's storage boundary.
 
 ---
 
@@ -5875,6 +6027,33 @@ resulting effective-configuration hash; no separate amendment ledger or hash cha
 
 ---
 
+## D-065 — Stage selection may skip production, never required acceptance
+
+Stage 0 recommends both workflow depth and the earliest producer stage. That recommendation has two
+different meanings which must not collapse:
+
+- A boundary absent from the selected workflow is `NOT_REQUIRED`. Its omission carries no approval.
+- A required upstream artifact that already exists may be reused instead of reproduced, but it must
+  pass the same boundary judge and configured authority as a new candidate. Downstream admission
+  requires the resulting accepted version/hash binding.
+
+The Stage 0–2 `control.json.gates` map remains limited to selected mutable boundaries. An unselected
+boundary therefore has conceptual `NOT_REQUIRED` semantics without adding a mutable gate entry. A
+required pre-existing artifact records its real approval outcome; `NOT_REQUIRED` may not be used as
+a shortcut for trust.
+
+Current Stage 0–2 initialization behavior is unchanged. It rejects pre-existing discovery and
+amendment state before `control.json`; a pre-existing `20-spec.md` may coexist with initialization,
+but that fact grants no acceptance. Any reused candidate at a prescribed artifact path remains
+untrusted until judged normally. D-065 changes no shipped runtime in this architecture-only revision.
+
+This is an admission rule, not a new scoring model or runtime subsystem. Atlas adds no uncertainty
+taxonomy, automatic prose grading, or execution-playbook engine in this change. Semantic stage
+routing remains separate from execution-framework selection, whose machinery is deferred until
+Stages 5–7 have a concrete consumer.
+
+---
+
 ## v0.5 north star
 
-> **The artifact layout is fixed; its location is configured. Where work spans repositories, the planning root spans them too — while execution stays repository-scoped, and what that costs is written down rather than assumed away.**
+> **The artifact layout is fixed; its location is configured. Where work spans repositories, the planning root spans them too — while execution stays repository-scoped, and what that costs is written down rather than assumed away. Within that planning pipeline, omission is never approval: an unselected boundary is not required, while reused required material must still earn ordinary acceptance.**

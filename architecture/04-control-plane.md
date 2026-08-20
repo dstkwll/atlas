@@ -9,6 +9,7 @@ Without it, one skill might ask for human approval, another might auto-advance, 
 The control plane centralizes:
 
 - workflow depth;
+- stage admission;
 - governance / gate authority;
 - execution policy;
 - environment policy;
@@ -128,6 +129,26 @@ roster: frontier
 ```
 
 Do not create combinatorial named profiles for every possible combination.
+
+---
+
+## Stage selection and boundary admission
+
+The selected workflow determines which semantic artifact boundaries are required. It does not grant
+approval to artifacts merely because a later starting point is convenient.
+
+Two cases are intentionally distinct:
+
+1. **Boundary not selected:** the artifact is not required by this workflow. Its gate is conceptually
+   `NOT_REQUIRED`; no approval is implied or fabricated.
+2. **Required artifact already exists:** its production step may be reused, but the artifact must pass
+   the same boundary contract and configured authority as a newly produced candidate. Only the
+   resulting accepted version/hash binding permits downstream admission.
+
+This keeps “skip work we do not need” separate from “trust work that already exists.” It also keeps
+semantic routing orthogonal to later execution-framework selection: Stage 0 chooses which approved
+contracts the run needs; Stages 5–7 may later choose how implementation work executes. A library of
+execution playbooks is deferred until those stages have a concrete consumer.
 
 ---
 

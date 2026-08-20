@@ -80,6 +80,14 @@ STALE
 
 A gate can become `STALE` if an upstream amendment invalidates its prior approval.
 
+`NOT_REQUIRED` means the selected workflow does not include that boundary. It is not a successful
+gate outcome and must never be used for required material reused from before the run. Reused required
+material still follows the ordinary judge/authority path. In current Stages 0–2 that means
+`AGENT_APPROVED` or `HUMAN_APPROVED`; a future mechanical-only boundary may use `AUTO_PASSED`. The
+Stage 0–2 `control.json.gates` map continues to contain only selected mutable boundaries; omission
+because a boundary was not selected has `NOT_REQUIRED` semantics without manufacturing an approval
+record.
+
 `AUTO_PASSED` means a boundary explicitly declared mechanical-only and all of its
 deterministic prerequisites passed. It never means an agent reviewed the artifact. Discovery
 and behavioral specification are not mechanical-only boundaries in this revision.

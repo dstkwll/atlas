@@ -38,6 +38,9 @@
 
 ### D-005 — Separate workflow depth from governance profile
 
+**Refined by:** D-065 distinguishes a boundary omitted by workflow selection from a required
+pre-existing artifact that still needs ordinary acceptance.
+
 **Decision:** Model the amount of planning decomposition independently from how much authority the factory receives.
 
 **Why:** Risk/assurance and task complexity are not the same dimension.
