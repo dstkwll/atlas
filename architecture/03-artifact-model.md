@@ -209,8 +209,10 @@ Owns:
 
 > A mandatory generated projection of `20-prd.md` for cold-read review.
 
-It is regenerated whenever the PRD changes and must exactly match the current Markdown source before
-product closure can pass. It is never authoritative and never contributes its own acceptance hash.
+It is regenerated whenever the PRD changes and must declare the exact current Markdown source path,
+source SHA-256, and renderer version before product closure can pass. The controller verifies this
+metadata binding without re-rendering, so “current” does not claim byte-for-byte body recomputation
+during verification. It is never authoritative and never contributes its own acceptance hash.
 
 ---
 
@@ -363,7 +365,9 @@ code, artifact, problem, and resume stage/action. A PASS envelope has no gaps. T
 validates and hashes this envelope but never asks it to modify the artifact or state. V1 does not
 add authenticated reviewer identities or signatures: the invoker must obtain the envelope from
 a fresh read-only context, while the controller enforces only schema and current run/version/hash
-binding. This limitation is explicit rather than implying cryptographic independence.
+binding. After acceptance, those exact review bytes remain required at the canonical run-relative
+path and their hash is rechecked with the accepted PRD/decision provenance. This limitation is
+explicit rather than implying cryptographic independence.
 
 ---
 

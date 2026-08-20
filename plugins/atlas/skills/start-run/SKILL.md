@@ -10,9 +10,9 @@ Create one Stage 0 run at `<planning-root>/<feature-slug>/`. Resolve the plannin
 
 ## 1. Resolve and accept intake
 
-Inspect every affected repository and record its stable identity plus commit baseline. Classify the goal, risk, workflow, governance, execution/environment policy, roster, selected stages, and every selected gate. Record recommendation evidence and explicit overrides.
+Inspect every affected repository and record its stable identity plus commit baseline. Classify the goal, risk, workflow, governance, execution/environment policy, roster, the selected ordered stages, every selected gate, and every run-relevant conditionally reachable route. Discovery's product-closure authority must be `AGENT_REVIEW` or `HUMAN`.
 
-Discovery and specification contain semantic questions, so their authority must be `AGENT_REVIEW` or `HUMAN`. Reject `AUTO` for either boundary. Stage 0 acceptance freezes intake but does not pre-approve a candidate.
+Discovery exits through a semantic product-closure boundary, so its authority must be `AGENT_REVIEW` or `HUMAN`. Reject `AUTO`. Stage 0 acceptance freezes intake but does not pre-approve the living PRD candidate.
 
 Use [`references/run-file.md`](references/run-file.md) for the exact `run.yaml` shape. Preview the complete file and obtain human acceptance before writing it.
 
@@ -30,14 +30,8 @@ If initialization fails, stop. Never calculate authority fields in prose, edit `
 
 ## 3. Hand off
 
-Read the first phase and authority from `control.json` and `run.yaml`. Offer the matching producer skill. Producers record completion/readiness only. `atlas:control-run` performs read-only checking, consumes configured authority, and records at most one transition.
+Read the first phase and authority from `control.json` and `run.yaml`. Offer `atlas:discovery`. Producers record completion/readiness only. `atlas:control-run` performs read-only checking, consumes configured authority, and records at most one transition.
 
 ## Intake correction
 
-Discovery may find a wrong repository or baseline. It records `intake_stale: true`, then `atlas:control-run mark-stale` blocks the run. After explicit human acceptance, write exactly the next contiguous `amendments/NNN-*.md` using [`references/run-amendment.md`](references/run-amendment.md), then run:
-
-```shell
-python3 tools/atlas_control.py apply-amendment --run <run-directory>
-```
-
-The controller stores only accepted amendment count and resulting effective configuration hash in `control.json`. There is no amendment ledger, receipt, or hash chain. `run.yaml` remains byte-for-byte unchanged.
+If discovery proves a repository identity or baseline wrong, follow the complete shared procedure in [`../../references/intake-correction.md`](../../references/intake-correction.md). Do not improvise or mutate intake authority directly.

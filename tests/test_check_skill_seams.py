@@ -1,4 +1,5 @@
 import importlib.util
+import re
 import shutil
 import tempfile
 import unittest
@@ -28,18 +29,33 @@ class SkillSeamHardeningTests(unittest.TestCase):
                 encoding="utf-8",
             )
             findings = SEAMS.cross_skill_contracts(skills)
-            self.assertTrue(any("discovery candidate schema" in message for _, message in findings))
+            self.assertTrue(any("decision-log schema" in message for _, message in findings))
 
-    def test_spec_candidate_template_field_deletion_is_detected(self):
+    def test_prd_candidate_template_field_deletion_is_detected(self):
         with tempfile.TemporaryDirectory() as td:
             skills = self.copy_plugin(Path(td))
-            reference = skills / "to-spec" / "references" / "spec-file.md"
+            reference = skills / "discovery" / "references" / "prd-file.md"
             reference.write_text(
                 reference.read_text(encoding="utf-8").replace("gate_ready: false\n", "", 1),
                 encoding="utf-8",
             )
             findings = SEAMS.cross_skill_contracts(skills)
-            self.assertTrue(any("spec candidate schema" in message for _, message in findings))
+            self.assertTrue(any("discovery candidate schema" in message for _, message in findings))
+
+    def test_controller_and_renderer_version_contract_cannot_drift(self):
+        with tempfile.TemporaryDirectory() as td:
+            skills = self.copy_plugin(Path(td))
+            renderer = skills.parent / "tools" / "render_prd.py"
+            renderer.write_text(
+                renderer.read_text(encoding="utf-8").replace(
+                    'RENDERER_VERSION = "1.0.0"', 'RENDERER_VERSION = "9.9.9"'
+                ),
+                encoding="utf-8",
+            )
+
+            findings = SEAMS.cross_skill_contracts(skills)
+
+            self.assertTrue(any("renderer version" in message.lower() for _, message in findings))
 
     def test_control_projection_template_requires_base_hash_and_acceptance_bindings(self):
         with tempfile.TemporaryDirectory() as td:
@@ -48,7 +64,7 @@ class SkillSeamHardeningTests(unittest.TestCase):
             text = reference.read_text(encoding="utf-8")
             text = text.replace('  "base_run_sha256": "<sha256>",\n', "")
             text = text.replace(
-                '  "blocked_reason": null,\n  "acceptances": {\n    "discovery": null,\n    "spec": null\n  }\n',
+                '  "blocked_reason": null,\n  "acceptances": {\n    "discovery": null\n  }\n',
                 '  "blocked_reason": null\n',
             )
             reference.write_text(text, encoding="utf-8")
@@ -69,29 +85,75 @@ class SkillSeamHardeningTests(unittest.TestCase):
                 findings = SEAMS.cross_skill_contracts(skills)
                 self.assertTrue(any(expected in message for _, message in findings))
 
-    def test_packaged_boundary_review_carries_every_stage_semantic_question(self):
+    def test_shared_intake_correction_reference_is_required(self):
+        with tempfile.TemporaryDirectory() as td:
+            skills = self.copy_plugin(Path(td))
+            (skills.parent / "references" / "intake-correction.md").unlink()
+
+            findings = SEAMS.cross_skill_contracts(skills)
+
+            self.assertTrue(any("intake-correction" in message for _, message in findings))
+
+    def test_packaged_boundary_review_carries_the_exact_nine_product_closure_questions(self):
         review_path = (
             ROOT / "plugins" / "atlas" / "skills" / "control-run" / "references" / "boundary-review.md"
         )
         canonical_path = ROOT / "architecture" / "06-review-and-validation.md"
-        review = " ".join(review_path.read_text(encoding="utf-8").lower().split())
-        canonical = " ".join(canonical_path.read_text(encoding="utf-8").lower().split())
-        semantic_questions = (
-            "does the artifact state the real problem",
-            "important consequences, contradictions, or scope questions",
-            "decisions supported well enough to specify from",
-            "cold read's findings receive a real disposition",
-            "does each requirement describe externally observable behavior",
-            "preserve discovery intent without inventing new intent",
-            "material behavioral consequences missing or contradictory",
-            "acceptance outcomes genuinely observable",
-        )
-        for phrase in semantic_questions:
-            with self.subTest(phrase=phrase):
-                self.assertIn(phrase, canonical)
-                self.assertIn(phrase, review)
+        review_text = review_path.read_text(encoding="utf-8")
+        canonical_text = canonical_path.read_text(encoding="utf-8")
+        review_section = review_text.split("## Product-closure semantic questions\n", 1)[1].split(
+            "\nThese are the packaged questions", 1
+        )[0]
+        canonical_section = canonical_text.split("**Semantic questions, in order:**\n", 1)[1].split(
+            "\nFailure resumes at discovery", 1
+        )[0]
+        review_questions = tuple(re.findall(r"(?m)^[1-9]\. (.+\?)$", review_section))
+        canonical_questions = tuple(re.findall(r"(?m)^[1-9]\. (.+\?)$", canonical_section))
+        self.assertEqual(len(review_questions), 9)
+        self.assertEqual(review_questions, canonical_questions)
+        review = " ".join(review_text.lower().split())
         self.assertIn("every material gap", review)
         self.assertIn("must not repair", review)
+
+    def test_discovery_skill_stays_below_400_lines_without_substituting_filler_for_precise_ownership(self):
+        discovery = ROOT / "plugins" / "atlas" / "skills" / "discovery" / "SKILL.md"
+        lines = discovery.read_text(encoding="utf-8").splitlines()
+        self.assertLessEqual(len(lines), 400)
+        self.assertIn("10-decisions.md", "\n".join(lines))
+        self.assertIn("20-prd.md", "\n".join(lines))
+        self.assertIn("references/decision-record.md", "\n".join(lines))
+        self.assertIn("references/run-layout.md", "\n".join(lines))
+        self.assertIn("render_prd.py", "\n".join(lines))
+        self.assertIn("--draft .20-prd.next.md", "\n".join(lines))
+        self.assertIn("Never edit canonical `20-prd.md` directly", "\n".join(lines))
+
+        with tempfile.TemporaryDirectory() as td:
+            skills = self.copy_plugin(Path(td))
+            discovery_copy = skills / "discovery" / "SKILL.md"
+            discovery_copy.write_text(
+                "\n".join(line for line in discovery_copy.read_text(encoding="utf-8").splitlines() if "references/" not in line),
+                encoding="utf-8",
+            )
+            trimmed = discovery_copy.read_text(encoding="utf-8").splitlines()
+            self.assertLessEqual(len(trimmed), 400)
+            self.assertNotIn("references/decision-record.md", "\n".join(trimmed))
+
+    def test_to_spec_is_deleted_from_packaging_and_seam_contracts(self):
+        self.assertFalse((ROOT / "plugins" / "atlas" / "skills" / "to-spec").exists())
+        for manifest in (
+            ROOT / "plugins" / "atlas" / "plugin.json",
+            ROOT / "plugins" / "atlas" / ".codex-plugin" / "plugin.json",
+        ):
+            text = manifest.read_text(encoding="utf-8").lower()
+            self.assertNotIn("behavioural specification", text)
+            self.assertNotIn("behavioral specification", text)
+            self.assertNotIn("to-spec", text)
+
+        with tempfile.TemporaryDirectory() as td:
+            skills = self.copy_plugin(Path(td))
+            (skills / "to-spec").mkdir()
+            findings = SEAMS.cross_skill_contracts(skills)
+            self.assertTrue(any("to-spec remains" in message for _, message in findings))
 
     def test_immutable_run_mutation_is_detected_but_negation_is_not(self):
         for sentence, expected in (

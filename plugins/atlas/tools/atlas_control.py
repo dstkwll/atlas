@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Tiny deterministic controller for Atlas planning Stages 0–2.
 
-Producers write candidates. ``check`` performs read-only mechanical checks.
-Configured HUMAN or AGENT_REVIEW authority supplies semantic acceptance. This
-program alone replaces the feature's authoritative ``control.json``.
+Discovery continuously authors the decision log and living PRD. ``check`` is
+read-only and validates the product-closure boundary mechanically. HUMAN or
+AGENT_REVIEW authority supplies semantic acceptance. This program alone
+replaces the feature's authoritative ``control.json``.
 """
 from __future__ import annotations
 
@@ -16,6 +17,7 @@ import re
 import sys
 import tempfile
 from datetime import date, datetime
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any, Iterator, Optional
 
@@ -37,15 +39,16 @@ except ImportError as exc:  # pragma: no cover - environment failure
 
 CONTROL_FILE = "control.json"
 LOCK_FILE = ".atlas-control.lock"
-CANDIDATES = {"discovery": "10-decisions.md", "spec": "20-spec.md"}
+DECISIONS_FILE = "10-decisions.md"
+PRD_FILE = "20-prd.md"
+PRD_HTML_FILE = "20-prd.html"
+RENDERER_VERSION = "1.0.0"
+CANDIDATES = {"discovery": PRD_FILE}
+EXIT_BOUNDARY = {"discovery": "product_closure"}
 CANDIDATE_FIELDS = {
     "discovery": {
         "run", "version", "status", "gate_ready", "intake_stale", "cold_read",
-        "effective_config_revision", "opened", "repos",
-    },
-    "spec": {
-        "run", "version", "status", "gate_ready", "effective_config_revision",
-        "derived_from",
+        "effective_config_revision", "opened", "repos", "derived_from",
     },
 }
 CONTROL_FIELDS = {
@@ -69,18 +72,90 @@ RUN_FIELDS = {
     "workflow", "stages", "governance", "gates", "execution_policy", "environment_policy",
     "roster", "risk", "repos", "overrides",
 }
-SPEC_SECTIONS = (
-    "Problem", "Requirements", "Prohibitions", "Constraints", "Invariants",
-    "Out of scope", "Edge coverage", "Open questions",
+PRD_SECTIONS = (
+    "Problem", "Goals and outcomes", "Non-goals", "Actors", "Scenarios",
+    "Requirements", "Invariants", "Contracts and interfaces",
+    "Edge and failure cases", "Observability", "Acceptance outcomes", "Open questions",
 )
 DECISION_FIELDS = {
     "id", "route", "findings", "status", "decided", "origin", "confidence", "unblocked",
     "blocked_by", "supersedes", "contribution",
 }
+DECISION_LOG_FIELDS = {"run", "version"}
 
 
 class ControlError(RuntimeError):
     pass
+
+
+class UniqueKeyLoader(yaml.SafeLoader):
+    """Safe YAML loader that rejects duplicate mapping keys."""
+
+
+def construct_unique_mapping(loader: UniqueKeyLoader, node: yaml.nodes.MappingNode, deep: bool = False) -> dict[Any, Any]:
+    mapping: dict[Any, Any] = {}
+    for key_node, value_node in node.value:
+        key = loader.construct_object(key_node, deep=deep)
+        try:
+            duplicate = key in mapping
+        except TypeError as exc:
+            raise yaml.constructor.ConstructorError(
+                "while constructing a mapping",
+                node.start_mark,
+                "found an unhashable YAML key",
+                key_node.start_mark,
+            ) from exc
+        if duplicate:
+            raise yaml.constructor.ConstructorError(
+                "while constructing a mapping",
+                node.start_mark,
+                f"duplicate YAML key: {key}",
+                key_node.start_mark,
+            )
+        mapping[key] = loader.construct_object(value_node, deep=deep)
+    return mapping
+
+
+UniqueKeyLoader.add_constructor(
+    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+    construct_unique_mapping,
+)
+
+
+def load_yaml(text: str) -> Any:
+    return yaml.load(text, Loader=UniqueKeyLoader)
+
+
+def reject_duplicate_json_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ControlError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
+def load_json(text: str) -> Any:
+    return json.loads(text, object_pairs_hook=reject_duplicate_json_keys)
+
+
+class MetaParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.meta: dict[str, str] = {}
+        self.duplicates: set[str] = set()
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, Optional[str]]]) -> None:
+        if tag.lower() != "meta":
+            return
+        pairs = {key.lower(): value or "" for key, value in attrs}
+        name = pairs.get("name")
+        if name in {
+            "atlas-source", "atlas-source-sha256", "atlas-renderer-version",
+        }:
+            if name in self.meta:
+                self.duplicates.add(name)
+            self.meta[name] = pairs.get("content", "")
 
 
 def canonical_value(value: Any) -> Any:
@@ -143,7 +218,7 @@ def read_frontmatter(path: Path) -> tuple[dict[str, Any], str]:
     if not text.startswith("---\n") or "\n---\n" not in text[4:]:
         raise ControlError(f"missing YAML frontmatter: {path.name}")
     raw, body = text[4:].split("\n---\n", 1)
-    data = yaml.safe_load(raw)
+    data = load_yaml(raw)
     if not isinstance(data, dict):
         raise ControlError(f"frontmatter is not a map: {path.name}")
     return data, body
@@ -151,7 +226,7 @@ def read_frontmatter(path: Path) -> tuple[dict[str, Any], str]:
 
 def load_run(run_dir: Path) -> dict[str, Any]:
     path = managed_path(run_dir, "run.yaml")
-    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    data = load_yaml(path.read_text(encoding="utf-8"))
     if not isinstance(data, dict):
         raise ControlError("run.yaml is not a map")
     return data
@@ -186,17 +261,27 @@ def validate_run(config: dict[str, Any]) -> None:
     require_string(config.get("goal"), "run.yaml goal")
     validate_repos(config.get("repos"))
     stages = config.get("stages")
-    if not isinstance(stages, list) or not stages or len(stages) != len(set(stages)):
-        raise ControlError("run.yaml stages must be a non-empty unique list")
+    if (
+        not isinstance(stages, list)
+        or not stages
+        or any(not isinstance(stage, str) or not stage.strip() for stage in stages)
+        or len(stages) != len(set(stages))
+        or stages[0] != "discovery"
+        or "spec" in stages
+    ):
+        raise ControlError("run.yaml stages must be a unique string list beginning with discovery and may not contain legacy spec")
     gates = config.get("gates")
-    if not isinstance(gates, dict) or any(stage in stages and stage not in gates for stage in CANDIDATES):
-        raise ControlError("run.yaml gates must cover selected Stage 0–2 boundaries")
+    if (
+        not isinstance(gates, dict)
+        or "discovery" not in gates
+        or "spec" in gates
+    ):
+        raise ControlError("run.yaml gates must cover discovery and may not contain legacy spec")
     for stage, policy in gates.items():
         if not isinstance(policy, dict) or not isinstance(policy.get("authority"), str):
             raise ControlError(f"run.yaml gate policy is malformed: {stage}")
-    for stage in ("discovery", "spec"):
-        if stage in stages and gates[stage].get("authority") not in {"AGENT_REVIEW", "HUMAN"}:
-            raise ControlError(f"the semantic {stage} boundary requires AGENT_REVIEW or HUMAN")
+    if "discovery" in stages and gates["discovery"].get("authority") not in {"AGENT_REVIEW", "HUMAN"}:
+        raise ControlError("the semantic discovery boundary requires AGENT_REVIEW or HUMAN")
     root = config.get("planning_root")
     if not isinstance(root, dict) or set(root) != {"source", "mode", "path"}:
         raise ControlError("run.yaml planning_root is malformed")
@@ -245,7 +330,7 @@ def effective_run(run_dir: Path, count: int) -> dict[str, Any]:
 def load_control(run_dir: Path) -> dict[str, Any]:
     path = managed_path(run_dir, CONTROL_FILE)
     try:
-        control = json.loads(path.read_text(encoding="utf-8"))
+        control = load_json(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         raise ControlError("control.json is not valid JSON") from exc
     if not isinstance(control, dict):
@@ -298,6 +383,296 @@ def load_control(run_dir: Path) -> dict[str, Any]:
     return control
 
 
+def section(body: str, heading: str) -> Optional[str]:
+    match = re.search(rf"(?ms)^## {re.escape(heading)}\s*$\n(.*?)(?=^## |\Z)", body)
+    return match.group(1) if match else None
+
+
+def gap(artifact: str, problem: str, stage: str, action: str) -> dict[str, str]:
+    slug = re.sub(r"[^a-z0-9]+", "-", problem.lower()).strip("-")[:48]
+    return {
+        "code": f"{stage}-{slug}",
+        "artifact": artifact,
+        "problem": problem,
+        "resume_stage": stage,
+        "resume_action": action,
+    }
+
+
+def expected_candidate_version(control: dict[str, Any], stage: str) -> int:
+    record = control.get("acceptances", {}).get(stage)
+    return record["candidate_version"] + 1 if isinstance(record, dict) else 1
+
+
+def latest_acceptance(control: dict[str, Any], stage: str) -> Optional[dict[str, Any]]:
+    record = control.get("acceptances", {}).get(stage)
+    return record if isinstance(record, dict) else None
+
+
+def parse_meta(path: Path) -> dict[str, str]:
+    parser = MetaParser()
+    parser.feed(path.read_text(encoding="utf-8"))
+    if parser.duplicates:
+        raise ControlError(f"duplicate atlas metadata: {sorted(parser.duplicates)}")
+    return parser.meta
+
+
+def parse_decision_records(body: str) -> tuple[dict[str, dict[str, Any]], list[dict[str, str]]]:
+    gaps: list[dict[str, str]] = []
+    matches = list(re.finditer(r"(?m)^### (D-[0-9]{3})\s+—\s+.+$", body))
+    identifiers = [match.group(1) for match in matches]
+    if not identifiers:
+        gaps.append(gap(DECISIONS_FILE, "no decision identifiers are present", "discovery", "record settled decisions"))
+        return {}, gaps
+    if len(identifiers) != len(set(identifiers)):
+        gaps.append(gap(DECISIONS_FILE, "decision identifiers are not unique", "discovery", "assign unique D-NNN identifiers"))
+    decisions: dict[str, dict[str, Any]] = {}
+    superseded_targets: list[str] = []
+    for index, match in enumerate(matches):
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(body)
+        fenced = re.search(r"```yaml\n(.*?)```", body[match.end():end], re.S)
+        if not fenced:
+            gaps.append(gap(DECISIONS_FILE, f"{match.group(1)} has no YAML record", "discovery", "add the required decision record fields"))
+            continue
+        try:
+            record = load_yaml(fenced.group(1))
+        except yaml.YAMLError as exc:
+            gaps.append(gap(DECISIONS_FILE, f"{match.group(1)} has invalid YAML: {exc}", "discovery", "repair the decision record"))
+            continue
+        decision_id = match.group(1)
+        if not isinstance(record, dict) or set(record) != DECISION_FIELDS or record.get("id") != decision_id:
+            gaps.append(gap(DECISIONS_FILE, f"{decision_id} record fields are incomplete or mismatched", "discovery", "repair the decision record"))
+            continue
+        if record.get("status") not in {"settled", "superseded"}:
+            gaps.append(gap(DECISIONS_FILE, f"{decision_id} is not settled or superseded", "discovery", "settle or supersede the decision"))
+        if record.get("contribution") not in {"load-bearing", "minor", "irrelevant"}:
+            gaps.append(gap(DECISIONS_FILE, f"{decision_id} contribution grade is invalid", "discovery", "grade contribution as load-bearing, minor, or irrelevant"))
+        supersedes = record.get("supersedes")
+        if supersedes is not None and not re.fullmatch(r"D-[0-9]{3}", str(supersedes)):
+            gaps.append(gap(DECISIONS_FILE, f"{decision_id} supersedes field is invalid", "discovery", "repair the supersedes field"))
+            supersedes = None
+        if isinstance(supersedes, str):
+            if supersedes not in identifiers[:index]:
+                gaps.append(gap(DECISIONS_FILE, f"{decision_id} supersedes must name an earlier distinct decision", "discovery", "repair supersession ordering"))
+            else:
+                superseded_targets.append(supersedes)
+        decisions[decision_id] = record
+    for target in superseded_targets:
+        target_record = decisions.get(target)
+        if target_record is None:
+            gaps.append(gap(DECISIONS_FILE, f"{target} is named in supersedes but no such decision exists", "discovery", "repair supersession references"))
+        elif target_record.get("status") != "superseded":
+            gaps.append(gap(DECISIONS_FILE, f"{target} is superseded by a later decision but still marked settled", "discovery", "mark the earlier decision superseded"))
+    frontier = section(body, "Open frontier")
+    if frontier is None:
+        gaps.append(gap(DECISIONS_FILE, "Open frontier section is absent", "discovery", "record the open frontier"))
+    else:
+        table_lines = [line.strip() for line in frontier.splitlines() if line.strip().startswith("|")]
+        expected_header = ("Question", "Route", "Blocked by")
+        malformed = len(table_lines) < 2
+        if not malformed:
+            header_cells = tuple(cell.strip() for cell in table_lines[0].split("|")[1:-1])
+            separator_cells = [cell.strip() for cell in table_lines[1].split("|")[1:-1]]
+            malformed = (
+                header_cells != expected_header
+                or len(separator_cells) != 3
+                or any(not re.fullmatch(r":?-{3,}:?", cell) for cell in separator_cells)
+            )
+        if malformed:
+            gaps.append(gap(DECISIONS_FILE, "Open frontier table is malformed", "discovery", "restore the exact frontier table"))
+        elif table_lines[2:]:
+            gaps.append(gap(DECISIONS_FILE, "open frontier still contains unresolved entries", "discovery", "resolve every frontier entry"))
+    cold_read = section(body, "Cold-read evidence")
+    if cold_read is None:
+        gaps.append(gap(DECISIONS_FILE, "Cold-read evidence section is absent", "discovery", "record baseline findings and their disposition"))
+    else:
+        table_lines = [line.strip() for line in cold_read.splitlines() if line.strip().startswith("|")]
+        malformed = len(table_lines) < 3
+        if not malformed:
+            header_cells = tuple(cell.strip() for cell in table_lines[0].split("|")[1:-1])
+            separator_cells = [cell.strip() for cell in table_lines[1].split("|")[1:-1]]
+            rows = [tuple(cell.strip() for cell in line.split("|")[1:-1]) for line in table_lines[2:]]
+            placeholder_values = {"pending", "pending.", "todo", "tbd", "—", "-"}
+            malformed = (
+                header_cells != ("Finding", "Disposition")
+                or len(separator_cells) != 2
+                or any(not re.fullmatch(r":?-{3,}:?", cell) for cell in separator_cells)
+                or any(len(row) != 2 or not row[0] or not row[1] for row in rows)
+                or any(cell.strip().lower() in placeholder_values for row in rows for cell in row)
+                or len({row[0] for row in rows}) != len(rows)
+            )
+        if malformed:
+            gaps.append(gap(DECISIONS_FILE, "Cold-read evidence table is malformed", "discovery", "record one unique row per finding with a non-empty disposition"))
+    return decisions, gaps
+
+
+def parse_retrospective(body: str) -> tuple[dict[str, dict[str, str]], list[dict[str, str]]]:
+    gaps: list[dict[str, str]] = []
+    headings = re.findall(r"(?m)^## ([^\n]+?)\s*$", body)
+    retrospective_count = headings.count("PRD alignment retrospective")
+    if retrospective_count != 1:
+        gaps.append(gap(DECISIONS_FILE, "PRD alignment retrospective must appear exactly once", "discovery", "keep one retrospective table"))
+    if headings and headings[-1] != "PRD alignment retrospective":
+        gaps.append(gap(DECISIONS_FILE, "PRD alignment retrospective must be the final section", "discovery", "move trailing material before the retrospective"))
+    retrospective = section(body, "PRD alignment retrospective")
+    if retrospective is None:
+        gaps.append(gap(DECISIONS_FILE, "PRD alignment retrospective section is absent", "discovery", "rebuild the retrospective table"))
+        return {}, gaps
+    lines = [line.strip() for line in retrospective.splitlines() if line.strip()]
+    table_lines = [line for line in lines if line.startswith("|")]
+    if len(table_lines) < 2:
+        gaps.append(gap(DECISIONS_FILE, "PRD alignment retrospective table is malformed", "discovery", "rebuild the retrospective table"))
+        return {}, gaps
+    expected_header = (
+        "Decision",
+        "Disposition",
+        "PRD identifiers",
+        "Reason (required iff NO_NORMATIVE_EFFECT)",
+    )
+    header_cells = tuple(cell.strip() for cell in table_lines[0].split("|")[1:-1])
+    separator_cells = [cell.strip() for cell in table_lines[1].split("|")[1:-1]]
+    if header_cells != expected_header:
+        gaps.append(gap(DECISIONS_FILE, "PRD alignment retrospective table header is not exact", "discovery", "restore the required retrospective columns"))
+    if len(separator_cells) != 4 or any(not re.fullmatch(r":?-{3,}:?", cell) for cell in separator_cells):
+        gaps.append(gap(DECISIONS_FILE, "PRD alignment retrospective table separator is malformed", "discovery", "repair the retrospective table separator"))
+    rows = table_lines[2:]
+    parsed: dict[str, dict[str, str]] = {}
+    for line in rows:
+        cells = [cell.strip() for cell in line.split("|")[1:-1]]
+        if len(cells) != 4:
+            gaps.append(gap(DECISIONS_FILE, "PRD alignment retrospective row is malformed", "discovery", "repair the retrospective row"))
+            continue
+        decision_id, disposition, prd_ids, reason = cells
+        if not re.fullmatch(r"D-[0-9]{3}", decision_id):
+            gaps.append(gap(DECISIONS_FILE, f"retrospective names an invalid decision identifier: {decision_id}", "discovery", "repair the retrospective row"))
+            continue
+        if decision_id in parsed:
+            gaps.append(gap(DECISIONS_FILE, f"retrospective duplicates decision {decision_id}", "discovery", "keep exactly one row per live decision"))
+            continue
+        if disposition not in {"NORMATIVE", "NO_NORMATIVE_EFFECT"}:
+            gaps.append(gap(DECISIONS_FILE, f"retrospective disposition is invalid for {decision_id}", "discovery", "use NORMATIVE or NO_NORMATIVE_EFFECT"))
+            continue
+        parsed[decision_id] = {
+            "decision": decision_id,
+            "disposition": disposition,
+            "prd_ids": prd_ids,
+            "reason": reason,
+        }
+    return parsed, gaps
+
+
+def parse_prd_items(body: str) -> tuple[dict[str, set[str]], list[dict[str, str]]]:
+    gaps: list[dict[str, str]] = []
+    section_sequence = tuple(re.findall(r"(?m)^## ([^\n]+?)\s*$", body))
+    if section_sequence != PRD_SECTIONS:
+        gaps.append(gap(PRD_FILE, "PRD section sequence does not match the exact product contract", "discovery", "restore the required PRD sections and order"))
+    for heading in PRD_SECTIONS:
+        if len(re.findall(rf"(?m)^## {re.escape(heading)}\s*$", body)) != 1:
+            gaps.append(gap(PRD_FILE, f"required section {heading} must appear exactly once", "discovery", f"repair section {heading}"))
+    if re.search(r"(?im)^## (Work Items|Files|Classes|Methods|Implementation|Tickets)\s*$", body):
+        gaps.append(gap(PRD_FILE, "PRD contains an internal design or ticket section", "discovery", "move internal shape downstream"))
+    open_questions = section(body, "Open questions") or ""
+    if re.search(
+        r"(?im)^[ \t]*(?:(?:[-+*]|[0-9]+[.)]|>)[ \t]*)?(?:[*_]{1,2})?blocking(?:[*_]{1,2})?[ \t]*:",
+        open_questions,
+    ) or re.search(r"(?im)^\s*\|.*\bblocking\b.*\|", open_questions):
+        gaps.append(gap(PRD_FILE, "PRD contains a blocking open question", "discovery", "resolve the behavior-changing question"))
+
+    matches = list(re.finditer(r"(?m)^### ([RPCIX]-[0-9]{3})\s+—\s+.+$", body))
+    identifiers = [match.group(1) for match in matches]
+    if not identifiers:
+        gaps.append(gap(PRD_FILE, "no normative identifiers are present", "discovery", "record at least one normative R/P/C/I/X-NNN obligation"))
+        return {}, gaps
+    if len(identifiers) != len(set(identifiers)):
+        gaps.append(gap(PRD_FILE, "normative identifiers are not unique", "discovery", "assign unique normative identifiers"))
+    items: dict[str, set[str]] = {}
+    for match in matches:
+        trailing = body[match.end():]
+        next_heading = re.search(r"(?m)^#{1,3}\s+", trailing)
+        end = match.end() + next_heading.start() if next_heading else len(body)
+        block = body[match.end():end]
+        derived_matches = re.findall(r"(?mi)^\*\*Derived from:\*\*\s*(.+?)\s*$", block)
+        item_id = match.group(1)
+        if not derived_matches:
+            gaps.append(gap(PRD_FILE, f"{item_id} is missing a Derived from list", "discovery", "cite one or more live decisions"))
+            continue
+        if len(derived_matches) != 1:
+            gaps.append(gap(PRD_FILE, f"{item_id} must contain exactly one Derived from list", "discovery", "keep one exact citation line"))
+            continue
+        derived_value = derived_matches[0]
+        cited = {
+            token for token in re.findall(r"\bD-[0-9]{3}\b", derived_value)
+        }
+        if not cited:
+            gaps.append(gap(PRD_FILE, f"{item_id} must cite one or more live decisions", "discovery", "cite one or more live decisions"))
+            continue
+        items[item_id] = cited
+    return items, gaps
+
+
+def validate_html_projection(run_dir: Path, markdown_hash: str) -> list[dict[str, str]]:
+    path = managed_path(run_dir, PRD_HTML_FILE)
+    gaps: list[dict[str, str]] = []
+    if not path.is_file():
+        gaps.append(gap(PRD_HTML_FILE, "20-prd.html is missing", "discovery", "render the PRD HTML projection"))
+        return gaps
+    try:
+        meta = parse_meta(path)
+    except (ControlError, OSError, UnicodeError) as exc:
+        gaps.append(gap(PRD_HTML_FILE, str(exc), "discovery", "rerender the PRD HTML projection"))
+        return gaps
+    if meta.get("atlas-source") != PRD_FILE:
+        gaps.append(gap(PRD_HTML_FILE, "20-prd.html does not declare 20-prd.md as its source", "discovery", "rerender the PRD HTML projection"))
+    if meta.get("atlas-source-sha256") != markdown_hash:
+        gaps.append(gap(PRD_HTML_FILE, "20-prd.html source sha256 does not match the current PRD bytes", "discovery", "rerender the PRD HTML projection"))
+    if meta.get("atlas-renderer-version") != RENDERER_VERSION:
+        gaps.append(gap(PRD_HTML_FILE, "20-prd.html renderer version is missing or unknown", "discovery", "rerender with the installed renderer"))
+    return gaps
+
+
+def accepted_source_gaps(run_dir: Path, record: dict[str, Any]) -> list[str]:
+    prd_path = managed_path(run_dir, PRD_FILE)
+    decisions_path = managed_path(run_dir, DECISIONS_FILE)
+    problems: list[str] = []
+    if not prd_path.is_file() or file_sha256(prd_path) != record.get("candidate_sha256"):
+        problems.append("accepted PRD bytes no longer match recorded discovery provenance")
+        return problems
+    try:
+        prd_frontmatter, _ = read_frontmatter(prd_path)
+    except (ControlError, yaml.YAMLError) as exc:
+        problems.append(str(exc))
+        return problems
+    derived_from = prd_frontmatter.get("derived_from")
+    if not isinstance(derived_from, dict):
+        problems.append("accepted PRD derived_from binding is malformed")
+        return problems
+    if not decisions_path.is_file():
+        problems.append("accepted PRD decision source is missing")
+        return problems
+    try:
+        decisions_frontmatter, _ = read_frontmatter(decisions_path)
+    except (ControlError, yaml.YAMLError) as exc:
+        problems.append(str(exc))
+        return problems
+    if (
+        derived_from.get("artifact") != DECISIONS_FILE
+        or derived_from.get("version") != decisions_frontmatter.get("version")
+        or derived_from.get("sha256") != file_sha256(decisions_path)
+    ):
+        problems.append("accepted PRD no longer matches its bound decision source")
+    if record.get("authority") == "AGENT_REVIEW":
+        try:
+            review_path = managed_path(run_dir, str(record.get("review_reference", "")))
+        except ControlError as exc:
+            problems.append(f"accepted review evidence path is invalid: {exc}")
+        else:
+            if not review_path.is_file():
+                problems.append("accepted review evidence is missing")
+            elif file_sha256(review_path) != record.get("review_sha256"):
+                problems.append("accepted review evidence bytes no longer match recorded provenance")
+    return problems
+
+
 def verified_state(run_dir: Path) -> tuple[dict[str, Any], dict[str, Any]]:
     control = load_control(run_dir)
     if control.get("version") != 1:
@@ -324,13 +699,16 @@ def verified_state(run_dir: Path) -> tuple[dict[str, Any], dict[str, Any]]:
     approved_states = {"AGENT_APPROVED", "HUMAN_APPROVED"}
     for stage, record in control["acceptances"].items():
         gate_state = control["gates"].get(stage)
+        if gate_state == "STALE" and record is not None:
+            raise ControlError("STALE gate cannot retain an acceptance after reopen removal")
         if (gate_state in approved_states) != (record is not None):
-            if not (gate_state == "STALE" and record is not None):
-                raise ControlError("control.json gate/acceptance coherence is invalid")
-        if record is not None and gate_state != "STALE":
+            raise ControlError("control.json gate/acceptance coherence is invalid")
+        if record is not None:
             expected_gate = "HUMAN_APPROVED" if record["authority"] == "HUMAN" else "AGENT_APPROVED"
             if gate_state != expected_gate:
                 raise ControlError("control.json authority/gate coherence is invalid")
+            for problem in accepted_source_gaps(run_dir, record):
+                raise ControlError(problem)
     phase_index = stages.index(control["phase"])
     for stage, record in control["acceptances"].items():
         if stage in stages and stages.index(stage) < phase_index and record is None:
@@ -422,7 +800,7 @@ def initialize(run_dir: Path) -> str:
         raise ControlError("control.json already exists")
     config = load_run(run_dir)
     validate_run(config)
-    if managed_path(run_dir, "10-decisions.md").exists() or amendment_paths(run_dir):
+    if managed_path(run_dir, DECISIONS_FILE).exists() or managed_path(run_dir, PRD_FILE).exists() or amendment_paths(run_dir):
         raise ControlError("initialize must run before discovery or amendments")
     stages = config["stages"]
     control = {
@@ -437,157 +815,160 @@ def initialize(run_dir: Path) -> str:
         "accepted_amendment_count": 0,
         "gates": {stage: "PENDING" for stage in stages if stage in CANDIDATES},
         "blocked_reason": None,
-        "acceptances": {"discovery": None, "spec": None},
+        "acceptances": {"discovery": None},
     }
     commit(run_dir, control)
     return "initialized control.json revision 1"
 
 
-def gap(artifact: str, problem: str, stage: str, action: str) -> dict[str, str]:
-    slug = re.sub(r"[^a-z0-9]+", "-", problem.lower()).strip("-")[:48]
-    return {
-        "code": f"{stage}-{slug}",
-        "artifact": artifact,
-        "problem": problem,
-        "resume_stage": stage,
-        "resume_action": action,
-    }
-
-
-def expected_candidate_version(control: dict[str, Any], stage: str) -> int:
-    record = control.get("acceptances", {}).get(stage)
-    return record["candidate_version"] + 1 if isinstance(record, dict) else 1
-
-
-def latest_acceptance(control: dict[str, Any], stage: str) -> Optional[dict[str, Any]]:
-    record = control.get("acceptances", {}).get(stage)
-    return record if isinstance(record, dict) else None
-
-
-def section(body: str, heading: str) -> Optional[str]:
-    match = re.search(rf"(?ms)^## {re.escape(heading)}\s*$\n(.*?)(?=^## |\Z)", body)
-    return match.group(1) if match else None
-
-
-def discovery_ids_and_gaps(body: str, artifact: str) -> tuple[set[str], list[dict[str, str]]]:
-    gaps: list[dict[str, str]] = []
-    matches = list(re.finditer(r"(?m)^### (D-[0-9]{3})\s+—\s+.+$", body))
-    identifiers = [match.group(1) for match in matches]
-    if not identifiers:
-        gaps.append(gap(artifact, "no decision identifiers are present", "discovery", "record settled decisions"))
-    if len(identifiers) != len(set(identifiers)):
-        gaps.append(gap(artifact, "decision identifiers are not unique", "discovery", "assign unique D-NNN identifiers"))
-    for index, match in enumerate(matches):
-        end = matches[index + 1].start() if index + 1 < len(matches) else len(body)
-        record_text = body[match.end():end]
-        fenced = re.search(r"```yaml\n(.*?)```", record_text, re.S)
-        if not fenced:
-            gaps.append(gap(artifact, f"{match.group(1)} has no YAML record", "discovery", "add the required decision record fields"))
-            continue
-        try:
-            record = yaml.safe_load(fenced.group(1))
-        except yaml.YAMLError:
-            record = None
-        if not isinstance(record, dict) or not DECISION_FIELDS.issubset(record) or record.get("id") != match.group(1):
-            gaps.append(gap(artifact, f"{match.group(1)} record fields are incomplete or mismatched", "discovery", "repair the decision record"))
-        elif record.get("status") not in {"settled", "superseded"}:
-            gaps.append(gap(artifact, f"{match.group(1)} is not settled or superseded", "discovery", "settle or supersede the decision"))
-    frontier = section(body, "Open frontier")
-    if frontier is None:
-        gaps.append(gap(artifact, "Open frontier section is absent", "discovery", "record the open frontier"))
-    else:
-        rows = [
-            line for line in frontier.splitlines() if line.lstrip().startswith("|")
-            and "Question" not in line and not re.fullmatch(r"\s*\|?[-:| ]+\|?\s*", line)
-        ]
-        if rows:
-            gaps.append(gap(artifact, "open frontier still contains unresolved entries", "discovery", "resolve every frontier entry"))
-    return set(identifiers), gaps
-
-
 def candidate_report(run_dir: Path, control: dict[str, Any], effective: dict[str, Any]) -> dict[str, Any]:
-    stage = control.get("phase")
+    stage = str(control["phase"])
     artifact = CANDIDATES.get(stage)
     gaps: list[dict[str, str]] = []
-    report: dict[str, Any] = {"version": 1, "run": control["run"], "verdict": "BLOCKED", "stage": stage, "gaps": gaps}
+    report: dict[str, Any] = {
+        "version": 1,
+        "run": control["run"],
+        "verdict": "BLOCKED",
+        "stage": stage,
+        "boundary": EXIT_BOUNDARY.get(str(stage)),
+        "gaps": gaps,
+    }
     if artifact is None:
         gaps.append(gap(CONTROL_FILE, f"{stage} is outside the Stage 0–2 controller", str(stage), "use the next-stage controller"))
         return report
-    path = managed_path(run_dir, artifact)
-    if not path.is_file():
+    prd_path = managed_path(run_dir, artifact)
+    decisions_path = managed_path(run_dir, DECISIONS_FILE)
+    if not prd_path.is_file():
         gaps.append(gap(artifact, "candidate file is missing", stage, f"produce {artifact}"))
         return report
-    report["candidate_sha256"] = file_sha256(path)
+    report["candidate_sha256"] = file_sha256(prd_path)
     try:
-        candidate, body = read_frontmatter(path)
+        prd_frontmatter, prd_body = read_frontmatter(prd_path)
     except (ControlError, yaml.YAMLError) as exc:
         gaps.append(gap(artifact, str(exc), stage, "repair candidate frontmatter"))
         return report
-    report["candidate_version"] = candidate.get("version")
+    candidate_version = prd_frontmatter.get("version")
+    report["candidate_version"] = candidate_version
     expected = expected_candidate_version(control, stage)
-    if set(candidate) != CANDIDATE_FIELDS[stage]:
+    if not isinstance(candidate_version, int) or isinstance(candidate_version, bool) or candidate_version < 1:
+        gaps.append(gap(artifact, "candidate version must be a positive integer", stage, f"write candidate version {expected}"))
+    if set(prd_frontmatter) != CANDIDATE_FIELDS[stage]:
         gaps.append(gap(artifact, "candidate frontmatter does not match its exact schema", stage, "repair candidate frontmatter"))
-    if candidate.get("run") != control.get("run"):
+    if prd_frontmatter.get("run") != control.get("run"):
         gaps.append(gap(artifact, "candidate run identity does not match control.json", stage, "bind the candidate to this run"))
-    if candidate.get("version") != expected:
+    if prd_frontmatter.get("version") != expected:
         gaps.append(gap(artifact, f"candidate must use version {expected}", stage, f"write candidate version {expected}"))
-    if candidate.get("status") != "draft":
+    if prd_frontmatter.get("status") != "draft":
         gaps.append(gap(artifact, "producer candidate status must remain draft", stage, "record readiness without approval"))
-    if candidate.get("gate_ready") is not True:
+    if prd_frontmatter.get("gate_ready") is not True:
         gaps.append(gap(artifact, "producer has not recorded gate readiness", stage, "finish the candidate and set gate_ready true"))
-    if candidate.get("effective_config_revision") != control.get("effective_config_revision"):
+    effective_config_revision = prd_frontmatter.get("effective_config_revision")
+    if (
+        not isinstance(effective_config_revision, int)
+        or isinstance(effective_config_revision, bool)
+        or effective_config_revision != control.get("effective_config_revision")
+    ):
         gaps.append(gap(artifact, "candidate uses a stale effective configuration revision", stage, "revalidate against effective intake"))
+    if prd_frontmatter.get("intake_stale") is not False:
+        gaps.append(gap(artifact, "discovery reports stale intake", "intake", "apply the next repository/baseline amendment"))
+    if prd_frontmatter.get("cold_read") != "complete":
+        gaps.append(gap(artifact, "cold-read evidence is incomplete", stage, "complete and disposition the cold read"))
+    expected_repos = [item["repository"] for item in effective.get("repos", [])]
+    if prd_frontmatter.get("repos") != expected_repos:
+        gaps.append(gap(artifact, "declared repository scope differs from effective intake", stage, "revalidate repository scope"))
+    if canonical_value(prd_frontmatter.get("opened")) != canonical_value(effective.get("opened")):
+        gaps.append(gap(artifact, "candidate opened date differs from intake", stage, "copy the intake opened date"))
 
-    if stage == "discovery":
-        if candidate.get("intake_stale") is not False:
-            gaps.append(gap(artifact, "discovery reports stale intake", "intake", "apply the next repository/baseline amendment"))
-        if candidate.get("cold_read") != "complete":
-            gaps.append(gap(artifact, "cold-read evidence is incomplete", stage, "complete and disposition the cold read"))
-        cold_read = section(body, "Cold-read evidence")
-        if cold_read is None or not cold_read.strip():
-            gaps.append(gap(artifact, "Cold-read evidence section is absent or empty", stage, "record baseline findings and their disposition"))
-        expected_repos = [item["repository"] for item in effective.get("repos", [])]
-        if candidate.get("repos") != expected_repos:
-            gaps.append(gap(artifact, "declared repository scope differs from effective intake", stage, "revalidate repository scope"))
-        if canonical_value(candidate.get("opened")) != canonical_value(effective.get("opened")):
-            gaps.append(gap(artifact, "candidate opened date differs from intake", stage, "copy the intake opened date"))
-        _, body_gaps = discovery_ids_and_gaps(body, artifact)
-        gaps.extend(body_gaps)
+    if not decisions_path.is_file():
+        gaps.append(gap(DECISIONS_FILE, "decision log is missing", stage, f"produce {DECISIONS_FILE}"))
+        report["verdict"] = "BLOCKED"
+        return report
+    try:
+        decisions_frontmatter, decisions_body = read_frontmatter(decisions_path)
+    except (ControlError, yaml.YAMLError) as exc:
+        gaps.append(gap(DECISIONS_FILE, str(exc), stage, "repair decision-log frontmatter"))
+        report["verdict"] = "BLOCKED"
+        return report
+
+    if set(decisions_frontmatter) != DECISION_LOG_FIELDS:
+        gaps.append(gap(DECISIONS_FILE, "decision-log frontmatter does not match its exact schema", stage, "repair decision-log frontmatter"))
+    if decisions_frontmatter.get("run") != control.get("run"):
+        gaps.append(gap(DECISIONS_FILE, "decision-log frontmatter run identity does not match control.json", stage, "bind the decision log to this run"))
+    decision_log_version = decisions_frontmatter.get("version")
+    if not isinstance(decision_log_version, int) or isinstance(decision_log_version, bool) or decision_log_version < 1:
+        gaps.append(gap(DECISIONS_FILE, "decision-log frontmatter version must be a positive integer", stage, "repair decision-log frontmatter"))
+
+    decisions, decision_gaps = parse_decision_records(decisions_body)
+    gaps.extend(decision_gaps)
+    retrospective_rows, retrospective_gaps = parse_retrospective(decisions_body)
+    gaps.extend(retrospective_gaps)
+    prd_items, prd_gaps = parse_prd_items(prd_body)
+    gaps.extend(prd_gaps)
+    gaps.extend(validate_html_projection(run_dir, report["candidate_sha256"]))
+
+    derived_from = prd_frontmatter.get("derived_from")
+    if not isinstance(derived_from, dict) or set(derived_from) != {"artifact", "version", "sha256"}:
+        gaps.append(gap(PRD_FILE, "derived_from frontmatter is malformed", stage, "bind the PRD to the decision log bytes"))
     else:
-        predecessor = latest_acceptance(control, "discovery")
-        source_path = managed_path(run_dir, CANDIDATES["discovery"])
-        if predecessor is None:
-            gaps.append(gap(artifact, "accepted discovery provenance is absent", "discovery", "accept discovery first"))
+        if derived_from.get("artifact") != DECISIONS_FILE:
+            gaps.append(gap(PRD_FILE, "derived_from.artifact must equal 10-decisions.md", stage, "bind the PRD to the decision log"))
+        derived_version = derived_from.get("version")
+        if not isinstance(derived_version, int) or isinstance(derived_version, bool) or derived_version < 1:
+            gaps.append(gap(PRD_FILE, "derived_from.version must be a positive integer", stage, "repair the derived_from version"))
+        elif derived_version != decisions_frontmatter.get("version"):
+            gaps.append(gap(PRD_FILE, "derived_from.version does not match the decision-log version", stage, "update the derived_from version"))
+        if derived_from.get("sha256") != file_sha256(decisions_path):
+            gaps.append(gap(PRD_FILE, "derived_from does not bind the current decision-log bytes", stage, "update the derived_from sha256"))
+
+    live_decisions = {
+        decision_id: record for decision_id, record in decisions.items()
+        if record.get("status") == "settled"
+    }
+    if set(retrospective_rows) != set(live_decisions):
+        missing = sorted(set(live_decisions) - set(retrospective_rows))
+        extra = sorted(set(retrospective_rows) - set(live_decisions))
+        if missing:
+            gaps.append(gap(DECISIONS_FILE, f"retrospective is missing live decisions: {missing}", stage, "rebuild the retrospective table"))
+        if extra:
+            gaps.append(gap(DECISIONS_FILE, f"retrospective names nonexistent or superseded decisions: {extra}", stage, "remove invalid retrospective rows"))
+
+    prd_ids = set(prd_items)
+    for decision_id, row in retrospective_rows.items():
+        identifier_tokens = re.findall(r"\b[RPCIX]-[0-9]{3}\b", row["prd_ids"])
+        identifiers = set(identifier_tokens)
+        if row["disposition"] == "NORMATIVE":
+            if row["prd_ids"] != ", ".join(identifier_tokens) or len(identifier_tokens) != len(identifiers):
+                gaps.append(gap(DECISIONS_FILE, f"retrospective PRD identifier list is malformed for {decision_id}", stage, "use a unique comma-space separated PRD identifier list"))
+            if not identifiers:
+                gaps.append(gap(DECISIONS_FILE, f"retrospective NORMATIVE row {decision_id} must cite one or more PRD identifiers", stage, "repair the retrospective row"))
+            if row["reason"]:
+                gaps.append(gap(DECISIONS_FILE, f"retrospective NORMATIVE row {decision_id} must leave reason empty", stage, "repair the retrospective row"))
         else:
-            expected_source = {
-                "stage": "discovery",
-                "candidate_version": predecessor.get("candidate_version"),
-                "candidate_sha256": predecessor.get("candidate_sha256"),
-            }
-            if candidate.get("derived_from") != expected_source:
-                gaps.append(gap(artifact, "derived_from does not bind the accepted discovery version/hash", stage, "bind the spec to accepted discovery"))
-            if not source_path.is_file() or file_sha256(source_path) != predecessor.get("candidate_sha256"):
-                gaps.append(gap(CANDIDATES["discovery"], "current discovery bytes no longer match accepted discovery provenance", "discovery", "reopen discovery and accept a new version"))
-        for heading in SPEC_SECTIONS:
-            if len(re.findall(rf"(?m)^## {re.escape(heading)}\s*$", body)) != 1:
-                gaps.append(gap(artifact, f"required section {heading} must appear exactly once", stage, f"repair section {heading}"))
-        normative = re.findall(r"(?m)^### ([RPCIX]-[0-9]{3})\s+—\s+", body)
-        if not normative:
-            gaps.append(gap(artifact, "no normative identifiers are present", str(stage), "record at least one normative R/P/C/I/X-NNN obligation"))
-        if len(normative) != len(set(normative)):
-            gaps.append(gap(artifact, "normative identifiers are not unique", stage, "assign unique normative identifiers"))
-        if re.search(r"(?im)^## (Work Items|Files|Classes|Methods|Implementation|Tickets)\s*$", body):
-            gaps.append(gap(artifact, "spec contains an internal design or ticket section", stage, "move internal shape downstream"))
-        open_questions = section(body, "Open questions") or ""
-        if re.search(r"(?im)^(?:\s*Blocking\s*:|\s*\|.*\bblocking\b.*\|)", open_questions):
-            gaps.append(gap(artifact, "spec contains a blocking open question", "discovery", "resolve the behavior-changing question"))
-        decision_ids, _ = discovery_ids_and_gaps(
-            managed_path(run_dir, CANDIDATES["discovery"]).read_text(encoding="utf-8") if managed_path(run_dir, CANDIDATES["discovery"]).is_file() else "",
-            CANDIDATES["discovery"],
-        )
-        refs = set(re.findall(r"\bD-[0-9]{3}\b", body))
-        if refs - decision_ids:
-            gaps.append(gap(artifact, f"decision references do not resolve: {sorted(refs - decision_ids)}", stage, "repair decision references"))
+            if row["prd_ids"]:
+                gaps.append(gap(DECISIONS_FILE, f"retrospective NO_NORMATIVE_EFFECT row {decision_id} must leave PRD identifiers empty", stage, "repair the retrospective row"))
+            if not row["reason"]:
+                gaps.append(gap(DECISIONS_FILE, f"retrospective NO_NORMATIVE_EFFECT row {decision_id} must include a reason", stage, "repair the retrospective row"))
+        unresolved_prd_ids = sorted(identifiers - prd_ids)
+        if unresolved_prd_ids:
+            gaps.append(gap(DECISIONS_FILE, f"retrospective cites nonexistent PRD identifiers for {decision_id}: {unresolved_prd_ids}", stage, "repair the retrospective row"))
+        for item_id in sorted(identifiers & prd_ids):
+            if decision_id not in prd_items[item_id]:
+                gaps.append(gap(DECISIONS_FILE, f"retrospective points {decision_id} to {item_id}, but that PRD item does not cite {decision_id}", stage, "repair the retrospective and PRD citations"))
+
+    for item_id, cited in prd_items.items():
+        unresolved = sorted(cited - set(live_decisions))
+        if unresolved:
+            gaps.append(gap(PRD_FILE, f"{item_id} cites nonexistent or superseded decisions: {unresolved}", stage, "repair the PRD citations"))
+            continue
+        for decision_id in cited:
+            row = retrospective_rows.get(decision_id)
+            if row is None or row["disposition"] != "NORMATIVE":
+                gaps.append(gap(PRD_FILE, f"{item_id} cites {decision_id} but the retrospective does not mark it NORMATIVE", stage, "repair the retrospective and PRD citations"))
+                continue
+            identifiers = {token for token in re.findall(r"\b[RPCIX]-[0-9]{3}\b", row["prd_ids"])}
+            if item_id not in identifiers:
+                gaps.append(gap(PRD_FILE, f"{item_id} cites {decision_id} but the retrospective does not point back to it", stage, "repair the retrospective and PRD citations"))
+
     report["verdict"] = "PASS" if not gaps else "BLOCKED"
     return report
 
@@ -598,16 +979,32 @@ def check(run_dir: Path) -> dict[str, Any]:
 
 
 def validate_review(run_dir: Path, relative: str, report: dict[str, Any]) -> tuple[dict[str, Any], str, str]:
+    expected_reference = f"reviews/product_closure-v{report.get('candidate_version')}.json"
+    if relative != expected_reference:
+        raise ControlError(f"review reference must equal {expected_reference}")
     path = managed_path(run_dir, relative)
     try:
-        review = json.loads(path.read_text(encoding="utf-8"))
+        review = load_json(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         raise ControlError("review envelope is not valid JSON") from exc
     if not isinstance(review, dict) or set(review) != REVIEW_FIELDS:
         raise ControlError("review envelope fields do not match version-1 schema")
-    if review.get("version") != 1 or review.get("run") != report.get("run") or review.get("stage") != report.get("stage"):
+    review_version = review.get("version")
+    if (
+        review_version != 1
+        or isinstance(review_version, bool)
+        or review.get("run") != report.get("run")
+        or review.get("stage") != report.get("boundary")
+    ):
         raise ControlError("review envelope stage/version is invalid")
-    if review.get("candidate_version") != report.get("candidate_version") or review.get("candidate_sha256") != report.get("candidate_sha256"):
+    review_candidate_version = review.get("candidate_version")
+    if (
+        not isinstance(review_candidate_version, int)
+        or isinstance(review_candidate_version, bool)
+        or review_candidate_version < 1
+    ):
+        raise ControlError("review envelope candidate version must be a positive integer")
+    if review_candidate_version != report.get("candidate_version") or review.get("candidate_sha256") != report.get("candidate_sha256"):
         raise ControlError("review envelope is not bound to the current candidate version/hash")
     gaps = review.get("gaps")
     if (
@@ -657,6 +1054,18 @@ def advance(run_dir: Path, approval: Optional[str], review_ref: Optional[str], a
             raise ControlError("review envelope is BLOCKED")
     else:
         raise ControlError(f"authority {authority} is unavailable for this boundary")
+    final_report = candidate_report(run_dir, control, effective)
+    if (
+        final_report.get("candidate_sha256") != report.get("candidate_sha256")
+        or final_report.get("candidate_version") != report.get("candidate_version")
+    ):
+        raise ControlError("candidate bytes changed after review and before acceptance")
+    if final_report.get("verdict") != "PASS":
+        raise ControlError("candidate dependencies changed after review and before acceptance")
+    if review_reference is not None:
+        review_path = managed_path(run_dir, review_reference)
+        if not review_path.is_file() or file_sha256(review_path) != review_sha256:
+            raise ControlError("review evidence changed after validation and before acceptance")
     accepted = canonical_date(accepted, "acceptance date")
     stages = effective.get("stages", [])
     index = stages.index(stage)
@@ -694,25 +1103,8 @@ def reject(run_dir: Path, reason: str) -> str:
     return f"rejected {stage}; control revision {control['revision']}"
 
 
-def reopen(run_dir: Path, target: str, reason: str) -> str:
-    control, effective = verified_state(run_dir)
-    require_planning(control)
-    require_string(reason, "reopen reason")
-    if control.get("phase") != "spec" or target != "discovery":
-        raise ControlError("the only Stage 0–2 reopen is spec -> discovery")
-    if latest_acceptance(control, "discovery") is None:
-        raise ControlError("discovery has no accepted provenance to reopen")
-    control["phase"] = "discovery"
-    control["gates"]["discovery"] = "STALE"
-    control["gates"]["spec"] = "STALE"
-    control["revision"] += 1
-    control["blocked_reason"] = None
-    commit(run_dir, control)
-    return f"reopened spec -> discovery; next candidate version {expected_candidate_version(control, 'discovery')}"
-
-
 def mark_stale(run_dir: Path, reason: str) -> str:
-    control, effective = verified_state(run_dir)
+    control, _ = verified_state(run_dir)
     require_planning(control)
     require_string(reason, "mark-stale reason")
     if control.get("phase") != "discovery":
@@ -770,10 +1162,6 @@ def build_parser() -> argparse.ArgumentParser:
     stale.add_argument("--reason", required=True)
     amend = sub.add_parser("apply-amendment")
     amend.add_argument("--run", required=True, type=Path)
-    back = sub.add_parser("reopen")
-    back.add_argument("--run", required=True, type=Path)
-    back.add_argument("--to", required=True, choices=("discovery",))
-    back.add_argument("--reason", required=True)
     return parser
 
 
@@ -796,8 +1184,6 @@ def main(argv: Optional[list[str]] = None) -> int:
                 print(mark_stale(run_dir, args.reason))
             elif args.command == "apply-amendment":
                 print(apply_amendment(run_dir))
-            elif args.command == "reopen":
-                print(reopen(run_dir, args.to, args.reason))
             else:  # pragma: no cover
                 return 2
         return 0

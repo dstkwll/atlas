@@ -1085,8 +1085,10 @@ Owns:
 
 > A mandatory generated projection of `20-prd.md` for cold-read review.
 
-It is regenerated whenever the PRD changes and must exactly match the current Markdown source before
-product closure can pass. It is never authoritative and never contributes its own acceptance hash.
+It is regenerated whenever the PRD changes and must declare the exact current Markdown source path,
+source SHA-256, and renderer version before product closure can pass. The controller verifies this
+metadata binding without re-rendering, so “current” does not claim byte-for-byte body recomputation
+during verification. It is never authoritative and never contributes its own acceptance hash.
 
 ---
 
@@ -1239,7 +1241,9 @@ code, artifact, problem, and resume stage/action. A PASS envelope has no gaps. T
 validates and hashes this envelope but never asks it to modify the artifact or state. V1 does not
 add authenticated reviewer identities or signatures: the invoker must obtain the envelope from
 a fresh read-only context, while the controller enforces only schema and current run/version/hash
-binding. This limitation is explicit rather than implying cryptographic independence.
+binding. After acceptance, those exact review bytes remain required at the canonical run-relative
+path and their hash is rechecked with the accepted PRD/decision provenance. This limitation is
+explicit rather than implying cryptographic independence.
 
 ---
 
@@ -1994,9 +1998,10 @@ producer without changing authoritative state. A producer-authored completion fl
 that the attempt ended, never proof that product closure passed.
 
 **Mechanical checks:** candidate identity and version match the planning run; required decision
-identifiers and record fields are present and unique; declared repository scope matches the
-effective intake; the open-frontier structure contains no unresolved entry; cold-read evidence
-is recorded and dispositioned; intake is not stale; the required PRD-alignment retrospective
+identifiers and record fields are present and unique; every decision has a closed contribution
+grade; declared repository scope matches the effective intake; the exact open-frontier table contains
+no unresolved entry; the exact cold-read table gives each unique finding a non-placeholder
+disposition; intake is not stale; the required PRD-alignment retrospective
 contains exactly one row for every live decision; every `NORMATIVE` decision maps to current PRD
 identifiers; every `NO_NORMATIVE_EFFECT` decision has a reason and maps to none; every normative
 PRD item cites one or more live decisions; the mappings agree in both directions; `20-prd.md`
@@ -6210,8 +6215,26 @@ source SHA-256, and known renderer version for `20-prd.md`. The renderer determi
 its body from that source; the read-only controller verifies the metadata binding without
 re-rendering. The HTML is a generated projection for cold-read review, not a second source of truth.
 
+“Current” means that exact metadata binding, not that verification secretly recomputes the body.
+Rendering disables raw HTML, JavaScript and active-content schemes; network-loaded images are
+rendered as inert alt text, while ordinary HTTP(S) links and run-relative images remain usable.
+
 Its bytes never supersede the Markdown and never enter acceptance provenance independently. This
 makes readability mandatory without letting presentation rewrite authority.
+
+---
+
+## D-070 — Canonical PRD replacement uses one reserved draft path and fails detectably
+
+Discovery never edits canonical `20-prd.md` directly. It writes the complete proposal only to
+`.20-prd.next.md`; the renderer accepts no other draft name, validates and renders those exact bytes
+before replacement, then installs `20-prd.md` and `20-prd.html`. A render or staging failure leaves
+the prior pair unchanged and preserves the draft for repair.
+
+Portable filesystems do not provide one atomic rename across two files. An interruption between the
+two replacements may therefore leave a torn pair; metadata-only verification detects that mismatch,
+product closure blocks, and rerunning the same reserved-draft operation is the recovery. The writer
+does not promise an impossible two-file atomic transaction and may never consume another run file.
 
 ---
 

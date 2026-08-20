@@ -151,12 +151,13 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         "amendment": skills / "start-run" / "references" / "run-amendment.md",
         "discovery": skills / "discovery" / "SKILL.md",
         "discovery-template": skills / "discovery" / "references" / "run-layout.md",
+        "prd-template": skills / "discovery" / "references" / "prd-file.md",
         "control": skills / "control-run" / "SKILL.md",
         "review": skills / "control-run" / "references" / "boundary-review.md",
-        "spec": skills / "to-spec" / "SKILL.md",
-        "spec-template": skills / "to-spec" / "references" / "spec-file.md",
+        "intake-correction": skills.parent / "references" / "intake-correction.md",
         "spike": skills / "spike" / "SKILL.md",
         "controller": skills.parent / "tools" / "atlas_control.py",
+        "renderer": skills.parent / "tools" / "render_prd.py",
     }
     texts: dict[str, str] = {}
     for name, path in paths.items():
@@ -169,13 +170,15 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         "start": ["run.yaml", "control.json", "initialize", "AGENT_REVIEW", "HUMAN", "AUTO"],
         "state": ["control.json", "base_run_sha256", "accepted_amendment_count", "acceptances"],
         "amendment": ["amendments/NNN-", "accepted amendment count", "No `previous`"],
-        "discovery": ["producer", "read-only", "gate_ready", "status: draft", "control.json"],
+        "discovery": ["producer", "read-only", "gate_ready", "status: draft", "control.json", "20-prd.md", "render_prd.py"],
         "discovery-template": ["Cold-read evidence"],
+        "prd-template": ["derived_from", "Goals and outcomes", "Acceptance outcomes"],
         "control": ["read-only", "AGENT_REVIEW", "HUMAN", "One invocation", "atomic", "no transaction journal"],
         "review": ["candidate_version", "candidate_sha256", "PASS", "BLOCKED", "resume_stage", "resume_action"],
-        "spec": ["derived_from", "producer", "read-only", "status: draft", "control.json"],
+        "intake-correction": [".20-prd.next.md", "mark-stale", "apply-amendment", "run.yaml remains byte-for-byte unchanged"],
         "spike": ["authoritative `control.json`", "accepted_amendment_count", "ignore `00-state.md`"],
-        "controller": ["def initialize", "def check", "def advance", "def reject", "def mark_stale", "def apply_amendment", "def reopen"],
+        "controller": ["def initialize", "def check", "def advance", "def reject", "def mark_stale", "def apply_amendment"],
+        "renderer": ["def write_canonical", "def render", "def verify", "RENDERER_VERSION"],
     }
     for name, needles in required.items():
         text = texts.get(name, "")
@@ -189,21 +192,25 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         acceptance_fields = set(assigned_literal(texts.get("controller", ""), "ACCEPTANCE_FIELDS"))
         review_fields = set(assigned_literal(texts.get("controller", ""), "REVIEW_FIELDS"))
         gap_fields = set(assigned_literal(texts.get("controller", ""), "GAP_FIELDS"))
+        controller_renderer_version = assigned_literal(texts.get("controller", ""), "RENDERER_VERSION")
+        renderer_version = assigned_literal(texts.get("renderer", ""), "RENDERER_VERSION")
     except (SyntaxError, ValueError) as exc:
         findings.append(("cross", f"controller schemas are unreadable: {exc}"))
     else:
+        if controller_renderer_version != renderer_version:
+            findings.append(("cross", "controller and renderer version contracts differ"))
         discovery_maps = [
             set(item) for item in frontmatter_maps(texts.get("discovery-template", ""))
+            if {"run", "version"}.issubset(item)
+        ]
+        prd_maps = [
+            set(item) for item in frontmatter_maps(texts.get("prd-template", ""))
             if {"run", "version", "status", "gate_ready"}.issubset(item)
         ]
-        spec_maps = [
-            set(item) for item in frontmatter_maps(texts.get("spec-template", ""))
-            if {"run", "version", "status", "gate_ready"}.issubset(item)
-        ]
-        if set(controller_candidates["discovery"]) not in discovery_maps:
+        if set({"run", "version"}) not in discovery_maps:
+            findings.append(("cross", "discovery decision-log schema is missing required run/version frontmatter"))
+        if set(controller_candidates["discovery"]) not in prd_maps:
             findings.append(("cross", "discovery candidate schema does not match controller CANDIDATE_FIELDS"))
-        if set(controller_candidates["spec"]) not in spec_maps:
-            findings.append(("cross", "spec candidate schema does not match controller CANDIDATE_FIELDS"))
 
         try:
             state_maps = json_maps(texts.get("state", ""))
@@ -241,7 +248,10 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         if phrase.lower() in joined.lower():
             findings.append(("cross", f"legacy contract `{phrase}` remains — {reason}"))
 
-    for name in ("discovery", "spec"):
+    if (skills / "to-spec").exists():
+        findings.append(("cross", "to-spec remains in the Atlas plugin after product-closure migration"))
+
+    for name in ("discovery",):
         for sentence in re.split(r"(?<=[.!?])\s+|\n+", texts.get(name, "")):
             lower = sentence.lower()
             if "run.yaml" not in lower:
