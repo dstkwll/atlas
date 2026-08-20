@@ -189,9 +189,10 @@ producer without changing authoritative state. A producer-authored completion fl
 that the attempt ended, never proof that product closure passed.
 
 **Mechanical checks:** candidate identity and version match the planning run; required decision
-identifiers and record fields are present and unique; declared repository scope matches the
-effective intake; the open-frontier structure contains no unresolved entry; cold-read evidence
-is recorded and dispositioned; intake is not stale; the required PRD-alignment retrospective
+identifiers and record fields are present and unique; every decision has a closed contribution
+grade; declared repository scope matches the effective intake; the exact open-frontier table contains
+no unresolved entry; the exact cold-read table gives each unique finding a non-placeholder
+disposition; intake is not stale; the required PRD-alignment retrospective
 contains exactly one row for every live decision; every `NORMATIVE` decision maps to current PRD
 identifiers; every `NO_NORMATIVE_EFFECT` decision has a reason and maps to none; every normative
 PRD item cites one or more live decisions; the mappings agree in both directions; `20-prd.md`

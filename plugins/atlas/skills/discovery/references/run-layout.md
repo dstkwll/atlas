@@ -7,25 +7,19 @@ Discovery operates inside an initialized run:
 ├── run.yaml
 ├── control.json
 ├── 00-state.md
-└── 10-decisions.md
+├── 10-decisions.md
+├── 20-prd.md
+└── 20-prd.html
 ```
 
 `control.json` is authority. `00-state.md` is only a generated projection.
 
-Use this exact `10-decisions.md` frontmatter for every discovery candidate, including a reopened next version:
+`10-decisions.md` keeps provenance and the required retrospective table. Use this exact frontmatter:
 
 ```markdown
 ---
 run: <feature-slug copied from run.yaml>
 version: 1
-status: draft
-gate_ready: false
-intake_stale: false
-cold_read: pending
-effective_config_revision: 0
-opened: "<YYYY-MM-DD copied from run.yaml>"
-repos:
-  - <stable repository identity from effective intake>
 ---
 
 # Decisions — <title>
@@ -36,7 +30,9 @@ Pending.
 
 ## Cold-read evidence
 
-Pending. Record the baseline findings and the disposition of each finding.
+| Finding | Disposition |
+|---|---|
+| Pending. | Pending. |
 
 ## Open frontier
 
@@ -44,11 +40,10 @@ Pending. Record the baseline findings and the disposition of each finding.
 |---|---|---|
 ```
 
-Field rules:
+Create or resume the PRD immediately using [`prd-file.md`](prd-file.md), the sole owner of the complete PRD schema and canonical-write contract. This layout reference does not duplicate either.
 
-- The schema is exact; no approval, approved-copy, receipt, or supersedes fields exist.
-- `version` starts at `1`. After reopen, write one greater than the latest accepted discovery version in `control.json`.
-- `status` remains `draft`; the producer changes only completion/readiness fields.
-- `effective_config_revision`, `opened`, and `repos` mirror effective intake/control.
-- `intake_stale: true` requires `gate_ready: false` and Stage 0 amendment recovery.
-- `cold_read: complete` and `gate_ready: true` mean producer work ended, not that the boundary was accepted.
+Rules:
+
+- `10-decisions.md` frontmatter remains exact: only `run` and `version`.
+- Replace the initial cold-read placeholder with one unique row per finding and a non-empty disposition before claiming completion; use [`decision-record.md`](decision-record.md) for the exact closure contract.
+- `20-prd.md` and `20-prd.html` remain adjacent run artifacts; all mutation rules live in [`prd-file.md`](prd-file.md).

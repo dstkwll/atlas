@@ -602,10 +602,13 @@ classifies the run, but the first **producer** action may occur later in the pip
 The classifier therefore recommends the earliest admissible producer stage, while the control plane
 proves any required upstream contracts before allowing work to begin there.
 
-This does not change the shipped Stage 0–2 initializer. It rejects pre-existing discovery and
-amendment state before `control.json`; a pre-existing `20-prd.md` may coexist with initialization,
-but receives no acceptance from that fact. Any reused candidate at a prescribed artifact path remains
-untrusted until it passes the ordinary judge/authority path.
+The shipped Stage 0–2 initializer enforces that distinction. When discovery is selected,
+initialization creates its mutable gate and acceptance slot and starts there. When discovery is omitted,
+initialization creates no discovery gate or acceptance and starts at the first selected downstream
+phase for fail-closed handoff to its owner. It rejects pre-existing decision-log or amendment state
+before `control.json`; a pre-existing `20-prd.md` may coexist with initialization but receives no
+acceptance from that fact. Any reused candidate at a prescribed artifact path remains untrusted until
+it passes the ordinary judge/authority path.
 
 ---
 
@@ -989,9 +992,10 @@ It records only the current planning phase and revision, gate outcomes, the immu
 hash/effective amendment revision, and accepted candidate version/hash provenance. The
 controller replaces this one JSON file atomically. It is not execution runtime state and does
 not contain ticket ownership, attempts, retries, or repository-scoped factory events. Its mutable
-`gates` map contains only selected discovery boundaries. Immutable `run.yaml` retains later-stage
-and conditional policy; after product closure acceptance, `phase` may name the
-next selected stage without creating mutable state for that stage.
+`gates` map contains the discovery boundary only when selected. Immutable `run.yaml` retains
+later-stage and conditional policy. When discovery is omitted, `phase` begins at the first selected
+downstream stage with no mutable gate; after product closure acceptance, `phase` may likewise name
+the next selected stage without creating mutable state for that stage.
 
 An accepted discovery/product-closure candidate remains in its prescribed artifact path.
 Acceptance records its current version and content hash in `control.json`; V1 does not create a
@@ -1085,8 +1089,10 @@ Owns:
 
 > A mandatory generated projection of `20-prd.md` for cold-read review.
 
-It is regenerated whenever the PRD changes and must exactly match the current Markdown source before
-product closure can pass. It is never authoritative and never contributes its own acceptance hash.
+It is regenerated whenever the PRD changes and must declare the exact current Markdown source path,
+source SHA-256, and renderer version before product closure can pass. The controller verifies this
+metadata binding without re-rendering, so “current” does not claim byte-for-byte body recomputation
+during verification. It is never authoritative and never contributes its own acceptance hash.
 
 ---
 
@@ -1239,7 +1245,9 @@ code, artifact, problem, and resume stage/action. A PASS envelope has no gaps. T
 validates and hashes this envelope but never asks it to modify the artifact or state. V1 does not
 add authenticated reviewer identities or signatures: the invoker must obtain the envelope from
 a fresh read-only context, while the controller enforces only schema and current run/version/hash
-binding. This limitation is explicit rather than implying cryptographic independence.
+binding. After acceptance, those exact review bytes remain required at the canonical run-relative
+path and their hash is rechecked with the accepted PRD/decision provenance. This limitation is
+explicit rather than implying cryptographic independence.
 
 ---
 
@@ -1994,9 +2002,10 @@ producer without changing authoritative state. A producer-authored completion fl
 that the attempt ended, never proof that product closure passed.
 
 **Mechanical checks:** candidate identity and version match the planning run; required decision
-identifiers and record fields are present and unique; declared repository scope matches the
-effective intake; the open-frontier structure contains no unresolved entry; cold-read evidence
-is recorded and dispositioned; intake is not stale; the required PRD-alignment retrospective
+identifiers and record fields are present and unique; every decision has a closed contribution
+grade; declared repository scope matches the effective intake; the exact open-frontier table contains
+no unresolved entry; the exact cold-read table gives each unique finding a non-placeholder
+disposition; intake is not stale; the required PRD-alignment retrospective
 contains exactly one row for every live decision; every `NORMATIVE` decision maps to current PRD
 identifiers; every `NO_NORMATIVE_EFFECT` decision has a reason and maps to none; every normative
 PRD item cites one or more live decisions; the mappings agree in both directions; `20-prd.md`
@@ -5080,9 +5089,10 @@ inspection showed an asymmetric result:
 - evidence-local repair and selective workflow depth were already explicit in Atlas;
 - an uncertainty-axis router and earliest trustworthy semantic entry are **not** implemented by
   Autoprompt, whose invoked missions still enter its minimum roadmap/reviewer topology;
-- fresh architecture review corrected an overstatement about Atlas itself: the shipped initializer
-  rejects pre-existing discovery/amendment state but allows a pre-existing `20-spec.md`. The rule
-  must therefore govern acceptance authority, not pretend every candidate file postdates control.
+- fresh architecture review corrected an overstatement about Atlas itself: initialization may
+  coexist with a prescribed candidate (`20-prd.md` in the current vocabulary) without accepting it.
+  The rule must therefore govern acceptance authority, not pretend every candidate file postdates
+  control.
 
 ### Accepted consequence
 
@@ -6078,9 +6088,9 @@ discovery/specification split with discovery-authored PRD closure.
 Stages 0–2. `00-state.md` is its generated human projection. The planning snapshot is distinct
 from repository-scoped execution state under `.factory/runs/` and contains no execution
 attempt, ownership, retry, ticket, or event machinery. Its mutable gate state is limited to the
-selected discovery and specification boundaries this controller implements. Later-stage and
-conditional gate policy remains immutable in `run.yaml`; advancing `phase` to the next selected
-stage is a handoff, not acquisition of that stage's mutable state.
+selected discovery boundary this controller implements. Later-stage and conditional gate policy
+remains immutable in `run.yaml`; initializing or advancing
+`phase` to the next selected stage is a handoff, not acquisition of that stage's mutable state.
 
 The controller atomically replaces this one JSON file under a run-local single-writer lock.
 Atomic replacement prevents a torn file but cannot prevent two processes that both read revision
@@ -6134,10 +6144,11 @@ boundary therefore has conceptual `NOT_REQUIRED` semantics without adding a muta
 required pre-existing artifact records its real approval outcome; `NOT_REQUIRED` may not be used as
 a shortcut for trust.
 
-Current Stage 0–2 initialization behavior is unchanged. It rejects pre-existing discovery and
-amendment state before `control.json`; a pre-existing `20-spec.md` may coexist with initialization,
-but that fact grants no acceptance. Any reused candidate at a prescribed artifact path remains
-untrusted until judged normally. D-065 changes no shipped runtime in this architecture-only revision.
+Stage 0–2 initialization rejects pre-existing decision records and amendment state before
+`control.json`, but a pre-existing `20-prd.md` may coexist with initialization. That fact grants no
+acceptance. When discovery is selected, reused PRD material remains untrusted until reconciled and
+judged through normal product closure. When discovery is omitted, initialization creates no
+discovery gate or acceptance and hands off at the first selected downstream stage.
 
 This is an admission rule, not a new scoring model or runtime subsystem. Atlas adds no uncertainty
 taxonomy, automatic prose grading, or execution-playbook engine in this change. Semantic stage
@@ -6162,7 +6173,7 @@ boundary before engineering design begins.
 
 ## D-066 — Discovery continuously authors decisions and the living PRD
 
-Discovery owns both `10-decisions.md` and `20-prd.md` throughout the pre-design phase. Atlas no
+When selected, discovery owns both `10-decisions.md` and `20-prd.md` throughout the pre-design phase. Atlas no
 longer inserts a separate producer whose job is to translate discovery into a later specification
 artifact.
 
@@ -6179,14 +6190,16 @@ caches, and never fill available space merely because it exists.
 
 ## D-067 — Product closure is discovery's single exit boundary
 
-Discovery does not finish merely because its frontier is empty. It exits only through product
+When selected, discovery remains the first pre-design producer and does not finish merely because its
+frontier is empty. It exits only through product
 closure: one read-only boundary judgment over the current decision ledger, living PRD, cold-read
 evidence, and reconciliation retrospective, followed by the configured `AGENT_REVIEW` or `HUMAN`
 authority.
 
 This preserves D-065's rule in the new vocabulary. Required pre-existing PRD material may skip
-production, but it must still pass product closure. Omitted downstream boundaries remain
-conceptually `NOT_REQUIRED` and do not create mutable gate entries.
+production, but selected discovery still subjects it to product closure. Any boundary omitted from
+the selected workflow is conceptually `NOT_REQUIRED` and creates no mutable gate entry; D-067 does
+not make discovery mandatory.
 
 ---
 
@@ -6210,8 +6223,26 @@ source SHA-256, and known renderer version for `20-prd.md`. The renderer determi
 its body from that source; the read-only controller verifies the metadata binding without
 re-rendering. The HTML is a generated projection for cold-read review, not a second source of truth.
 
+“Current” means that exact metadata binding, not that verification secretly recomputes the body.
+Rendering disables raw HTML, JavaScript and active-content schemes; network-loaded images are
+rendered as inert alt text, while ordinary HTTP(S) links and run-relative images remain usable.
+
 Its bytes never supersede the Markdown and never enter acceptance provenance independently. This
 makes readability mandatory without letting presentation rewrite authority.
+
+---
+
+## D-070 — Canonical PRD replacement uses one reserved draft path and fails detectably
+
+Discovery never edits canonical `20-prd.md` directly. It writes the complete proposal only to
+`.20-prd.next.md`; the renderer accepts no other draft name, validates and renders those exact bytes
+before replacement, then installs `20-prd.md` and `20-prd.html`. A render or staging failure leaves
+the prior pair unchanged and preserves the draft for repair.
+
+Portable filesystems do not provide one atomic rename across two files. An interruption between the
+two replacements may therefore leave a torn pair; metadata-only verification detects that mismatch,
+product closure blocks, and rerunning the same reserved-draft operation is the recovery. The writer
+does not promise an impossible two-file atomic transaction and may never consume another run file.
 
 ---
 

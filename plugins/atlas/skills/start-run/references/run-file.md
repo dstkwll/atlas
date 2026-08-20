@@ -23,12 +23,10 @@ recommendation:
     - dimension: workflow
       evidence: <risk evidence supporting the recommendation>
 workflow: normal
-stages: [discovery, spec, program_design, tickets, execute, final_review, pr]
+stages: [discovery, program_design, tickets, execute, final_review, pr]
 governance: standard
 gates:
   discovery:
-    authority: HUMAN
-  spec:
     authority: HUMAN
   program_design:
     authority: HUMAN
@@ -74,16 +72,16 @@ overrides:
 - `goal` records the accepted fuzzy goal.
 - `planning_root` records the configuration `source`, the resolved `mode`, and a portable `path` form. Repository-relative roots record the configured relative value (`.planning` by default); external roots record `.` because the file already lives beneath that root. It never copies a machine-specific absolute path.
 - `recommendation` records workflow, governance, execution policy, environment policy, roster, the complete recommended gate map, and structured evidence before overrides.
-- `workflow` records the accepted workflow depth; `stages` records its resolved ordered stages.
-- `governance` records the accepted posture; `gates` records the fully resolved policy for every selected stage and every run-relevant conditionally reachable route. Every entry has `authority`. Valid authorities are `AUTO`, `AGENT_REVIEW`, `HUMAN`, `CONDITIONAL`, and `HUMAN_IF_CHANGED`. Discovery and specification specifically require `AGENT_REVIEW` or `HUMAN`; `AUTO` is unavailable because both boundaries contain semantic questions. The explicit map wins over later changes to global profiles.
-- A conditionally reachable route omitted from `stages` records `activation.when` separately from gate review policy. This remains immutable policy in `run.yaml`; it does not create mutable gate state in the Stage 0–2 `control.json`, which owns only selected discovery and specification boundaries. The later-stage controller that owns the route may materialize `NOT_REQUIRED` and reachable states when that capability is implemented.
+- `workflow` records the accepted workflow depth; `stages` records its resolved ordered stages beginning with the selected earliest producer. Discovery is present only when selected and is first when present.
+- `governance` records the accepted posture; `gates` records the fully resolved policy for every selected stage and every run-relevant conditionally reachable route. Every entry has `authority`. Valid authorities are `AUTO`, `AGENT_REVIEW`, `HUMAN`, `CONDITIONAL`, and `HUMAN_IF_CHANGED`. When discovery is selected, its product-closure boundary specifically requires `AGENT_REVIEW` or `HUMAN`; `AUTO` is unavailable because that boundary includes semantic acceptance. When discovery is omitted, omit its gate policy too. The explicit map wins over later changes to global profiles.
+- A conditionally reachable route omitted from `stages` records `activation.when` separately from gate review policy. This remains immutable policy in `run.yaml`; it does not create mutable gate state in the Stage 0–2 `control.json`, which owns the discovery boundary only when selected. If discovery is omitted, the controller creates no mutable gates and starts at the actual first selected phase. The later-stage controller that owns the route may materialize `NOT_REQUIRED` and reachable states when that capability is implemented.
 - A `CONDITIONAL` entry also records ordered `conditions`, the authority produced by each match, and `otherwise` authority. A `HUMAN_IF_CHANGED` entry records explicit `material_dimensions` and the `otherwise` authority used when none changed. Never write either authority without those operands: a label that requires later profile interpretation is not a resolved snapshot.
 
 Use these exact shapes when either special authority is selected:
 
 ```yaml
 gates:
-  spec:
+  tickets:
     authority: CONDITIONAL
     conditions:
       - when: <structured predicate over run or artifact state>

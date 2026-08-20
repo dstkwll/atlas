@@ -2,7 +2,7 @@
 
 The required shape of every entry in `10-decisions.md`. Appended the moment a question settles, never batched to the end of the run.
 
-The log is read twice: by whatever writes the specification, which needs what was decided, and by a later reader studying how decisions get made. The second reader is why options not taken, reasoning, and confidence are required — a record of the choice alone teaches nothing about the choosing, and one too thin to reconstruct the moment is worth less than one that repeats itself.
+The log is read twice: by the discovery producer maintaining `20-prd.md`, which needs the live decisions and their provenance, and by a later reader studying how decisions get made. The second reader is why options not taken, reasoning, and confidence are required — a record of the choice alone teaches nothing about the choosing, and one too thin to reconstruct the moment is worth less than one that repeats itself.
 
 ## Shape
 
@@ -53,11 +53,25 @@ All four are legitimate; conflating them is not. Every grill question arrives wi
 
 **`contribution`** stays null until the grading pass, then holds `load-bearing`, `minor`, or `irrelevant` with a sentence of justification.
 
+## Cold-read evidence
+
+The final cold read uses an exact table so every finding has a visible disposition:
+
+```markdown
+## Cold-read evidence
+
+| Finding | Disposition |
+|---|---|
+| No unresolved contradictions found. | No action required. |
+```
+
+Use one unique row per finding. Both cells are non-empty. Replace placeholders such as `Pending.`, `TODO`, or `TBD`; they cannot support `cold_read: complete`.
+
 ## Superseding
 
 Filling `contribution` at the grading pass is the one in-place edit a settled record receives; every other change supersedes. A reversed decision is never edited or deleted. Set its `status: superseded`, append a new record with `supersedes: D-007`, and state in the new record what changed. The reversal is the interesting part of the log.
 
-**Both edits, or neither.** A later record that narrows, replaces or overrides an earlier one carries `supersedes:` in its own frontmatter *and* flips the earlier record's `status`. Saying it in prose alone leaves the earlier record reading `settled`, and a consumer following the fields — which is what `to-spec` does — compiles the reversed choice as live. Prose is for the human; the fields are the contract.
+**Both edits, or neither.** A later record that narrows, replaces or overrides an earlier one carries `supersedes:` in its own frontmatter *and* flips the earlier record's `status`. Saying it in prose alone leaves the earlier record reading `settled`, and a consumer following the fields compiles the reversed choice as live. Prose is for the human; the fields are the contract.
 
 ## Open frontier
 
@@ -74,3 +88,23 @@ Rewritten at every round boundary — the map a resuming session reads:
 ```
 
 Questions with no blocker are the frontier; an empty table ends the run.
+
+## PRD alignment retrospective
+
+Discovery ends by rebuilding one whole-table retrospective:
+
+```markdown
+## PRD alignment retrospective
+
+| Decision | Disposition | PRD identifiers | Reason (required iff NO_NORMATIVE_EFFECT) |
+|---|---|---|---|
+| D-001 | NORMATIVE | R-001, C-001 | |
+| D-002 | NO_NORMATIVE_EFFECT | | Internal research-method choice; no externally observable consequence. |
+```
+
+Rules:
+
+- Exactly one row for every live `settled` decision and none for `superseded` decisions.
+- `NORMATIVE` rows name one or more current PRD identifiers and leave `Reason` empty.
+- `NO_NORMATIVE_EFFECT` rows name no PRD identifiers and give a non-empty reason.
+- The table is rebuilt after the final decision write; do not patch yesterday's table.

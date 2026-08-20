@@ -48,7 +48,7 @@ Check whether the working directory is inside a git repository, and name it — 
 
 Repository-relative `.planning/`, or an external absolute path. Lead with a recommendation — repository-relative where a single repository is the obvious scope — so it can be accepted in a word.
 
-Skip any question the environment has already settled. Where the working directory is a repository and the user names no external root, the answer is repository-relative and the question need not be asked.
+Skip the question only when an existing configuration already settles the planning root. Being inside a repository supports the recommendation but does not itself authorize a write.
 
 ### 3. Confirm before writing
 
@@ -71,17 +71,17 @@ This is the only V1 artifact-location setting. `evidence/` and `spikes/` are fix
 
 Report the path written. Every run will land at `<planning-root>/<feature-slug>/`; `atlas:start-run` chooses and validates the slug. An external root changes only the configured root, never the layout beneath it.
 
-### 5. Verify the deterministic controller dependency
+### 5. Verify the deterministic dependencies
 
-The installed plugin includes `tools/atlas_control.py`, the sole writer for authoritative post-intake state transitions. It requires Python 3.9 or newer and PyYAML. Verify with the platform-native Python launcher:
+The installed plugin includes `tools/atlas_control.py`, the sole writer for authoritative post-intake state transitions, and `tools/render_prd.py`, the mandatory PRD renderer. They require Python 3.9 or newer plus the packages pinned in `plugins/atlas/requirements.txt`. Verify with the platform-native Python launcher:
 
 ```shell
-python3 -c "import sys, yaml; assert sys.version_info >= (3, 9)"
+python3 -c "import sys, yaml, markdown_it; assert sys.version_info >= (3, 9)"
 ```
 
-On Windows, use `py -3 -c "import sys, yaml; assert sys.version_info >= (3, 9)"`. If Python or PyYAML is missing, stop and explain that discovery can still write a draft but Atlas cannot legally advance state. Offer the exact installation command (`python3 -m pip install pyyaml` or `py -3 -m pip install pyyaml`) and run it only after explicit approval; installing a package is an external side effect.
+On Windows, use `py -3 -c "import sys, yaml, markdown_it; assert sys.version_info >= (3, 9)"`. If Python or a pinned dependency is missing, stop and explain that discovery may only prepare non-canonical `.20-prd.next.md`; Atlas cannot update the canonical PRD or legally close discovery without the deterministic tooling. Offer the exact installation command (`python3 -m pip install -r plugins/atlas/requirements.txt` or `py -3 -m pip install -r plugins/atlas/requirements.txt`) and run it only after explicit approval; installing packages is an external side effect.
 
-Report whether the controller dependency is ready. Never pretend a missing dependency is optional.
+Report whether the deterministic dependencies are ready. Never pretend a missing dependency is optional.
 
 ## Standing rules
 

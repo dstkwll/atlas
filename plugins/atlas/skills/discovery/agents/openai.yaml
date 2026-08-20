@@ -1,5 +1,5 @@
 interface:
   display_name: "Discovery"
-  short_description: "Resolve open decisions before specification"
+  short_description: "Resolve open decisions and continuously maintain the living PRD"
 policy:
   allow_implicit_invocation: false

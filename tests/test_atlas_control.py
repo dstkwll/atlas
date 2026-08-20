@@ -1,6 +1,5 @@
 import hashlib
 import json
-import re
 import subprocess
 import sys
 import tempfile
@@ -12,6 +11,8 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 CLI = ROOT / "plugins" / "atlas" / "tools" / "atlas_control.py"
+
+ALL_PRD_IDS = "P-001, R-001, I-001, C-001, X-001"
 
 
 def run_cli(*args):
@@ -37,10 +38,9 @@ def write_markdown(path, frontmatter, body):
     )
 
 
-def run_config(discovery="HUMAN", spec="HUMAN"):
+def run_config(discovery="HUMAN"):
     gates = {
         "discovery": {"authority": discovery},
-        "spec": {"authority": spec},
         "program_design": {"authority": "HUMAN"},
     }
     return {
@@ -64,7 +64,7 @@ def run_config(discovery="HUMAN", spec="HUMAN"):
             "reasons": [{"dimension": "workflow", "evidence": "behavior must be specified"}],
         },
         "workflow": "normal",
-        "stages": ["discovery", "spec", "program_design"],
+        "stages": ["discovery", "program_design"],
         "governance": "standard",
         "gates": gates,
         "execution_policy": "conservative",
@@ -85,62 +85,123 @@ def run_config(discovery="HUMAN", spec="HUMAN"):
     }
 
 
-def discovery_body():
-    return """# Decisions — Demo
+def decision_log_frontmatter(*, version=1):
+    return {"run": "demo", "version": version}
+
+
+def decision_log_body(decisions=None, retrospective_rows=None, cold_read_text=None):
+    decisions = decisions or [
+        {
+            "id": "D-001",
+            "status": "settled",
+            "supersedes": "null",
+            "chosen": "Completion must be externally observable.",
+        }
+    ]
+    retrospective_rows = retrospective_rows if retrospective_rows is not None else [
+        {"decision": "D-001", "disposition": "NORMATIVE", "prd_ids": ALL_PRD_IDS, "reason": ""}
+    ]
+    decision_sections = []
+    for item in decisions:
+        decision_sections.append(
+            f"""### {item['id']} — Decision
+
+```yaml
+id: {item['id']}
+route: grill
+findings: null
+status: {item['status']}
+decided: 2026-08-20
+origin: accepted-recommendation
+confidence: high
+unblocked: []
+blocked_by: []
+supersedes: {item['supersedes']}
+contribution: load-bearing
+```
+
+**Chosen:** {item['chosen']}
+"""
+        )
+    rows = "\n".join(
+        f"| {row['decision']} | {row['disposition']} | {row['prd_ids']} | {row['reason']} |"
+        for row in retrospective_rows
+    )
+    cold_read_text = cold_read_text or """| Finding | Disposition |
+|---|---|
+| No unresolved contradictions found. | No action required. |"""
+    return f"""# Decisions — Demo
 
 ## Problem test
 
-Completion is not observable.
+Completion is not externally observable.
 
 ## Cold-read evidence
 
-A fresh baseline read found no conflicting behavior; the settled decision below dispositions that finding.
+{cold_read_text}
 
 ## Open frontier
 
 | Question | Route | Blocked by |
 |---|---|---|
 
-### D-001 — Should completion be observable?
+{''.join(decision_sections)}
+## PRD alignment retrospective
 
-```yaml
-id: D-001
-route: grill
-findings: null
-status: settled
-decided: 2026-08-20
-origin: accepted-recommendation
-confidence: high
-unblocked: []
-blocked_by: []
-supersedes: null
-contribution: load-bearing
-```
-
-**Chosen:** Completion must be externally observable.
+| Decision | Disposition | PRD identifiers | Reason (required iff NO_NORMATIVE_EFFECT) |
+|---|---|---|---|
+{rows}
 """
 
 
-def discovery_frontmatter(*, version=1, ready=True, stale=False, repos=None, revision=0):
+def prd_frontmatter(decisions_path, *, version=1, ready=True, stale=False, cold_read="complete", revision=0):
+    text = decisions_path.read_text(encoding="utf-8")
+    raw, _ = text[4:].split("\n---\n", 1)
+    decision_frontmatter = yaml.safe_load(raw)
     return {
         "run": "demo",
         "version": version,
         "status": "draft",
         "gate_ready": ready,
         "intake_stale": stale,
-        "cold_read": "complete",
+        "cold_read": cold_read,
         "effective_config_revision": revision,
         "opened": "2026-08-20",
-        "repos": repos or ["fixture"],
+        "repos": ["fixture"],
+        "derived_from": {
+            "artifact": "10-decisions.md",
+            "version": decision_frontmatter["version"],
+            "sha256": sha256(decisions_path),
+        },
     }
 
 
-def spec_body():
-    return """# Spec — Demo
+def prd_body(*, derived_from="D-001", out_of_scope_from="D-001", open_questions="None.", problem="Completion is not externally observable."):
+    return f"""# Product requirements — Demo
 
 ## Problem
 
-Completion is not externally observable.
+{problem}
+
+## Goals and outcomes
+
+- Users can tell when the product finished work.
+
+## Non-goals
+
+- Internal design choices.
+
+## Actors
+
+- Operator
+
+## Scenarios
+
+### P-001 — Observe completion
+**Current:** Completion is unclear.
+**Target:** Completion is obvious.
+**Acceptance:** An operator can tell when processing ends.
+**Derived from:** {derived_from}
 
 ## Requirements
 
@@ -148,64 +209,97 @@ Completion is not externally observable.
 **Current:** Completion is not visible.
 **Target:** Completion is visible.
 **Acceptance:** A completion indication is observable.
-**Derived from:** D-001
-
-## Prohibitions
-
-None.
-
-## Constraints
-
-None.
+**Derived from:** {derived_from}
 
 ## Invariants
 
-None.
+### I-001 — Stable completion signal
+**Rule:** Completion remains externally observable.
+**Derived from:** {derived_from}
 
-## Out of scope
+## Contracts and interfaces
 
-| ID | Excluded | Why | Derived from |
-|---|---|---|---|
-| X-001 | Internal design | Later stage | D-001 |
+### C-001 — Completion surface
+**Contract:** The product boundary exposes completion.
+**Derived from:** {derived_from}
 
-## Edge coverage
+## Edge and failure cases
 
-| Edge | Category | Resolution |
-|---|---|---|
-| exact boundary | boundary | R-001 |
+### X-001 — Internal design remains downstream
+**Case:** Internal design is excluded.
+**Resolution:** Later stage.
+**Derived from:** {out_of_scope_from}
+
+## Observability
+
+- Completion state is externally inspectable.
+
+## Acceptance outcomes
+
+- Users observe completion without internal knowledge.
 
 ## Open questions
 
-None.
+{open_questions}
 """
 
 
-def spec_frontmatter(discovery_record, *, version=1, ready=True):
-    return {
-        "run": "demo",
-        "version": version,
-        "status": "draft",
-        "gate_ready": ready,
-        "effective_config_revision": 0,
-        "derived_from": {
-            "stage": "discovery",
-            "candidate_version": discovery_record["candidate_version"],
-            "candidate_sha256": discovery_record["candidate_sha256"],
-        },
-    }
+def write_decisions(path, **kwargs):
+    write_markdown(path / "10-decisions.md", decision_log_frontmatter(), decision_log_body(**kwargs))
 
 
-def make_run(path, *, discovery="HUMAN", spec="HUMAN"):
-    config = run_config(discovery, spec)
+def write_prd(path, *, version=1, ready=True, stale=False, cold_read="complete", revision=0, body_kwargs=None):
+    decisions_path = path / "10-decisions.md"
+    write_markdown(
+        path / "20-prd.md",
+        prd_frontmatter(
+            decisions_path,
+            version=version,
+            ready=ready,
+            stale=stale,
+            cold_read=cold_read,
+            revision=revision,
+        ),
+        prd_body(**(body_kwargs or {})),
+    )
+
+
+def write_prd_html(path, *, source="20-prd.md", source_sha=None, renderer_version="1.0.0"):
+    html = f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="atlas-source" content="{source}">
+  <meta name="atlas-source-sha256" content="{source_sha or sha256(path / '20-prd.md')}">
+  <meta name="atlas-renderer-version" content="{renderer_version}">
+</head>
+<body><p>Living PRD</p></body>
+</html>
+"""
+    (path / "20-prd.html").write_text(html, encoding="utf-8")
+
+
+def write_discovery(path, *, version=1, ready=True, stale=False, cold_read="complete", revision=0, decisions=None, retrospective_rows=None, body_kwargs=None):
+    write_decisions(path, decisions=decisions, retrospective_rows=retrospective_rows)
+    write_prd(
+        path,
+        version=version,
+        ready=ready,
+        stale=stale,
+        cold_read=cold_read,
+        revision=revision,
+        body_kwargs=body_kwargs,
+    )
+    write_prd_html(path)
+
+
+def make_run(path, *, discovery="HUMAN"):
+    config = run_config(discovery)
     (path / "run.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
     result = run_cli("initialize", "--run", path)
     if result.returncode != 0:
         raise AssertionError(result.stderr)
     return config
-
-
-def write_discovery(path, **kwargs):
-    write_markdown(path / "10-decisions.md", discovery_frontmatter(**kwargs), discovery_body())
 
 
 def advance_discovery(path, *, review=None):
@@ -223,18 +317,18 @@ def advance_discovery(path, *, review=None):
 def write_review(path, record, verdict="PASS", *, candidate_sha256=None):
     review_dir = path / "reviews"
     review_dir.mkdir(exist_ok=True)
-    review = review_dir / f"{record['stage']}-v{record['candidate_version']}.json"
+    review = review_dir / f"product_closure-v{record['candidate_version']}.json"
     gaps = [] if verdict == "PASS" else [{
         "code": "semantic-consequence-unresolved",
-        "artifact": "10-decisions.md",
+        "artifact": "20-prd.md",
         "problem": "A consequence is unresolved",
         "resume_stage": "discovery",
-        "resume_action": "resolve D-002 and rerun review",
+        "resume_action": "repair the PRD and rerun product closure",
     }]
     review.write_text(json.dumps({
         "version": 1,
         "run": "demo",
-        "stage": record["stage"],
+        "stage": "product_closure",
         "candidate_version": record["candidate_version"],
         "candidate_sha256": candidate_sha256 or record["candidate_sha256"],
         "verdict": verdict,
@@ -256,17 +350,17 @@ class AtlasControlTests(unittest.TestCase):
             control = read_control(run)
             self.assertEqual((control["phase"], control["revision"]), ("discovery", 1))
             self.assertEqual(control["base_run_sha256"], sha256(run / "run.yaml"))
-            self.assertEqual(control["acceptances"], {"discovery": None, "spec": None})
-            self.assertEqual(control["gates"], {"discovery": "PENDING", "spec": "PENDING"})
+            self.assertEqual(control["acceptances"], {"discovery": None})
+            self.assertEqual(control["gates"], {"discovery": "PENDING"})
             self.assertTrue((run / "00-state.md").is_file())
 
     def test_initialize_requires_authority_only_for_stage02_boundaries(self):
         with tempfile.TemporaryDirectory() as td:
             run = Path(td)
             config = run_config()
-            config["stages"] = [
-                "discovery", "spec", "program_design", "tickets", "execute", "final_review", "pr"
-            ]
+            config["stages"] = ["discovery", "program_design", "tickets", "execute", "final_review", "pr"]
+            config["gates"]["tickets"] = {"authority": "AGENT_REVIEW"}
+            config["recommendation"]["gates"] = config["gates"]
             (run / "run.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
 
             result = run_cli("initialize", "--run", run)
@@ -283,25 +377,26 @@ class AtlasControlTests(unittest.TestCase):
 
             result = run_cli("check", "--run", run)
 
-            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             report = json.loads(result.stdout)
             self.assertEqual(report["verdict"], "PASS")
+            self.assertEqual(report["boundary"], "product_closure")
             self.assertEqual((run / "control.json").read_bytes(), before)
             self.assertEqual(read_control(run)["gates"]["discovery"], "PENDING")
-            self.assertEqual(read_control(run)["acceptances"], {"discovery": None, "spec": None})
+            self.assertEqual(read_control(run)["acceptances"], {"discovery": None})
 
     def test_mechanical_check_does_not_grade_prose_semantics(self):
         with tempfile.TemporaryDirectory() as td:
             run = Path(td)
             make_run(run)
-            write_markdown(
-                run / "10-decisions.md",
-                discovery_frontmatter(),
-                discovery_body().replace(
-                    "Completion must be externally observable.",
-                    "Words exist but their meaning is intentionally not machine-graded.",
-                ),
-            )
+            write_decisions(run, decisions=[{
+                "id": "D-001",
+                "status": "settled",
+                "supersedes": "null",
+                "chosen": "Words exist but their meaning is intentionally not machine-graded.",
+            }])
+            write_prd(run, body_kwargs={"problem": "Words exist but their meaning is intentionally not machine-graded."})
+            write_prd_html(run)
 
             result = run_cli("check", "--run", run)
 
@@ -312,24 +407,30 @@ class AtlasControlTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             run = Path(td)
             make_run(run)
-            write_markdown(
-                run / "10-decisions.md",
-                discovery_frontmatter(),
-                discovery_body().replace("status: settled", "status: open"),
-            )
+            write_discovery(run, decisions=[{
+                "id": "D-001",
+                "status": "open",
+                "supersedes": "null",
+                "chosen": "Completion must be externally observable.",
+            }])
 
             result = run_cli("check", "--run", run)
 
             self.assertNotEqual(result.returncode, 0)
             report = json.loads(result.stdout)
-            self.assertTrue(any("not settled" in item["problem"] for item in report["gaps"]))
+            self.assertTrue(any("not settled or superseded" in item["problem"] for item in report["gaps"]))
 
     def test_discovery_requires_reviewable_cold_read_evidence(self):
         with tempfile.TemporaryDirectory() as td:
             run = Path(td)
             make_run(run)
-            body = re.sub(r"(?ms)^## Cold-read evidence\s*$.*?(?=^## )", "", discovery_body())
-            write_markdown(run / "10-decisions.md", discovery_frontmatter(), body)
+            body = decision_log_body().replace(
+                "## Cold-read evidence\n\n| Finding | Disposition |\n|---|---|\n| No unresolved contradictions found. | No action required. |\n\n",
+                "",
+            )
+            write_markdown(run / "10-decisions.md", decision_log_frontmatter(), body)
+            write_prd(run)
+            write_prd_html(run)
 
             result = run_cli("check", "--run", run)
 
@@ -338,31 +439,21 @@ class AtlasControlTests(unittest.TestCase):
                 "Cold-read evidence" in item["problem"] for item in json.loads(result.stdout)["gaps"]
             ))
 
-    def test_human_discovery_and_spec_transitions_record_current_provenance(self):
+    def test_human_product_closure_transition_records_current_provenance(self):
         with tempfile.TemporaryDirectory() as td:
             run = Path(td)
             make_run(run)
             write_discovery(run)
-            discovery = advance_discovery(run)
-            write_markdown(run / "20-spec.md", spec_frontmatter(discovery), spec_body())
 
-            result = run_cli(
-                "advance", "--run", run, "--approval", "human", "--date", "2026-08-21"
-            )
+            result = run_cli("advance", "--run", run, "--approval", "human", "--date", "2026-08-21")
 
             self.assertEqual(result.returncode, 0, result.stderr)
             control = read_control(run)
-            self.assertEqual((control["phase"], control["revision"]), ("program_design", 3))
-            self.assertEqual(
-                control["gates"],
-                {"discovery": "HUMAN_APPROVED", "spec": "HUMAN_APPROVED"},
-            )
-            self.assertEqual(set(control["acceptances"]), {"discovery", "spec"})
-            self.assertEqual(
-                [control["acceptances"][stage]["authority"] for stage in ("discovery", "spec")],
-                ["HUMAN", "HUMAN"],
-            )
-            self.assertEqual(discovery["candidate_sha256"], sha256(run / "10-decisions.md"))
+            self.assertEqual((control["phase"], control["revision"]), ("program_design", 2))
+            self.assertEqual(control["gates"], {"discovery": "HUMAN_APPROVED"})
+            self.assertEqual(set(control["acceptances"]), {"discovery"})
+            self.assertEqual(control["acceptances"]["discovery"]["authority"], "HUMAN")
+            self.assertEqual(control["acceptances"]["discovery"]["candidate_sha256"], sha256(run / "20-prd.md"))
 
             before_handoff = (run / "control.json").read_bytes()
             handoff = run_cli("check", "--run", run)
@@ -372,23 +463,6 @@ class AtlasControlTests(unittest.TestCase):
             self.assertIn("outside the Stage 0–2 controller", handoff_report["gaps"][0]["problem"])
             self.assertEqual((run / "control.json").read_bytes(), before_handoff)
 
-    def test_spec_requires_normative_identifier_and_rejects_explicit_blocker(self):
-        variants = {
-            "missing-normative-id": spec_body().replace("### R-001 — Observable completion", "Observable completion"),
-            "explicit-blocker": spec_body().replace("## Open questions\n\nNone.", "## Open questions\n\nBlocking: output encoding is unresolved."),
-        }
-        for name, body in variants.items():
-            with self.subTest(name=name), tempfile.TemporaryDirectory() as td:
-                run = Path(td)
-                make_run(run)
-                write_discovery(run)
-                discovery = advance_discovery(run)
-                write_markdown(run / "20-spec.md", spec_frontmatter(discovery), body)
-
-                result = run_cli("check", "--run", run)
-
-                self.assertNotEqual(result.returncode, 0)
-
     def test_tampered_state_projection_is_ignored_for_legality(self):
         with tempfile.TemporaryDirectory() as td:
             run = Path(td)
@@ -396,12 +470,10 @@ class AtlasControlTests(unittest.TestCase):
             write_discovery(run)
             (run / "00-state.md").write_text("---\nphase: fabricated\nrevision: 999\n---\n", encoding="utf-8")
 
-            result = run_cli(
-                "advance", "--run", run, "--approval", "human", "--date", "2026-08-20"
-            )
+            result = run_cli("advance", "--run", run, "--approval", "human", "--date", "2026-08-20")
 
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertEqual(read_control(run)["phase"], "spec")
+            self.assertEqual(read_control(run)["phase"], "program_design")
 
     def test_agent_review_pass_is_bound_to_candidate_and_recorded(self):
         with tempfile.TemporaryDirectory() as td:
@@ -411,19 +483,18 @@ class AtlasControlTests(unittest.TestCase):
             candidate = {
                 "stage": "discovery",
                 "candidate_version": 1,
-                "candidate_sha256": sha256(run / "10-decisions.md"),
+                "candidate_sha256": sha256(run / "20-prd.md"),
             }
             review = write_review(run, candidate)
 
             result = run_cli(
-                "advance", "--run", run, "--review", review.relative_to(run),
-                "--date", "2026-08-20",
+                "advance", "--run", run, "--review", review.relative_to(run), "--date", "2026-08-20"
             )
 
             self.assertEqual(result.returncode, 0, result.stderr)
             record = read_control(run)["acceptances"]["discovery"]
             self.assertEqual(record["authority"], "AGENT_REVIEW")
-            self.assertEqual(record["review_reference"], "reviews/discovery-v1.json")
+            self.assertEqual(record["review_reference"], "reviews/product_closure-v1.json")
             self.assertEqual(record["review_sha256"], sha256(review))
             self.assertEqual(read_control(run)["gates"]["discovery"], "AGENT_APPROVED")
 
@@ -436,7 +507,7 @@ class AtlasControlTests(unittest.TestCase):
                 candidate = {
                     "stage": "discovery",
                     "candidate_version": 1,
-                    "candidate_sha256": sha256(run / "10-decisions.md"),
+                    "candidate_sha256": sha256(run / "20-prd.md"),
                 }
                 review = write_review(
                     run,
@@ -451,8 +522,8 @@ class AtlasControlTests(unittest.TestCase):
                 self.assertNotEqual(result.returncode, 0)
                 self.assertEqual((run / "control.json").read_bytes(), before)
 
-    def test_agent_review_is_bound_to_run_and_gap_schema(self):
-        for case in ("wrong-run", "missing-code", "blank-resume-action"):
+    def test_agent_review_is_bound_to_boundary_run_and_gap_schema(self):
+        for case in ("wrong-run", "wrong-stage", "missing-code", "blank-resume-action"):
             with self.subTest(case=case), tempfile.TemporaryDirectory() as td:
                 run = Path(td)
                 make_run(run, discovery="AGENT_REVIEW")
@@ -460,16 +531,18 @@ class AtlasControlTests(unittest.TestCase):
                 candidate = {
                     "stage": "discovery",
                     "candidate_version": 1,
-                    "candidate_sha256": sha256(run / "10-decisions.md"),
+                    "candidate_sha256": sha256(run / "20-prd.md"),
                 }
                 review = write_review(
                     run,
                     candidate,
-                    verdict="BLOCKED" if case != "wrong-run" else "PASS",
+                    verdict="BLOCKED" if case in {"missing-code", "blank-resume-action"} else "PASS",
                 )
                 data = json.loads(review.read_text(encoding="utf-8"))
                 if case == "wrong-run":
                     data["run"] = "another-run"
+                elif case == "wrong-stage":
+                    data["stage"] = "discovery"
                 elif case == "missing-code":
                     data["gaps"][0].pop("code")
                 else:
@@ -479,66 +552,22 @@ class AtlasControlTests(unittest.TestCase):
                 result = run_cli("advance", "--run", run, "--review", review.relative_to(run))
 
                 self.assertNotEqual(result.returncode, 0)
-                expected = "stage/version is invalid" if case == "wrong-run" else "gaps are malformed"
+                expected = "stage/version is invalid" if case in {"wrong-run", "wrong-stage"} else "gaps are malformed"
                 self.assertIn(expected, result.stderr)
                 self.assertEqual(read_control(run)["revision"], 1)
 
-    def test_auto_is_unavailable_for_discovery_and_spec(self):
-        for stage in ("discovery", "spec"):
-            with self.subTest(stage=stage), tempfile.TemporaryDirectory() as td:
+    def test_auto_remains_unavailable_for_product_closure_boundary(self):
+        for authority, expected in (("AUTO", False), ("BOGUS", False), ("HUMAN", True), ("AGENT_REVIEW", True)):
+            with self.subTest(authority=authority), tempfile.TemporaryDirectory() as td:
                 run = Path(td)
-                config = run_config("AUTO" if stage == "discovery" else "HUMAN", "AUTO")
+                config = run_config(discovery=authority)
                 (run / "run.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
 
                 result = run_cli("initialize", "--run", run)
 
-                self.assertNotEqual(result.returncode, 0)
-                self.assertIn("AGENT_REVIEW or HUMAN", result.stderr)
-                self.assertFalse((run / "control.json").exists())
-
-    def test_unknown_semantic_boundary_authority_is_rejected_at_initialization(self):
-        with tempfile.TemporaryDirectory() as td:
-            run = Path(td)
-            config = run_config(discovery="UNSUPPORTED")
-            (run / "run.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
-
-            result = run_cli("initialize", "--run", run)
-
-            self.assertNotEqual(result.returncode, 0)
-            self.assertIn("AGENT_REVIEW or HUMAN", result.stderr)
-            self.assertFalse((run / "control.json").exists())
-
-    def test_reopen_preserves_acceptance_and_requires_next_candidate_version(self):
-        with tempfile.TemporaryDirectory() as td:
-            run = Path(td)
-            make_run(run)
-            write_discovery(run)
-            accepted = advance_discovery(run)
-
-            reopened = run_cli(
-                "reopen", "--run", run, "--to", "discovery", "--reason", "spec exposed a gap"
-            )
-            self.assertEqual(reopened.returncode, 0, reopened.stderr)
-            control = read_control(run)
-            self.assertEqual(control["acceptances"]["discovery"], accepted)
-            self.assertEqual(control["gates"]["discovery"], "STALE")
-
-            old_version = run_cli("check", "--run", run)
-            self.assertNotEqual(old_version.returncode, 0)
-            self.assertIn("version 2", old_version.stdout)
-
-            write_discovery(run, version=2)
-            passed = run_cli("check", "--run", run)
-            self.assertEqual(passed.returncode, 0, passed.stdout + passed.stderr)
-            self.assertNotEqual(sha256(run / "10-decisions.md"), accepted["candidate_sha256"])
-
-            reaccepted = run_cli(
-                "advance", "--run", run, "--approval", "human", "--date", "2026-08-21"
-            )
-            self.assertEqual(reaccepted.returncode, 0, reaccepted.stderr)
-            current = read_control(run)["acceptances"]["discovery"]
-            self.assertEqual(current["candidate_version"], 2)
-            self.assertNotEqual(current["candidate_sha256"], accepted["candidate_sha256"])
+                self.assertEqual(result.returncode == 0, expected, result.stderr)
+                if not expected:
+                    self.assertIn("AGENT_REVIEW or HUMAN", result.stderr)
 
     def test_reject_records_configured_authority_outcome_without_accepting(self):
         with tempfile.TemporaryDirectory() as td:
@@ -552,7 +581,142 @@ class AtlasControlTests(unittest.TestCase):
             control = read_control(run)
             self.assertEqual(control["gates"]["discovery"], "REJECTED")
             self.assertEqual(control["blocked_reason"], "human declined")
-            self.assertEqual(control["acceptances"], {"discovery": None, "spec": None})
+            self.assertEqual(control["acceptances"], {"discovery": None})
+
+    def test_initialize_product_closure_run_uses_only_discovery_gate_and_acceptance_slot(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            config = run_config()
+            (run / "run.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+
+            result = run_cli("initialize", "--run", run)
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            control = read_control(run)
+            self.assertEqual(control["phase"], "discovery")
+            self.assertEqual(control["gates"], {"discovery": "PENDING"})
+            self.assertEqual(control["acceptances"], {"discovery": None})
+
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            config = run_config()
+            config["gates"] = {"program_design": {"authority": "HUMAN"}}
+            config["recommendation"]["gates"] = config["gates"]
+            (run / "run.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+
+            blocked = run_cli("initialize", "--run", run)
+
+            self.assertNotEqual(blocked.returncode, 0)
+            self.assertIn("discovery gate must exist exactly when discovery is selected", blocked.stderr)
+
+    def test_product_closure_uses_prd_candidate_without_requiring_spec_artifact(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            make_run(run)
+            write_discovery(run)
+
+            result = run_cli("check", "--run", run)
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            report = json.loads(result.stdout)
+            self.assertEqual(report["stage"], "discovery")
+            self.assertEqual(report["boundary"], "product_closure")
+            self.assertEqual(report["candidate_version"], 1)
+            self.assertEqual(report["candidate_sha256"], sha256(run / "20-prd.md"))
+            self.assertFalse((run / "20-spec.md").exists())
+
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            make_run(run)
+            write_decisions(run)
+            write_prd_html(run, source_sha="0" * 64)
+
+            blocked = run_cli("check", "--run", run)
+
+            self.assertNotEqual(blocked.returncode, 0)
+            self.assertIn("20-prd.md", blocked.stdout)
+
+    def test_product_closure_blocked_review_preserves_lifecycle_state(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            make_run(run, discovery="AGENT_REVIEW")
+            write_discovery(run)
+            review_dir = run / "reviews"
+            review_dir.mkdir()
+            review = review_dir / "product_closure-v1.json"
+            review.write_text(json.dumps({
+                "version": 1,
+                "run": "demo",
+                "stage": "product_closure",
+                "candidate_version": 1,
+                "candidate_sha256": sha256(run / "20-prd.md"),
+                "verdict": "BLOCKED",
+                "gaps": [{
+                    "code": "prd-omits-observable-outcome",
+                    "artifact": "20-prd.md",
+                    "problem": "A product consequence is understated.",
+                    "resume_stage": "discovery",
+                    "resume_action": "repair the cited PRD obligation and rerun closure",
+                }],
+            }, indent=2) + "\n", encoding="utf-8")
+            before = (run / "control.json").read_bytes()
+
+            result = run_cli("advance", "--run", run, "--review", review.relative_to(run))
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual((run / "control.json").read_bytes(), before)
+            self.assertEqual(read_control(run)["phase"], "discovery")
+            self.assertEqual(read_control(run)["gates"]["discovery"], "PENDING")
+
+    def test_product_closure_review_must_bind_current_prd_and_records_discovery_acceptance(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            make_run(run, discovery="AGENT_REVIEW")
+            write_discovery(run)
+            review_dir = run / "reviews"
+            review_dir.mkdir()
+            wrong = review_dir / "wrong.json"
+            wrong.write_text(json.dumps({
+                "version": 1,
+                "run": "demo",
+                "stage": "product_closure",
+                "candidate_version": 2,
+                "candidate_sha256": "0" * 64,
+                "verdict": "PASS",
+                "gaps": [],
+            }, indent=2) + "\n", encoding="utf-8")
+
+            rejected = run_cli("advance", "--run", run, "--review", wrong.relative_to(run))
+
+            self.assertNotEqual(rejected.returncode, 0)
+            self.assertEqual(read_control(run)["acceptances"], {"discovery": None})
+
+            accepted = review_dir / "product_closure-v1.json"
+            accepted.write_text(json.dumps({
+                "version": 1,
+                "run": "demo",
+                "stage": "product_closure",
+                "candidate_version": 1,
+                "candidate_sha256": sha256(run / "20-prd.md"),
+                "verdict": "PASS",
+                "gaps": [],
+            }, indent=2) + "\n", encoding="utf-8")
+
+            result = run_cli(
+                "advance", "--run", run, "--review", accepted.relative_to(run), "--date", "2026-08-20"
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            control = read_control(run)
+            self.assertEqual(control["phase"], "program_design")
+            self.assertEqual(control["gates"], {"discovery": "AGENT_APPROVED"})
+            self.assertEqual(set(control["acceptances"]), {"discovery"})
+            self.assertEqual(control["acceptances"]["discovery"]["authority"], "AGENT_REVIEW")
+            self.assertEqual(control["acceptances"]["discovery"]["candidate_sha256"], sha256(run / "20-prd.md"))
+            self.assertEqual(
+                control["acceptances"]["discovery"]["review_reference"],
+                "reviews/product_closure-v1.json",
+            )
 
 
 if __name__ == "__main__":

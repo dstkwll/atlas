@@ -82,10 +82,13 @@ classifies the run, but the first **producer** action may occur later in the pip
 The classifier therefore recommends the earliest admissible producer stage, while the control plane
 proves any required upstream contracts before allowing work to begin there.
 
-This does not change the shipped Stage 0–2 initializer. It rejects pre-existing discovery and
-amendment state before `control.json`; a pre-existing `20-prd.md` may coexist with initialization,
-but receives no acceptance from that fact. Any reused candidate at a prescribed artifact path remains
-untrusted until it passes the ordinary judge/authority path.
+The shipped Stage 0–2 initializer enforces that distinction. When discovery is selected,
+initialization creates its mutable gate and acceptance slot and starts there. When discovery is omitted,
+initialization creates no discovery gate or acceptance and starts at the first selected downstream
+phase for fail-closed handoff to its owner. It rejects pre-existing decision-log or amendment state
+before `control.json`; a pre-existing `20-prd.md` may coexist with initialization but receives no
+acceptance from that fact. Any reused candidate at a prescribed artifact path remains untrusted until
+it passes the ordinary judge/authority path.
 
 ---
 

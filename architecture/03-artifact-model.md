@@ -113,9 +113,10 @@ It records only the current planning phase and revision, gate outcomes, the immu
 hash/effective amendment revision, and accepted candidate version/hash provenance. The
 controller replaces this one JSON file atomically. It is not execution runtime state and does
 not contain ticket ownership, attempts, retries, or repository-scoped factory events. Its mutable
-`gates` map contains only selected discovery boundaries. Immutable `run.yaml` retains later-stage
-and conditional policy; after product closure acceptance, `phase` may name the
-next selected stage without creating mutable state for that stage.
+`gates` map contains the discovery boundary only when selected. Immutable `run.yaml` retains
+later-stage and conditional policy. When discovery is omitted, `phase` begins at the first selected
+downstream stage with no mutable gate; after product closure acceptance, `phase` may likewise name
+the next selected stage without creating mutable state for that stage.
 
 An accepted discovery/product-closure candidate remains in its prescribed artifact path.
 Acceptance records its current version and content hash in `control.json`; V1 does not create a
@@ -209,8 +210,10 @@ Owns:
 
 > A mandatory generated projection of `20-prd.md` for cold-read review.
 
-It is regenerated whenever the PRD changes and must exactly match the current Markdown source before
-product closure can pass. It is never authoritative and never contributes its own acceptance hash.
+It is regenerated whenever the PRD changes and must declare the exact current Markdown source path,
+source SHA-256, and renderer version before product closure can pass. The controller verifies this
+metadata binding without re-rendering, so “current” does not claim byte-for-byte body recomputation
+during verification. It is never authoritative and never contributes its own acceptance hash.
 
 ---
 
@@ -363,7 +366,9 @@ code, artifact, problem, and resume stage/action. A PASS envelope has no gaps. T
 validates and hashes this envelope but never asks it to modify the artifact or state. V1 does not
 add authenticated reviewer identities or signatures: the invoker must obtain the envelope from
 a fresh read-only context, while the controller enforces only schema and current run/version/hash
-binding. This limitation is explicit rather than implying cryptographic independence.
+binding. After acceptance, those exact review bytes remain required at the canonical run-relative
+path and their hash is rechecked with the accepted PRD/decision provenance. This limitation is
+explicit rather than implying cryptographic independence.
 
 ---
 
