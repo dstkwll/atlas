@@ -41,7 +41,7 @@ State the bounds before running: maximum scope, whether production code may be w
 
 ### 3. Separate workflow authority from side-effect consent
 
-Read immutable `run.yaml`, accepted `amendments/run-config-NNN.yaml`, and mutable `00-state.md`; reconstruct effective intake and verify the spike was explicitly invoked or routed by an active discovery decision. Present the plan: hypotheses, experiments, verdict criteria, and bounds. The effective run policy owns workflow authority; this skill neither creates a new human gate nor changes gate state.
+Read immutable `run.yaml`, authoritative `control.json`, and accepted `amendments/NNN-*.md` through `control.json.accepted_amendment_count`; ignore `00-state.md` for legality. Reconstruct effective intake and verify the spike was explicitly invoked or routed by an active discovery decision. Present the plan: hypotheses, experiments, verdict criteria, and bounds. The effective run policy owns workflow authority; this skill neither creates a new human gate nor changes gate state.
 
 `read-only` experiments — reads, searches, queries, and writes confined to the spike's own directory — may run under that valid invocation or route once their criteria and bounds are predeclared.
 

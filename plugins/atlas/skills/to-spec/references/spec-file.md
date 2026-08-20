@@ -1,108 +1,67 @@
 # Spec file
 
-The shape of `20-spec.md`. Written to be read by someone who will not build the thing.
-
-## Location
-
-`<run>/20-spec.md`, under the planning root — resolved as `../../discovery/references/run-layout.md` describes. Never hardcode a path.
-
-## Template
+Write `<run>/20-spec.md` with this exact frontmatter:
 
 ```markdown
 ---
-run: <slug>
+run: <feature-slug>
 version: 1
-status: draft | approved | superseded
+status: draft
 gate_ready: false
-approved: <YYYY-MM-DD or null>
-approved_authority: <AUTO | HUMAN | null>
-approved_copy: <run-relative immutable copy or null>
-approved_sha256: <SHA-256 of approved copy or null>
-supersedes: null
-amendment: null
-derived-from: 10-decisions.md
-effective_config_revision: <copied from 00-state.md>
+effective_config_revision: 0
+derived_from:
+  stage: discovery
+  candidate_version: 1
+  candidate_sha256: <accepted discovery SHA-256 from control.json>
 ---
 
 # Spec — <title>
 
 ## Problem
 
-What is wrong today, from the perspective of whoever suffers it. No solution.
+<observable problem>
 
 ## Requirements
 
-### R-001 — <short name>
-**Current:** <what is externally observable today>
-**Target:** <what must become externally observable>
-**Acceptance:** <the observation that settles it, under stated conditions; and what would falsify it>
-**Derived from:** D-003, D-007
-**Confidence:** <omit, or `low — <what is thin about it>`; available to every family below>
-**Reopens if:** <omit, or the condition from the decision that would put this back in play>
-
-### R-002 — <short name>
-...
+### R-001 — <name>
+**Current:** <observable current behavior>
+**Target:** <observable required behavior>
+**Acceptance:** <observation and counterexample>
+**Derived from:** D-001
 
 ## Prohibitions
 
-Negative acceptance criteria — what must never happen. Same form, same falsifiability.
-
-### P-001 — <short name>
-**Must never:** <the outcome nobody wants>
-**Acceptance:** <the observation that would show it happening>
-**Derived from:** D-011 — cite the decision that implies it, not only one that states it
+<negative obligations or reasoned none>
 
 ## Constraints
 
-Externally observable limits and user-mandated conditions: budgets, deadlines, compatibility
-obligations, regulatory requirements, things that may not change. Technologies, schemas and
-internal structure are Stage 3–4 material.
-
-### C-001 — <short name>
-**Constraint:** <the limit>
-**Derived from:** D-002
+<externally observable limits or reasoned none>
 
 ## Invariants
 
-What must hold true throughout, not merely at the end.
-
-### I-001 — <short name>
-**Holds:** <the condition, and when it is observable>
-**Derived from:** D-009
+<continuous obligations or reasoned none>
 
 ## Out of scope
 
 | ID | Excluded | Why | Derived from |
 |---|---|---|---|
-| X-001 | <the work> | <the reason> | D-014 |
-
-Reasons are required. Unexplained exclusions return later looking like oversights.
+| X-001 | <excluded behavior> | <reason> | D-001 |
 
 ## Edge coverage
 
 | Edge | Category | Resolution |
 |---|---|---|
-| <the case> | boundary/adjacency/empty/encoding/ordering/precision/idempotency/concurrency | covered by R-00N or P-00N · dismissed: <reason> · open: Q-00N |
-
-All eight categories appear, so that considering one and finding nothing is distinguishable
-from never considering it. A category with no applicable edge carries a row reading
-`none applicable — <why>`.
+| <case> | boundary | <obligation, dismissal, or question> |
 
 ## Open questions
 
-| ID | Question | Kind | Routed to |
-|---|---|---|---|
-| Q-001 | <question> | blocking · deferred | discovery · system design · program design |
-
-**Blocking** means the answer changes what must become true; it routes to `discovery` and the
-spec is not done while one stands. **Deferred** means the answer belongs to a later stage; it
-routes to system or program design. Those pairings are the only valid ones — a blocking
-question routed to design is a decision being made by the wrong stage.
-
-## Stories
-
-Optional, non-normative. Written where they help a reader understand who wants what. They
-carry no obligations — the requirements above do.
+<classified deferred questions, or `None.`>
 ```
 
-The currently implemented Stage 0–2 route accepts exactly this initial candidate schema: `version` is `1`, and `supersedes` and `amendment` remain null. A future specification-amendment transition may define non-null provenance only when deterministic control can create and validate it against an immutable predecessor receipt; this plugin does not guess that future representation.
+Rules:
+
+- The schema is exact. Candidate version starts at `1`; a future spec reopen may require a later version.
+- `status` remains `draft`; `gate_ready` records producer completion only.
+- `effective_config_revision` matches authoritative control.
+- `derived_from` exactly binds the latest accepted discovery version/hash.
+- Approval metadata is written only to `control.json`; no approved copy or receipt exists.

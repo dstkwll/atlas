@@ -180,6 +180,44 @@ Observed in a real run of a non-canonical skill; recorded as L-012. The mechanis
 
 ---
 
+## Stage 1–2 boundary contracts
+
+Both boundary judges are read-only and return `PASS` or `BLOCKED`. A blocked result reports
+all material gaps found in that pass; each gap names the affected artifact and the exact stage
+and action that can resume it. `BLOCKED` returns to the producer without changing authoritative
+state. A producer-authored completion flag is evidence that the attempt
+ended, never proof that the boundary passed.
+
+### Discovery → specification
+
+**Mechanical checks:** candidate identity and version match the planning run; required decision
+identifiers and record fields are present and unique; declared repository scope matches the
+effective intake; the open-frontier structure contains no unresolved entry; cold-read evidence
+is recorded; intake is not stale.
+
+**Semantic questions:** does the artifact state the real problem; are important consequences,
+contradictions, or scope questions still unresolved; are decisions supported well enough to
+specify from; did the cold read's findings receive a real disposition?
+
+Failure resumes at discovery in `10-decisions.md`. Because the semantic questions are part of
+this boundary, acceptance authority is `AGENT_REVIEW` or `HUMAN` in this revision.
+
+### Specification → next selected design stage
+
+**Mechanical checks:** candidate identity and version match the planning run; required sections
+and normative identifiers exist and are unique; every decision reference resolves to the
+accepted discovery version/hash; no blocking open question remains; the specification does not
+contain implementation-ticket or internal code-shape fields.
+
+**Semantic questions:** does each requirement describe externally observable behavior; does the
+spec preserve discovery intent without inventing new intent; are material behavioral
+consequences missing or contradictory; are acceptance outcomes genuinely observable?
+
+Failure resumes at specification in `20-spec.md`. Because the semantic questions are part of
+this boundary, acceptance authority is `AGENT_REVIEW` or `HUMAN` in this revision.
+
+---
+
 ## Whole-feature review
 
 Ticket-level correctness is insufficient.

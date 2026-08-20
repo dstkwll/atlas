@@ -863,6 +863,7 @@ Merge remains a human action initially.
 <planning-root>/
 └── <feature-slug>/
     ├── run.yaml
+    ├── control.json
     ├── 00-state.md
     ├── 10-decisions.md
     ├── 20-spec.md
@@ -957,37 +958,52 @@ Do not rely on changing global config to reconstruct historical behavior.
 
 ---
 
+## `control.json`
+
+Purpose:
+
+> Machine-canonical planning-control state for Stages 0–2.
+
+It records only the current planning phase and revision, gate outcomes, the immutable intake
+hash/effective amendment revision, and accepted candidate version/hash provenance. The
+controller replaces this one JSON file atomically. It is not execution runtime state and does
+not contain ticket ownership, attempts, retries, or repository-scoped factory events.
+
+An accepted discovery or specification remains in its prescribed artifact path. Acceptance
+records its current version and content hash in `control.json`; V1 does not create a second
+approved copy or retain a separate acceptance history. Reopening leaves that binding visible
+while stale and requires the producer to increment the candidate version; the next acceptance
+replaces it.
+
+---
+
 ## `00-state.md`
 
 Purpose:
 
-> Human-readable state mirror, with machine-parseable frontmatter.
+> Generated human-readable projection of `control.json`.
 
-Example:
+Example projection:
 
 ```yaml
 ---
+source: control.json
 feature: async-device-jobs
 status: planning
-phase: program-design
-baseline: 89a1c732
-revision: 4
-
-repos:
-  - device-service
-  - job-scheduler
+phase: specification
+revision: 3
 
 gates:
-  spec: approved
-  system_design: approved
-  program_design: in_review
-  tickets: pending
+  discovery: AGENT_APPROVED
+  specification: PENDING
 
-active_ticket: null
+blocked_reason: null
 ---
 ```
 
-Authoritative machine state may eventually live in a structured state file/database, but a boring on-disk representation is useful for observability and recovery.
+The controller may regenerate this projection after a successful transition, but never reads
+it to decide transition legality. If projection and `control.json` disagree, `control.json`
+wins and the projection is stale.
 
 ---
 
@@ -1172,6 +1188,15 @@ Example:
 
 This allows deterministic routing without requiring code to parse prose sentiment.
 
+For a Stage 1 or Stage 2 `AGENT_REVIEW` gate, the invoker persists the read-only judge's
+structured output as `reviews/<stage>-v<version>.json`. It binds `run`, `stage`, candidate
+`version` and SHA-256, `verdict: PASS|BLOCKED`, and an array of gaps; each gap includes a stable
+code, artifact, problem, and resume stage/action. A PASS envelope has no gaps. The controller
+validates and hashes this envelope but never asks it to modify the artifact or state. V1 does not
+add authenticated reviewer identities or signatures: the invoker must obtain the envelope from
+a fresh read-only context, while the controller enforces only schema and current run/version/hash
+binding. This limitation is explicit rather than implying cryptographic independence.
+
 ---
 
 ## `amendments/`
@@ -1188,6 +1213,11 @@ A change in an approved contract should produce an explicit amendment containing
 - approval
 
 The system may later fold approved amendments back into canonical documents, but provenance should remain visible.
+
+For Stages 0–2, an accepted intake correction uses the existing ordered
+`amendments/NNN-*.md` form with machine-parseable frontmatter. `control.json` records the
+accepted amendment count and resulting effective-configuration hash. V1 does not add a
+separate amendment ledger, per-amendment receipt file, or hash chain.
 
 ---
 
@@ -1357,7 +1387,12 @@ Possible files:
 
 ### `AUTO`
 
-Output can advance immediately once deterministic prerequisites are satisfied.
+Output can advance immediately once deterministic prerequisites are satisfied **only when the
+boundary contract declares no semantic acceptance question**. A successful automatic gate is
+recorded as `AUTO_PASSED`, never `AGENT_APPROVED`.
+
+Stage 1 discovery and Stage 2 behavioral specification both require semantic acceptance in
+this revision, so their configured authority is `AGENT_REVIEW` or `HUMAN`, not `AUTO`.
 
 ### `AGENT_REVIEW`
 
@@ -1399,6 +1434,24 @@ program_design:
 ```
 
 The human becomes the decision authority rather than the primary bug finder.
+
+### Stage 0–2 boundary seam
+
+For discovery and behavioral specification, keep four responsibilities distinct:
+
+```text
+producer completes a candidate
+  → read-only boundary judge returns PASS/BLOCKED with all gaps and resume points
+  → PASS goes to the configured authority; BLOCKED returns to the producer without mutation
+  → deterministic controller records one legal acceptance or explicit HUMAN rejection
+```
+
+The producer's completion claim is input, not acceptance. The judge reads only evidence for
+that boundary and never edits the candidate or planning state. Objective structure and
+cross-reference checks may be deterministic; semantic completeness is judged by a fresh
+reviewer under `AGENT_REVIEW`, or by the human under `HUMAN`. The controller validates the
+candidate identity/hash, the applicable judge or human authority, and transition legality; it
+does not grade prose.
 
 ---
 
@@ -1859,6 +1912,44 @@ Observed in a real run of a non-canonical skill; recorded as L-012. The mechanis
 
 ---
 
+## Stage 1–2 boundary contracts
+
+Both boundary judges are read-only and return `PASS` or `BLOCKED`. A blocked result reports
+all material gaps found in that pass; each gap names the affected artifact and the exact stage
+and action that can resume it. `BLOCKED` returns to the producer without changing authoritative
+state. A producer-authored completion flag is evidence that the attempt
+ended, never proof that the boundary passed.
+
+### Discovery → specification
+
+**Mechanical checks:** candidate identity and version match the planning run; required decision
+identifiers and record fields are present and unique; declared repository scope matches the
+effective intake; the open-frontier structure contains no unresolved entry; cold-read evidence
+is recorded; intake is not stale.
+
+**Semantic questions:** does the artifact state the real problem; are important consequences,
+contradictions, or scope questions still unresolved; are decisions supported well enough to
+specify from; did the cold read's findings receive a real disposition?
+
+Failure resumes at discovery in `10-decisions.md`. Because the semantic questions are part of
+this boundary, acceptance authority is `AGENT_REVIEW` or `HUMAN` in this revision.
+
+### Specification → next selected design stage
+
+**Mechanical checks:** candidate identity and version match the planning run; required sections
+and normative identifiers exist and are unique; every decision reference resolves to the
+accepted discovery version/hash; no blocking open question remains; the specification does not
+contain implementation-ticket or internal code-shape fields.
+
+**Semantic questions:** does each requirement describe externally observable behavior; does the
+spec preserve discovery intent without inventing new intent; are material behavioral
+consequences missing or contradictory; are acceptance outcomes genuinely observable?
+
+Failure resumes at specification in `20-spec.md`. Because the semantic questions are part of
+this boundary, acceptance authority is `AGENT_REVIEW` or `HUMAN` in this revision.
+
+---
+
 ## Whole-feature review
 
 Ticket-level correctness is insufficient.
@@ -2098,6 +2189,11 @@ Prefer one deterministic state authority responsible for:
 
 Agents produce evidence/proposals; the state machine applies valid transitions.
 
+For pre-execution Stages 0–2, that authority is the feature-root `control.json`. The
+controller changes it through one atomic file replacement and may then regenerate
+`00-state.md` as a projection. Repository-scoped `.factory/runs/` state begins with execution
+and remains a separate domain.
+
 ---
 
 ## Suggested high-level run states
@@ -2148,6 +2244,7 @@ The deterministic runner owns transition legality.
 ```text
 NOT_REQUIRED
 PENDING
+AUTO_PASSED
 AGENT_APPROVED
 HUMAN_APPROVED
 REJECTED
@@ -2156,15 +2253,26 @@ STALE
 
 A gate can become `STALE` if an upstream amendment invalidates its prior approval.
 
+`AUTO_PASSED` means a boundary explicitly declared mechanical-only and all of its
+deterministic prerequisites passed. It never means an agent reviewed the artifact. Discovery
+and behavioral specification are not mechanical-only boundaries in this revision.
+
 ---
 
 ## Approved artifacts are versioned contracts
 
-Once an artifact passes its gate, downstream work should reference an immutable approved version/hash.
+Once an artifact passes its gate, downstream work references its accepted version and content
+hash from `control.json`.
 
 This prevents:
 
 > “The design changed while ticket 3 was executing and nobody knows which version the implementation targeted.”
+
+Stages 0–2 do not create duplicate approved copies, acceptance-history ledgers, or separate
+receipt files. The prescribed candidate path remains the artifact, and any change after
+acceptance requires a version increment and a new gate decision. `control.json` preserves the
+current acceptance binding for each stage (version, hash, authority, date, and review reference
+when applicable). Reopening marks that binding stale; the next acceptance replaces it.
 
 ---
 
@@ -2180,6 +2288,12 @@ When execution discovers an invalid upstream assumption:
 6. already-completed work is checked for invalidation;
 7. stale approvals are explicitly marked;
 8. execution resumes only after valid re-approval.
+
+The narrower Stage 0–2 case is an intake correction discovered before execution. It is an
+ordered `amendments/NNN-*.md` record using machine-parseable frontmatter. Applying it updates
+only `control.json`'s amendment count and effective-configuration hash. Re-reading `run.yaml`
+plus the ordered amendments must reproduce that hash. No separate amendment ledger or hash
+chain exists in this revision.
 
 ---
 
@@ -2235,7 +2349,13 @@ Changing global settings later must not retroactively alter an active/historical
 
 ## Recovery and crash safety
 
-The system should be restartable from on-disk state.
+The system should be restartable from on-disk state, with recovery machinery proportional to
+the current write boundary.
+
+For Stages 0–2 the controller has one authoritative mutable file. It writes a temporary
+`control.json` beside the current one and atomically replaces it. A run-local single-writer
+lock prevents two processes from committing from the same revision. Because no authoritative
+transition spans several files, V1 has no transaction journal or replay protocol here.
 
 On restart:
 
@@ -2350,7 +2470,8 @@ workflows:
 governance:
   exploratory:
     gates:
-      spec: AUTO
+      discovery: AGENT_REVIEW
+      spec: AGENT_REVIEW
       system_design: AUTO
       program_design: AGENT_REVIEW
       tickets: AUTO
@@ -2359,6 +2480,7 @@ governance:
 
   standard:
     gates:
+      discovery: HUMAN
       spec: HUMAN
       system_design: HUMAN_IF_CHANGED
       program_design: HUMAN
@@ -2368,6 +2490,7 @@ governance:
 
   high_assurance:
     gates:
+      discovery: HUMAN
       spec: HUMAN
       system_design: HUMAN
       program_design: HUMAN
@@ -2377,6 +2500,7 @@ governance:
 
   autonomous:
     gates:
+      discovery: AGENT_REVIEW
       spec: AGENT_REVIEW
       system_design: AGENT_REVIEW
       program_design: AGENT_REVIEW
@@ -3151,6 +3275,14 @@ Phase-to-phase communication should use typed, schema-validated envelopes.
 
 Deterministic code consumes these envelopes and decides which state transition is legal.
 
+## Planning control state before execution
+
+Stages 0–2 use `<planning-root>/<feature>/control.json` as their machine-canonical planning
+state. It records only planning phase/gate outcomes and version/hash provenance. This closes
+the pre-execution authority gap for a planning effort that may span repositories without
+putting repository-scoped execution state in the planning root. `00-state.md` is generated
+from this file and is never transition authority.
+
 ## Machine-canonical runtime state
 
 Suggested runtime layout:
@@ -3167,6 +3299,10 @@ Suggested runtime layout:
 ```
 
 A generated `<planning-root>/<feature>/00-state.md` may remain useful as a projection, but it is not authoritative for attempt counts, active ownership, retry state, or exact state transitions.
+
+`control.json` does not replace this execution protocol. Once compiled work executes, each
+repository-scoped factory run owns its `run.json`, events, envelopes, evidence, and logs under
+that repository's `.factory/runs/` directory.
 
 ## Runtime state vs engineering truth
 
@@ -4716,6 +4852,41 @@ A reviewer reports what is absent; it never writes what is absent.
 
 ---
 
+## L-013 — The first executable planning gate exposed three responsibilities, not one controller
+
+### Evidence scope
+
+One Stage 0–2 implementation in draft PR #5, followed by adversarial tests and independent
+review. The controller worked, but implementation pressure exposed architecture the prose had
+left unresolved.
+
+### What happened
+
+The implementation correctly removed lifecycle authority from producer skills, then made one
+program responsible for semantic artifact grading, approval provenance, multi-file state,
+recovery, and legal transitions. Hardening that surface produced locking, transaction journals,
+approved copies, receipt ledgers, and hash chains before a real Stage 0–2 run had earned them.
+
+### Accepted consequence
+
+Stages 0–2 separate producer completion, read-only boundary judgment, configured acceptance
+authority, and deterministic transition recording. Planning state uses one machine-canonical
+`control.json`; `00-state.md` is a projection. Approval provenance is version/hash metadata in
+that snapshot rather than copied artifacts, and the controller grades no prose.
+
+The judge/drive seam from incubator `advance` is accepted as a **concept donor only**. Its
+Workbench routing, leash, worker, ticket, and ship machinery remain non-canonical.
+
+### Standing result
+
+A mechanism already implemented has not earned itself. Keep deterministic machinery only when
+a concrete current failure requires it and a materially simpler design does not survive that
+failure. One explicitly retained exclusion mechanism is the run lock: atomic replacement
+prevents torn state but not two revision-N writers overwriting each other, and a check
+immediately before replace has the same race.
+
+---
+
 # 17 — Agent Roles, Rosters, Model Policy, and Outcome Telemetry
 
 **Added in:** v0.3  
@@ -5644,6 +5815,9 @@ Runtime state under `.factory/` remains scoped to the repository a run executes 
 
 ## D-061 — The V1 configuration interface stabilizes only the planning root
 
+**Refined by:** D-062 and D-064, which add one fixed planning-control file and constrain how
+the already-prescribed amendment directory is used. They add no configurable path.
+
 `artifacts.planning_root` is a supported V1 configuration key. The key and its resolution semantics are stable enough for planning skills to consume; changing either requires an explicit configuration version or migration rather than an edit to an illustrative example.
 
 Its **value remains configurable per machine**. A repository-relative value resolves from the repository root; an absolute value names an already-usable local directory or checkout. The default remains `.planning`.
@@ -5651,6 +5825,47 @@ Its **value remains configurable per machine**. A repository-relative value reso
 Only the root location is configurable. The artifact layout beneath a run remains fixed by `03-artifact-model.md`: evidence lives at `<run>/evidence/`, spikes at `<run>/spikes/`, and other run artifacts retain their prescribed names. `evidence_dir` and `spikes_dir` are therefore not V1 configuration interfaces.
 
 The remainder of `09-reference-config.md` stays illustrative until a real consumer earns and stabilizes another key. This keeps the current interface small: freeze what has callers, not the whole design sketch.
+
+---
+
+## D-062 — Stages 0–2 use one machine-canonical planning-control snapshot
+
+`<planning-root>/<feature>/control.json` is the sole authoritative mutable planning state for
+Stages 0–2. `00-state.md` is its generated human projection. The planning snapshot is distinct
+from repository-scoped execution state under `.factory/runs/` and contains no execution
+attempt, ownership, retry, ticket, or event machinery.
+
+The controller atomically replaces this one JSON file under a run-local single-writer lock.
+Atomic replacement prevents a torn file but cannot prevent two processes that both read revision
+N from overwriting one another; a pre-write revision recheck has the same check/write race, and
+ordinary files provide no portable compare-and-swap. The lock is therefore the smallest current
+mechanism that excludes that stale-writer failure. Because a transition has one authoritative
+write, Stage 0–2 adds no transaction journal, multi-file replay protocol, or planning event log.
+
+---
+
+## D-063 — AUTO success is not agent approval
+
+An automatic gate that is explicitly mechanical-only records `AUTO_PASSED`; it never records
+`AGENT_APPROVED`. `AGENT_APPROVED` means an independent semantic reviewer accepted the
+candidate, and `HUMAN_APPROVED` means a human did.
+
+Discovery and behavioral specification include semantic acceptance questions in this
+revision. Their configured authority is therefore `AGENT_REVIEW` or `HUMAN`, not `AUTO`.
+
+---
+
+## D-064 — Stage 0–2 approval provenance is version and hash, not copied artifacts
+
+An accepted discovery or specification records its current version, content hash, authority,
+date, and applicable review reference in `control.json`. The prescribed candidate file remains
+the artifact. Stage 0–2 creates no `approved/` directory, duplicate approved copy, acceptance
+history ledger, separate receipt file, or approval hash chain. Reopening increments the
+candidate version and marks the current binding stale; the next acceptance replaces it.
+
+An accepted intake correction uses the already-prescribed ordered
+`amendments/NNN-*.md` location. `control.json` records the accepted amendment count and the
+resulting effective-configuration hash; no separate amendment ledger or hash chain is added.
 
 ---
 
