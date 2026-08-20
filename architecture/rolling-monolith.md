@@ -860,7 +860,7 @@ Merge remains a human action initially.
 ## Recommended directory layout
 
 ```text
-.planning/
+<planning-root>/
 └── <feature-slug>/
     ├── run.yaml
     ├── 00-state.md
@@ -890,7 +890,46 @@ Merge remains a human action initially.
         └── 001-*.md
 ```
 
-`.planning/` is preferred over `docs/` because these are working engineering artifacts. Durable architectural knowledge may later graduate into `CONTEXT.md`, `docs/adr/`, or permanent documentation.
+## Planning root
+
+`<planning-root>` is resolved from configuration (`artifacts.planning_root`), not fixed by this document. It takes one of two forms:
+
+- **Repository-relative** — the default, `.planning/` inside the repository being changed. `.planning/` is preferred over `docs/` because these are working engineering artifacts. Durable architectural knowledge may later graduate into `CONTEXT.md`, `docs/adr/`, or permanent documentation.
+- **External** — an absolute path or a separate planning repository, shared by many code repositories.
+
+The external form exists because a change is not always confined to one repository. Where an organization has many small repositories rather than a monorepo, a single unit of work commonly spans several, and no one of them is an honest home for the artifacts describing it. Forcing such work into one repository's `.planning/` requires nominating an arbitrary owning repository, which misrepresents the change.
+
+An external planning root is a location with an access model, not merely a path. A root reachable only by its author cannot be referenced by collaborators; a shared planning repository can. Configuration therefore records the root, and no artifact records an absolute path that resolves differently for different readers.
+
+**An external root resolves to an already-usable local filesystem path.** Configuration names a directory that exists and is readable when a run begins. Cloning, authentication, fetch and push lifecycle, synchronization, remote locking, conflict resolution, and repository provisioning are **outside this architecture**. Where the planning root happens to be a checkout of a shared repository, keeping that checkout current is the operator's responsibility, not the factory's. The contract here concerns artifact location and reference semantics, not remote repository management.
+
+### `repos`
+
+A feature that affects more than one repository declares them. Each affected repository is named in the feature's `run.yaml` and mirrored into `00-state.md` frontmatter, so the question *which planning artifacts touched this repository* is answerable by query against the planning root rather than by search across repositories.
+
+The planning effort also preserves the relevant baseline for **each** affected repository. The architecture does not freeze a larger multi-repository schema here; the invariant is the pair itself — repository identity plus the baseline against which that repository was planned. Without one baseline per repository, later compilation cannot tell which version of each codebase the approved design describes.
+
+`repos` and their planning baselines are **descriptive planning metadata**. They record what a body of work concerns. They grant no access, and they do not widen any agent's write scope.
+
+### Planning scope is not execution scope
+
+One planning effort may describe work spanning several repositories. Factory execution remains **repository-scoped**:
+
+- Each executable ticket identifies exactly one target repository unambiguously. Compilation may partition a multi-repository planning effort into repository-scoped ticket sets; it may not leave target selection to the executor.
+- An executable factory run and its immutable run manifest resolve **one repository, one worktree, and that repository's baseline**. The baseline is the corresponding repository-baseline pair preserved by planning.
+- Cross-repository atomic execution, synchronized branches, coordinated integration, multi-repository rollback, and multi-pull-request transaction semantics are **not** capabilities of this architecture. A planning effort spanning several repositories is executed as several repository-scoped runs.
+
+The planning root and the execution scope are separate concerns. Widening the first does not widen the second.
+
+### Consequences of an external root
+
+These are costs, not defects, and are accepted deliberately:
+
+- **Specification and code no longer share a commit.** With a repository-relative root, the approved contract and the change implementing it appear in one history; with an external root they do not. Correlation is by explicit reference, not by construction.
+- **Review loses ambient context.** A reviewer reading a pull request cannot see the contract unless the planning root is resolvable in their environment. Contract review therefore depends on configuration being correct wherever review runs.
+- **Atomicity is lost.** Repository-relative planning gives history, blame, and atomic spec-plus-code commits for free. An external root gives none of these unless it is itself version-controlled.
+
+Where a repository benefits from a permanent local record — a public repository, or one whose readers cannot reach the planning root — a decision may **graduate** into that repository as an ADR under `artifacts.adr_path`. Graduation is a deliberate act producing a durable record, not an automatic mirror of planning state.
 
 ---
 
@@ -910,7 +949,9 @@ Contains:
 - execution policy
 - model roles
 - artifact paths
-- repository baseline
+- resolved planning root
+- affected repositories (`repos`)
+- planning baseline for each affected repository
 
 Do not rely on changing global config to reconstruct historical behavior.
 
@@ -931,6 +972,10 @@ status: planning
 phase: program-design
 baseline: 89a1c732
 revision: 4
+
+repos:
+  - device-service
+  - job-scheduler
 
 gates:
   spec: approved
@@ -1298,7 +1343,7 @@ Possible files:
 ```text
 ~/.factory/config.yaml
 <repo>/.factory/config.yaml
-<repo>/.planning/<feature>/run.yaml
+<planning-root>/<feature>/run.yaml
 <repo>/.factory/runs/<run-id>/run-manifest.json
 ```
 
@@ -1576,7 +1621,7 @@ Benefits:
 Suggested interface:
 
 ```text
-factory run-feature .planning/<feature>
+factory run-feature <planning-root>/<feature>
 ```
 
 Responsibilities:
@@ -1798,6 +1843,19 @@ Default:
 If a reviewer mutates code, the harness should detect and reject/restore the mutation.
 
 Reviewer and executor roles should not blur.
+
+### A reviewer never creates the artifact it requires
+
+Read-only access is the enforcement. This is the design rule upstream of it: a reviewer that requires an artifact must first establish that the artifact is **applicable to the work under review**, and a missing required artifact is reported as a finding rather than supplied.
+
+A reviewer given an unconditional requirement — an artifact named as required with no test for whether this piece of work should have one — has two ways to complete its task when the artifact is absent, and only one of them is correct. Creating it is the failure mode, and it is a plausible-looking one: the reviewer appears to have resolved a gap, while the evidence it goes on to judge is evidence it authored.
+
+Two consequences for specifying any reviewer:
+
+- **Requirements that depend on which path the work took carry their applicability test with them.** Where a workflow offers alternative routes to the same stage, an artifact produced by only one route is conditional on evidence that the route was taken, and its absence on the other route is not a gap.
+- **A required artifact that is absent is a finding.** The reviewer reports it and stops. It never writes a routing artifact, an evidence file, a ticket, or a specification in order to satisfy its own condition.
+
+Observed in a real run of a non-canonical skill; recorded as L-012. The mechanism generalizes to any reviewer this architecture specifies.
 
 ---
 
@@ -2211,21 +2269,33 @@ The architecture should make these answers emergent from stored evidence rather 
 
 ---
 
-# 09 — Illustrative Reference Configuration
+# 09 — Reference Configuration
 
-This is intentionally illustrative rather than a frozen schema.
+Most of this document is intentionally illustrative rather than a frozen schema. It tests how **workflow, governance, execution, environment, and roster** remain separate dimensions, with optional presets for convenience.
 
-It reflects the current decision to keep **workflow, governance, execution, environment, and roster separate**, with optional presets for convenience.
+One interface is stable in V1 because the planning skills already consume it:
+
+```yaml
+artifacts:
+  planning_root: .planning
+```
+
+`artifacts.planning_root` is a supported configuration key. Its value remains configurable per machine:
+
+- a repository-relative path, resolved from the repository root;
+- or an absolute path / already-usable local checkout of a planning repository.
+
+The default is `.planning`. Changing the key or its resolution semantics requires an explicit version or migration rather than an illustrative edit.
+
+The layout beneath a run is fixed by `03-artifact-model.md`. In particular, evidence lives at `<run>/evidence/` and spikes at `<run>/spikes/`; they are not separate configuration knobs in V1. Other keys below remain illustrative until a real consumer earns and stabilizes them.
 
 ```yaml
 version: 0.2
 
 artifacts:
-  planning_root: .planning
+  planning_root: .planning        # stable V1 interface; value remains configurable
   permanent_docs: docs
   adr_path: docs/adr
-  evidence_dir: evidence
-  spikes_dir: spikes
 
 factory:
   state_root: .factory/runs
@@ -2502,9 +2572,11 @@ This is useful, but the CLI command itself is **not** a V1 requirement unless re
 
 ### D-004 — Use Markdown files on disk as primary planning contracts
 
-**Decision:** Specs/designs/tickets live in a repo-local working planning directory rather than GitHub Issues as the canonical store.
+**Decision:** Specs, designs, and tickets live as filesystem-backed Markdown under the configured planning root rather than GitHub Issues as the canonical store. The default planning root is repository-relative `.planning/`; an external root is permitted where explicitly configured.
 
 **Why:** Local files are portable, inspectable, versionable, agent-friendly, and usable without external tracker coupling.
+
+**Refined by:** D-055 governs the location portion of this decision. The choice of filesystem-backed Markdown over an issue tracker is unchanged.
 
 ---
 
@@ -2953,6 +3025,8 @@ builder:
   approve_gate: false
 ```
 
+The `.planning/**` deny rule covers a repository-relative planning root. Where the planning root is external, it lies outside the builder's repository write scope entirely and is denied by that scope rather than by an explicit rule. A builder is never granted write access to the planning root under either arrangement: the artifacts it is judged against are not writable by it.
+
 V1 may enforce this using **repository-state comparison and rollback/failure** rather than a perfect preventive filesystem sandbox.
 
 The important invariant is that unauthorized mutation does not silently become accepted output.
@@ -3092,7 +3166,7 @@ Suggested runtime layout:
       logs/
 ```
 
-A generated `.planning/<feature>/00-state.md` may remain useful as a projection, but it is not authoritative for attempt counts, active ownership, retry state, or exact state transitions.
+A generated `<planning-root>/<feature>/00-state.md` may remain useful as a projection, but it is not authoritative for attempt counts, active ownership, retry state, or exact state transitions.
 
 ## Runtime state vs engineering truth
 
@@ -4559,6 +4633,89 @@ This refinement preserves the canonical-source rule and architecture governance.
 
 ---
 
+## L-011 — The single-repository assumption was never stated, and was wrong for the intended user
+
+### How it surfaced
+
+While designing the discovery skill's artifact output, the question *where does the decision log go* had no satisfactory answer. `03-artifact-model.md` prescribed `.planning/` inside the repository being changed. The intended user's work spans many small repositories, and a single unit of work commonly touches several.
+
+### The finding
+
+The assumption was **one run, one repository**, and it was never written down as an assumption. It appeared instead as a fixed path in the artifact model, a repository-relative default in the reference configuration, and a `.planning/**` deny rule in two capability documents. Nothing recorded that these depended on a claim about how repositories are organized.
+
+An assumption embedded in four incidental places, and stated in none, is invisible until something contradicts it.
+
+### What was rejected on the way
+
+- **Distributing a copy of each decision into every affected repository.** This reproduces the problem an external root solves — several partial records that drift, and no answer to which is authoritative.
+- **A pointer file in each repository naming the planning root as a local path.** A path meaningful only on its author's machine is worse than absent: it resolves to nothing for every other reader while appearing authoritative.
+
+Both were proposed and both failed the same test — a record is only useful to a reader who can reach what it points at.
+
+### Accepted consequence
+
+The planning root became configuration (D-055), a feature declares the repositories it affects (D-056), the costs of an external root are recorded rather than mitigated (D-057), and an external root is treated as a location with an access model rather than a path (D-058).
+
+### Standing result
+
+Where the architecture fixes a location, it should say what it assumes about the surrounding organization. A default is legitimate; an unstated structural premise is not.
+
+---
+
+## L-012 — A judge with an unconditional requirement manufactured the artifact it was judging
+
+### Evidence scope
+
+One observed run of `advance`, a non-canonical incubation skill, on a real effort. This is a
+single empirical observation of one implementation, not proof about every reviewer. It is
+recorded because the mechanism is general and the failure was silent.
+
+### What happened
+
+An effort reached specification through ordinary grilling rather than Wayfinder discovery, so
+it had no discovery map. Its terminal ship-readiness judge evaluated a `discovery-unclosed`
+gap whose subject identity was hardcoded to a topic-root `map.md`. The file was absent. The
+judge wrote one, then continued.
+
+A read-only judge authored the evidence it went on to judge, and reported a result as though
+it had assessed the effort.
+
+### The defect
+
+The skill's evidence contract already knew that a grilling-originated effort has no map:
+presence routing selects between the Wayfinder and grilling branches on exactly that file,
+and the grilling branch states that ordinary grilling never requires Wayfinder. The knowledge
+was present and the ship judge did not consult it.
+
+The gap itself carried **no applicability test**. Every other gap in that contract names an
+artifact that must exist; this one names an artifact that exists for only one of two
+discovery paths, and nothing said how to establish which path an effort took. Given a
+requirement it could not satisfy and no way to rule it inapplicable, creating the file was the
+locally reasonable move.
+
+### Why it generalizes
+
+The failure was not a missing prohibition. Read-only access was already the reviewer default,
+and the outcome still occurred, because the reviewer was *instructed* to require something
+that should never have applied. Enforcement sits downstream of specification: a reviewer given
+an unconditional requirement will find a way to complete it.
+
+An unconditional requirement is a defect wherever a workflow offers more than one route to the
+same stage.
+
+### Accepted consequence
+
+`06-review-and-validation.md` now states, in the reviewer write policy, that a reviewer
+establishes an artifact's applicability before requiring it, and that a missing required
+artifact is a finding rather than something to supply.
+
+### Standing result
+
+Where a requirement depends on which path work took, its applicability test travels with it.
+A reviewer reports what is absent; it never writes what is absent.
+
+---
+
 # 17 — Agent Roles, Rosters, Model Policy, and Outcome Telemetry
 
 **Added in:** v0.3  
@@ -5395,3 +5552,108 @@ The canonical-source rule remains intact. This decision does not create an "exec
 ## v0.4 north star
 
 > **Preserve the architecture by making its evolution explicit, grounded, versioned, and reconstructable. Use chat for reasoning, `main` for canonical truth, and branches and pull requests for reviewable change.**
+
+---
+
+# 20 — v0.5 Decisions
+
+v0.5 addresses one question the earlier versions answered by assumption: **where planning artifacts live.**
+
+Every prior version assumed one run, one repository — the planning directory sitting beside the code it describes. That assumption is correct for a monorepo and wrong for an organization of many small repositories, where a single unit of work commonly spans several and none of them is an honest home for the artifacts describing it.
+
+This version makes the planning root a configured value with two legitimate forms, records what is lost by choosing the second, and draws an explicit boundary: planning may span repositories, execution does not.
+
+---
+
+## D-055 — The planning root is configured, not fixed
+
+`artifacts.planning_root` resolves the planning root. It takes one of two forms:
+
+- **Repository-relative** — `.planning/` inside the repository being changed. This remains the default and the recommended arrangement wherever the work is confined to one repository.
+- **External** — an absolute path or a separate planning repository, shared across many code repositories.
+
+`03-artifact-model.md` describes the layout *within* a feature directory; that layout is unchanged. Only its parent is configurable.
+
+The default is unchanged deliberately. An external root is a considered departure with real costs (D-057), not a neutral alternative.
+
+---
+
+## D-056 — A feature declares the repositories it affects
+
+A feature affecting more than one repository names them in `run.yaml`, mirrored into `00-state.md` frontmatter as `repos`. The planning effort preserves the relevant baseline for each named repository, so every affected codebase is tied to the version the approved planning artifacts describe. This decision fixes the semantic requirement — repository identity paired with its planning baseline — without prematurely freezing a larger multi-repository schema.
+
+This exists so that *which planning artifacts touched this repository* is answerable by query against a single planning root, rather than by search across every repository. Without it, an external root makes the reverse lookup impossible; with it, the external root answers a question the repository-relative arrangement cannot answer at all — a change spanning five repositories has one record, not five partial ones.
+
+The repository declarations and baselines are descriptive. They do not grant access, and they do not widen any builder's write scope.
+
+---
+
+
+## D-057 — The costs of an external planning root are accepted, not denied
+
+Choosing an external root gives up properties the repository-relative arrangement provides for free:
+
+- **Specification and code no longer share a commit.** Correlation becomes explicit reference rather than construction. A reader cannot recover from history alone which revision of a contract a change implemented.
+- **Review loses ambient context.** A reviewer sees the diff without the contract unless the planning root resolves in their environment. Contract review therefore acquires a configuration dependency it did not have.
+- **Atomicity is lost.** History, blame, and atomic spec-plus-code commits are no longer free. A version-controlled planning root recovers history but never atomicity across the two.
+
+These are recorded rather than mitigated. An arrangement that misrepresents where a change lives is worse than one that loses commit-level correlation, but the loss is real and a future version may revisit it.
+
+---
+
+## D-058 — An external planning root is a location with an access model
+
+A planning root reachable only by its author cannot be referenced by anyone else. A root that is a shared repository can.
+
+Two consequences:
+
+- **No artifact records an absolute path that resolves differently for different readers.** References within the planning root are relative to it; references to the planning root come from configuration.
+- **Nothing in the workflow may depend on properties peculiar to one storage choice.** Plain files in a directory tree, portable across a local directory and a cloned repository alike.
+
+This constrains the design without requiring shared-root machinery to be built. The single-author case is the one that must work; the shared case is the one that must not be foreclosed.
+
+**Configuration resolves to an already-usable local filesystem root.** An external planning root is a directory that exists and is readable when a run begins. This architecture takes no responsibility for cloning, authentication, fetch and push lifecycle, synchronization, remote locking, conflict resolution, or repository provisioning. Where the root is a checkout of a shared repository, keeping it current is the operator's concern.
+
+Those responsibilities may be earned later if a real implementation requires them. At this stage the contract is about artifact location and reference semantics, not remote repository management.
+
+---
+
+## D-059 — Decisions may graduate into a repository as ADRs
+
+Where a repository benefits from a permanent local record — a public repository, or one whose readers cannot reach the planning root — a decision may be written into it as an ADR under `artifacts.adr_path`.
+
+Graduation is deliberate and selective. It is **not** a mirror of planning state: an automatic copy into every affected repository would reproduce the problem an external root exists to solve, replacing one honest record with several partial ones that drift.
+
+The planning root remains authoritative. A graduated ADR is a durable local record of a decision, not a second source of truth about it.
+
+---
+
+## D-060 — Planning scope is not execution scope
+
+A planning effort may span several repositories. Factory execution does not.
+
+Each executable ticket identifies its target repository unambiguously; target selection is not deferred to the executor. Where a planning effort spans several repositories, compilation may partition tickets into repository-scoped sets. Each executable factory run and its immutable run manifest then resolve exactly one target repository, one worktree, and that repository's preserved planning baseline.
+
+Cross-repository atomic execution, synchronized branches, coordinated integration, multi-repository rollback, and multi-pull-request transaction semantics are **not** capabilities of this architecture and are not introduced by v0.5.
+
+This is stated because it would otherwise be inferred. Widening where artifacts live is not an argument for widening what a run may touch, and "features pay for seams" applies with full force: no multi-repository orchestration seam has been paid for.
+
+Runtime state under `.factory/` remains scoped to the repository a run executes against. Planning artifacts may sit outside that repository; runtime state does not.
+
+---
+
+## D-061 — The V1 configuration interface stabilizes only the planning root
+
+`artifacts.planning_root` is a supported V1 configuration key. The key and its resolution semantics are stable enough for planning skills to consume; changing either requires an explicit configuration version or migration rather than an edit to an illustrative example.
+
+Its **value remains configurable per machine**. A repository-relative value resolves from the repository root; an absolute value names an already-usable local directory or checkout. The default remains `.planning`.
+
+Only the root location is configurable. The artifact layout beneath a run remains fixed by `03-artifact-model.md`: evidence lives at `<run>/evidence/`, spikes at `<run>/spikes/`, and other run artifacts retain their prescribed names. `evidence_dir` and `spikes_dir` are therefore not V1 configuration interfaces.
+
+The remainder of `09-reference-config.md` stays illustrative until a real consumer earns and stabilizes another key. This keeps the current interface small: freeze what has callers, not the whole design sketch.
+
+---
+
+## v0.5 north star
+
+> **The artifact layout is fixed; its location is configured. Where work spans repositories, the planning root spans them too — while execution stays repository-scoped, and what that costs is written down rather than assumed away.**

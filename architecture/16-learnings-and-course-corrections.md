@@ -552,3 +552,86 @@ Calibration Run 001 was one manual execution-factory simulation. Its results are
 The root contract now contains shared repository rules, while `architecture/AGENTS.md` contains architecture-specific evolution rules. Agents must name grounding sources, report what validation did and did not establish, and surface contradictions among authoritative sources rather than silently reconciling them.
 
 This refinement preserves the canonical-source rule and architecture governance. It does not establish an "execution first at all costs" mandate. Architecture work may still resolve contradictions, preserve rationale, clarify authority boundaries, record failure modes, and reduce future ambiguity; the existing features-pay-for-seams and current-problem tests remain the controls against speculative architecture.
+
+---
+
+## L-011 — The single-repository assumption was never stated, and was wrong for the intended user
+
+### How it surfaced
+
+While designing the discovery skill's artifact output, the question *where does the decision log go* had no satisfactory answer. `03-artifact-model.md` prescribed `.planning/` inside the repository being changed. The intended user's work spans many small repositories, and a single unit of work commonly touches several.
+
+### The finding
+
+The assumption was **one run, one repository**, and it was never written down as an assumption. It appeared instead as a fixed path in the artifact model, a repository-relative default in the reference configuration, and a `.planning/**` deny rule in two capability documents. Nothing recorded that these depended on a claim about how repositories are organized.
+
+An assumption embedded in four incidental places, and stated in none, is invisible until something contradicts it.
+
+### What was rejected on the way
+
+- **Distributing a copy of each decision into every affected repository.** This reproduces the problem an external root solves — several partial records that drift, and no answer to which is authoritative.
+- **A pointer file in each repository naming the planning root as a local path.** A path meaningful only on its author's machine is worse than absent: it resolves to nothing for every other reader while appearing authoritative.
+
+Both were proposed and both failed the same test — a record is only useful to a reader who can reach what it points at.
+
+### Accepted consequence
+
+The planning root became configuration (D-055), a feature declares the repositories it affects (D-056), the costs of an external root are recorded rather than mitigated (D-057), and an external root is treated as a location with an access model rather than a path (D-058).
+
+### Standing result
+
+Where the architecture fixes a location, it should say what it assumes about the surrounding organization. A default is legitimate; an unstated structural premise is not.
+
+---
+
+## L-012 — A judge with an unconditional requirement manufactured the artifact it was judging
+
+### Evidence scope
+
+One observed run of `advance`, a non-canonical incubation skill, on a real effort. This is a
+single empirical observation of one implementation, not proof about every reviewer. It is
+recorded because the mechanism is general and the failure was silent.
+
+### What happened
+
+An effort reached specification through ordinary grilling rather than Wayfinder discovery, so
+it had no discovery map. Its terminal ship-readiness judge evaluated a `discovery-unclosed`
+gap whose subject identity was hardcoded to a topic-root `map.md`. The file was absent. The
+judge wrote one, then continued.
+
+A read-only judge authored the evidence it went on to judge, and reported a result as though
+it had assessed the effort.
+
+### The defect
+
+The skill's evidence contract already knew that a grilling-originated effort has no map:
+presence routing selects between the Wayfinder and grilling branches on exactly that file,
+and the grilling branch states that ordinary grilling never requires Wayfinder. The knowledge
+was present and the ship judge did not consult it.
+
+The gap itself carried **no applicability test**. Every other gap in that contract names an
+artifact that must exist; this one names an artifact that exists for only one of two
+discovery paths, and nothing said how to establish which path an effort took. Given a
+requirement it could not satisfy and no way to rule it inapplicable, creating the file was the
+locally reasonable move.
+
+### Why it generalizes
+
+The failure was not a missing prohibition. Read-only access was already the reviewer default,
+and the outcome still occurred, because the reviewer was *instructed* to require something
+that should never have applied. Enforcement sits downstream of specification: a reviewer given
+an unconditional requirement will find a way to complete it.
+
+An unconditional requirement is a defect wherever a workflow offers more than one route to the
+same stage.
+
+### Accepted consequence
+
+`06-review-and-validation.md` now states, in the reviewer write policy, that a reviewer
+establishes an artifact's applicability before requiring it, and that a missing required
+artifact is a finding rather than something to supply.
+
+### Standing result
+
+Where a requirement depends on which path work took, its applicability test travels with it.
+A reviewer reports what is absent; it never writes what is absent.

@@ -179,7 +179,7 @@ Benefits:
 Suggested interface:
 
 ```text
-factory run-feature .planning/<feature>
+factory run-feature <planning-root>/<feature>
 ```
 
 Responsibilities:

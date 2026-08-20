@@ -1,18 +1,30 @@
-# 09 — Illustrative Reference Configuration
+# 09 — Reference Configuration
 
-This is intentionally illustrative rather than a frozen schema.
+Most of this document is intentionally illustrative rather than a frozen schema. It tests how **workflow, governance, execution, environment, and roster** remain separate dimensions, with optional presets for convenience.
 
-It reflects the current decision to keep **workflow, governance, execution, environment, and roster separate**, with optional presets for convenience.
+One interface is stable in V1 because the planning skills already consume it:
+
+```yaml
+artifacts:
+  planning_root: .planning
+```
+
+`artifacts.planning_root` is a supported configuration key. Its value remains configurable per machine:
+
+- a repository-relative path, resolved from the repository root;
+- or an absolute path / already-usable local checkout of a planning repository.
+
+The default is `.planning`. Changing the key or its resolution semantics requires an explicit version or migration rather than an illustrative edit.
+
+The layout beneath a run is fixed by `03-artifact-model.md`. In particular, evidence lives at `<run>/evidence/` and spikes at `<run>/spikes/`; they are not separate configuration knobs in V1. Other keys below remain illustrative until a real consumer earns and stabilizes them.
 
 ```yaml
 version: 0.2
 
 artifacts:
-  planning_root: .planning
+  planning_root: .planning        # stable V1 interface; value remains configurable
   permanent_docs: docs
   adr_path: docs/adr
-  evidence_dir: evidence
-  spikes_dir: spikes
 
 factory:
   state_root: .factory/runs
