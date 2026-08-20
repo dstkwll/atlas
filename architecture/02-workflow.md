@@ -37,6 +37,7 @@ Input:
 Output:
 
 - recommended workflow depth
+- recommended first producer stage within that workflow
 - recommended governance profile
 - structured risk assessment
 - resolved run configuration after human acceptance/override
@@ -68,6 +69,23 @@ Conditional gates:
 ```
 
 The resolved run configuration is snapshotted into the planning directory and becomes part of the run's audit trail.
+
+Stage selection and boundary acceptance are different decisions. Stage 0 always initializes and
+classifies the run, but the first **producer** action may occur later in the pipeline:
+
+- If the selected workflow does not require an artifact boundary, that boundary is conceptually
+  `NOT_REQUIRED`. Its omission is not an approval.
+- If a required upstream artifact already exists, producing it again may be unnecessary, but the
+  artifact must pass that stage's ordinary boundary judge and configured authority before downstream
+  admission. Reuse may skip production; it never skips acceptance.
+
+The classifier therefore recommends the earliest admissible producer stage, while the control plane
+proves any required upstream contracts before allowing work to begin there.
+
+This does not change the shipped Stage 0–2 initializer. It rejects pre-existing discovery and
+amendment state before `control.json`; a pre-existing `20-spec.md` may coexist with initialization,
+but receives no acceptance from that fact. Any reused candidate at a prescribed artifact path remains
+untrusted until it passes the ordinary judge/authority path.
 
 ---
 

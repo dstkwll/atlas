@@ -2,7 +2,7 @@
 
 **Purpose:** Preserve not only what the design currently says, but **how and why it changed**. This is intended to protect the project from recency bias, repeated rediscovery, and future agents mistaking superseded ideas for current commitments.
 
-**Snapshot date:** 2026-08-13
+**Snapshot date:** 2026-08-20
 
 ---
 
@@ -453,6 +453,7 @@ The reference repositories are therefore treated as:
 - **Masterplan:** durable-state/resume donor;
 - **Warren:** production-runtime failure-history and future control-plane donor;
 - **Ringer:** model-identity / roster-telemetry / validator-preflight reference donor;
+- **Autoprompt:** compact-handoff / evidence-preserving-repair / execution-framework reference donor;
 - **Groundwork / PlanF3 / Maciej gist:** selective idea/checklist donors.
 
 No single repository is the architecture.
@@ -670,3 +671,41 @@ a concrete current failure requires it and a materially simpler design does not 
 failure. One explicitly retained exclusion mechanism is the run lock: atomic replacement
 prevents torn state but not two revision-N writers overwriting each other, and a check
 immediately before replace has the same race.
+
+---
+
+## L-014 — Autoprompt mostly reinforced existing rules; the missing rule was stage admission
+
+### Evidence scope
+
+Source inspection of `Spielewoy/autoprompt-skill` at commit
+`1a195165c5e54ce33fc357425a0b3af7a8dae96f`, including its canonical contracts, generated provider
+packages, installer/runtime code, and a separate proposal applying its ideas to Atlas.
+
+### What changed under source comparison
+
+The proposal attributed several useful ideas to Autoprompt: uncertainty-aware stage routing,
+boundary-local repair, useful-first decomposition, compact handoffs, and evidence reuse. Source
+inspection showed an asymmetric result:
+
+- compact pointer handoffs, retained evidence, named repair loops, framework axes, and a final goal
+  check are genuine Autoprompt prior art;
+- evidence-local repair and selective workflow depth were already explicit in Atlas;
+- an uncertainty-axis router and earliest trustworthy semantic entry are **not** implemented by
+  Autoprompt, whose invoked missions still enter its minimum roadmap/reviewer topology;
+- fresh architecture review corrected an overstatement about Atlas itself: the shipped initializer
+  rejects pre-existing discovery/amendment state but allows a pre-existing `20-spec.md`. The rule
+  must therefore govern acceptance authority, not pretend every candidate file postdates control.
+
+### Accepted consequence
+
+Atlas records Autoprompt in the borrow map and makes one missing rule explicit: a boundary omitted by
+the selected workflow is `NOT_REQUIRED`, while a required pre-existing artifact may skip production
+but still passes its ordinary acceptance boundary. Semantic-stage admission and later
+execution-framework selection remain separate decisions.
+
+### Standing result
+
+External prior art can expose a missing local distinction even when the proposed attribution is
+wrong. Borrow the verified mechanisms, preserve the contrast that sharpened the design, and do not
+import the source's hierarchy or prompt-first control model merely to obtain those ideas.

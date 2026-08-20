@@ -2,7 +2,7 @@
 
 **Purpose:** Preserve the implementation provenance behind the architecture so that implementation can begin from known, working or at least concrete upstream patterns rather than re-inventing every mechanism from a blank page.
 
-**Snapshot date:** 2026-08-12
+**Snapshot date:** 2026-08-20
 
 This is not a dependency list and it is not an instruction to wholesale-fork any repository. It is a **subsystem donor map**: which source demonstrates a useful mechanism, what we intend to reuse or adapt, what concrete files should be re-read before implementation, and which parts of the upstream design we explicitly do **not** want.
 
@@ -527,6 +527,64 @@ Ringer does **not** become a new architectural pillar or swarm-first execution r
 
 ---
 
+# 12. Spielewoy — Autoprompt Skill
+
+- Repository: https://github.com/Spielewoy/autoprompt-skill
+- Inspected commit: `1a195165c5e54ce33fc357425a0b3af7a8dae96f`
+- License observed at that commit: **MIT**
+
+## Why it matters
+
+Autoprompt is a substantial multi-provider orchestration protocol wrapped in a defensive npm
+installer. Its most useful evidence for Atlas is not the size of its role hierarchy; it is the
+concrete treatment of compact handoffs, retained evidence, targeted repair, execution-framework
+routing, and final goal checking. Source inspection also provides a valuable contrast: every invoked
+mission still enters Autoprompt's roadmap topology, so it does **not** implement Atlas's
+evidence-backed earliest-stage admission rule.
+
+Most orchestration semantics are model-interpreted. Executable enforcement is strongest in
+installation/manifest handling, the optional Claude workflow runtime and supervisors, and Prime's
+native dispatcher. Treat protocol prose and runtime authority as different evidence classes.
+
+## Borrow map
+
+| Facet | Action | Maturity | How it maps to our design |
+|---|---|---|---|
+| Hash/length/nonce-bound pointers instead of repeated mission prose | **CONCEPT** | **IMPLEMENTATION_REFERENCE** | Revisit for Stage 5 ticket handoffs and Stage 7 worker envelopes; preserve Atlas's own artifact authority. |
+| Retain accepted evidence and repair only named rejected items | **CONCEPT** | **ACCEPTED_PRINCIPLE** | Reinforces boundary-local repair and targeted invalidation already present in Atlas. |
+| Useful-first decomposition into dependency-safe lanes | **REFERENCE** | **IMPLEMENTATION_REFERENCE** | Revisit while designing the Stage 5 ticket compiler; Atlas already requires vertical slices, so borrow only mechanics that sharpen ownership/dependency output. |
+| Separate category, optional playbook tag, and task/depth tier | **ADAPT** | **DEFERRED** | Useful input when execution-framework selection is designed for Stages 5–7; do not make it the semantic-stage router. |
+| Narrow `apply` framework after the mandatory roadmap gate | **REFERENCE** | **OBSERVED** | Contrast case showing that detailed execution planning can be conditional, but not semantic-stage admission; Atlas's admission proof remains separate. |
+| Independent final goal check against the original mission | **ADAPT** | **DEFERRED** | Revisit for Stage 9 whole-feature validation after the execution factory exists. |
+| Provider payload generation, manifests, receipts, and scoped uninstall | **REFERENCE** | **DEFERRED** | Useful only if Atlas later ships across several hosts; no current packaging seam is earned. |
+
+## Concrete upstream areas to re-read
+
+- `agents/contracts/autoprompt.contract.json` — canonical persona/framework inventory.
+- `agents/contracts/generic.md` — provider-neutral protocol.
+- `agents/contracts/frameworks/README.md` and `apply.md` — framework routing and narrow path.
+- `agents/claude/SKILL.md`, `GATES.md`, and `MODES.md` — ordinary prompt-level conductor contract.
+- `agents/claude/workflow/autoprompt-gate.js` — executable Claude workflow runtime when invoked.
+- `agents/claude/workflow/autoprompt-ledger-check.js` and `supervisor.sh` — provenance validation and relaunch mechanics.
+- `agents/prime/extensions/autoprompt.ts` and `agents/prime/skills/autoprompt/src/autoprompt/__init__.py` — strongest native topology/binding enforcement.
+- `bin/autoprompt.cjs`, `scripts/install/`, and `scripts/runtime-payload.cjs` — installer and provider lifecycle.
+
+## Explicitly do not import
+
+- **REJECT:** prompt-defined orchestration as authoritative lifecycle control.
+- **REJECT:** a mandatory roadmap/reviewer topology for every mission, including work whose required upstream contracts already exist.
+- **REJECT:** the 25-persona, five-level hierarchy as Atlas's default organization.
+- **REJECT:** a second three-file governance ledger alongside Atlas's authoritative planning and execution state.
+- **REJECT:** Autoprompt's universal 95% changed-line coverage floor and broad mandatory review topology as Atlas defaults; Atlas applies its own contract/risk policy.
+- **DEFERRED:** custom relaunch supervisors, provider installers, and generated provider packages until a current Atlas use case earns them.
+
+## Likely implementation role
+
+**Secondary donor for:** compact worker envelopes, evidence-preserving repair, execution-framework
+selection, and final mission closure. **Not a runtime base and not the semantic-stage router.**
+
+---
+
 # Cross-source implementation map
 
 This is the most useful implementation-time view: **for each subsystem we plan to build, where should the engineer look first?**
@@ -541,12 +599,14 @@ This is the most useful implementation-time view: **for each subsystem we plan t
 | System design | HumanLayer WSFF | Maciej gist, Groundwork solution-design | New skill using concepts |
 | Program design | HumanLayer WSFF | Maciej gist, Pocock architecture principles | New skill using concepts |
 | Vertical ticket compiler | Pocock `to-tickets` | HumanLayer vertical slices | Fork/adapt heavily |
+| Stage admission | Our workflow/gate contracts | Autoprompt `apply` as a contrast case | Required pre-existing artifacts pass ordinary acceptance; unselected boundaries are `NOT_REQUIRED` |
 | Ticket execution engine | SSSF | Superpowers SDD | Adapt SSSF runtime around our ticket contract |
 | Deterministic validators | SSSF | Superpowers verification, PlanF3 validation concept | Reuse pattern, repo-specific commands |
 | Validator baseline preflight | Ringer | — | Adapt early; catch broken checks before worker attempts |
 | Contract review | Pocock code-review + Superpowers spec review | SSSF reviewer phase | New bounded reviewer role |
 | Design/quality review | Pocock + Superpowers | Groundwork ops-review conditional | New bounded reviewer roles |
 | Runtime envelopes | SSSF / Inkwell | — | Reuse schema pattern, define our types |
+| Compact worker handoffs | Our accepted artifact bindings | Autoprompt pointer envelopes | Revisit at Stage 5/7; pointers never become authority themselves |
 | Machine run state | Masterplan | Warren, Inkwell run_record, SSSF tracing | JSON/JSONL V1; single authoritative controller |
 | Resume/recovery | Masterplan | Warren failure/recovery records, Inkwell lifecycle state | Defer advanced recovery; adapt deterministic next-action logic when needed |
 | Workcell runtime | Superpowers worktrees | Inkwell; Warren RuntimeProvider when a second runtime appears | **Local worktree V1. No generalized provider seam yet.** |
@@ -682,6 +742,7 @@ upstreams:
 | HumanLayer WSFF | Not intended as code baseline | **Very high** for design philosophy |
 | Groundwork | Low–Medium as code baseline | Medium–High for selected practices |
 | PlanF3 | Low | Medium for a handful of local ideas |
+| Autoprompt | Low as a wholesale runtime base; medium as a later execution-protocol reference | Medium–High for compact handoffs, repair, and framework-selection concepts |
 | Maciej gist | Not a code baseline | Medium–High as a concrete abstraction checklist |
 
 The confidence labels describe **fit to our architecture**, not overall quality or popularity.
@@ -702,6 +763,7 @@ It combines:
 - **Inkwell's supervisor/workcell/trust boundary**,
 - **Warren's seam discipline, event trust, configuration freezing, and production-runtime failure history**,
 - **Ringer's role/task-shape telemetry, model identity taxonomy, and evidence-informed staffing feedback loop**,
+- **Autoprompt's compact handoffs, evidence-preserving repair, and execution-framework prior art**,
 - plus selected evidence/review ideas from Groundwork and PlanF3.
 
 The implementation goal is therefore not “build another SSSF” or “install all these skills.” It is:
