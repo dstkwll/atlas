@@ -4,7 +4,7 @@ Pipeline skills written against the Atlas architecture in this repository.
 
 Unlike the [`incubator`](../incubator/README.md) plugin beside it, nothing here is forked. Each skill was written against a named stage of `architecture/02-workflow.md`, and `architecture/` remains authoritative whenever this plugin and it disagree — report the conflict rather than following the skill.
 
-**This is a work in progress.** Four of the pipeline's stages have skills; the rest do not. Nothing here has been exercised on real work.
+**This is a work in progress.** The first two pipeline stages have skills, alongside machine setup and the spike route. Stages 3–5 do not.
 
 ## Skills
 
@@ -17,6 +17,15 @@ Unlike the [`incubator`](../incubator/README.md) plugin beside it, nothing here 
 
 Invocations read `atlas:<skill>` — `atlas:discovery`, `atlas:to-spec`. Codex resolves the plugin as `atlas@dstkwll`.
 
+## Install with Copilot CLI
+
+```shell
+copilot plugin marketplace add dstkwll/atlas
+copilot plugin install atlas@dstkwll
+```
+
+Install `atlas` without `incubator` while their skill names overlap.
+
 ## What is not here
 
 Stages 3 (system design), 4 (program design) and 5 (ticket compilation) have no skills yet. Candidates for those, and for execution and review, live in the `incubator` plugin carrying upstream assumptions — see its README for what each is and what conflicts are known.
@@ -28,11 +37,13 @@ Two consequences worth knowing before you install this:
 
 ## Status of each skill
 
-All four are **candidates**. They were written against the architecture, which is not the same as verified against it — none has been run on real work, and no host has loaded this tree.
+All four are **candidates**. They were written against the architecture, which is not the same as proving the complete pipeline.
 
-`to-spec` has been executed once against a fabricated decision log by an agent that had not seen it, which found a contradiction three adversarial reviews had missed. That is one run against one input; the supersession path was not exercised because the fixture did not carry a superseded record.
+`discovery` has been executed once on a real photo-archive decision topic. It completed two rounds and produced a decision log that a fresh `to-spec` executor consumed. That Stage 2 run wrote a blocked behavioural specification and stopped correctly because two blocking questions remained. These runs exercised discovery → specification, not the rest of the pipeline.
 
-`discovery`, `spike` and `setup-atlas` have never been run at all.
+`to-spec` was also executed against a fabricated fixture, which found a joint-followability contradiction that three adversarial reviews had missed. The fixture did not exercise supersession; the later photo-archive run did.
+
+`spike` and `setup-atlas` have not been executed end to end. Copilot CLI 1.0.80 registered the repository's marketplace in an isolated home, installed `atlas@dstkwll`, reported all four skills, and successfully dispatched interactive `/atlas:setup-atlas`; that proves marketplace installation, plugin discovery, and the explicit invocation path, not the skill's write behavior or cross-host invocation policy.
 
 ## Conventions
 

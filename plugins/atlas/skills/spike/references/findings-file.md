@@ -1,6 +1,6 @@
 # Findings file
 
-One file per spike, under `artifacts.spikes_dir` **beneath the run** — `spikes/` where that key is unset. Both directory keys resolve relative to the run, never to the planning root; `../../discovery/references/run-layout.md` is the authority. Never hardcode a path; where no run exists, ask.
+One file per spike under `<run>/spikes/`. The run layout is fixed and `../../discovery/references/run-layout.md` is the authority; only the planning root above the run is configurable. Where no run exists, ask.
 
 ```markdown
 ---

@@ -67,8 +67,7 @@ artifacts:
   planning_root: .planning        # or an absolute path
 ```
 
-Other `artifacts` keys are left unset and fall back to the defaults in
-`architecture/09-reference-config.md` — `evidence/` and `spikes/` beneath the run.
+This is the only V1 artifact-location setting. `evidence/` and `spikes/` are fixed beneath each run by `architecture/03-artifact-model.md`; setup does not configure them.
 
 Report the path written and where the next run will land. Placement of an individual run
 under an external root is a per-run judgement, not configuration — see

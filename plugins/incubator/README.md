@@ -21,8 +21,6 @@
 > `atlas:factory-implement`. The friction is the point: every call should remind the caller
 > that the skill has not earned canonical status.
 
-There is no canonical `plugins/atlas/` yet. That is expected, not an omission.
-
 ## Architectural precedence
 
 If a skill in this plugin conflicts with:
@@ -67,9 +65,11 @@ plugins/incubator/
   LICENSE                  Upstream MIT license
 ```
 
-The marketplace index lives at the repository root in
-[`.agents/plugins/marketplace.json`](../../.agents/plugins/marketplace.json) under the
-marketplace name `dstkwll`, so Codex resolves this plugin as `incubator@dstkwll`.
+The Codex marketplace index lives at
+[`.agents/plugins/marketplace.json`](../../.agents/plugins/marketplace.json), and the Copilot
+CLI marketplace index at [`.github/plugin/marketplace.json`](../../.github/plugin/marketplace.json).
+Both use the marketplace name `dstkwll`; install `incubator` separately from `atlas` while
+their skill names overlap.
 
 ## Candidate status
 

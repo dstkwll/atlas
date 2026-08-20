@@ -29,7 +29,7 @@ Read `<run>/10-decisions.md`. It is authoritative for what was decided and why: 
 
 The log keeps reversals — a record carrying `status: superseded` was overturned, and the record naming it in `supersedes:` holds the live choice. Follow every chain to its end and compile only what stands there.
 
-Read the code where it helps establish what is currently true and what vocabulary the domain already uses — the **Current** half of every requirement comes from there. Keep what you learn about implementation under `artifacts.evidence_dir` — `evidence/` where that key is unset — beside the run, where Stage 3 will want it.
+Read the code where it helps establish what is currently true and what vocabulary the domain already uses — the **Current** half of every requirement comes from there. Keep what you learn about implementation under `<run>/evidence/`, where Stage 3 will want it. The run layout is fixed; only the planning root above it is configurable.
 
 Where no decision log exists, say so and offer `discovery`.
 

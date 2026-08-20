@@ -37,7 +37,7 @@ for this run alone. Never default to a path.
 <run>/10-decisions.md
 ```
 
-`20-spec.md` and everything after it belong to later stages. Evidence from a dispatched research or explore route lands under `artifacts.evidence_dir`, a spike under `artifacts.spikes_dir` — `evidence/` and `spikes/` where those keys are unset, per `architecture/09-reference-config.md`.
+`20-spec.md` and everything after it belong to later stages. Evidence from a dispatched research or explore route lands under `<run>/evidence/`; a spike lands under `<run>/spikes/`. These fixed subdirectories are part of the V1 artifact layout in `architecture/03-artifact-model.md`; only the planning root above the run is configurable.
 
 ## `10-decisions.md` at creation
 
