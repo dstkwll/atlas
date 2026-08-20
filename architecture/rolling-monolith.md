@@ -1,7 +1,9 @@
 # 00 — Architecture Governance and Continuity Protocol
 
-**Version introduced:** v0.4  
-**Snapshot date:** 2026-08-13  
+**Version introduced:** v0.4
+
+**Snapshot date:** 2026-08-20
+
 **Purpose:** Preserve architectural integrity as the project evolves across long conversations, different agents/sessions, external reference reviews, and Git-backed implementation.
 
 ---
@@ -92,7 +94,7 @@ These are not immutable forever, but they require explicit challenge and amendme
 
 1. **Workflow defines capability; policy defines authority.**
 2. **Pre-implementation progressively reduces degrees of freedom.**
-3. **Behavioral spec, system design, program design, and executable tickets have distinct responsibilities.**
+3. **The product contract, system design, program design, and executable tickets have distinct responsibilities.**
 4. **Downstream execution cannot silently rewrite approved upstream decisions.**
 5. **Deterministic code owns deterministic workflow mechanics and authoritative state transitions.**
 6. **Agent claims are evidence/proposals, never authoritative lifecycle truth.**
@@ -212,6 +214,7 @@ Every substantial snapshot should verify at least:
 - principles and concrete workflow do not contradict each other;
 - artifact responsibilities remain non-overlapping;
 - examples/config do not encode superseded policy;
+- mandatory generated projections remain explicitly non-authoritative;
 - open questions that were resolved are marked resolved or removed;
 - deferred ideas are not presented as V1 requirements;
 - rejected ideas are not reintroduced without explicit reconsideration;
@@ -389,12 +392,15 @@ If two artifacts repeatedly restate one another, one of the abstraction boundari
 The intended progression is:
 
 1. **Decision discovery** — what is still unresolved?
-2. **Behavioral spec** — what must become true?
+2. **Product contract (living PRD)** — what must become true?
 3. **System design** — where does it fit and what boundaries/contracts change?
 4. **Program design** — what shape will the code take?
 5. **Execution compilation** — what independent vertical slices implement the approved design?
 
 Each stage should reduce degrees of freedom without reopening resolved upstream decisions.
+
+Decision discovery and the product contract are authored by one producer and separated by the
+product-closure boundary rather than by two stages (D-066, D-067).
 
 ## 4. Downstream stages may discover problems, but cannot silently redesign upstream decisions
 
@@ -573,7 +579,7 @@ Why:
 - affects failure/recovery semantics
 
 Human gates:
-- behavioral spec
+- product closure
 - program design
 - final PR
 
@@ -591,23 +597,28 @@ classifies the run, but the first **producer** action may occur later in the pip
   `NOT_REQUIRED`. Its omission is not an approval.
 - If a required upstream artifact already exists, producing it again may be unnecessary, but the
   artifact must pass that stage's ordinary boundary judge and configured authority before downstream
-  admission. Reuse may skip production; it never skips acceptance.
+  admission. Reuse may skip production; it never skips product closure.
 
 The classifier therefore recommends the earliest admissible producer stage, while the control plane
 proves any required upstream contracts before allowing work to begin there.
 
 This does not change the shipped Stage 0–2 initializer. It rejects pre-existing discovery and
-amendment state before `control.json`; a pre-existing `20-spec.md` may coexist with initialization,
+amendment state before `control.json`; a pre-existing `20-prd.md` may coexist with initialization,
 but receives no acceptance from that fact. Any reused candidate at a prescribed artifact path remains
 untrusted until it passes the ordinary judge/authority path.
 
 ---
 
-## Stage 1 — Decision discovery
+## Stage 1 — Decision discovery, living PRD maintenance, and product closure
+
+Stage 2 was the former behavioral-specification stage; v0.6 folds it into Stage 1's
+product-closure boundary. The “Stages 0–2” control-plane scope name remains for state-key
+coherence.
 
 Purpose:
 
-> Determine which decisions actually need to be made before specification/design can stabilize.
+> Determine which decisions actually need to be made before engineering design can stabilize, and
+> continuously maintain the decision ledger and living product PRD as those decisions settle.
 
 Potential resolution modes:
 
@@ -622,39 +633,29 @@ OPEN DECISION
 
 For very large/foggy work, use a Wayfinder-style frontier of currently answerable decisions rather than pretending the entire project can be decomposed up front.
 
-Output is **resolved decisions/evidence**, not implementation tickets.
+Output is **resolved decisions/evidence plus a living product PRD**, not implementation tickets.
 
----
-
-## Stage 2 — Behavioral specification
+### Exit boundary — Product closure
 
 Question:
 
-> What must become true?
+> Has discovery reconciled every live decision into one reviewable product contract that is ready
+> to hand off to engineering design?
 
-The spec should be understandable and approvable without requiring implementation knowledge.
+Discovery owns both `10-decisions.md` and `20-prd.md` continuously; v0.6 removes the separate
+specification translation producer. Product closure is discovery's single exit boundary, not a new
+authoring stage or durable phase name.
 
-Suggested content:
+Closure requires:
 
-- problem
-- desired behavior
-- user/operator stories
-- acceptance outcomes
-- constraints
-- invariants
-- out of scope
-- observable behavior
-- unresolved questions
+- a complete `10-decisions.md` with the required PRD-alignment retrospective;
+- a current `20-prd.md` whose `derived_from` binds the exact decision-log version and hash it was
+  reconciled against;
+- a current `20-prd.html` projection regenerated from that Markdown;
+- deterministic reconciliation checks plus configured semantic acceptance.
 
-Avoid:
-
-- class names
-- file layouts
-- method signatures
-- internal interfaces
-- implementation structure
-
-This artifact defines the **behavioral contract**.
+The accepted PRD defines the **product contract** and remains understandable and approvable without
+requiring implementation knowledge.
 
 ---
 
@@ -732,7 +733,7 @@ This stage should be treated as a **compiler**, not another open-ended design st
 
 Inputs:
 
-- approved spec
+- accepted product PRD
 - approved system design when present
 - approved program design when present
 
@@ -828,7 +829,7 @@ After all tickets are complete:
 - full build/test/lint suite
 - integration/system tests
 - architecture/scope checks
-- whole-branch spec compliance review
+- whole-branch product-contract compliance review
 - whole-branch architecture/program-design drift review
 - maintainability/standards review
 - conditional ops/security/migration/UI review
@@ -884,7 +885,8 @@ Merge remains a human action initially.
     ├── control.json
     ├── 00-state.md
     ├── 10-decisions.md
-    ├── 20-spec.md
+    ├── 20-prd.md
+    ├── 20-prd.html
     ├── 30-system-design.md
     ├── 40-program-design.md
     │
@@ -944,9 +946,9 @@ The planning root and the execution scope are separate concerns. Widening the fi
 
 These are costs, not defects, and are accepted deliberately:
 
-- **Specification and code no longer share a commit.** With a repository-relative root, the approved contract and the change implementing it appear in one history; with an external root they do not. Correlation is by explicit reference, not by construction.
+- **Contract and code no longer share a commit.** With a repository-relative root, the approved contract and the change implementing it appear in one history; with an external root they do not. Correlation is by explicit reference, not by construction.
 - **Review loses ambient context.** A reviewer reading a pull request cannot see the contract unless the planning root is resolvable in their environment. Contract review therefore depends on configuration being correct wherever review runs.
-- **Atomicity is lost.** Repository-relative planning gives history, blame, and atomic spec-plus-code commits for free. An external root gives none of these unless it is itself version-controlled.
+- **Atomicity is lost.** Repository-relative planning gives history, blame, and atomic contract-plus-code commits for free. An external root gives none of these unless it is itself version-controlled.
 
 Where a repository benefits from a permanent local record — a public repository, or one whose readers cannot reach the planning root — a decision may **graduate** into that repository as an ADR under `artifacts.adr_path`. Graduation is a deliberate act producing a durable record, not an automatic mirror of planning state.
 
@@ -987,15 +989,16 @@ It records only the current planning phase and revision, gate outcomes, the immu
 hash/effective amendment revision, and accepted candidate version/hash provenance. The
 controller replaces this one JSON file atomically. It is not execution runtime state and does
 not contain ticket ownership, attempts, retries, or repository-scoped factory events. Its mutable
-`gates` map contains only selected discovery and specification boundaries. Immutable `run.yaml`
-retains later-stage and conditional policy; after specification acceptance, `phase` may name the
+`gates` map contains only selected discovery boundaries. Immutable `run.yaml` retains later-stage
+and conditional policy; after product closure acceptance, `phase` may name the
 next selected stage without creating mutable state for that stage.
 
-An accepted discovery or specification remains in its prescribed artifact path. Acceptance
-records its current version and content hash in `control.json`; V1 does not create a second
-approved copy or retain a separate acceptance history. Reopening leaves that binding visible
-while stale and requires the producer to increment the candidate version; the next acceptance
-replaces it.
+An accepted discovery/product-closure candidate remains in its prescribed artifact path.
+Acceptance records its current version and content hash in `control.json`; V1 does not create a
+second approved copy or retain a separate acceptance history. The Stage 0–2 controller provides no
+post-closure reopen. A version increment replaces a previously accepted candidate only through a
+future downstream reopen owner; until that owner exists, a live mismatch against an accepted
+binding fails closed (see 08 — State and Governance).
 
 ---
 
@@ -1012,12 +1015,11 @@ Example projection:
 source: control.json
 feature: async-device-jobs
 status: planning
-phase: specification
+phase: discovery
 revision: 3
 
 gates:
-  discovery: AGENT_APPROVED
-  specification: PENDING
+  discovery: PENDING
 
 blocked_reason: null
 ---
@@ -1033,7 +1035,8 @@ wins and the projection is stale.
 
 Purpose:
 
-> Durable record of important pre-spec decisions and their rationale.
+> Durable record of important discovery decisions, their rationale, and the reconciliation
+> provenance that binds them to the living PRD.
 
 Possible schema:
 
@@ -1050,13 +1053,18 @@ Consequences: ...
 
 This is not necessarily required for every small feature.
 
+`10-decisions.md` also owns a required `## PRD alignment retrospective` table. That table is the
+mechanical reconciliation surface for product closure: it is exhaustive over identifiers and
+best-effort over meaning, and the semantic reviewer judges whether its mappings and
+`NO_NORMATIVE_EFFECT` reasons are honest.
+
 ---
 
-## `20-spec.md`
+## `20-prd.md`
 
 Owns:
 
-> External/observable behavior.
+> The living product contract discovery continuously maintains for product closure.
 
 Should answer:
 
@@ -1066,7 +1074,19 @@ Should answer:
 - what invariants must hold?
 - what behaviors constitute acceptance?
 
-Must not become an implementation plan.
+Its frontmatter includes `derived_from`, binding the exact `10-decisions.md` version and SHA-256
+the PRD was reconciled against. It must not become an implementation plan.
+
+---
+
+## `20-prd.html`
+
+Owns:
+
+> A mandatory generated projection of `20-prd.md` for cold-read review.
+
+It is regenerated whenever the PRD changes and must exactly match the current Markdown source before
+product closure can pass. It is never authoritative and never contributes its own acceptance hash.
 
 ---
 
@@ -1117,7 +1137,7 @@ Examples:
 - external API constraints
 - repository archaeology
 
-Evidence is descriptive; specs/designs are normative.
+Evidence is descriptive; the PRD and designs are normative.
 
 ---
 
@@ -1150,7 +1170,7 @@ blocked_by:
 risk: medium
 
 references:
-  spec: ../20-spec.md
+  prd: ../20-prd.md
   system_design: ../30-system-design.md
   program_design: ../40-program-design.md
 
@@ -1210,9 +1230,11 @@ Example:
 
 This allows deterministic routing without requiring code to parse prose sentiment.
 
-For a Stage 1 or Stage 2 `AGENT_REVIEW` gate, the invoker persists the read-only judge's
-structured output as `reviews/<stage>-v<version>.json`. It binds `run`, `stage`, candidate
-`version` and SHA-256, `verdict: PASS|BLOCKED`, and an array of gaps; each gap includes a stable
+For the discovery product-closure `AGENT_REVIEW` gate, the invoker persists the read-only judge's
+structured output as `reviews/product_closure-v<version>.json`. It binds `run`; a `stage` field
+whose value is the boundary label `product_closure` and which the controller accepts only when it
+equals the report's `boundary`; candidate `version` and SHA-256, `verdict: PASS|BLOCKED`, and an
+array of gaps; each gap includes a stable
 code, artifact, problem, and resume stage/action. A PASS envelope has no gaps. The controller
 validates and hashes this envelope but never asks it to modify the artifact or state. V1 does not
 add authenticated reviewer identities or signatures: the invoker must obtain the envelope from
@@ -1293,12 +1315,12 @@ Goal → Ticket → Implement → Validate → PR
 
 ```text
 NORMAL
-Goal → Discovery → Spec → Program Design → Tickets → Factory
+Goal → Discovery + Product Closure → Program Design → Tickets → Factory
 ```
 
 ```text
 ARCHITECTURAL
-Goal → Discovery → Spec → System Design → Program Design → Tickets → Factory
+Goal → Discovery + Product Closure → System Design → Program Design → Tickets → Factory
 ```
 
 ```text
@@ -1434,8 +1456,8 @@ Output can advance immediately once deterministic prerequisites are satisfied **
 boundary contract declares no semantic acceptance question**. A successful automatic gate is
 recorded as `AUTO_PASSED`, never `AGENT_APPROVED`.
 
-Stage 1 discovery and Stage 2 behavioral specification both require semantic acceptance in
-this revision, so their configured authority is `AGENT_REVIEW` or `HUMAN`, not `AUTO`.
+Discovery's product-closure boundary requires semantic acceptance in this revision, so its
+configured authority is `AGENT_REVIEW` or `HUMAN`, not `AUTO`.
 
 ### `AGENT_REVIEW`
 
@@ -1478,9 +1500,17 @@ program_design:
 
 The human becomes the decision authority rather than the primary bug finder.
 
+### Boundary labels are not state keys
+
+`control.json.phase`, the `gates` map, the `acceptances` map, and every gap's resume stage remain
+keyed by the controlled producer name `discovery`. `product_closure` is the semantic label for
+discovery's exit boundary: it names the review envelope and human-facing vocabulary, and it never
+becomes a phase value, gate key, or acceptance key. This keeps stage-index coherence unchanged
+while making the boundary explicit (D-067).
+
 ### Stage 0–2 boundary seam
 
-For discovery and behavioral specification, keep four responsibilities distinct:
+For discovery and its product-closure boundary, keep four responsibilities distinct:
 
 ```text
 producer completes a candidate
@@ -1800,7 +1830,7 @@ These should run before LLM review so reviewers spend reasoning tokens on ambigu
 
 Required for things deterministic checks cannot fully judge:
 
-- contract/spec compliance
+- contract/product-contract compliance
 - architecture drift
 - maintainability
 - unnecessary complexity
@@ -1827,7 +1857,7 @@ Question:
 Checks:
 
 - ticket acceptance
-- relevant spec sections
+- relevant product-contract sections
 - relevant system/program-design sections
 - missing behavior
 - scope creep
@@ -1949,47 +1979,48 @@ A reviewer given an unconditional requirement — an artifact named as required 
 Two consequences for specifying any reviewer:
 
 - **Requirements that depend on which path the work took carry their applicability test with them.** Where a workflow offers alternative routes to the same stage, an artifact produced by only one route is conditional on evidence that the route was taken, and its absence on the other route is not a gap.
-- **A required artifact that is absent is a finding.** The reviewer reports it and stops. It never writes a routing artifact, an evidence file, a ticket, or a specification in order to satisfy its own condition.
+- **A required artifact that is absent is a finding.** The reviewer reports it and stops. It never writes a routing artifact, an evidence file, a ticket, or a product contract in order to satisfy its own condition.
 
 Observed in a real run of a non-canonical skill; recorded as L-012. The mechanism generalizes to any reviewer this architecture specifies.
 
 ---
 
-## Stage 1–2 boundary contracts
+## Discovery product-closure boundary
 
-Both boundary judges are read-only and return `PASS` or `BLOCKED`. A blocked result reports
-all material gaps found in that pass; each gap names the affected artifact and the exact stage
-and action that can resume it. `BLOCKED` returns to the producer without changing authoritative
-state. A producer-authored completion flag is evidence that the attempt
-ended, never proof that the boundary passed.
-
-### Discovery → specification
+The discovery exit boundary is product closure. Its judge is read-only and returns `PASS` or
+`BLOCKED`. A blocked result reports all material gaps found in that pass; each gap names the
+affected artifact and the exact stage and action that can resume it. `BLOCKED` returns to the
+producer without changing authoritative state. A producer-authored completion flag is evidence
+that the attempt ended, never proof that product closure passed.
 
 **Mechanical checks:** candidate identity and version match the planning run; required decision
 identifiers and record fields are present and unique; declared repository scope matches the
 effective intake; the open-frontier structure contains no unresolved entry; cold-read evidence
-is recorded; intake is not stale.
+is recorded and dispositioned; intake is not stale; the required PRD-alignment retrospective
+contains exactly one row for every live decision; every `NORMATIVE` decision maps to current PRD
+identifiers; every `NO_NORMATIVE_EFFECT` decision has a reason and maps to none; every normative
+PRD item cites one or more live decisions; the mappings agree in both directions; `20-prd.md`
+`derived_from` binds the exact current `10-decisions.md` version/hash; and `20-prd.html` declares
+the current Markdown source/hash. These checks are exhaustive over identifiers and best-effort
+over meaning.
 
-**Semantic questions:** does the artifact state the real problem; are important consequences,
-contradictions, or scope questions still unresolved; are decisions supported well enough to
-specify from; did the cold read's findings receive a real disposition?
+**Semantic questions, in order:**
 
-Failure resumes at discovery in `10-decisions.md`. Because the semantic questions are part of
-this boundary, acceptance authority is `AGENT_REVIEW` or `HUMAN` in this revision.
+1. Does the decision record state and support the real problem?
+2. Are important consequences, contradictions, or scope questions still unresolved?
+3. Are decisions supported well enough to justify the product contract?
+4. Did every cold-read finding receive a real disposition?
+5. Does each PRD obligation describe externally observable behavior?
+6. Are acceptance outcomes genuinely observable?
+7. Does any live decision carry a normative consequence the PRD omits or understates?
+8. Does the PRD assert an obligation that its cited decisions do not actually support?
+9. Is any `NO_NORMATIVE_EFFECT` reason false or evasive?
 
-### Specification → next selected design stage
-
-**Mechanical checks:** candidate identity and version match the planning run; required sections
-and normative identifiers exist and are unique; every decision reference resolves to the
-accepted discovery version/hash; no blocking open question remains; the specification does not
-contain implementation-ticket or internal code-shape fields.
-
-**Semantic questions:** does each requirement describe externally observable behavior; does the
-spec preserve discovery intent without inventing new intent; are material behavioral
-consequences missing or contradictory; are acceptance outcomes genuinely observable?
-
-Failure resumes at specification in `20-spec.md`. Because the semantic questions are part of
-this boundary, acceptance authority is `AGENT_REVIEW` or `HUMAN` in this revision.
+Failure resumes at discovery in `10-decisions.md` and `20-prd.md`. Because the semantic questions
+are part of this boundary, acceptance authority is `AGENT_REVIEW` or `HUMAN` in this revision.
+Reviewer freshness and read order remain procedural requirements: the controller can enforce
+schema, binding, and artifact identity, but it cannot authenticate who read first or how fresh a
+review context really was.
 
 ---
 
@@ -1999,7 +2030,7 @@ Ticket-level correctness is insufficient.
 
 After all tickets:
 
-1. full behavioral/spec compliance
+1. full product-contract compliance
 2. architecture drift across combined change
 3. program-design drift
 4. cross-ticket interactions
@@ -2016,7 +2047,7 @@ Human review can occur at different points based on governance profile.
 
 Potential gates:
 
-- spec approval
+- product-closure approval
 - system design approval
 - program design approval
 - ticket graph approval
@@ -2208,9 +2239,22 @@ resolve one or several decisions
 new territory becomes visible
 ```
 
-Only transition into normal spec/design/ticket compilation once enough uncertainty has collapsed.
+Only transition into engineering design and ticket compilation once enough uncertainty has collapsed.
 
 This prevents premature decomposition and false precision.
+
+---
+
+## Discovery outputs and skill-writing discipline
+
+Discovery continuously maintains the durable decision ledger and the living PRD; v0.6 removes the
+separate translation producer that used to turn discovery into a later specification artifact.
+
+The main discovery skill should keep the universal ordered path inline and disclose
+branch-specific procedures or reference material only through precise trigger pointers. Apply the
+Writing for Agents pruning rules aggressively: `discovery/SKILL.md` may be up to 400 lines as a
+hard ceiling, not a target; remove duplication, no-op instructions, and facts the environment
+already owns; never fill available space merely because it is available.
 
 ---
 
@@ -2244,7 +2288,6 @@ and remains a separate domain.
 ```text
 INTAKE
 DISCOVERY
-SPEC
 SYSTEM_DESIGN
 PROGRAM_DESIGN
 TICKETING
@@ -2258,7 +2301,8 @@ COMPLETE
 FAILED
 ```
 
-Not every workflow depth uses every state.
+Not every workflow depth uses every state. In v0.6, product closure is the exit boundary inside
+`DISCOVERY`, not a separate durable phase/state name.
 
 ---
 
@@ -2306,7 +2350,7 @@ record.
 
 `AUTO_PASSED` means a boundary explicitly declared mechanical-only and all of its
 deterministic prerequisites passed. It never means an agent reviewed the artifact. Discovery
-and behavioral specification are not mechanical-only boundaries in this revision.
+product closure is not a mechanical-only boundary in this revision.
 
 ---
 
@@ -2323,7 +2367,11 @@ Stages 0–2 do not create duplicate approved copies, acceptance-history ledgers
 receipt files. The prescribed candidate path remains the artifact, and any change after
 acceptance requires a version increment and a new gate decision. `control.json` preserves the
 current acceptance binding for each stage (version, hash, authority, date, and review reference
-when applicable). Reopening marks that binding stale; the next acceptance replaces it.
+when applicable). In v0.6 that accepted product-contract candidate is `20-prd.md`, whose
+`derived_from` binding transitively names the exact decision-log version/hash it closed against.
+The current Stage 0–2 controller has no post-closure reopen command. A future downstream owner may
+mark that binding stale and require the next candidate version; until that owner exists, any live
+source mismatch after acceptance fails closed rather than silently reopening discovery.
 
 ---
 
@@ -2730,6 +2778,9 @@ This is useful, but the CLI command itself is **not** a V1 requirement unless re
 ---
 
 ### D-002 — Planning is a compiler pipeline, not one giant planning activity
+
+**Refined by:** D-066 and D-067 collapse the former discovery-to-spec translation into one
+discovery producer with a separate product-closure boundary before engineering design.
 
 **Decision:** Separate decision discovery, behavioral spec, system design, program design, and execution compilation.
 
@@ -3288,7 +3339,8 @@ These are **future hardening paths**, not reasons to delay a local verified-boun
 
 ## Durable contracts vs runtime protocol
 
-Markdown remains ideal for decisions, behavioral specification, system design, program design, vertical tickets, amendments, and durable evidence summaries.
+Markdown remains ideal for decisions, the living product PRD, system design, program design,
+vertical tickets, amendments, and durable evidence summaries.
 
 Phase-to-phase communication should use typed, schema-validated envelopes.
 
@@ -3332,10 +3384,12 @@ Deterministic code consumes these envelopes and decides which state transition i
 ## Planning control state before execution
 
 Stages 0–2 use `<planning-root>/<feature>/control.json` as their machine-canonical planning
-state. It records only planning phase/gate outcomes and version/hash provenance. This closes
-the pre-execution authority gap for a planning effort that may span repositories without
-putting repository-scoped execution state in the planning root. `00-state.md` is generated
-from this file and is never transition authority.
+state. It records only planning phase/gate outcomes and version/hash provenance. In v0.6 the
+accepted product-contract candidate is `20-prd.md`, and its `derived_from` field binds the exact
+`10-decisions.md` version/hash product closure reconciled. This closes the pre-execution
+authority gap for a planning effort that may span repositories without putting repository-scoped
+execution state in the planning root. `00-state.md` is generated from this file and is never
+transition authority.
 
 ## Machine-canonical runtime state
 
@@ -3721,6 +3775,9 @@ License observed at snapshot: **MIT**
 This remains the best starting library for our **pre-implementation reasoning primitives** rather than our execution runtime. The skills are small, composable, deliberately editable, and already support local-file trackers/docs.
 
 ## Borrow map
+
+Donor-repository names in this table are external prior art; they do not describe Atlas's current
+producer set.
 
 | Facet | Action | How it maps to our design |
 |---|---|---|
@@ -5042,6 +5099,35 @@ import the source's hierarchy or prompt-first control model merely to obtain tho
 
 ---
 
+## L-015 — The separate discovery-to-spec translation pass was weaker than explicit product closure
+
+### Evidence scope
+
+Two-model review of the living-PRD redesign, grounded in the accepted Stage 0–2 control contracts
+and the observed limits of non-authoritative reviewer freshness.
+
+### What changed
+
+Atlas had been carrying two ideas at once: discovery should settle intent before engineering
+design, and a later translation from discovery into specification might catch omissions
+incidentally. Review showed that the translation pass was not a proven independent review and
+that its strongest incidental value could be replaced more explicitly.
+
+### Accepted consequence
+
+Discovery now continuously authors both `10-decisions.md` and `20-prd.md`, and exits through one
+product-closure boundary. Closure requires the complete PRD-alignment retrospective, exact
+`derived_from` binding to the current decision log, a regenerated `20-prd.html` projection, and
+fresh semantic acceptance. The retrospective checks are exhaustive over identifiers and
+best-effort over meaning.
+
+### Standing result
+
+Use deterministic cross-checking where the architecture can prove it, and say plainly where it
+cannot. Reviewer freshness and read order remain procedural discipline, not authenticated state.
+
+---
+
 # 17 — Agent Roles, Rosters, Model Policy, and Outcome Telemetry
 
 **Added in:** v0.3  
@@ -5985,6 +6071,9 @@ The remainder of `09-reference-config.md` stays illustrative until a real consum
 
 ## D-062 — Stages 0–2 use one machine-canonical planning-control snapshot
 
+**Refined by:** D-066 through D-069 preserve one planning-control snapshot while replacing the
+discovery/specification split with discovery-authored PRD closure.
+
 `<planning-root>/<feature>/control.json` is the sole authoritative mutable planning state for
 Stages 0–2. `00-state.md` is its generated human projection. The planning snapshot is distinct
 from repository-scoped execution state under `.factory/runs/` and contains no execution
@@ -6029,6 +6118,9 @@ resulting effective-configuration hash; no separate amendment ledger or hash cha
 
 ## D-065 — Stage selection may skip production, never required acceptance
 
+**Refined by:** D-067, which preserves the same reuse-without-trust rule under product-closure
+vocabulary.
+
 Stage 0 recommends both workflow depth and the earliest producer stage. That recommendation has two
 different meanings which must not collapse:
 
@@ -6057,3 +6149,74 @@ Stages 5–7 have a concrete consumer.
 ## v0.5 north star
 
 > **The artifact layout is fixed; its location is configured. Where work spans repositories, the planning root spans them too — while execution stays repository-scoped, and what that costs is written down rather than assumed away. Within that planning pipeline, omission is never approval: an unselected boundary is not required, while reused required material must still earn ordinary acceptance.**
+
+---
+
+# 21 — v0.6 Decisions
+
+v0.6 replaces the old discovery-to-spec translation with a tighter contract: discovery continuously
+authors both provenance and product intent, then exits through one explicit product-closure
+boundary before engineering design begins.
+
+---
+
+## D-066 — Discovery continuously authors decisions and the living PRD
+
+Discovery owns both `10-decisions.md` and `20-prd.md` throughout the pre-design phase. Atlas no
+longer inserts a separate producer whose job is to translate discovery into a later specification
+artifact.
+
+This keeps provenance and product intent adjacent while decisions are still moving. It also removes
+an unaudited transformation pass whose incidental omissions-finding value was real but procedural,
+not architectural.
+
+The main discovery skill keeps the universal ordered path inline and pushes branch-specific
+procedure/reference material behind precise trigger pointers. `discovery/SKILL.md` may be up to 400
+lines as a hard ceiling, not a target: prune duplication, no-op instructions, and environment
+caches, and never fill available space merely because it exists.
+
+---
+
+## D-067 — Product closure is discovery's single exit boundary
+
+Discovery does not finish merely because its frontier is empty. It exits only through product
+closure: one read-only boundary judgment over the current decision ledger, living PRD, cold-read
+evidence, and reconciliation retrospective, followed by the configured `AGENT_REVIEW` or `HUMAN`
+authority.
+
+This preserves D-065's rule in the new vocabulary. Required pre-existing PRD material may skip
+production, but it must still pass product closure. Omitted downstream boundaries remain
+conceptually `NOT_REQUIRED` and do not create mutable gate entries.
+
+---
+
+## D-068 — Product closure accepts `20-prd.md`, and `derived_from` binds exact decision provenance
+
+The accepted product-contract candidate is `20-prd.md`. Its frontmatter `derived_from` field binds
+the exact `10-decisions.md` version and SHA-256 the PRD was reconciled against. One `control.json`
+acceptance records that PRD binding; it does not add a second acceptance record, bundle manifest,
+shared closure version, or digest-of-digests.
+
+The required retrospective lives in `10-decisions.md`, not in the PRD. Its mechanical checks are
+exhaustive over identifiers and best-effort over meaning; semantic honesty remains a reviewer
+judgment.
+
+---
+
+## D-069 — `20-prd.html` is mandatory for closure and non-authoritative forever
+
+Before product closure can pass, `20-prd.html` must exist and embed the exact current source path,
+source SHA-256, and known renderer version for `20-prd.md`. The renderer deterministically produces
+its body from that source; the read-only controller verifies the metadata binding without
+re-rendering. The HTML is a generated projection for cold-read review, not a second source of truth.
+
+Its bytes never supersede the Markdown and never enter acceptance provenance independently. This
+makes readability mandatory without letting presentation rewrite authority.
+
+---
+
+## v0.6 north star
+
+> **Discovery carries provenance and product intent together, then earns one explicit product
+> closure: the accepted PRD binds the exact decision source it reconciled, required generated
+> projections stay non-authoritative, and omitted work is never mistaken for accepted work.**

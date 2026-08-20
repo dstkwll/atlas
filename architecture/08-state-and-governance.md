@@ -28,7 +28,6 @@ and remains a separate domain.
 ```text
 INTAKE
 DISCOVERY
-SPEC
 SYSTEM_DESIGN
 PROGRAM_DESIGN
 TICKETING
@@ -42,7 +41,8 @@ COMPLETE
 FAILED
 ```
 
-Not every workflow depth uses every state.
+Not every workflow depth uses every state. In v0.6, product closure is the exit boundary inside
+`DISCOVERY`, not a separate durable phase/state name.
 
 ---
 
@@ -90,7 +90,7 @@ record.
 
 `AUTO_PASSED` means a boundary explicitly declared mechanical-only and all of its
 deterministic prerequisites passed. It never means an agent reviewed the artifact. Discovery
-and behavioral specification are not mechanical-only boundaries in this revision.
+product closure is not a mechanical-only boundary in this revision.
 
 ---
 
@@ -107,7 +107,11 @@ Stages 0–2 do not create duplicate approved copies, acceptance-history ledgers
 receipt files. The prescribed candidate path remains the artifact, and any change after
 acceptance requires a version increment and a new gate decision. `control.json` preserves the
 current acceptance binding for each stage (version, hash, authority, date, and review reference
-when applicable). Reopening marks that binding stale; the next acceptance replaces it.
+when applicable). In v0.6 that accepted product-contract candidate is `20-prd.md`, whose
+`derived_from` binding transitively names the exact decision-log version/hash it closed against.
+The current Stage 0–2 controller has no post-closure reopen command. A future downstream owner may
+mark that binding stale and require the next candidate version; until that owner exists, any live
+source mismatch after acceptance fails closed rather than silently reopening discovery.
 
 ---
 

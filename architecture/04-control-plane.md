@@ -48,12 +48,12 @@ Goal → Ticket → Implement → Validate → PR
 
 ```text
 NORMAL
-Goal → Discovery → Spec → Program Design → Tickets → Factory
+Goal → Discovery + Product Closure → Program Design → Tickets → Factory
 ```
 
 ```text
 ARCHITECTURAL
-Goal → Discovery → Spec → System Design → Program Design → Tickets → Factory
+Goal → Discovery + Product Closure → System Design → Program Design → Tickets → Factory
 ```
 
 ```text
@@ -189,8 +189,8 @@ Output can advance immediately once deterministic prerequisites are satisfied **
 boundary contract declares no semantic acceptance question**. A successful automatic gate is
 recorded as `AUTO_PASSED`, never `AGENT_APPROVED`.
 
-Stage 1 discovery and Stage 2 behavioral specification both require semantic acceptance in
-this revision, so their configured authority is `AGENT_REVIEW` or `HUMAN`, not `AUTO`.
+Discovery's product-closure boundary requires semantic acceptance in this revision, so its
+configured authority is `AGENT_REVIEW` or `HUMAN`, not `AUTO`.
 
 ### `AGENT_REVIEW`
 
@@ -233,9 +233,17 @@ program_design:
 
 The human becomes the decision authority rather than the primary bug finder.
 
+### Boundary labels are not state keys
+
+`control.json.phase`, the `gates` map, the `acceptances` map, and every gap's resume stage remain
+keyed by the controlled producer name `discovery`. `product_closure` is the semantic label for
+discovery's exit boundary: it names the review envelope and human-facing vocabulary, and it never
+becomes a phase value, gate key, or acceptance key. This keeps stage-index coherence unchanged
+while making the boundary explicit (D-067).
+
 ### Stage 0–2 boundary seam
 
-For discovery and behavioral specification, keep four responsibilities distinct:
+For discovery and its product-closure boundary, keep four responsibilities distinct:
 
 ```text
 producer completes a candidate

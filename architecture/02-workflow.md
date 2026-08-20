@@ -59,7 +59,7 @@ Why:
 - affects failure/recovery semantics
 
 Human gates:
-- behavioral spec
+- product closure
 - program design
 - final PR
 
@@ -77,23 +77,28 @@ classifies the run, but the first **producer** action may occur later in the pip
   `NOT_REQUIRED`. Its omission is not an approval.
 - If a required upstream artifact already exists, producing it again may be unnecessary, but the
   artifact must pass that stage's ordinary boundary judge and configured authority before downstream
-  admission. Reuse may skip production; it never skips acceptance.
+  admission. Reuse may skip production; it never skips product closure.
 
 The classifier therefore recommends the earliest admissible producer stage, while the control plane
 proves any required upstream contracts before allowing work to begin there.
 
 This does not change the shipped Stage 0–2 initializer. It rejects pre-existing discovery and
-amendment state before `control.json`; a pre-existing `20-spec.md` may coexist with initialization,
+amendment state before `control.json`; a pre-existing `20-prd.md` may coexist with initialization,
 but receives no acceptance from that fact. Any reused candidate at a prescribed artifact path remains
 untrusted until it passes the ordinary judge/authority path.
 
 ---
 
-## Stage 1 — Decision discovery
+## Stage 1 — Decision discovery, living PRD maintenance, and product closure
+
+Stage 2 was the former behavioral-specification stage; v0.6 folds it into Stage 1's
+product-closure boundary. The “Stages 0–2” control-plane scope name remains for state-key
+coherence.
 
 Purpose:
 
-> Determine which decisions actually need to be made before specification/design can stabilize.
+> Determine which decisions actually need to be made before engineering design can stabilize, and
+> continuously maintain the decision ledger and living product PRD as those decisions settle.
 
 Potential resolution modes:
 
@@ -108,39 +113,29 @@ OPEN DECISION
 
 For very large/foggy work, use a Wayfinder-style frontier of currently answerable decisions rather than pretending the entire project can be decomposed up front.
 
-Output is **resolved decisions/evidence**, not implementation tickets.
+Output is **resolved decisions/evidence plus a living product PRD**, not implementation tickets.
 
----
-
-## Stage 2 — Behavioral specification
+### Exit boundary — Product closure
 
 Question:
 
-> What must become true?
+> Has discovery reconciled every live decision into one reviewable product contract that is ready
+> to hand off to engineering design?
 
-The spec should be understandable and approvable without requiring implementation knowledge.
+Discovery owns both `10-decisions.md` and `20-prd.md` continuously; v0.6 removes the separate
+specification translation producer. Product closure is discovery's single exit boundary, not a new
+authoring stage or durable phase name.
 
-Suggested content:
+Closure requires:
 
-- problem
-- desired behavior
-- user/operator stories
-- acceptance outcomes
-- constraints
-- invariants
-- out of scope
-- observable behavior
-- unresolved questions
+- a complete `10-decisions.md` with the required PRD-alignment retrospective;
+- a current `20-prd.md` whose `derived_from` binds the exact decision-log version and hash it was
+  reconciled against;
+- a current `20-prd.html` projection regenerated from that Markdown;
+- deterministic reconciliation checks plus configured semantic acceptance.
 
-Avoid:
-
-- class names
-- file layouts
-- method signatures
-- internal interfaces
-- implementation structure
-
-This artifact defines the **behavioral contract**.
+The accepted PRD defines the **product contract** and remains understandable and approvable without
+requiring implementation knowledge.
 
 ---
 
@@ -218,7 +213,7 @@ This stage should be treated as a **compiler**, not another open-ended design st
 
 Inputs:
 
-- approved spec
+- accepted product PRD
 - approved system design when present
 - approved program design when present
 
@@ -314,7 +309,7 @@ After all tickets are complete:
 - full build/test/lint suite
 - integration/system tests
 - architecture/scope checks
-- whole-branch spec compliance review
+- whole-branch product-contract compliance review
 - whole-branch architecture/program-design drift review
 - maintainability/standards review
 - conditional ops/security/migration/UI review

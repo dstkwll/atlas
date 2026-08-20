@@ -166,6 +166,9 @@ This remains the best starting library for our **pre-implementation reasoning pr
 
 ## Borrow map
 
+Donor-repository names in this table are external prior art; they do not describe Atlas's current
+producer set.
+
 | Facet | Action | How it maps to our design |
 |---|---|---|
 | `grilling` / `grill-with-docs` | **ADAPT strongly** | Core decision-discovery engine; humans resolve judgment, agents research facts. |

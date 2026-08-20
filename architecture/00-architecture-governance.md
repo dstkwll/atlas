@@ -1,7 +1,9 @@
 # 00 — Architecture Governance and Continuity Protocol
 
-**Version introduced:** v0.4  
-**Snapshot date:** 2026-08-13  
+**Version introduced:** v0.4
+
+**Snapshot date:** 2026-08-20
+
 **Purpose:** Preserve architectural integrity as the project evolves across long conversations, different agents/sessions, external reference reviews, and Git-backed implementation.
 
 ---
@@ -92,7 +94,7 @@ These are not immutable forever, but they require explicit challenge and amendme
 
 1. **Workflow defines capability; policy defines authority.**
 2. **Pre-implementation progressively reduces degrees of freedom.**
-3. **Behavioral spec, system design, program design, and executable tickets have distinct responsibilities.**
+3. **The product contract, system design, program design, and executable tickets have distinct responsibilities.**
 4. **Downstream execution cannot silently rewrite approved upstream decisions.**
 5. **Deterministic code owns deterministic workflow mechanics and authoritative state transitions.**
 6. **Agent claims are evidence/proposals, never authoritative lifecycle truth.**
@@ -212,6 +214,7 @@ Every substantial snapshot should verify at least:
 - principles and concrete workflow do not contradict each other;
 - artifact responsibilities remain non-overlapping;
 - examples/config do not encode superseded policy;
+- mandatory generated projections remain explicitly non-authoritative;
 - open questions that were resolved are marked resolved or removed;
 - deferred ideas are not presented as V1 requirements;
 - rejected ideas are not reintroduced without explicit reconsideration;

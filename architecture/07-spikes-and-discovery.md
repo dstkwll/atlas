@@ -173,6 +173,19 @@ resolve one or several decisions
 new territory becomes visible
 ```
 
-Only transition into normal spec/design/ticket compilation once enough uncertainty has collapsed.
+Only transition into engineering design and ticket compilation once enough uncertainty has collapsed.
 
 This prevents premature decomposition and false precision.
+
+---
+
+## Discovery outputs and skill-writing discipline
+
+Discovery continuously maintains the durable decision ledger and the living PRD; v0.6 removes the
+separate translation producer that used to turn discovery into a later specification artifact.
+
+The main discovery skill should keep the universal ordered path inline and disclose
+branch-specific procedures or reference material only through precise trigger pointers. Apply the
+Writing for Agents pruning rules aggressively: `discovery/SKILL.md` may be up to 400 lines as a
+hard ceiling, not a target; remove duplication, no-op instructions, and facts the environment
+already owns; never fill available space merely because it is available.

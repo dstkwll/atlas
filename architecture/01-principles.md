@@ -46,12 +46,15 @@ If two artifacts repeatedly restate one another, one of the abstraction boundari
 The intended progression is:
 
 1. **Decision discovery** — what is still unresolved?
-2. **Behavioral spec** — what must become true?
+2. **Product contract (living PRD)** — what must become true?
 3. **System design** — where does it fit and what boundaries/contracts change?
 4. **Program design** — what shape will the code take?
 5. **Execution compilation** — what independent vertical slices implement the approved design?
 
 Each stage should reduce degrees of freedom without reopening resolved upstream decisions.
+
+Decision discovery and the product contract are authored by one producer and separated by the
+product-closure boundary rather than by two stages (D-066, D-067).
 
 ## 4. Downstream stages may discover problems, but cannot silently redesign upstream decisions
 

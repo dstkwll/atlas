@@ -6,9 +6,10 @@ The numbered documents are authoritative. `rolling-monolith.md` is generated fro
 
 ## Current baseline
 
-**v0.5** made the planning root configurable and later clarified Stage 0–2 state authority,
-approval provenance, and stage admission, on top of v0.4's architecture-governance and continuity
-rules and the prior factory, runtime, and model-policy design.
+**v0.6** makes discovery continuously maintain both decision provenance and the living PRD, adds a
+single product-closure boundary before engineering design, and requires a mandatory but
+non-authoritative HTML projection, on top of v0.5's planning-root and Stage 0–2 control
+clarifications.
 
 ## Change discipline
 

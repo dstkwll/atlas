@@ -9,7 +9,8 @@
     ├── control.json
     ├── 00-state.md
     ├── 10-decisions.md
-    ├── 20-spec.md
+    ├── 20-prd.md
+    ├── 20-prd.html
     ├── 30-system-design.md
     ├── 40-program-design.md
     │
@@ -69,9 +70,9 @@ The planning root and the execution scope are separate concerns. Widening the fi
 
 These are costs, not defects, and are accepted deliberately:
 
-- **Specification and code no longer share a commit.** With a repository-relative root, the approved contract and the change implementing it appear in one history; with an external root they do not. Correlation is by explicit reference, not by construction.
+- **Contract and code no longer share a commit.** With a repository-relative root, the approved contract and the change implementing it appear in one history; with an external root they do not. Correlation is by explicit reference, not by construction.
 - **Review loses ambient context.** A reviewer reading a pull request cannot see the contract unless the planning root is resolvable in their environment. Contract review therefore depends on configuration being correct wherever review runs.
-- **Atomicity is lost.** Repository-relative planning gives history, blame, and atomic spec-plus-code commits for free. An external root gives none of these unless it is itself version-controlled.
+- **Atomicity is lost.** Repository-relative planning gives history, blame, and atomic contract-plus-code commits for free. An external root gives none of these unless it is itself version-controlled.
 
 Where a repository benefits from a permanent local record — a public repository, or one whose readers cannot reach the planning root — a decision may **graduate** into that repository as an ADR under `artifacts.adr_path`. Graduation is a deliberate act producing a durable record, not an automatic mirror of planning state.
 
@@ -112,15 +113,16 @@ It records only the current planning phase and revision, gate outcomes, the immu
 hash/effective amendment revision, and accepted candidate version/hash provenance. The
 controller replaces this one JSON file atomically. It is not execution runtime state and does
 not contain ticket ownership, attempts, retries, or repository-scoped factory events. Its mutable
-`gates` map contains only selected discovery and specification boundaries. Immutable `run.yaml`
-retains later-stage and conditional policy; after specification acceptance, `phase` may name the
+`gates` map contains only selected discovery boundaries. Immutable `run.yaml` retains later-stage
+and conditional policy; after product closure acceptance, `phase` may name the
 next selected stage without creating mutable state for that stage.
 
-An accepted discovery or specification remains in its prescribed artifact path. Acceptance
-records its current version and content hash in `control.json`; V1 does not create a second
-approved copy or retain a separate acceptance history. Reopening leaves that binding visible
-while stale and requires the producer to increment the candidate version; the next acceptance
-replaces it.
+An accepted discovery/product-closure candidate remains in its prescribed artifact path.
+Acceptance records its current version and content hash in `control.json`; V1 does not create a
+second approved copy or retain a separate acceptance history. The Stage 0–2 controller provides no
+post-closure reopen. A version increment replaces a previously accepted candidate only through a
+future downstream reopen owner; until that owner exists, a live mismatch against an accepted
+binding fails closed (see 08 — State and Governance).
 
 ---
 
@@ -137,12 +139,11 @@ Example projection:
 source: control.json
 feature: async-device-jobs
 status: planning
-phase: specification
+phase: discovery
 revision: 3
 
 gates:
-  discovery: AGENT_APPROVED
-  specification: PENDING
+  discovery: PENDING
 
 blocked_reason: null
 ---
@@ -158,7 +159,8 @@ wins and the projection is stale.
 
 Purpose:
 
-> Durable record of important pre-spec decisions and their rationale.
+> Durable record of important discovery decisions, their rationale, and the reconciliation
+> provenance that binds them to the living PRD.
 
 Possible schema:
 
@@ -175,13 +177,18 @@ Consequences: ...
 
 This is not necessarily required for every small feature.
 
+`10-decisions.md` also owns a required `## PRD alignment retrospective` table. That table is the
+mechanical reconciliation surface for product closure: it is exhaustive over identifiers and
+best-effort over meaning, and the semantic reviewer judges whether its mappings and
+`NO_NORMATIVE_EFFECT` reasons are honest.
+
 ---
 
-## `20-spec.md`
+## `20-prd.md`
 
 Owns:
 
-> External/observable behavior.
+> The living product contract discovery continuously maintains for product closure.
 
 Should answer:
 
@@ -191,7 +198,19 @@ Should answer:
 - what invariants must hold?
 - what behaviors constitute acceptance?
 
-Must not become an implementation plan.
+Its frontmatter includes `derived_from`, binding the exact `10-decisions.md` version and SHA-256
+the PRD was reconciled against. It must not become an implementation plan.
+
+---
+
+## `20-prd.html`
+
+Owns:
+
+> A mandatory generated projection of `20-prd.md` for cold-read review.
+
+It is regenerated whenever the PRD changes and must exactly match the current Markdown source before
+product closure can pass. It is never authoritative and never contributes its own acceptance hash.
 
 ---
 
@@ -242,7 +261,7 @@ Examples:
 - external API constraints
 - repository archaeology
 
-Evidence is descriptive; specs/designs are normative.
+Evidence is descriptive; the PRD and designs are normative.
 
 ---
 
@@ -275,7 +294,7 @@ blocked_by:
 risk: medium
 
 references:
-  spec: ../20-spec.md
+  prd: ../20-prd.md
   system_design: ../30-system-design.md
   program_design: ../40-program-design.md
 
@@ -335,9 +354,11 @@ Example:
 
 This allows deterministic routing without requiring code to parse prose sentiment.
 
-For a Stage 1 or Stage 2 `AGENT_REVIEW` gate, the invoker persists the read-only judge's
-structured output as `reviews/<stage>-v<version>.json`. It binds `run`, `stage`, candidate
-`version` and SHA-256, `verdict: PASS|BLOCKED`, and an array of gaps; each gap includes a stable
+For the discovery product-closure `AGENT_REVIEW` gate, the invoker persists the read-only judge's
+structured output as `reviews/product_closure-v<version>.json`. It binds `run`; a `stage` field
+whose value is the boundary label `product_closure` and which the controller accepts only when it
+equals the report's `boundary`; candidate `version` and SHA-256, `verdict: PASS|BLOCKED`, and an
+array of gaps; each gap includes a stable
 code, artifact, problem, and resume stage/action. A PASS envelope has no gaps. The controller
 validates and hashes this envelope but never asks it to modify the artifact or state. V1 does not
 add authenticated reviewer identities or signatures: the invoker must obtain the envelope from
