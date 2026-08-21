@@ -127,10 +127,13 @@ post-closure reopen. A version increment replaces a previously accepted candidat
 future downstream reopen owner; until that owner exists, any live mismatch against an accepted
 binding fails closed (see 08 — State and Governance).
 
-Stages 3–4 do not widen this file. A downstream design controller will own their separate gate and
-acceptance state, including exact candidate version/hash bindings and staleness. Its implementation
-must add only the minimum state required for those boundaries; v0.7 does not introduce a generalized
-router or move Stage 3–4 state into `control.json`.
+Stages 3–5 do not widen this file. One downstream planning controller is the logical mutable authority
+for their separate System Design, Program Design, and ticket-graph outcomes, exact
+candidate/version/hash bindings, and monotonic staleness. A changed accepted upstream design marks
+all directly dependent downstream acceptances stale in the same logical atomic transition. The
+controller ends at Stage 5 and owns no repository-scoped execution state. Its exact file, storage
+representation, schema fields, lock, and module/CLI decomposition remain implementation choices;
+v0.8 adds no separate compilation controller or generalized router.
 
 ---
 
@@ -375,7 +378,18 @@ review:
 The compiler replaces the placeholder with one entry for each applicable accepted source on the
 selected path. It never emits the placeholder itself. Product Closure, System Design, and Program
 Design entries appear only when those boundaries are selected. A direct Program Design path lists
-the accepted Program Design and its frozen Stage 0 binding, not nonexistent upstream artifacts.
+the accepted Program Design and its frozen Stage 0 binding, not nonexistent upstream artifacts. A
+`trivial` path with no semantic producer has one ticket and therefore one one-node graph; its sole
+planning source is the frozen Stage 0 intake/effective configuration, plus the target repository
+baseline. It neither requires nor manufactures a PRD, System Design, or Program Design artifact.
+
+The complete set of ticket files plus dependency relationships forms the **ticket-graph candidate**.
+Before execution, the downstream planning controller records an acceptance binding over the exact
+graph version and SHA-256, its applicable accepted upstream sources, and the frozen baseline of each
+target repository. This is an acceptance of the complete graph, not permission for each ticket to
+self-approve. Any bound upstream acceptance or baseline change makes the graph stale. The artifact
+model fixes those semantic bindings but does not yet fix whether a future implementation represents
+the graph with an index, manifest, canonical serialization, or another deterministic form.
 
 Human-readable body:
 

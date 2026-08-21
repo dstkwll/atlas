@@ -81,6 +81,13 @@ System Design participation: agent_led (user-selectable as co_design)
 
 The resolved run configuration is snapshotted into the planning directory and becomes part of the run's audit trail.
 
+A small number of intake clarifications may make an already-small task bounded enough for the
+`trivial` path. If the accepted goal can be expressed as one independently verifiable ticket, intake
+selects direct ticket execution; it does not invoke Discovery merely to produce a smaller PRD. If
+real product decisions remain unresolved after intake, Discovery is selected regardless of the
+expected code-change size. If system-observable or code-shape decisions remain, select the matching
+design producer rather than hiding design inside a “trivial” ticket.
+
 Stage selection and boundary acceptance are different decisions. Stage 0 always initializes and
 classifies the run, but the first **producer** action may occur later in the pipeline:
 
@@ -296,6 +303,9 @@ Inputs are the applicable accepted sources for the actual selected path:
 
 An omitted boundary contributes neither an artifact nor an approval. Compilation preserves the
 accepted bindings carried by the selected path rather than requiring every possible upstream file.
+When product closure, System Design, and Program Design are all omitted, the `trivial` path compiles
+one one-node ticket graph directly from the accepted/frozen Stage 0 intake, effective configuration,
+and target repository baseline. It creates no substitute PRD or design artifact.
 
 Outputs:
 
@@ -305,7 +315,22 @@ Outputs:
 - deterministic validation contracts
 - explicit references to upstream sections
 
-Tickets should reference upstream source-of-truth sections rather than copying them.
+Stage 5 is the final pre-execution planning boundary. The compiler proposes the complete ticket
+graph; it does not accept its own output. A read-only ticket-graph judge evaluates verticality,
+dependency completeness, validation contracts, repository targeting, and exact upstream references.
+The configured `tickets` authority decides whether the downstream planning controller may record
+acceptance. That controller records the exact graph version/SHA-256, every applicable accepted
+upstream binding, and each target repository baseline.
+
+The downstream planning controller is one logical authority for Stages 3–5, while preserving each
+stage's distinct outcome. A System Design or Program Design change marks every dependent accepted
+ticket graph stale in the same logical atomic transition as the upstream state change. Its exact
+file, schema, lock, and implementation decomposition remain Program Design choices. There is no
+separate compilation controller.
+
+Tickets should reference upstream source-of-truth sections rather than copying them. Execution
+receives only an exact accepted ticket-graph binding; it may verify that acceptance and its currency
+but may not create or record it.
 
 ---
 
@@ -316,15 +341,17 @@ For high-risk or foundational changes, run one minimal end-to-end tracer slice b
 Possible policy:
 
 ```text
-approved design
+exact accepted ticket graph
    ↓
-tracer ticket factory
+preflight verifies graph acceptance, applicable upstream bindings, and repository baseline
+   ↓
+selected tracer ticket factory
    ↓
 automated validation/review
    ↓
 HUMAN CHECKPOINT
    ↓
-remaining tickets
+remaining accepted graph
 ```
 
 This captures Dex's incremental steering principle without forcing human review of every ticket.
@@ -362,7 +389,7 @@ The feature runner owns dependency traversal.
 Pseudo-flow:
 
 ```text
-load approved ticket graph
+load exact accepted ticket-graph version/hash and verify its accepted upstream/baseline bindings
 while unblocked tickets exist:
     select next ticket
     run TicketFactory(ticket)

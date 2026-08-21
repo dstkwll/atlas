@@ -382,7 +382,9 @@ It is:
 ```text
 planning contracts
       ↓
-approved ticket
+exact accepted ticket graph
+      ↓
+selected ready ticket
       ↓
 local worktree
       ↓
@@ -807,3 +809,33 @@ diversity treated as conditional staffing rather than authority. Add one bounded
 critic before the first grill round and repeat completeness/wrong-owner review in the existing final
 cold read. Do not create a second router, a council per question, or runtime machinery in this
 architecture-only change.
+
+---
+
+## L-019 — An “approved ticket graph” without an acceptance owner is an authority gap
+
+### Contradiction found
+
+The architecture gave `tickets` real gate policy, told the feature runner to load an approved graph,
+and required execution preflight to verify approved upstream contracts. Stage 5, however, only
+produced a graph. The Stage 0–2 controller stopped before design, the v0.7 design controller stopped
+at Stage 4, and repository-scoped runtime state began after approval. The consumer assumed an
+acceptance no producer was authorized to record.
+
+Two blind reviews split on the next move. One proposed fixing the Stage 3–4 authority aggregate
+first; the other independently confirmed the Stage 5 gap but proposed a separate compilation
+controller. The user selected the smaller staleness topology: extend the existing downstream owner
+rather than create a third place whose currency could disagree with design and execution.
+
+### Standing result
+
+One bounded downstream planning controller owns separate System Design, Program Design, and
+compiled ticket-graph outcomes through Stage 5. It binds the accepted graph to exact applicable
+upstream sources and target repository baselines, and records directly caused downstream staleness
+in the same logical atomic transition as an upstream change. Execution verifies this acceptance but
+cannot create it. A trivial run carries the same authority in miniature: one one-node graph binds
+directly to frozen Stage 0 intake/configuration plus its target repository baseline and creates no
+substitute PRD or design artifact. Execution checks graph currency at ticket preflight and again
+before deterministic commit, closing the in-flight staleness interval. The controller owns no Stage
+6+ execution state, and architecture deliberately leaves its exact file/schema to Program Design
+rather than hard-coding storage prematurely.
