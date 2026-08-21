@@ -37,9 +37,9 @@ Stage 0 is recommend-only. Classify the eight risk dimensions in [`references/ru
 
 A workflow name does not imply an exact stage sequence or gate map. Exact selected stages and authorities remain explicit intake. Use a real configured policy when one exists; otherwise present evidence-backed alternatives and ask rather than invent policy.
 
-Governance (`exploratory`, `standard`, `high_assurance`, or `autonomous`) describes the desired assurance posture but does not itself choose authority or supply a gate map. Use actual configured execution/environment/roster values when present; otherwise present explicit evidence-backed options rather than treating an illustrative example as a default. Record the selected ordered stages beginning with the earliest admissible producer; if Discovery is selected it must be first.
+Governance (`exploratory`, `standard`, `high_assurance`, or `autonomous`) describes the desired assurance posture but does not itself choose authority or supply a gate map. Use actual configured execution/environment/roster values when present; otherwise present explicit evidence-backed options rather than treating an illustrative example as a default. Record the selected ordered stages beginning with the earliest admissible producer. When discovery is selected, it must be first. If `system_design` is selected, ask once at intake: present `agent_led` and `co_design` neutrally, require the user's explicit choice, and record it in `system_design_participation`. The classifier neither recommends nor chooses this value. If `system_design` is omitted, record `system_design_participation: null`. Participation changes collaboration only, never gate authority; downstream System Design reads the frozen value and does not re-ask.
 
-Classify every selected gate and every run-relevant conditionally reachable route. When discovery is selected, its product-closure authority must be `AGENT_REVIEW` or `HUMAN`; reject `AUTO` for that boundary. Stage 0 acceptance freezes intake but does not pre-approve new or reused PRD material.
+Classify every selected gate and every run-relevant conditionally reachable route. Apply the exact stage-specific legality in [`references/run-file.md`](references/run-file.md), not the general authority vocabulary: Discovery allows `AGENT_REVIEW|HUMAN`; System Design allows `HUMAN|AGENT_REVIEW|HUMAN_IF_CHANGED`; Program Design allows `HUMAN|AGENT_REVIEW`; and tickets allow `HUMAN|AGENT_REVIEW|CONDITIONAL` in V1. Semantic boundaries never use raw `AUTO`. Stage 0 acceptance freezes intake but does not pre-approve new or reused PRD material.
 
 Use [`references/run-file.md`](references/run-file.md) for the exact `run.yaml` shape. Preview the complete file and obtain human acceptance before writing it.
 
@@ -54,6 +54,14 @@ python3 "<atlas-plugin-root>/tools/atlas_control.py" initialize --run "<path>" -
 Initialization validates intake, writes authoritative `<run>/control.json` by atomic replacement, seals the exact-byte `run.yaml` hash, and best-effort generates `<run>/00-state.md`. See [`references/state-file.md`](references/state-file.md).
 
 Initialization may coexist with a pre-existing `20-prd.md`, but creates no acceptance for it. It rejects pre-existing `10-decisions.md` and amendments. If initialization fails, stop. Never calculate authority fields in prose, edit `control.json` directly, or treat `00-state.md` as state authority.
+
+Read the resulting `control.json.phase`. When it is `system_design`, `program_design`, or `tickets`, initialize the separate downstream planning snapshot exactly once:
+
+```shell
+python3 "<atlas-plugin-root>/tools/atlas_planning.py" initialize --run "<path>"
+```
+
+This command uses its own `.atlas-planning.lock` and creates only `planning-control.json`; it never edits Stage 0–2 `control.json`. If it fails, report the exact error and stop. Do not retry by editing either control file. Do not run it while `control.json.phase` is `discovery`.
 
 ## 3. Hand off
 

@@ -96,6 +96,40 @@ class SkillSeamHardeningTests(unittest.TestCase):
 
             self.assertTrue(any("intake-correction" in message for _, message in findings))
 
+    def test_downstream_run_schema_and_packaged_command_seams_are_checked(self):
+        with tempfile.TemporaryDirectory() as td:
+            skills = self.copy_plugin(Path(td))
+            run_file = skills / "start-run" / "references" / "run-file.md"
+            run_file.write_text(
+                run_file.read_text(encoding="utf-8").replace(
+                    "system_design_participation: agent_led  # agent_led | co_design when system_design is selected; otherwise null\n",
+                    "",
+                    1,
+                ),
+                encoding="utf-8",
+            )
+            start = skills / "start-run" / "SKILL.md"
+            start.write_text(
+                start.read_text(encoding="utf-8").replace("atlas_planning.py", "missing_planning.py", 1),
+                encoding="utf-8",
+            )
+            findings = SEAMS.cross_skill_contracts(skills)
+            self.assertTrue(any("run.yaml v2 template" in message for _, message in findings), findings)
+            self.assertTrue(any("planning initialize command" in message for _, message in findings), findings)
+
+    def test_classifier_contract_never_recommends_or_selects_participation(self):
+        start = (ROOT / "plugins" / "atlas" / "skills" / "start-run" / "SKILL.md").read_text(encoding="utf-8")
+        run_file = (
+            ROOT / "plugins" / "atlas" / "skills" / "start-run" / "references" / "run-file.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("ask once", start.lower())
+        self.assertIn("present `agent_led` and `co_design` neutrally", start)
+        self.assertIn("classifier neither recommends nor chooses", start)
+        self.assertIn("version: 2", run_file)
+        self.assertIn("system_design_participation: agent_led", run_file)
+        self.assertIn("downstream system design reads the frozen value and never asks again", run_file.lower())
+
     def test_start_run_hands_off_from_the_current_authoritative_phase(self):
         text = (ROOT / "plugins" / "atlas" / "skills" / "start-run" / "SKILL.md").read_text(
             encoding="utf-8"
@@ -237,13 +271,15 @@ class SkillSeamHardeningTests(unittest.TestCase):
                 self.assertNotIn("plugins/atlas/requirements.txt", text)
 
         with tempfile.TemporaryDirectory() as td:
-            result = subprocess.run(
-                [sys.executable, str(plugin / "tools" / "atlas_control.py"), "--help"],
-                cwd=td,
-                text=True,
-                capture_output=True,
-            )
-            self.assertEqual(result.returncode, 0, result.stderr)
+            for tool in ("atlas_control.py", "atlas_planning.py"):
+                with self.subTest(tool=tool):
+                    result = subprocess.run(
+                        [sys.executable, str(plugin / "tools" / tool), "--help"],
+                        cwd=td,
+                        text=True,
+                        capture_output=True,
+                    )
+                    self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_start_run_resolves_a_safe_contained_target_before_writing(self):
         start = (ROOT / "plugins" / "atlas" / "skills" / "start-run" / "SKILL.md").read_text(encoding="utf-8")

@@ -45,7 +45,7 @@ The deterministic controller/renderer require Python 3.9+ and the pinned package
 
 ## Current boundary
 
-Stages 3–5 and execution are not implemented here. The Stage 0–2 controller stops when it reaches the next selected unsupported phase. It does not call incubator workers or create orchestration machinery.
+Stages 3–5 producers, candidates, checking, acceptance transitions, rejection, and staleness are not implemented here. Slice 0 only persists the once-selected System Design participation in new `run.yaml` version 2 and can atomically initialize a separate `planning-control.json` snapshot from a verified Stage 0 handoff. The initializer validates downstream ordering and complete stage-specific gate policy, uses `.atlas-planning.lock`, and never widens or edits `control.json`. `atlas_planning.py` exposes only `initialize --run`; it has no production Stage 3 candidate or execution behavior. The Stage 0–2 controller still stops when it reaches the next selected unsupported phase and never calls incubator workers or creates orchestration machinery.
 
 ## Licence
 

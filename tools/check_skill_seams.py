@@ -161,6 +161,7 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         "spike": skills / "spike" / "SKILL.md",
         "spike-findings": skills / "spike" / "references" / "findings-file.md",
         "controller": skills.parent / "tools" / "atlas_control.py",
+        "planning": skills.parent / "tools" / "atlas_planning.py",
         "renderer": skills.parent / "tools" / "render_prd.py",
     }
     texts: dict[str, str] = {}
@@ -171,8 +172,14 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             texts[name] = path.read_text(encoding="utf-8")
 
     required = {
-        "start": ["run.yaml", "control.json", "initialize", "AGENT_REVIEW", "HUMAN", "AUTO"],
-        "run-file": ["[a-z0-9]+(?:-[a-z0-9]+)*", "rejects path separators"],
+        "start": [
+            "run.yaml", "control.json", "initialize", "AGENT_REVIEW", "HUMAN", "AUTO",
+            "atlas_planning.py", "planning-control.json", ".atlas-planning.lock",
+        ],
+        "run-file": [
+            "[a-z0-9]+(?:-[a-z0-9]+)*", "rejects path separators",
+            "version: 2", "system_design_participation: agent_led",
+        ],
         "state": ["control.json", "base_run_sha256", "accepted_amendment_count", "acceptances"],
         "amendment": ["amendments/NNN-", "accepted amendment count", "No `previous`"],
         "discovery": ["producer", "read-only", "gate_ready", "status: draft", "control.json", "20-prd.md", "render_prd.py"],
@@ -183,6 +190,11 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         "intake-correction": [".20-prd.next.md", "mark-stale", "apply-amendment", "run.yaml remains byte-for-byte unchanged"],
         "spike": ["authoritative `control.json`", "accepted_amendment_count", "ignore `00-state.md`"],
         "controller": ["def initialize", "def check", "def advance", "def reject", "def mark_stale", "def apply_amendment"],
+        "planning": [
+            'PLANNING_FILE = "planning-control.json"',
+            'PLANNING_LOCK_FILE = ".atlas-planning.lock"',
+            "def load_planning_control", "def initialize_planning",
+        ],
         "renderer": ["def write_canonical", "def render", "def verify", "RENDERER_VERSION"],
     }
     for name, needles in required.items():
@@ -190,6 +202,22 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         for needle in needles:
             if needle.lower() not in text.lower():
                 findings.append(("cross", f"{name}: missing seam contract `{needle}`"))
+
+    planning_command = 'python3 "<atlas-plugin-root>/tools/atlas_planning.py" initialize --run "<path>"'
+    if planning_command not in texts.get("start", ""):
+        findings.append(("cross", "start: missing planning initialize command with installed-root/CWD contract"))
+    try:
+        run_v2_fields = set(assigned_literal(texts.get("controller", ""), "RUN_V2_FIELDS"))
+        run_maps = [
+            value for _, block in template_blocks(texts.get("run-file", ""))
+            if isinstance((value := yaml.safe_load(block)), dict) and value.get("version") == 2
+        ]
+    except (SyntaxError, ValueError, yaml.YAMLError) as exc:
+        findings.append(("cross", f"run.yaml v2 schema seam is unreadable: {exc}"))
+    else:
+        present = set(run_maps[0]) if run_maps else set()
+        if len(run_maps) != 1 or present != run_v2_fields:
+            findings.append(("cross", f"run.yaml v2 template does not match controller RUN_V2_FIELDS; missing={sorted(run_v2_fields - present)}"))
 
     operating_required = {
         "discovery": [
