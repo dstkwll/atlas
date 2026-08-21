@@ -33,16 +33,26 @@ Input:
 - fuzzy goal
 - existing repository context
 - optional explicit workflow/profile selection
+- optional System Design participation selection when `system_design` is selected:
+  `agent_led` (default) or `co_design`
 
 Output:
 
 - recommended workflow depth
 - recommended first producer stage within that workflow
 - recommended governance profile
+- a neutral System Design participation choice when that stage is selected
 - structured risk assessment
-- resolved run configuration after human acceptance/override
+- resolved run configuration, including the user-selected participation mode, after human
+  acceptance/override
 
-Classifier behavior should initially be **recommend-only**.
+Classifier behavior for workflow depth, producer stage, governance, and risk should initially be
+**recommend-only**. Participation mode is deliberately excluded from that recommendation surface.
+
+Participation and acceptance authority are separate intake axes. The classifier neither recommends
+nor selects `co_design`; intake neutrally presents `agent_led` and `co_design`, and the user may
+explicitly choose either whenever System Design is selected. That choice does not alter the gate
+authority resolved from governance.
 
 Example:
 
@@ -60,12 +70,13 @@ Why:
 
 Human gates:
 - product closure
-- program design
 - final PR
 
 Conditional gates:
 - system design if boundaries change
 - tracer slice if implementation risk becomes high
+
+System Design participation: agent_led (user-selectable as co_design)
 ```
 
 The resolved run configuration is snapshotted into the planning directory and becomes part of the run's audit trail.
@@ -148,25 +159,45 @@ Question:
 
 > Where does this change fit in the existing system?
 
-Suggested content:
+Stage 3 owns **system-observable commitments** and choices requiring coordinated change across a
+seam:
 
 - current system
 - proposed system
-- affected components/modules
-- system boundaries
-- external contracts
-- data ownership
-- API/protocol contracts
-- persistence/schema changes
-- end-to-end flows
-- failure/recovery behavior
-- compatibility constraints
-- security/operational concerns
+- responsibilities and system seams
+- authoritative data owner
+- cross-module and external contracts
+- target schema/protocol
+- end-to-end lifecycle, data flow, failure, and recovery
+- compatibility commitments
+- trust, security, and operational commitments
 - rejected alternatives
 
-This is the architectural layer.
+The ownership test is reliance, not whether someone calls the thing a “module”: if changing a choice
+requires any caller, peer, or operator to adjust, or changes an accepted guarantee, it belongs here.
+Composite decisions split: Stage 3 owns the invariant while Stage 4 owns its realization.
 
-It should stop before detailed internal code shape.
+### Participation modes
+
+`agent_led` is the default. `co_design` is user-selected at intake, never silently selected by the
+classifier, and is available whenever System Design is selected. It changes the collaboration UX,
+not artifact semantics or acceptance authority.
+
+In co-design, chat is the primary interactive control surface. Work one system seam or decision at
+a time. For each, ask one plain question; present two or three concrete alternatives; give a
+recommendation and its strongest counterargument; and assign a stable label. The user may redirect
+or zoom in. Accepted conversational choices are written into canonical `30-system-design.md`;
+conversation alone never has artifact or acceptance authority.
+
+Co-design also requires `30-system-design.html`, a deterministic, self-contained visual board bound
+to the exact Markdown source path/hash and renderer version. It contains precise architecture views,
+not decorative generative imagery: current/proposed topology, seam/ownership map,
+interface/contract view, end-to-end sequence or data flow, applicable schema/protocol deltas,
+failure/recovery paths, open decisions, and rejected alternatives. An inapplicable view states why.
+Feedback returns through chat using the stable labels. Generated chat images or snapshots are
+ephemeral projections; HTML bytes never acquire independent acceptance authority.
+
+Stage 3 stops before codebase-local realization inside the accepted seams.
 
 ---
 
@@ -176,22 +207,41 @@ Question:
 
 > What shape should the implementation take inside the codebase?
 
-Suggested content:
+Stage 4 owns **codebase-local realization** inside accepted seams:
 
-- file/module placement
+- file/package/module placement
 - new vs modified files
-- important types
-- interfaces/contracts
-- public method/function signatures
-- ownership/state boundaries
+- important types and language-level signatures
+- internal interfaces
+- internal state mutation and ownership mechanics
 - call stacks / interaction chains
-- concurrency/lifetime assumptions
+- locking, concurrency, and lifetime mechanics
 - test seams
-- migration/expand-contract mechanics where relevant
+- migration implementation order and local expand/contract mechanics
 
 No production method bodies.
 
 Program design resolves the architecture-ish decisions that otherwise emerge invisibly during implementation.
+
+The decision test is: if the choice can change without any caller, peer, or operator adjusting and
+without changing an accepted guarantee, it belongs in Stage 4; otherwise it belongs in Stage 3.
+
+### Paired drafting, sequential acceptance
+
+`30-system-design.md` and `40-program-design.md` may be drafted side-by-side so codebase feasibility
+can pressure-test interfaces. The Program Design draft is provisional: it may report feasibility
+findings upstream, but it cannot accept or silently rewrite Stage 3.
+
+There are two distinct judges and outcomes, never one bundle verdict. The process must accept
+system design first. It then binds, rechecks, and finalizes program design against the exact accepted
+system design candidate in `30-system-design.md`, or the exact accepted `20-prd.md` when Stage 3 is
+legitimately `NOT_REQUIRED`. Any accepted Stage 3 change makes Stage 4 stale. If Stage 4 discovers
+that a system commitment must change, it returns `DESIGN_BLOCKED` upstream rather than escalating
+merely to a human inside Stage 4.
+
+Program Design always has semantic questions and therefore never uses raw `AUTO`. Its recommended
+standard authority is `AGENT_REVIEW`; `HUMAN` remains available under governance or high assurance.
+An independent fresh review remains mandatory.
 
 A design review should explicitly challenge:
 

@@ -6,10 +6,10 @@ The numbered documents are authoritative. `rolling-monolith.md` is generated fro
 
 ## Current baseline
 
-**v0.6** makes discovery continuously maintain both decision provenance and the living PRD, adds a
-single product-closure boundary before engineering design, and requires a mandatory but
-non-authoritative HTML projection, on top of v0.5's planning-root and Stage 0–2 control
-clarifications.
+**v0.7** pairs System Design and Program Design for drafting while preserving sequential acceptance,
+routes their ownership by reliance horizon, and adds user-selected co-design with a mandatory
+non-authoritative System Design board. It builds on v0.6's living PRD and product-closure boundary
+without widening the Stage 0–2 controller.
 
 ## Change discipline
 

@@ -21,6 +21,11 @@ controller changes it through one atomic file replacement and may then regenerat
 `00-state.md` as a projection. Repository-scoped `.factory/runs/` state begins with execution
 and remains a separate domain.
 
+Stages 3–4 require a separate downstream design controller. It owns only the minimum gate,
+acceptance, staleness, and exact candidate/version/hash bindings needed for System Design and
+Program Design. It does not widen Stage 0–2 `control.json`, and v0.7 does not introduce a
+generalized router. The exact storage shape is left to that controller's implementation.
+
 ---
 
 ## Suggested high-level run states
@@ -97,7 +102,8 @@ product closure is not a mechanical-only boundary in this revision.
 ## Approved artifacts are versioned contracts
 
 Once an artifact passes its gate, downstream work references its accepted version and content
-hash from `control.json`.
+hash from the controller that owns that boundary. Stages 0–2 use `control.json`; Stages 3–4 use
+their downstream design controller.
 
 This prevents:
 
@@ -140,32 +146,41 @@ chain exists in this revision.
 
 This gate deserves explicit support rather than being a prompt convention.
 
-Possible semantics:
+System Design semantics:
 
 ```text
-stage produces candidate artifact
+bind exact repository/current-system baseline and candidate
   ↓
-compare relevant semantic dimensions with approved/baseline artifact
+independent read-only classification with evidence per material dimension
   ↓
 no material change
-  → auto/agent authority may continue
+  → AGENT_REVIEW
 
-material change
+any material change
   → human gate required
+
+baseline or classification unavailable
+  → fail closed to HUMAN
 ```
 
-Material dimensions should be explicit where possible.
+The stage-specific material dimensions are:
 
-Examples for system design:
+- responsibilities and system seams;
+- authoritative data ownership;
+- cross-module/external contracts and dependencies;
+- target schema/protocol;
+- end-to-end lifecycle, failure, and recovery;
+- compatibility guarantees;
+- trust, security, and operational commitments.
 
-- new component boundary
-- changed data owner
-- new external dependency
-- schema/protocol change
-- cross-layer dependency
-- changed failure semantics
+The classifier judges materiality but has no gate authority. Deterministic policy maps any material
+dimension to `HUMAN` and no material dimensions to `AGENT_REVIEW`; semantic design boundaries never
+use raw `AUTO`. Persist the exact baseline and candidate identities/hashes with the classification
+evidence. Any change to those inputs makes the classification and prior approval stale and requires
+reclassification/reapproval.
 
-The LLM may classify whether change is material; deterministic policy decides what that classification implies.
+Participation remains orthogonal. Choosing `co_design` does not bypass this comparison, satisfy the
+human gate, or otherwise alter authority.
 
 ---
 

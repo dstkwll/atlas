@@ -220,6 +220,54 @@ review context really was.
 
 ---
 
+## System Design boundary
+
+System Design review judges the exact `30-system-design.md` candidate independently of its
+participation mode. Co-design does not make conversational agreement an approval and does not
+change the gate authority.
+
+Deterministic checks establish candidate identity/version/hash and required source bindings. When
+participation is `co_design`, they also require `30-system-design.html`, verify that it is
+self-contained and binds the exact Markdown source path/hash plus renderer version, and require each
+prescribed architecture view or an explicit reason it is inapplicable. The HTML and ephemeral chat
+images remain projections and never receive an independent acceptance outcome.
+
+Semantic review checks the Stage 3 reliance horizon: responsibilities and system seams,
+authoritative data ownership, cross-module/external contracts, target schema/protocol, end-to-end
+lifecycle/failure/recovery, compatibility, and trust/security/operations. The judge reports its own
+Stage 3 result; no later Program Design verdict can accept or amend it.
+
+Under standard governance, `HUMAN_IF_CHANGED` compares the candidate against the exact
+repository/current-system baseline. An independent read-only classifier provides per-dimension
+evidence; deterministic policy sends any material dimension to `HUMAN` and otherwise requires
+`AGENT_REVIEW`. The baseline, candidate bindings, and evidence persist. Missing or unprovable
+baseline/classification fails closed to `HUMAN`; changed inputs make the classification and approval
+stale. Autonomous governance uses `AGENT_REVIEW`; high assurance uses `HUMAN`. System Design never
+uses raw `AUTO` for its semantic boundary.
+
+---
+
+## Program Design boundary
+
+Program Design has its own independent fresh review because codebase-local realization still asks
+semantic questions. It never uses raw `AUTO`. The recommended standard authority is
+`AGENT_REVIEW`; policy may select `HUMAN`, including for high assurance.
+
+Paired drafting may produce both design candidates side-by-side, but the Program Design result is
+provisional until System Design is accepted. Its boundary then verifies an exact binding to the
+accepted `30-system-design.md` version/hash, or to the accepted `20-prd.md` when System Design is
+legitimately `NOT_REQUIRED`, and rechecks the candidate against that source. Any accepted System
+Design change makes the Program Design candidate and prior result stale.
+
+The Stage 4 judge evaluates files/packages/types, language signatures, internal state mutation and
+call graph, locking/concurrency/lifetime mechanics, migration implementation order, and test seams.
+If acceptance would require a caller, peer, or operator to adjust or would change an accepted
+guarantee, the finding belongs upstream: return `DESIGN_BLOCKED` rather than seek a human exception
+inside Stage 4. Stage 3 and Stage 4 always produce distinct outcomes; there is no joint bundle
+verdict.
+
+---
+
 ## Whole-feature review
 
 Ticket-level correctness is insufficient.

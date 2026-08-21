@@ -10,6 +10,7 @@ The control plane centralizes:
 
 - workflow depth;
 - stage admission;
+- System Design participation;
 - governance / gate authority;
 - execution policy;
 - environment policy;
@@ -25,6 +26,18 @@ The control plane centralizes:
 ## Configuration dimensions
 
 Keep these dimensions independent even if a named preset resolves several at once.
+
+### `system_design_participation`
+
+Question:
+
+> How does the user collaborate while the System Design candidate is produced?
+
+Values are `agent_led` (default) and `co_design`. This dimension exists only when System Design is
+selected, and intake prompts the user with both choices. The classifier does not recommend or select
+the participation mode; `co_design` exists only through the user's explicit intake choice.
+Participation does not alter artifact semantics, review independence, or the authority resolved from
+governance.
 
 ### `workflow`
 
@@ -206,7 +219,18 @@ Policy evaluates structured conditions to determine whether escalation is requir
 
 ### `HUMAN_IF_CHANGED`
 
-Human approval required only if the stage introduces a material change relative to an approved baseline or specified semantic dimensions.
+Human approval is required only if the stage introduces a material change relative to an exact
+repository/current-system baseline on one or more stage-specific material dimensions. System Design
+uses responsibilities/system seams, authoritative data ownership, cross-module/external contracts,
+target schema/protocol, end-to-end lifecycle/failure/recovery, compatibility guarantees, and
+trust/security/operational commitments.
+
+An independent read-only classifier compares the exact candidate with that baseline and emits
+evidence per dimension. Deterministic policy maps any material dimension to `HUMAN`; no material
+dimension maps to `AGENT_REVIEW`. Candidate/baseline identities and hashes plus classification
+evidence are persisted. If the baseline or classification cannot be established, the gate fails
+closed to `HUMAN`. A baseline or candidate change makes the result stale and requires
+reclassification/reapproval. Semantic design boundaries never use raw `AUTO`.
 
 ---
 
@@ -259,6 +283,21 @@ reviewer under `AGENT_REVIEW`, or by the human under `HUMAN`. The controller val
 candidate identity/hash, the applicable judge or human authority, and transition legality; it
 does not grade prose.
 
+### Stage 3–4 boundary seam
+
+Stages 3 and 4 use the same separation of producer, independent read-only judge, configured
+authority, and deterministic transition recording, but their state does not belong in the Stage
+0–2 `control.json`. A downstream design controller will own separate exact candidate/version/hash
+bindings, distinct Stage 3 and Stage 4 outcomes, and staleness propagation. Its implementation adds
+only the minimum state these boundaries require; v0.7 does not introduce a generalized router.
+
+Paired drafting does not merge gates. System Design is accepted first. Program Design is then bound,
+rechecked, and finalized against that accepted candidate, or the accepted PRD when System Design is
+`NOT_REQUIRED`. Program Design requires independent semantic review and never raw `AUTO`; the
+recommended standard authority is `AGENT_REVIEW`, with `HUMAN` available under governance/high
+assurance. A Stage 4 finding that would change a Stage 3 commitment returns `DESIGN_BLOCKED`
+upstream.
+
 ---
 
 ## Classifier behavior
@@ -282,6 +321,10 @@ risk:
 ```
 
 Then the user accepts or overrides the recommendation.
+
+When System Design is selected, intake separately prompts for `agent_led` or `co_design`; this is an
+explicit collaboration preference, not a classifier output. The classifier does not determine or
+recommend participation, and the choice does not change gate authority.
 
 An explicit user-selected assurance level should not be silently downgraded. Future policy may automatically raise minimum scrutiny for known high-risk conditions after the system earns that trust.
 

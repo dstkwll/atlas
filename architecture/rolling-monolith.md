@@ -383,6 +383,13 @@ Examples:
 - Another may require human approval.
 - Another may require human approval only if architecture materially changed.
 
+Participation is a third, independent question: **how does the user collaborate in producing the
+artifact?** System Design may be `agent_led` (the default) or `co_design`, but that choice neither
+changes what `30-system-design.md` means nor grants acceptance authority. The classifier neither
+recommends nor selects the participation mode; intake neutrally presents both and only the user
+selects it. Gate policy still independently resolves
+`AGENT_REVIEW`, `HUMAN_IF_CHANGED`, or `HUMAN`.
+
 ## 3. One artifact, one abstraction level, one exclusive job
 
 Each artifact must resolve a distinct class of uncertainty.
@@ -402,11 +409,26 @@ Each stage should reduce degrees of freedom without reopening resolved upstream 
 Decision discovery and the product contract are authored by one producer and separated by the
 product-closure boundary rather than by two stages (D-066, D-067).
 
+The System Design / Program Design boundary is determined by **reliance horizon**, not by the
+overloaded word “module.” A system-observable commitment, or a choice that requires a caller, peer,
+or operator to adjust, belongs to System Design. A codebase-local realization that can change
+without another party adjusting and without changing an accepted guarantee belongs to Program
+Design. Composite decisions split: the invariant is upstream; its realization is downstream.
+
+The two artifacts may be drafted side-by-side to pressure-test interfaces, but their acceptance is
+sequential. System Design is accepted first. Program Design remains provisional until it is bound,
+rechecked, and finalized against that exact accepted System Design candidate, or against the exact
+accepted PRD when System Design is legitimately `NOT_REQUIRED`.
+
 ## 4. Downstream stages may discover problems, but cannot silently redesign upstream decisions
 
-Implementation agents are allowed to discover that an approved design is invalid.
+Downstream design and implementation agents are allowed to discover that an approved design is
+invalid.
 
-They are **not** allowed to self-authorize architectural changes.
+They are **not** allowed to self-authorize architectural changes. In particular, Program Design may
+report feasibility findings upstream but cannot accept or silently rewrite a System Design
+commitment. If Program Design requires such a change, it returns `DESIGN_BLOCKED`; any accepted
+System Design change makes the Program Design candidate stale.
 
 If execution requires violating an approved contract, the correct state is:
 
@@ -553,16 +575,26 @@ Input:
 - fuzzy goal
 - existing repository context
 - optional explicit workflow/profile selection
+- optional System Design participation selection when `system_design` is selected:
+  `agent_led` (default) or `co_design`
 
 Output:
 
 - recommended workflow depth
 - recommended first producer stage within that workflow
 - recommended governance profile
+- a neutral System Design participation choice when that stage is selected
 - structured risk assessment
-- resolved run configuration after human acceptance/override
+- resolved run configuration, including the user-selected participation mode, after human
+  acceptance/override
 
-Classifier behavior should initially be **recommend-only**.
+Classifier behavior for workflow depth, producer stage, governance, and risk should initially be
+**recommend-only**. Participation mode is deliberately excluded from that recommendation surface.
+
+Participation and acceptance authority are separate intake axes. The classifier neither recommends
+nor selects `co_design`; intake neutrally presents `agent_led` and `co_design`, and the user may
+explicitly choose either whenever System Design is selected. That choice does not alter the gate
+authority resolved from governance.
 
 Example:
 
@@ -580,12 +612,13 @@ Why:
 
 Human gates:
 - product closure
-- program design
 - final PR
 
 Conditional gates:
 - system design if boundaries change
 - tracer slice if implementation risk becomes high
+
+System Design participation: agent_led (user-selectable as co_design)
 ```
 
 The resolved run configuration is snapshotted into the planning directory and becomes part of the run's audit trail.
@@ -668,25 +701,45 @@ Question:
 
 > Where does this change fit in the existing system?
 
-Suggested content:
+Stage 3 owns **system-observable commitments** and choices requiring coordinated change across a
+seam:
 
 - current system
 - proposed system
-- affected components/modules
-- system boundaries
-- external contracts
-- data ownership
-- API/protocol contracts
-- persistence/schema changes
-- end-to-end flows
-- failure/recovery behavior
-- compatibility constraints
-- security/operational concerns
+- responsibilities and system seams
+- authoritative data owner
+- cross-module and external contracts
+- target schema/protocol
+- end-to-end lifecycle, data flow, failure, and recovery
+- compatibility commitments
+- trust, security, and operational commitments
 - rejected alternatives
 
-This is the architectural layer.
+The ownership test is reliance, not whether someone calls the thing a “module”: if changing a choice
+requires any caller, peer, or operator to adjust, or changes an accepted guarantee, it belongs here.
+Composite decisions split: Stage 3 owns the invariant while Stage 4 owns its realization.
 
-It should stop before detailed internal code shape.
+### Participation modes
+
+`agent_led` is the default. `co_design` is user-selected at intake, never silently selected by the
+classifier, and is available whenever System Design is selected. It changes the collaboration UX,
+not artifact semantics or acceptance authority.
+
+In co-design, chat is the primary interactive control surface. Work one system seam or decision at
+a time. For each, ask one plain question; present two or three concrete alternatives; give a
+recommendation and its strongest counterargument; and assign a stable label. The user may redirect
+or zoom in. Accepted conversational choices are written into canonical `30-system-design.md`;
+conversation alone never has artifact or acceptance authority.
+
+Co-design also requires `30-system-design.html`, a deterministic, self-contained visual board bound
+to the exact Markdown source path/hash and renderer version. It contains precise architecture views,
+not decorative generative imagery: current/proposed topology, seam/ownership map,
+interface/contract view, end-to-end sequence or data flow, applicable schema/protocol deltas,
+failure/recovery paths, open decisions, and rejected alternatives. An inapplicable view states why.
+Feedback returns through chat using the stable labels. Generated chat images or snapshots are
+ephemeral projections; HTML bytes never acquire independent acceptance authority.
+
+Stage 3 stops before codebase-local realization inside the accepted seams.
 
 ---
 
@@ -696,22 +749,41 @@ Question:
 
 > What shape should the implementation take inside the codebase?
 
-Suggested content:
+Stage 4 owns **codebase-local realization** inside accepted seams:
 
-- file/module placement
+- file/package/module placement
 - new vs modified files
-- important types
-- interfaces/contracts
-- public method/function signatures
-- ownership/state boundaries
+- important types and language-level signatures
+- internal interfaces
+- internal state mutation and ownership mechanics
 - call stacks / interaction chains
-- concurrency/lifetime assumptions
+- locking, concurrency, and lifetime mechanics
 - test seams
-- migration/expand-contract mechanics where relevant
+- migration implementation order and local expand/contract mechanics
 
 No production method bodies.
 
 Program design resolves the architecture-ish decisions that otherwise emerge invisibly during implementation.
+
+The decision test is: if the choice can change without any caller, peer, or operator adjusting and
+without changing an accepted guarantee, it belongs in Stage 4; otherwise it belongs in Stage 3.
+
+### Paired drafting, sequential acceptance
+
+`30-system-design.md` and `40-program-design.md` may be drafted side-by-side so codebase feasibility
+can pressure-test interfaces. The Program Design draft is provisional: it may report feasibility
+findings upstream, but it cannot accept or silently rewrite Stage 3.
+
+There are two distinct judges and outcomes, never one bundle verdict. The process must accept
+system design first. It then binds, rechecks, and finalizes program design against the exact accepted
+system design candidate in `30-system-design.md`, or the exact accepted `20-prd.md` when Stage 3 is
+legitimately `NOT_REQUIRED`. Any accepted Stage 3 change makes Stage 4 stale. If Stage 4 discovers
+that a system commitment must change, it returns `DESIGN_BLOCKED` upstream rather than escalating
+merely to a human inside Stage 4.
+
+Program Design always has semantic questions and therefore never uses raw `AUTO`. Its recommended
+standard authority is `AGENT_REVIEW`; `HUMAN` remains available under governance or high assurance.
+An independent fresh review remains mandatory.
 
 A design review should explicitly challenge:
 
@@ -891,6 +963,7 @@ Merge remains a human action initially.
     ├── 20-prd.md
     ├── 20-prd.html
     ├── 30-system-design.md
+    ├── 30-system-design.html        # required only for co_design
     ├── 40-program-design.md
     │
     ├── evidence/
@@ -967,6 +1040,7 @@ Contains:
 
 - selected workflow depth
 - resolved ordered stages, including the earliest producer stage
+- selected System Design participation (`agent_led` by default, or user-selected `co_design`)
 - selected governance profile
 - explicit overrides
 - risk classification
@@ -1001,8 +1075,13 @@ An accepted discovery/product-closure candidate remains in its prescribed artifa
 Acceptance records its current version and content hash in `control.json`; V1 does not create a
 second approved copy or retain a separate acceptance history. The Stage 0–2 controller provides no
 post-closure reopen. A version increment replaces a previously accepted candidate only through a
-future downstream reopen owner; until that owner exists, a live mismatch against an accepted
+future downstream reopen owner; until that owner exists, any live mismatch against an accepted
 binding fails closed (see 08 — State and Governance).
+
+Stages 3–4 do not widen this file. A downstream design controller will own their separate gate and
+acceptance state, including exact candidate version/hash bindings and staleness. Its implementation
+must add only the minimum state required for those boundaries; v0.7 does not introduce a generalized
+router or move Stage 3–4 state into `control.json`.
 
 ---
 
@@ -1100,9 +1179,33 @@ during verification. It is never authoritative and never contributes its own acc
 
 Owns:
 
-> System placement, boundaries, contracts, data ownership, and end-to-end behavior.
+> System-observable commitments: responsibilities, seams, authoritative data ownership,
+> cross-module/external contracts, target schema/protocol, end-to-end lifecycle and
+> failure/recovery, compatibility, trust, security, and operations.
 
-Should be architecture-level, not file/class-level.
+The decision boundary is the reliance horizon. A choice belongs here when changing it requires a
+caller, peer, or operator to adjust, or changes an accepted guarantee. It should remain
+architecture-level rather than file/class-level. Composite decisions record the invariant here and
+leave its local realization to Program Design.
+
+---
+
+## `30-system-design.html`
+
+Owns:
+
+> A mandatory generated visual board when System Design participation is `co_design`.
+
+`30-system-design.md` remains canonical. The HTML is deterministic, self-contained, and
+non-authoritative; it embeds the exact Markdown source path, source SHA-256, and renderer version.
+It provides precise current/proposed topology, seam/ownership, interface/contract, end-to-end
+sequence or data-flow, applicable schema/protocol delta, failure/recovery, open-decision, and
+rejected alternatives views. A view that does not apply states why rather than disappearing or being
+replaced with decorative imagery.
+
+Stable labels connect board views to chat feedback. Generated chat images and snapshots are
+ephemeral projections. Neither they nor the HTML bytes receive an independent acceptance hash or
+authority.
 
 ---
 
@@ -1110,7 +1213,7 @@ Should be architecture-level, not file/class-level.
 
 Owns:
 
-> Internal code shape necessary to implement the approved system design.
+> Codebase-local realization inside the exact accepted system seams.
 
 Typical details:
 
@@ -1125,7 +1228,15 @@ src/
     DeviceJobWorker.cs    NEW
 ```
 
-and public/internal contracts such as important type signatures and call chains.
+and language-level signatures, internal state mutation, call chains, locking/concurrency/lifetime
+mechanics, migration implementation order, and test seams.
+
+It is provisional while paired drafting pressure-tests System Design. Before acceptance it binds to
+and is rechecked against the exact accepted `30-system-design.md` version/hash, or the exact accepted
+`20-prd.md` version/hash when System Design is `NOT_REQUIRED`. It has a distinct judge and outcome;
+there is no joint design-bundle verdict. An accepted System Design change makes it stale. A finding
+that requires changing a system commitment returns `DESIGN_BLOCKED` upstream rather than being
+approved inside Stage 4.
 
 ---
 
@@ -1285,6 +1396,7 @@ The control plane centralizes:
 
 - workflow depth;
 - stage admission;
+- System Design participation;
 - governance / gate authority;
 - execution policy;
 - environment policy;
@@ -1300,6 +1412,18 @@ The control plane centralizes:
 ## Configuration dimensions
 
 Keep these dimensions independent even if a named preset resolves several at once.
+
+### `system_design_participation`
+
+Question:
+
+> How does the user collaborate while the System Design candidate is produced?
+
+Values are `agent_led` (default) and `co_design`. This dimension exists only when System Design is
+selected, and intake prompts the user with both choices. The classifier does not recommend or select
+the participation mode; `co_design` exists only through the user's explicit intake choice.
+Participation does not alter artifact semantics, review independence, or the authority resolved from
+governance.
 
 ### `workflow`
 
@@ -1481,7 +1605,18 @@ Policy evaluates structured conditions to determine whether escalation is requir
 
 ### `HUMAN_IF_CHANGED`
 
-Human approval required only if the stage introduces a material change relative to an approved baseline or specified semantic dimensions.
+Human approval is required only if the stage introduces a material change relative to an exact
+repository/current-system baseline on one or more stage-specific material dimensions. System Design
+uses responsibilities/system seams, authoritative data ownership, cross-module/external contracts,
+target schema/protocol, end-to-end lifecycle/failure/recovery, compatibility guarantees, and
+trust/security/operational commitments.
+
+An independent read-only classifier compares the exact candidate with that baseline and emits
+evidence per dimension. Deterministic policy maps any material dimension to `HUMAN`; no material
+dimension maps to `AGENT_REVIEW`. Candidate/baseline identities and hashes plus classification
+evidence are persisted. If the baseline or classification cannot be established, the gate fails
+closed to `HUMAN`. A baseline or candidate change makes the result stale and requires
+reclassification/reapproval. Semantic design boundaries never use raw `AUTO`.
 
 ---
 
@@ -1534,6 +1669,21 @@ reviewer under `AGENT_REVIEW`, or by the human under `HUMAN`. The controller val
 candidate identity/hash, the applicable judge or human authority, and transition legality; it
 does not grade prose.
 
+### Stage 3–4 boundary seam
+
+Stages 3 and 4 use the same separation of producer, independent read-only judge, configured
+authority, and deterministic transition recording, but their state does not belong in the Stage
+0–2 `control.json`. A downstream design controller will own separate exact candidate/version/hash
+bindings, distinct Stage 3 and Stage 4 outcomes, and staleness propagation. Its implementation adds
+only the minimum state these boundaries require; v0.7 does not introduce a generalized router.
+
+Paired drafting does not merge gates. System Design is accepted first. Program Design is then bound,
+rechecked, and finalized against that accepted candidate, or the accepted PRD when System Design is
+`NOT_REQUIRED`. Program Design requires independent semantic review and never raw `AUTO`; the
+recommended standard authority is `AGENT_REVIEW`, with `HUMAN` available under governance/high
+assurance. A Stage 4 finding that would change a Stage 3 commitment returns `DESIGN_BLOCKED`
+upstream.
+
 ---
 
 ## Classifier behavior
@@ -1557,6 +1707,10 @@ risk:
 ```
 
 Then the user accepts or overrides the recommendation.
+
+When System Design is selected, intake separately prompts for `agent_led` or `co_design`; this is an
+explicit collaboration preference, not a classifier output. The classifier does not determine or
+recommend participation, and the choice does not change gate authority.
 
 An explicit user-selected assurance level should not be silently downgraded. Future policy may automatically raise minimum scrutiny for known high-risk conditions after the system earns that trust.
 
@@ -2033,6 +2187,54 @@ review context really was.
 
 ---
 
+## System Design boundary
+
+System Design review judges the exact `30-system-design.md` candidate independently of its
+participation mode. Co-design does not make conversational agreement an approval and does not
+change the gate authority.
+
+Deterministic checks establish candidate identity/version/hash and required source bindings. When
+participation is `co_design`, they also require `30-system-design.html`, verify that it is
+self-contained and binds the exact Markdown source path/hash plus renderer version, and require each
+prescribed architecture view or an explicit reason it is inapplicable. The HTML and ephemeral chat
+images remain projections and never receive an independent acceptance outcome.
+
+Semantic review checks the Stage 3 reliance horizon: responsibilities and system seams,
+authoritative data ownership, cross-module/external contracts, target schema/protocol, end-to-end
+lifecycle/failure/recovery, compatibility, and trust/security/operations. The judge reports its own
+Stage 3 result; no later Program Design verdict can accept or amend it.
+
+Under standard governance, `HUMAN_IF_CHANGED` compares the candidate against the exact
+repository/current-system baseline. An independent read-only classifier provides per-dimension
+evidence; deterministic policy sends any material dimension to `HUMAN` and otherwise requires
+`AGENT_REVIEW`. The baseline, candidate bindings, and evidence persist. Missing or unprovable
+baseline/classification fails closed to `HUMAN`; changed inputs make the classification and approval
+stale. Autonomous governance uses `AGENT_REVIEW`; high assurance uses `HUMAN`. System Design never
+uses raw `AUTO` for its semantic boundary.
+
+---
+
+## Program Design boundary
+
+Program Design has its own independent fresh review because codebase-local realization still asks
+semantic questions. It never uses raw `AUTO`. The recommended standard authority is
+`AGENT_REVIEW`; policy may select `HUMAN`, including for high assurance.
+
+Paired drafting may produce both design candidates side-by-side, but the Program Design result is
+provisional until System Design is accepted. Its boundary then verifies an exact binding to the
+accepted `30-system-design.md` version/hash, or to the accepted `20-prd.md` when System Design is
+legitimately `NOT_REQUIRED`, and rechecks the candidate against that source. Any accepted System
+Design change makes the Program Design candidate and prior result stale.
+
+The Stage 4 judge evaluates files/packages/types, language signatures, internal state mutation and
+call graph, locking/concurrency/lifetime mechanics, migration implementation order, and test seams.
+If acceptance would require a caller, peer, or operator to adjust or would change an accepted
+guarantee, the finding belongs upstream: return `DESIGN_BLOCKED` rather than seek a human exception
+inside Stage 4. Stage 3 and Stage 4 always produce distinct outcomes; there is no joint bundle
+verdict.
+
+---
+
 ## Whole-feature review
 
 Ticket-level correctness is insufficient.
@@ -2290,6 +2492,11 @@ controller changes it through one atomic file replacement and may then regenerat
 `00-state.md` as a projection. Repository-scoped `.factory/runs/` state begins with execution
 and remains a separate domain.
 
+Stages 3–4 require a separate downstream design controller. It owns only the minimum gate,
+acceptance, staleness, and exact candidate/version/hash bindings needed for System Design and
+Program Design. It does not widen Stage 0–2 `control.json`, and v0.7 does not introduce a
+generalized router. The exact storage shape is left to that controller's implementation.
+
 ---
 
 ## Suggested high-level run states
@@ -2366,7 +2573,8 @@ product closure is not a mechanical-only boundary in this revision.
 ## Approved artifacts are versioned contracts
 
 Once an artifact passes its gate, downstream work references its accepted version and content
-hash from `control.json`.
+hash from the controller that owns that boundary. Stages 0–2 use `control.json`; Stages 3–4 use
+their downstream design controller.
 
 This prevents:
 
@@ -2409,32 +2617,41 @@ chain exists in this revision.
 
 This gate deserves explicit support rather than being a prompt convention.
 
-Possible semantics:
+System Design semantics:
 
 ```text
-stage produces candidate artifact
+bind exact repository/current-system baseline and candidate
   ↓
-compare relevant semantic dimensions with approved/baseline artifact
+independent read-only classification with evidence per material dimension
   ↓
 no material change
-  → auto/agent authority may continue
+  → AGENT_REVIEW
 
-material change
+any material change
   → human gate required
+
+baseline or classification unavailable
+  → fail closed to HUMAN
 ```
 
-Material dimensions should be explicit where possible.
+The stage-specific material dimensions are:
 
-Examples for system design:
+- responsibilities and system seams;
+- authoritative data ownership;
+- cross-module/external contracts and dependencies;
+- target schema/protocol;
+- end-to-end lifecycle, failure, and recovery;
+- compatibility guarantees;
+- trust, security, and operational commitments.
 
-- new component boundary
-- changed data owner
-- new external dependency
-- schema/protocol change
-- cross-layer dependency
-- changed failure semantics
+The classifier judges materiality but has no gate authority. Deterministic policy maps any material
+dimension to `HUMAN` and no material dimensions to `AGENT_REVIEW`; semantic design boundaries never
+use raw `AUTO`. Persist the exact baseline and candidate identities/hashes with the classification
+evidence. Any change to those inputs makes the classification and prior approval stale and requires
+reclassification/reapproval.
 
-The LLM may classify whether change is material; deterministic policy decides what that classification implies.
+Participation remains orthogonal. Choosing `co_design` does not bypass this comparison, satisfy the
+human gate, or otherwise alter authority.
 
 ---
 
@@ -2545,7 +2762,6 @@ workflows:
   normal:
     stages:
       - discovery
-      - spec
       - program_design
       - tickets
       - execute
@@ -2555,7 +2771,6 @@ workflows:
   architectural:
     stages:
       - discovery
-      - spec
       - system_design
       - program_design
       - tickets
@@ -2567,7 +2782,6 @@ workflows:
     stages:
       - wayfinder
       - discovery
-      - spec
       - system_design
       - program_design
       - tickets
@@ -2575,12 +2789,18 @@ workflows:
       - final_review
       - pr
 
+design:
+  system_design:
+    participation: agent_led        # intake prompts agent_led | co_design; this is the default
+    prompt_at_intake: true
+    classifier_controls_participation: false
+    co_design_board: 30-system-design.html
+
 governance:
   exploratory:
     gates:
       discovery: AGENT_REVIEW
-      spec: AGENT_REVIEW
-      system_design: AUTO
+      system_design: AGENT_REVIEW
       program_design: AGENT_REVIEW
       tickets: AUTO
       tracer: AUTO
@@ -2589,9 +2809,8 @@ governance:
   standard:
     gates:
       discovery: HUMAN
-      spec: HUMAN
       system_design: HUMAN_IF_CHANGED
-      program_design: HUMAN
+      program_design: AGENT_REVIEW
       tickets: AGENT_REVIEW
       tracer: CONDITIONAL
       final_pr: HUMAN
@@ -2599,7 +2818,6 @@ governance:
   high_assurance:
     gates:
       discovery: HUMAN
-      spec: HUMAN
       system_design: HUMAN
       program_design: HUMAN
       tickets: HUMAN
@@ -2609,7 +2827,6 @@ governance:
   autonomous:
     gates:
       discovery: AGENT_REVIEW
-      spec: AGENT_REVIEW
       system_design: AGENT_REVIEW
       program_design: AGENT_REVIEW
       tickets: AGENT_REVIEW
@@ -2699,15 +2916,21 @@ routing:
 
 human_if_changed:
   system_design:
+    baseline: exact_repository_current_system
+    classifier: independent_read_only
+    no_material_change: AGENT_REVIEW
+    any_material_change: HUMAN
+    baseline_or_classification_unavailable: HUMAN
+    persist_bindings_and_evidence: true
+    stale_on_baseline_or_candidate_change: true
     material_dimensions:
-      - component_boundary
-      - data_ownership
-      - external_dependency
-      - public_contract
-      - schema
-      - protocol
-      - failure_semantics
-      - cross_layer_dependency
+      - responsibility_or_system_seam
+      - authoritative_data_owner
+      - cross_module_or_external_contract
+      - target_schema_or_protocol
+      - end_to_end_lifecycle_failure_recovery
+      - compatibility_guarantee
+      - trust_security_or_operational_commitment
 
 specialty_review_triggers:
   ops:
@@ -2799,6 +3022,9 @@ discovery producer with a separate product-closure boundary before engineering d
 
 ### D-003 — Program design is a first-class layer
 
+**Refined by:** D-073 routes System Design / Program Design ownership by reliance horizon, and D-074
+allows paired drafting while preserving sequential acceptance.
+
 **Decision:** Explicitly resolve file/module placement, important types, signatures, ownership, call chains, and test seams before implementation for work that warrants it.
 
 **Why:** These decisions otherwise emerge implicitly during coding and are expensive to reverse in review.
@@ -2818,7 +3044,8 @@ discovery producer with a separate product-closure boundary before engineering d
 ### D-005 — Separate workflow depth from governance profile
 
 **Refined by:** D-065 distinguishes a boundary omitted by workflow selection from a required
-pre-existing artifact that still needs ordinary acceptance.
+pre-existing artifact that still needs ordinary acceptance. D-071 adds System Design participation
+as a third independent axis rather than treating co-design as authority.
 
 **Decision:** Model the amount of planning decomposition independently from how much authority the factory receives.
 
@@ -2923,17 +3150,24 @@ Recommendation: begin boring and file-based; add stronger machinery only after f
 
 ---
 
-### OQ-003 — Change detection for `HUMAN_IF_CHANGED`
+### OQ-003 — Change detection for `HUMAN_IF_CHANGED` — **RESOLVED FOR SYSTEM DESIGN IN v0.7**
 
-Need a robust definition of “material change.”
+v0.7 resolves the System Design case (D-075): compare the exact candidate against an exact
+repository/current-system baseline across stage-specific reliance-horizon dimensions, using an
+independent read-only classification with evidence. Deterministic policy maps any material
+dimension to `HUMAN`, no material dimensions to `AGENT_REVIEW`, and an unavailable baseline or
+classification to `HUMAN`. Persist candidate/baseline bindings and evidence; changed inputs make
+the result stale and require reclassification/reapproval.
 
-Likely solution:
+The retained general pattern is:
 
 - stage-specific semantic dimensions
 - structured agent classification with evidence
 - deterministic policy mapping classification → gate
 
-Avoid raw text-diff-only semantics.
+Avoid raw text-diff-only semantics and raw `AUTO` at semantic design boundaries. Other stages must
+define their own material dimensions before adopting `HUMAN_IF_CHANGED`; this resolution is not a
+universal prose-diff classifier.
 
 ---
 
@@ -3607,7 +3841,11 @@ These are preserved as reference ideas, not implementation commitments.
 3. Exact local-worktree protection/rollback mechanism for V1.
 4. Ticket sizing and the point at which a ticket should be split before execution.
 5. Feature worktree vs ticket worktree once real usage provides evidence.
-6. Exact semantics of `HUMAN_IF_CHANGED` and what constitutes a meaningful change.
+6. Exact semantics of `HUMAN_IF_CHANGED` and what constitutes a meaningful change —
+   **resolved/refined for System Design in v0.7 (D-075):** exact baseline/candidate bindings,
+   stage-specific material dimensions, independent evidence-bearing classification, deterministic
+   `AGENT_REVIEW`/`HUMAN` mapping, fail-closed behavior, and staleness/reapproval. Other stages must
+   define their own dimensions before using the gate.
 7. How governance/profile recommendations are surfaced and approved at intake.
 8. When execution/review parallelism becomes safe and useful.
 
@@ -5138,6 +5376,30 @@ cannot. Reviewer freshness and read order remain procedural discipline, not auth
 
 ---
 
+## L-016 — “Involvement tiers” conflated participation with authority
+
+### Initial proposal
+
+The first co-design proposal coupled degrees of user involvement to automatic architecture tiers
+and gate behavior. That made collaboration look like another assurance profile.
+
+### User clarification
+
+The failure being addressed is detachment from AI-authored architecture, not insufficient approval
+ceremony. Co-design must therefore be explicitly selectable whenever System Design is selected,
+while acceptance authority remains an independent governance decision.
+
+### Standing result
+
+System Design has a separate participation axis: `agent_led` by default or user-selected
+`co_design`. The classifier neither recommends nor selects co-design; intake neutrally presents both
+choices to the user. Chat becomes the interactive control surface and accepted choices are written
+into canonical Markdown; neither the
+conversation nor its generated visual projections gains authority. Do not reintroduce automatic
+co-design tiers.
+
+---
+
 # 17 — Agent Roles, Rosters, Model Policy, and Outcome Telemetry
 
 **Added in:** v0.3  
@@ -6251,3 +6513,138 @@ does not promise an impossible two-file atomic transaction and may never consume
 > **Discovery carries provenance and product intent together, then earns one explicit product
 > closure: the accepted PRD binds the exact decision source it reconciled, required generated
 > projections stay non-authoritative, and omitted work is never mistaken for accepted work.**
+
+---
+
+# 22 — v0.7 Decisions
+
+v0.7 pairs System Design and Program Design closely enough to pressure-test one another without
+collapsing their ownership or acceptance boundaries. It also makes co-design an explicit
+collaboration choice rather than an authority tier.
+
+---
+
+## D-071 — System Design participation is separate from gate authority
+
+System Design participation is selected by the user at intake when `system_design` is part of the
+workflow:
+
+- `agent_led` is the default;
+- `co_design` is an explicit user selection.
+
+Intake prompts with both choices whenever System Design is selected. The classifier neither
+recommends nor selects the participation mode; `co_design` exists only through the user's explicit
+choice. Participation does not change the semantics of `30-system-design.md`, grant acceptance
+authority, or resolve the gate. Governance independently selects `AGENT_REVIEW`,
+`HUMAN_IF_CHANGED`, or `HUMAN`. There are no automatic co-design involvement tiers.
+
+In co-design, chat is the primary interactive control surface. Work one system seam or decision at a
+time with a plain question, two or three concrete alternatives, a recommendation and its strongest
+counterargument, and a stable label. The user can redirect or zoom in. Accepted conversational
+choices are written into canonical Markdown; chat alone is never authority.
+
+---
+
+## D-072 — Co-design requires a deterministic, non-authoritative System Design board
+
+When participation is `co_design`, `30-system-design.html` is mandatory and
+`30-system-design.md` remains canonical. The HTML is deterministic, self-contained, and bound to the
+exact Markdown source path/hash plus renderer version. Its bytes receive no independent acceptance
+hash or authority.
+
+The board contains precise architecture views rather than decorative generative imagery:
+
+- current and proposed topology;
+- seam and ownership map;
+- interface/contract view;
+- end-to-end sequence or data flow;
+- schema/protocol deltas when applicable;
+- failure and recovery paths;
+- open decisions;
+- rejected alternatives.
+
+An inapplicable view states why. Feedback occurs in chat using the board's stable labels. Generated
+chat images and snapshots are ephemeral projections and never become canonical evidence by
+existence alone.
+
+---
+
+## D-073 — Stage 3 and Stage 4 ownership follows reliance horizon
+
+Stage 3 owns system-observable commitments and choices requiring coordinated change across a seam:
+responsibilities, system seams, authoritative data owner, cross-module/external contracts, target
+schema/protocol, end-to-end lifecycle/failure/recovery, compatibility, and trust/security/operations.
+
+Stage 4 owns codebase-local realization inside accepted seams: files/packages/types, language
+signatures, internal state mutation, call graph, locking/concurrency/lifetime mechanics, migration
+implementation order, and test seams.
+
+The decision test is:
+
+> If the choice can change without any caller, peer, or operator adjusting and without changing an
+> accepted guarantee, it belongs to Stage 4; otherwise it belongs to Stage 3.
+
+The overloaded word “module” does not decide ownership. Composite decisions split: the invariant is
+recorded in Stage 3 and its realization in Stage 4.
+
+---
+
+## D-074 — System Design and Program Design pair for drafting but accept sequentially
+
+`30-system-design.md` and `40-program-design.md` may be drafted side-by-side to pressure-test
+interfaces. The Program Design draft is provisional and may report codebase-feasibility findings
+upstream, but it cannot accept or silently rewrite Stage 3.
+
+System Design is accepted first. Program Design is then bound, rechecked, and finalized against the
+exact accepted `30-system-design.md` candidate, or against the exact accepted `20-prd.md` when
+System Design is legitimately `NOT_REQUIRED`. Any accepted Stage 3 change makes Stage 4 stale.
+Stage 4 discovery of a required system-commitment change returns `DESIGN_BLOCKED` upstream rather
+than escalating merely to a human inside Stage 4.
+
+The stages have two independent judges and outcomes. There is no joint design-bundle verdict.
+Program Design always has semantic questions, so it never uses raw `AUTO`; the recommended standard
+authority is `AGENT_REVIEW`, while governance and high assurance may select `HUMAN`. An independent
+fresh review remains mandatory.
+
+---
+
+## D-075 — System Design governance has concrete, fail-closed semantics
+
+System Design uses `HUMAN_IF_CHANGED` under standard governance, `AGENT_REVIEW` under autonomous
+governance, and `HUMAN` under high assurance. Co-design participation is orthogonal to all three.
+Semantic design boundaries never use raw `AUTO`.
+
+For `HUMAN_IF_CHANGED`:
+
+1. bind the exact repository/current-system baseline and exact candidate identity/version/hash;
+2. obtain an independent read-only classification with evidence for each Stage 3 material dimension;
+3. deterministically map any material dimension to `HUMAN` and no material dimensions to
+   `AGENT_REVIEW`;
+4. persist the baseline/candidate bindings and classification evidence;
+5. fail closed to `HUMAN` if the baseline or classification cannot be established;
+6. mark the result and approval stale when the baseline or candidate changes, then reclassify and
+   reapprove.
+
+The material dimensions are the Stage 3 commitments named in D-073. This resolves OQ-003 for System
+Design without pretending raw textual difference is semantic materiality or defining dimensions for
+every other stage.
+
+---
+
+## D-076 — A minimal downstream design controller owns Stage 3–4 acceptance state
+
+The existing Stage 0–2 `control.json` is not widened. A downstream design controller will own
+separate Stage 3 and Stage 4 gate/acceptance state, exact candidate/version/hash bindings, and
+staleness propagation. Its implementation introduces only the minimum state those accepted
+boundaries require.
+
+v0.7 does not introduce a generalized router, merge the two design outcomes, or move execution
+runtime state into planning control.
+
+---
+
+## v0.7 north star
+
+> **Collaborate explicitly without confusing participation for authority; let System Design and
+> Program Design pressure-test each other without sharing a verdict; and accept system commitments
+> before binding the codebase-local realization that depends on them.**

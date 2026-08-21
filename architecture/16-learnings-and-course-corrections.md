@@ -739,3 +739,27 @@ best-effort over meaning.
 
 Use deterministic cross-checking where the architecture can prove it, and say plainly where it
 cannot. Reviewer freshness and read order remain procedural discipline, not authenticated state.
+
+---
+
+## L-016 — “Involvement tiers” conflated participation with authority
+
+### Initial proposal
+
+The first co-design proposal coupled degrees of user involvement to automatic architecture tiers
+and gate behavior. That made collaboration look like another assurance profile.
+
+### User clarification
+
+The failure being addressed is detachment from AI-authored architecture, not insufficient approval
+ceremony. Co-design must therefore be explicitly selectable whenever System Design is selected,
+while acceptance authority remains an independent governance decision.
+
+### Standing result
+
+System Design has a separate participation axis: `agent_led` by default or user-selected
+`co_design`. The classifier neither recommends nor selects co-design; intake neutrally presents both
+choices to the user. Chat becomes the interactive control surface and accepted choices are written
+into canonical Markdown; neither the
+conversation nor its generated visual projections gains authority. Do not reintroduce automatic
+co-design tiers.
