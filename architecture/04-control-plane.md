@@ -283,13 +283,16 @@ reviewer under `AGENT_REVIEW`, or by the human under `HUMAN`. The controller val
 candidate identity/hash, the applicable judge or human authority, and transition legality; it
 does not grade prose.
 
-### Stage 3–4 boundary seam
+### Stages 3–5 downstream planning seam
 
-Stages 3 and 4 use the same separation of producer, independent read-only judge, configured
+Stages 3 through 5 use the same separation of producer, independent read-only judge, configured
 authority, and deterministic transition recording, but their state does not belong in the Stage
-0–2 `control.json`. A downstream design controller will own separate exact candidate/version/hash
-bindings, distinct Stage 3 and Stage 4 outcomes, and staleness propagation. Its implementation adds
-only the minimum state these boundaries require; v0.7 does not introduce a generalized router.
+0–2 `control.json`. One downstream planning controller is the logical mutable authority for their
+separate exact candidate/version/hash bindings, distinct outcomes, dependency chain, and staleness
+propagation. It records every downstream invalidation directly caused by an upstream state change in
+the same logical atomic transition. Its exact storage/schema remains an implementation choice; it
+ends at Stage 5 and owns no execution state. v0.8 adds neither a separate compilation controller nor
+a generalized router.
 
 Paired drafting does not merge gates. When selected, System Design is accepted first. Program Design
 is then bound, rechecked, and finalized against the selected path's applicable source: the accepted
@@ -298,9 +301,24 @@ closure is selected; or the accepted/frozen Stage 0 intake and effective-configu
 both upstream semantic boundaries are `NOT_REQUIRED`. The downstream judge reads the effective
 selected stages, chooses exactly one branch, and never treats `NOT_REQUIRED` as approval. Program
 Design requires independent semantic review and never raw `AUTO`; the recommended standard
-authority is `AGENT_REVIEW`, with
-`HUMAN` available under governance/high assurance. A Stage 4 finding that would change a Stage 3
-commitment returns `DESIGN_BLOCKED` upstream.
+authority is `AGENT_REVIEW`, with `HUMAN` available under governance/high assurance. A Stage 4
+finding that would change a Stage 3 commitment returns `DESIGN_BLOCKED` upstream.
+
+Stage 5 has its own boundary inside that same controller:
+
+```text
+execution compiler proposes complete ticket graph
+  → independent read-only ticket-graph judge returns PASS/BLOCKED with all gaps
+  → PASS goes to the configured tickets authority; BLOCKED returns to compilation
+  → downstream planning controller records exact graph/version/hash acceptance
+  → execution preflight verifies the accepted binding and currency
+```
+
+The Stage 5 judge examines verticality, dependency completeness, validation contracts, repository
+targeting, and exact applicable-upstream references. The controller binds the accepted graph to
+each applicable accepted upstream source and each target repository baseline. It does not grade the
+graph's prose. Execution preflight may reject a missing or stale acceptance, but it cannot create,
+record, or manufacture one.
 
 ---
 

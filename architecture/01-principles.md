@@ -87,6 +87,12 @@ report feasibility findings upstream but cannot accept or silently rewrite a Sys
 commitment. If Program Design requires such a change, it returns `DESIGN_BLOCKED`; any accepted
 System Design change makes the Program Design candidate stale.
 
+The same monotonic rule continues through execution compilation. The downstream planning controller
+owns System Design, Program Design, and ticket-graph acceptance as separate outcomes under one
+pre-execution authority. A changed accepted upstream design makes every dependent accepted ticket
+graph stale in the same logical atomic transition. Execution may verify an accepted graph; it may
+not create the acceptance it depends on.
+
 If execution requires violating an approved contract, the correct state is:
 
 ```text

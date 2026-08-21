@@ -4,7 +4,12 @@
 
 ### D-001 — Build a software factory, but start it at execution
 
-**Decision:** Initial autonomous factory boundary begins with an approved vertical ticket and can run through draft PR creation.
+**Refined by:** D-080. The execution boundary still begins after planning acceptance, but its input
+is now the exact accepted ticket graph plus a selected ticket identity. A ticket file alone is not
+execution authority.
+
+**Decision:** Initial autonomous factory boundary begins with an exact accepted ticket graph plus one
+selected ready vertical ticket and can run through draft PR creation.
 
 **Why:** This captures the strongest SSSF leverage without asking post-hoc reviewers to compensate for poor architectural decisions.
 
@@ -139,15 +144,22 @@ Need to validate through real usage:
 
 ---
 
-### OQ-002 — Canonical machine state format
+### OQ-002 — Canonical machine state format — **PARTIALLY RESOLVED IN v0.8**
 
-Options:
+D-080 resolves the authority topology without freezing a storage schema: one downstream planning
+controller is the logical mutable authority for separate Stage 3, Stage 4, and Stage 5 outcomes,
+and an upstream change plus every directly caused downstream invalidation is one logical atomic
+transition. Stage 0–2 `control.json` remains the frozen admission anchor; execution state remains
+repository-scoped.
 
-- YAML/JSON state file + human Markdown mirror
-- SQLite/event log
-- pure frontmatter initially
+Still open for Program Design and real-use calibration:
 
-Recommendation: begin boring and file-based; add stronger machinery only after failure modes justify it.
+- exact file/storage representation and schema fields;
+- whether one snapshot, a transactional store, or another minimal representation best preserves the
+  required atomicity;
+- when stronger history/replay machinery is earned.
+
+Do not add an event log, receipt ledger, or database merely to close this question on paper.
 
 ---
 
@@ -239,15 +251,22 @@ Existing Pocock primitives can remain available beneath these.
 
 ---
 
-### OQ-009 — How much of pre-implementation belongs under deterministic orchestration
+### OQ-009 — How much of pre-implementation belongs under deterministic orchestration — **STRUCTURALLY RESOLVED THROUGH STAGE 5 IN v0.8**
 
-Current recommendation:
+D-080 places all selected pre-execution acceptance through the compiled ticket graph under one
+bounded downstream planning controller. Stage 5 is the final planning boundary; the controller
+records the exact accepted graph and ends there. Repository-scoped execution begins only after that
+handoff and may verify, but never create, planning acceptance.
 
-- same control plane may eventually orchestrate all stages;
-- high-leverage design stages remain human-gated according to policy;
-- autonomy can increase without changing artifact contracts.
+Still intentionally open:
 
-The system should be able to automate generation while preserving separate acceptance authority.
+- the downstream controller's exact storage and implementation mechanics;
+- ticket sizing, graph partitioning, and tracer policy;
+- execution-runtime mechanics within the already-fixed `local_worktree` V1 baseline;
+- any future second runtime that earns revisiting that baseline and the fixed Stage 5 boundary.
+
+Autonomy can increase without merging acceptance authority into execution or changing artifact
+contracts.
 
 ---
 

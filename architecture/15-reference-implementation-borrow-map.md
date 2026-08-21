@@ -632,7 +632,8 @@ A reasonable first technical spike should compare two starting points:
 
 1. Clone/pin SSSF.
 2. Strip its planning methodology from the runtime boundary.
-3. Replace its plan input with our approved Markdown ticket + resolved contracts.
+3. Replace its plan input with an exact accepted ticket-graph packet plus the selected ticket identity;
+   a Markdown ticket alone is never execution authority.
 4. Keep/adapt phase runner, envelopes, gates, repair loops, roster, trace.
 5. Add our contract/design reviewer semantics.
 6. Run it in a local Git worktree; preserve provider-neutral vocabulary but **do not** extract a provider registry/interface yet.
@@ -654,13 +655,15 @@ A reasonable first technical spike should compare two starting points:
 Choose the approach that can implement this smallest credible flow with the least accidental coupling:
 
 ```text
-factory run tickets/01.md
-  → preflight approved contract
+exact accepted ticket-graph version/hash + selected ticket identity
+  → preflight current graph acceptance + applicable upstream bindings + frozen target baseline
+  → verify expected accepted-commit chain rooted at that baseline
   → builder
   → deterministic test/build command
   → contract reviewer (read-only)
   → design/quality reviewer (read-only)
   → bounded builder repair
+  → revalidate graph currency immediately before commit
   → accepted local commit
   → structured result bundle
 ```

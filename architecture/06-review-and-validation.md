@@ -297,6 +297,32 @@ verdict.
 
 ---
 
+## Ticket-graph compilation boundary
+
+Stage 5's compiler is a producer, not its own judge. A fresh read-only ticket-graph judge evaluates
+the exact complete graph and returns `PASS` or `BLOCKED` with all gaps. It establishes applicability
+before requiring an upstream artifact and never writes a missing ticket, edge, validation contract,
+or acceptance to satisfy its own finding.
+
+Deterministic checks bind the exact graph version/SHA-256, assert unique ticket identities and valid
+dependency references, require unambiguous repository targets, verify declared validation commands,
+and prove every ticket's upstream references are drawn from the selected path's applicable accepted
+sources. The candidate also binds the frozen baseline for every target repository.
+
+Semantic review checks that slices are vertical and independently verifiable, dependencies are
+complete without hiding a global ordering, acceptance criteria are observable, validators cover the
+promised behavior, and implementation decisions do not leak back into compilation. PASS proceeds to
+the configured `tickets` authority; the downstream planning controller records the acceptance.
+BLOCKED returns to Stage 5 without changing authoritative state.
+
+Any accepted System Design or Program Design change makes every dependent ticket-graph acceptance
+stale in the same logical atomic transition as the upstream change. Execution preflight consumes and
+verifies that exact acceptance but cannot create it. This boundary does not decide whether a future
+proven mechanical-only compilation class may use `AUTO_PASSED`; the existing gate vocabulary and
+configured policy continue to govern authority.
+
+---
+
 ## Whole-feature review
 
 Ticket-level correctness is insufficient.
