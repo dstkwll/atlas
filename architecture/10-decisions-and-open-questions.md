@@ -23,6 +23,9 @@ discovery producer with a separate product-closure boundary before engineering d
 
 ### D-003 — Program design is a first-class layer
 
+**Refined by:** D-073 routes System Design / Program Design ownership by reliance horizon, and D-074
+allows paired drafting while preserving sequential acceptance.
+
 **Decision:** Explicitly resolve file/module placement, important types, signatures, ownership, call chains, and test seams before implementation for work that warrants it.
 
 **Why:** These decisions otherwise emerge implicitly during coding and are expensive to reverse in review.
@@ -42,7 +45,8 @@ discovery producer with a separate product-closure boundary before engineering d
 ### D-005 — Separate workflow depth from governance profile
 
 **Refined by:** D-065 distinguishes a boundary omitted by workflow selection from a required
-pre-existing artifact that still needs ordinary acceptance.
+pre-existing artifact that still needs ordinary acceptance. D-071 adds System Design participation
+as a third independent axis rather than treating co-design as authority.
 
 **Decision:** Model the amount of planning decomposition independently from how much authority the factory receives.
 
@@ -147,17 +151,24 @@ Recommendation: begin boring and file-based; add stronger machinery only after f
 
 ---
 
-### OQ-003 — Change detection for `HUMAN_IF_CHANGED`
+### OQ-003 — Change detection for `HUMAN_IF_CHANGED` — **RESOLVED FOR SYSTEM DESIGN IN v0.7**
 
-Need a robust definition of “material change.”
+v0.7 resolves the System Design case (D-075): compare the exact candidate against an exact
+repository/current-system baseline across stage-specific reliance-horizon dimensions, using an
+independent read-only classification with evidence. Deterministic policy maps any material
+dimension to `HUMAN`, no material dimensions to `AGENT_REVIEW`, and an unavailable baseline or
+classification to `HUMAN`. Persist candidate/baseline bindings and evidence; changed inputs make
+the result stale and require reclassification/reapproval.
 
-Likely solution:
+The retained general pattern is:
 
 - stage-specific semantic dimensions
 - structured agent classification with evidence
 - deterministic policy mapping classification → gate
 
-Avoid raw text-diff-only semantics.
+Avoid raw text-diff-only semantics and raw `AUTO` at semantic design boundaries. Other stages must
+define their own material dimensions before adopting `HUMAN_IF_CHANGED`; this resolution is not a
+universal prose-diff classifier.
 
 ---
 

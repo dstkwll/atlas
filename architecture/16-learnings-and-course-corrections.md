@@ -739,3 +739,71 @@ best-effort over meaning.
 
 Use deterministic cross-checking where the architecture can prove it, and say plainly where it
 cannot. Reviewer freshness and read order remain procedural discipline, not authenticated state.
+
+---
+
+## L-016 — “Involvement tiers” conflated participation with authority
+
+### Initial proposal
+
+The first co-design proposal coupled degrees of user involvement to automatic architecture tiers
+and gate behavior. That made collaboration look like another assurance profile.
+
+### User clarification
+
+The failure being addressed is detachment from AI-authored architecture, not insufficient approval
+ceremony. Co-design must therefore be explicitly selectable whenever System Design is selected,
+while acceptance authority remains an independent governance decision.
+
+### Standing result
+
+System Design has a separate participation axis: `agent_led` by default or user-selected
+`co_design`. The classifier neither recommends nor selects co-design; intake neutrally presents both
+choices to the user. Chat becomes the interactive control surface and accepted choices are written
+into canonical Markdown; neither the
+conversation nor its generated visual projections gains authority. Do not reintroduce automatic
+co-design tiers.
+
+---
+
+## L-017 — A downstream binding follows the selected path, not a preferred upstream artifact
+
+### Contradiction found
+
+v0.7 initially required Program Design to bind accepted System Design, or an accepted PRD when
+System Design was `NOT_REQUIRED`. The existing stage-admission contract also permits Program Design
+to be the earliest selected producer when both upstream semantic boundaries are `NOT_REQUIRED`.
+That valid path has neither accepted artifact, so the new binding rule accidentally made an older
+admission path impossible.
+
+### Standing result
+
+A downstream reviewer and execution compiler carry the applicability test for alternative upstream
+paths. Program Design binds accepted System Design when selected, accepted product closure when that
+is the selected upstream semantic boundary, or the exact accepted/frozen Stage 0 effective intake
+when both are omitted. Compilation and downstream review consume only the applicable accepted
+sources and never restore a requirement for an omitted PRD or System Design. `NOT_REQUIRED` still
+means absence, never approval; no runtime controller is implemented by this architecture correction.
+
+---
+
+## L-018 — The model router already existed; Discovery's question frontier was the thin seam
+
+### Reframe
+
+The initial request sounded like two new subsystems: model-tier routing for skills and model sparring
+for Discovery. Repository-grounded review showed the first already existed as role × task-shape roster
+resolution. Binding a whole skill to one model tier would have coupled reusable procedure to worker
+identity and duplicated the existing precedence chain.
+
+The real gap was earlier: independent review challenged answers and completed artifacts, but nothing
+independently challenged whether Discovery's initial question frontier was complete and correctly
+routed before user deliberation began.
+
+### Standing result
+
+Staff model invocations through role × task shape, with exact workers in configuration and model
+diversity treated as conditional staffing rather than authority. Add one bounded, blind frontier
+critic before the first grill round and repeat completeness/wrong-owner review in the existing final
+cold read. Do not create a second router, a council per question, or runtime machinery in this
+architecture-only change.

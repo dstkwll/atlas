@@ -37,6 +37,13 @@ Examples:
 - Another may require human approval.
 - Another may require human approval only if architecture materially changed.
 
+Participation is a third, independent question: **how does the user collaborate in producing the
+artifact?** System Design may be `agent_led` (the default) or `co_design`, but that choice neither
+changes what `30-system-design.md` means nor grants acceptance authority. The classifier neither
+recommends nor selects the participation mode; intake neutrally presents both and only the user
+selects it. Gate policy still independently resolves
+`AGENT_REVIEW`, `HUMAN_IF_CHANGED`, or `HUMAN`.
+
 ## 3. One artifact, one abstraction level, one exclusive job
 
 Each artifact must resolve a distinct class of uncertainty.
@@ -56,11 +63,29 @@ Each stage should reduce degrees of freedom without reopening resolved upstream 
 Decision discovery and the product contract are authored by one producer and separated by the
 product-closure boundary rather than by two stages (D-066, D-067).
 
+The System Design / Program Design boundary is determined by **reliance horizon**, not by the
+overloaded word “module.” A system-observable commitment, or a choice that requires a caller, peer,
+or operator to adjust, belongs to System Design. A codebase-local realization that can change
+without another party adjusting and without changing an accepted guarantee belongs to Program
+Design. Composite decisions split: the invariant is upstream; its realization is downstream.
+
+The two artifacts may be drafted side-by-side to pressure-test interfaces, but their acceptance is
+sequential when both stages are selected: System Design is accepted first. Program Design remains
+provisional until it is bound, rechecked, and finalized against the exact upstream source selected
+by the run: accepted System Design when selected; the accepted PRD when System Design is
+`NOT_REQUIRED` but product closure is selected; or the exact frozen Stage 0 effective intake when
+both upstream semantic boundaries are `NOT_REQUIRED`. An omitted boundary never manufactures an
+approval or a nonexistent artifact.
+
 ## 4. Downstream stages may discover problems, but cannot silently redesign upstream decisions
 
-Implementation agents are allowed to discover that an approved design is invalid.
+Downstream design and implementation agents are allowed to discover that an approved design is
+invalid.
 
-They are **not** allowed to self-authorize architectural changes.
+They are **not** allowed to self-authorize architectural changes. In particular, Program Design may
+report feasibility findings upstream but cannot accept or silently rewrite a System Design
+commitment. If Program Design requires such a change, it returns `DESIGN_BLOCKED`; any accepted
+System Design change makes the Program Design candidate stale.
 
 If execution requires violating an approved contract, the correct state is:
 

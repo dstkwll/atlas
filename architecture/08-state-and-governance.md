@@ -21,6 +21,11 @@ controller changes it through one atomic file replacement and may then regenerat
 `00-state.md` as a projection. Repository-scoped `.factory/runs/` state begins with execution
 and remains a separate domain.
 
+Stages 3–4 require a separate downstream design controller. It owns only the minimum gate,
+acceptance, staleness, and exact candidate/version/hash bindings needed for System Design and
+Program Design. It does not widen Stage 0–2 `control.json`, and v0.7 does not introduce a
+generalized router. The exact storage shape is left to that controller's implementation.
+
 ---
 
 ## Suggested high-level run states
@@ -97,7 +102,8 @@ product closure is not a mechanical-only boundary in this revision.
 ## Approved artifacts are versioned contracts
 
 Once an artifact passes its gate, downstream work references its accepted version and content
-hash from `control.json`.
+hash from the controller that owns that boundary. Stages 0–2 use `control.json`; Stages 3–4 use
+their downstream design controller.
 
 This prevents:
 
@@ -112,6 +118,14 @@ when applicable). In v0.6 that accepted product-contract candidate is `20-prd.md
 The current Stage 0–2 controller has no post-closure reopen command. A future downstream owner may
 mark that binding stale and require the next candidate version; until that owner exists, any live
 source mismatch after acceptance fails closed rather than silently reopening discovery.
+
+System Design acceptance chooses exactly one admission/provenance binding from the selected path:
+the exact accepted `20-prd.md` version/hash when Product Closure is selected, or the exact
+accepted/frozen Stage 0 intake and effective configuration when Product Closure is `NOT_REQUIRED`,
+bound by `control.json.base_run_sha256`, `effective_config_hash`, and
+`effective_config_revision`. Omitted Product Closure creates no PRD or approval. A change to
+whichever source is bound to accepted System Design makes that acceptance stale; dependent Program
+Design becomes stale transitively in the same logical downstream transition.
 
 ---
 
@@ -140,32 +154,41 @@ chain exists in this revision.
 
 This gate deserves explicit support rather than being a prompt convention.
 
-Possible semantics:
+System Design semantics:
 
 ```text
-stage produces candidate artifact
+bind exact repository/current-system baseline and candidate
   ↓
-compare relevant semantic dimensions with approved/baseline artifact
+independent read-only classification with evidence per material dimension
   ↓
 no material change
-  → auto/agent authority may continue
+  → AGENT_REVIEW
 
-material change
+any material change
   → human gate required
+
+baseline or classification unavailable
+  → fail closed to HUMAN
 ```
 
-Material dimensions should be explicit where possible.
+The stage-specific material dimensions are:
 
-Examples for system design:
+- responsibilities and system seams;
+- authoritative data ownership;
+- cross-module/external contracts and dependencies;
+- target schema/protocol;
+- end-to-end lifecycle, failure, and recovery;
+- compatibility guarantees;
+- trust, security, and operational commitments.
 
-- new component boundary
-- changed data owner
-- new external dependency
-- schema/protocol change
-- cross-layer dependency
-- changed failure semantics
+The classifier judges materiality but has no gate authority. Deterministic policy maps any material
+dimension to `HUMAN` and no material dimensions to `AGENT_REVIEW`; semantic design boundaries never
+use raw `AUTO`. Persist the exact baseline and candidate identities/hashes with the classification
+evidence. Any change to those inputs makes the classification and prior approval stale and requires
+reclassification/reapproval.
 
-The LLM may classify whether change is material; deterministic policy decides what that classification implies.
+Participation remains orthogonal. Choosing `co_design` does not bypass this comparison, satisfy the
+human gate, or otherwise alter authority.
 
 ---
 

@@ -46,7 +46,6 @@ workflows:
   normal:
     stages:
       - discovery
-      - spec
       - program_design
       - tickets
       - execute
@@ -56,7 +55,6 @@ workflows:
   architectural:
     stages:
       - discovery
-      - spec
       - system_design
       - program_design
       - tickets
@@ -68,7 +66,6 @@ workflows:
     stages:
       - wayfinder
       - discovery
-      - spec
       - system_design
       - program_design
       - tickets
@@ -76,12 +73,18 @@ workflows:
       - final_review
       - pr
 
+design:
+  system_design:
+    participation: agent_led        # intake prompts agent_led | co_design; this is the default
+    prompt_at_intake: true
+    classifier_controls_participation: false
+    co_design_board: 30-system-design.html
+
 governance:
   exploratory:
     gates:
       discovery: AGENT_REVIEW
-      spec: AGENT_REVIEW
-      system_design: AUTO
+      system_design: AGENT_REVIEW
       program_design: AGENT_REVIEW
       tickets: AUTO
       tracer: AUTO
@@ -90,9 +93,8 @@ governance:
   standard:
     gates:
       discovery: HUMAN
-      spec: HUMAN
       system_design: HUMAN_IF_CHANGED
-      program_design: HUMAN
+      program_design: AGENT_REVIEW
       tickets: AGENT_REVIEW
       tracer: CONDITIONAL
       final_pr: HUMAN
@@ -100,7 +102,6 @@ governance:
   high_assurance:
     gates:
       discovery: HUMAN
-      spec: HUMAN
       system_design: HUMAN
       program_design: HUMAN
       tickets: HUMAN
@@ -110,7 +111,6 @@ governance:
   autonomous:
     gates:
       discovery: AGENT_REVIEW
-      spec: AGENT_REVIEW
       system_design: AGENT_REVIEW
       program_design: AGENT_REVIEW
       tickets: AGENT_REVIEW
@@ -200,15 +200,21 @@ routing:
 
 human_if_changed:
   system_design:
+    baseline: exact_repository_current_system
+    classifier: independent_read_only
+    no_material_change: AGENT_REVIEW
+    any_material_change: HUMAN
+    baseline_or_classification_unavailable: HUMAN
+    persist_bindings_and_evidence: true
+    stale_on_baseline_or_candidate_change: true
     material_dimensions:
-      - component_boundary
-      - data_ownership
-      - external_dependency
-      - public_contract
-      - schema
-      - protocol
-      - failure_semantics
-      - cross_layer_dependency
+      - responsibility_or_system_seam
+      - authoritative_data_owner
+      - cross_module_or_external_contract
+      - target_schema_or_protocol
+      - end_to_end_lifecycle_failure_recovery
+      - compatibility_guarantee
+      - trust_security_or_operational_commitment
 
 specialty_review_triggers:
   ops:

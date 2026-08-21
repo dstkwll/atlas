@@ -33,16 +33,26 @@ Input:
 - fuzzy goal
 - existing repository context
 - optional explicit workflow/profile selection
+- optional System Design participation selection when `system_design` is selected:
+  `agent_led` (default) or `co_design`
 
 Output:
 
 - recommended workflow depth
 - recommended first producer stage within that workflow
 - recommended governance profile
+- a neutral System Design participation choice when that stage is selected
 - structured risk assessment
-- resolved run configuration after human acceptance/override
+- resolved run configuration, including the user-selected participation mode, after human
+  acceptance/override
 
-Classifier behavior should initially be **recommend-only**.
+Classifier behavior for workflow depth, producer stage, governance, and risk should initially be
+**recommend-only**. Participation mode is deliberately excluded from that recommendation surface.
+
+Participation and acceptance authority are separate intake axes. The classifier neither recommends
+nor selects `co_design`; intake neutrally presents `agent_led` and `co_design`, and the user may
+explicitly choose either whenever System Design is selected. That choice does not alter the gate
+authority resolved from governance.
 
 Example:
 
@@ -60,12 +70,13 @@ Why:
 
 Human gates:
 - product closure
-- program design
 - final PR
 
 Conditional gates:
 - system design if boundaries change
 - tracer slice if implementation risk becomes high
+
+System Design participation: agent_led (user-selectable as co_design)
 ```
 
 The resolved run configuration is snapshotted into the planning directory and becomes part of the run's audit trail.
@@ -148,25 +159,57 @@ Question:
 
 > Where does this change fit in the existing system?
 
-Suggested content:
+Stage 3 owns **system-observable commitments** and choices requiring coordinated change across a
+seam:
 
 - current system
 - proposed system
-- affected components/modules
-- system boundaries
-- external contracts
-- data ownership
-- API/protocol contracts
-- persistence/schema changes
-- end-to-end flows
-- failure/recovery behavior
-- compatibility constraints
-- security/operational concerns
+- responsibilities and system seams
+- authoritative data owner
+- cross-module and external contracts
+- target schema/protocol
+- end-to-end lifecycle, data flow, failure, and recovery
+- compatibility commitments
+- trust, security, and operational commitments
 - rejected alternatives
 
-This is the architectural layer.
+The ownership test is reliance, not whether someone calls the thing a “module”: if changing a choice
+requires any caller, peer, or operator to adjust, or changes an accepted guarantee, it belongs here.
+Composite decisions split: Stage 3 owns the invariant while Stage 4 owns its realization.
 
-It should stop before detailed internal code shape.
+### Participation modes
+
+`agent_led` is the default. `co_design` is user-selected at intake, never silently selected by the
+classifier, and is available whenever System Design is selected. It changes the collaboration UX,
+not artifact semantics or acceptance authority.
+
+In co-design, chat is the primary interactive control surface. Work one system seam or decision at
+a time. For each, ask one plain question; present two or three concrete alternatives; give a
+recommendation and its strongest counterargument; and assign a stable label. The user may redirect
+or zoom in. Accepted conversational choices are written into canonical `30-system-design.md`;
+conversation alone never has artifact or acceptance authority.
+
+Co-design also requires `30-system-design.html`, a deterministic, self-contained visual board bound
+to the exact Markdown source path/hash and renderer version. It contains precise architecture views,
+not decorative generative imagery: current/proposed topology, seam/ownership map,
+interface/contract view, end-to-end sequence or data flow, applicable schema/protocol deltas,
+failure/recovery paths, open decisions, and rejected alternatives. An inapplicable view states why.
+Feedback returns through chat using the stable labels. Generated chat images or snapshots are
+ephemeral projections; HTML bytes never acquire independent acceptance authority.
+
+Stage 3 stops before codebase-local realization inside the accepted seams.
+
+At its boundary, System Design reads the effective selected stages and chooses exactly one
+admission/provenance binding:
+
+- Product Closure selected → exact accepted `20-prd.md` version/hash;
+- Product Closure `NOT_REQUIRED` → exact accepted/frozen Stage 0 intake and effective configuration,
+  bound by `control.json.base_run_sha256`, `effective_config_hash`, and
+  `effective_config_revision`.
+
+An omitted Product Closure creates no PRD or approval. A change to whichever bound source makes
+accepted System Design stale; Program Design that depends on it becomes stale transitively in the
+same logical downstream transition.
 
 ---
 
@@ -176,22 +219,51 @@ Question:
 
 > What shape should the implementation take inside the codebase?
 
-Suggested content:
+Stage 4 owns **codebase-local realization** without changing system-observable commitments. When
+System Design is selected, this means realization inside its exact accepted seams. On a direct
+Program Design path, the accepted/frozen Stage 0 intake and effective run configuration supply the
+applicable upstream constraints:
 
-- file/module placement
+- file/package/module placement
 - new vs modified files
-- important types
-- interfaces/contracts
-- public method/function signatures
-- ownership/state boundaries
+- important types and language-level signatures
+- internal interfaces
+- internal state mutation and ownership mechanics
 - call stacks / interaction chains
-- concurrency/lifetime assumptions
+- locking, concurrency, and lifetime mechanics
 - test seams
-- migration/expand-contract mechanics where relevant
+- migration implementation order and local expand/contract mechanics
 
 No production method bodies.
 
 Program design resolves the architecture-ish decisions that otherwise emerge invisibly during implementation.
+
+The decision test is: if the choice can change without any caller, peer, or operator adjusting and
+without changing an accepted guarantee, it belongs in Stage 4; otherwise it belongs in Stage 3.
+
+### Paired drafting, sequential acceptance
+
+`30-system-design.md` and `40-program-design.md` may be drafted side-by-side so codebase feasibility
+can pressure-test interfaces. The Program Design draft is provisional: it may report feasibility
+findings upstream, but it cannot accept or silently rewrite Stage 3.
+
+There are two distinct judges and outcomes, never one bundle verdict. The process must accept
+System Design first when that stage is selected. Program Design then binds, rechecks, and finalizes
+against the source required by the actual selected path:
+
+- selected System Design → exact accepted `30-system-design.md` candidate;
+- System Design `NOT_REQUIRED` with selected product closure → exact accepted `20-prd.md` candidate;
+- both upstream semantic boundaries `NOT_REQUIRED` → exact accepted/frozen Stage 0 intake and
+  effective run configuration that authorized direct Program Design admission.
+
+The last branch binds `control.json.base_run_sha256`, `effective_config_hash`, and
+`effective_config_revision`; it does not manufacture an upstream artifact or approval. Any accepted
+Stage 3 change makes Stage 4 stale. If Stage 4 discovers that a system commitment must change, it
+returns `DESIGN_BLOCKED` upstream rather than escalating merely to a human inside Stage 4.
+
+Program Design always has semantic questions and therefore never uses raw `AUTO`. Its recommended
+standard authority is `AGENT_REVIEW`; `HUMAN` remains available under governance or high assurance.
+An independent fresh review remains mandatory.
 
 A design review should explicitly challenge:
 
@@ -214,11 +286,16 @@ Question:
 
 This stage should be treated as a **compiler**, not another open-ended design step.
 
-Inputs:
+Inputs are the applicable accepted sources for the actual selected path:
 
-- accepted product PRD
-- approved system design when present
-- approved program design when present
+- exact accepted product PRD when product closure is selected;
+- exact accepted System Design when System Design is selected;
+- exact accepted Program Design when Program Design is selected;
+- accepted/frozen Stage 0 intake and effective run configuration for a direct admission path across
+  omitted upstream semantic boundaries.
+
+An omitted boundary contributes neither an artifact nor an approval. Compilation preserves the
+accepted bindings carried by the selected path rather than requiring every possible upstream file.
 
 Outputs:
 
@@ -307,12 +384,14 @@ Parallel execution may be introduced later when tickets are truly independent an
 
 ## Stage 9 — Whole-feature validation and review
 
-After all tickets are complete:
+After all tickets are complete, review against the applicable accepted upstream sources: the product
+contract when selected, System Design when selected, Program Design when selected, and the frozen
+Stage 0 binding on a direct path. Then run:
 
 - full build/test/lint suite
 - integration/system tests
 - architecture/scope checks
-- whole-branch product-contract compliance review
+- whole-branch applicable-contract compliance review
 - whole-branch architecture/program-design drift review
 - maintainability/standards review
 - conditional ops/security/migration/UI review

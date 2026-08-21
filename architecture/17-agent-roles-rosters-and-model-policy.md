@@ -42,6 +42,7 @@ A **role package** defines behavior and authority independent of whichever model
 Example roles:
 
 - `discovery_researcher`
+- `discovery_frontier_critic`
 - `spike_worker`
 - `system_design_critic`
 - `program_design_critic`
@@ -81,7 +82,14 @@ roles:
     writes: []
 ```
 
-The role package should not contain model-specific prompting quirks unless a real need later earns that mechanism.
+A role package should not contain model-specific prompting quirks unless a real need later earns that mechanism.
+
+Every model invocation is staffed by its **role and task shape**, never by a skill name or skill
+identity. A skill may orchestrate multiple model invocations with multiple task shapes—for example,
+cheap factual lookup, frontier synthesis, and an independent semantic review—and the roster may staff
+each differently without coupling the reusable procedure to one worker tier. An in-skill action only
+affects staffing when it is exposed as a stable task shape; arbitrary action-level routing would
+explode the taxonomy and is not part of V1.
 
 ---
 
@@ -195,6 +203,7 @@ rosters:
   default:
     defaults:
       discovery_researcher: frontier_reasoner
+      discovery_frontier_critic: frontier_reasoner
       spike_worker: frontier_coder
       builder: standard_coder
       contract_reviewer: frontier_reasoner
@@ -256,20 +265,28 @@ No automatic model promotion is required for the factory to function.
 
 # 8. Builder/reviewer diversity
 
-Independence is primarily about fresh context and independent evaluation, not vendor diversity for its own sake.
+Independence begins with fresh context and independent evaluation; model diversity is a staffing
+constraint, not authority.
 
-Possible future policy:
+V1 policy:
 
 ```yaml
 review_independence:
   fresh_context: required
   different_worker_config: preferred
-  different_model_family: optional
+  different_model_family: conditional
 ```
 
-Do not force different vendors/models unless evidence shows correlated blind spots justify the added cost/complexity.
+A different worker configuration is preferred where available, but ordinary review remains valid
+when a fresh reviewer uses the same strong model. A different model family is required for a model
+critic or reviewer under `high_assurance`, and after repeated review failures or evidence of
+correlated blind spots. Outside those conditions it is optional: do not multiply model calls or
+force vendor diversity for its own sake.
 
-A fresh reviewer using the same strong model can still provide meaningful independent evaluation because it does not inherit the builder's conversational rationalization.
+The family requirement changes staffing only. Model diversity grants no authority, never resolves a
+gate, and never substitutes for configured human acceptance. If the required family separation
+cannot be established, record that the diverse model pass is unavailable rather than claiming it
+occurred; governance decides the legal next step.
 
 ---
 
@@ -548,7 +565,7 @@ Explicitly defer:
 - autonomous model bakeoffs;
 - sophisticated evidence decay;
 - model-specific steering lifecycle;
-- forced cross-model reviewer diversity;
+- universal cross-model reviewer diversity outside the named conditional triggers;
 - a dedicated model-benchmarking platform.
 
 ---

@@ -41,6 +41,23 @@ This avoids asking humans factual questions agents can answer and avoids “rese
 
 ---
 
+## Challenge the frontier, not only its answers
+
+Before the first grill round, the producer persists its complete initial frontier and one fresh
+frontier critic independently derives a candidate question set and route for each question from the
+effective intake, problem test, announcement test, and available evidence. The critic does not read
+the producer's proposed frontier before producing its own. The producer compares the two sets and
+records every missing or misrouted question plus its disposition before asking the user anything.
+The critic is read-only: it proposes questions and routes, never answers them, repairs the artifacts,
+or accepts the stage.
+
+This is one bounded challenge per Discovery run, not a council for every question. At closure, the
+existing fresh cold read independently checks again for any absent decision or wrong owner route
+revealed by the now-complete decision record and PRD. The later product-closure reviewer remains a
+separate acceptance role; neither challenge has gate authority.
+
+---
+
 ## Grill
 
 Use for decisions involving:

@@ -12,6 +12,7 @@
     ├── 20-prd.md
     ├── 20-prd.html
     ├── 30-system-design.md
+    ├── 30-system-design.html        # required only for co_design
     ├── 40-program-design.md
     │
     ├── evidence/
@@ -88,6 +89,7 @@ Contains:
 
 - selected workflow depth
 - resolved ordered stages, including the earliest producer stage
+- selected System Design participation (`agent_led` by default, or user-selected `co_design`)
 - selected governance profile
 - explicit overrides
 - risk classification
@@ -122,8 +124,13 @@ An accepted discovery/product-closure candidate remains in its prescribed artifa
 Acceptance records its current version and content hash in `control.json`; V1 does not create a
 second approved copy or retain a separate acceptance history. The Stage 0–2 controller provides no
 post-closure reopen. A version increment replaces a previously accepted candidate only through a
-future downstream reopen owner; until that owner exists, a live mismatch against an accepted
+future downstream reopen owner; until that owner exists, any live mismatch against an accepted
 binding fails closed (see 08 — State and Governance).
+
+Stages 3–4 do not widen this file. A downstream design controller will own their separate gate and
+acceptance state, including exact candidate version/hash bindings and staleness. Its implementation
+must add only the minimum state required for those boundaries; v0.7 does not introduce a generalized
+router or move Stage 3–4 state into `control.json`.
 
 ---
 
@@ -221,9 +228,45 @@ during verification. It is never authoritative and never contributes its own acc
 
 Owns:
 
-> System placement, boundaries, contracts, data ownership, and end-to-end behavior.
+> System-observable commitments: responsibilities, seams, authoritative data ownership,
+> cross-module/external contracts, target schema/protocol, end-to-end lifecycle and
+> failure/recovery, compatibility, trust, security, and operations.
 
-Should be architecture-level, not file/class-level.
+The decision boundary is the reliance horizon. A choice belongs here when changing it requires a
+caller, peer, or operator to adjust, or changes an accepted guarantee. It should remain
+architecture-level rather than file/class-level. Composite decisions record the invariant here and
+leave its local realization to Program Design.
+
+Its admission/provenance applicability test reads the effective selected stages and chooses exactly
+one binding:
+
+- exact accepted `20-prd.md` version/hash when Product Closure is selected;
+- exact accepted/frozen Stage 0 intake and effective configuration when Product Closure is
+  `NOT_REQUIRED`, using `control.json.base_run_sha256`, `effective_config_hash`, and
+  `effective_config_revision`.
+
+The omitted-Product-Closure branch creates no PRD or approval. A change to the bound source makes
+accepted System Design stale and transitively stales any dependent Program Design in the same
+logical downstream transition.
+
+---
+
+## `30-system-design.html`
+
+Owns:
+
+> A mandatory generated visual board when System Design participation is `co_design`.
+
+`30-system-design.md` remains canonical. The HTML is deterministic, self-contained, and
+non-authoritative; it embeds the exact Markdown source path, source SHA-256, and renderer version.
+It provides precise current/proposed topology, seam/ownership, interface/contract, end-to-end
+sequence or data-flow, applicable schema/protocol delta, failure/recovery, open-decision, and
+rejected alternatives views. A view that does not apply states why rather than disappearing or being
+replaced with decorative imagery.
+
+Stable labels connect board views to chat feedback. Generated chat images and snapshots are
+ephemeral projections. Neither they nor the HTML bytes receive an independent acceptance hash or
+authority.
 
 ---
 
@@ -231,7 +274,8 @@ Should be architecture-level, not file/class-level.
 
 Owns:
 
-> Internal code shape necessary to implement the approved system design.
+> Codebase-local realization inside the exact accepted System Design seams when that stage is selected,
+> or inside the accepted/frozen applicable upstream source on a direct path.
 
 Typical details:
 
@@ -246,7 +290,25 @@ src/
     DeviceJobWorker.cs    NEW
 ```
 
-and public/internal contracts such as important type signatures and call chains.
+and language-level signatures, internal state mutation, call chains, locking/concurrency/lifetime
+mechanics, migration implementation order, and test seams.
+
+It is provisional while paired drafting pressure-tests System Design. Before acceptance, its
+applicability test reads the run's actual selected stages and chooses exactly one upstream binding:
+
+- exact accepted `30-system-design.md` version/hash when System Design is selected;
+- exact accepted `20-prd.md` version/hash when System Design is `NOT_REQUIRED` and product closure
+  is selected;
+- exact accepted/frozen Stage 0 intake and effective configuration when both upstream semantic
+  boundaries are `NOT_REQUIRED`, using `control.json.base_run_sha256`, `effective_config_hash`, and
+  `effective_config_revision`.
+
+The direct-admission branch does not manufacture an approval or require a nonexistent PRD. Tickets
+compiled from direct Program Design cite the accepted Program Design and its frozen Stage 0 binding;
+they omit references to nonexistent PRD or System Design artifacts. Program Design has a distinct
+judge and outcome; there is no joint design-bundle verdict. An accepted System Design change makes it
+stale. A finding that requires changing a system commitment returns `DESIGN_BLOCKED` upstream rather
+than being approved inside Stage 4.
 
 ---
 
@@ -297,9 +359,8 @@ blocked_by:
 risk: medium
 
 references:
-  prd: ../20-prd.md
-  system_design: ../30-system-design.md
-  program_design: ../40-program-design.md
+  applicable_upstream:
+    - <path-to-applicable-accepted-source>
 
 validation:
   - dotnet test --filter JobCancellation
@@ -310,6 +371,11 @@ review:
   design: required
 ---
 ```
+
+The compiler replaces the placeholder with one entry for each applicable accepted source on the
+selected path. It never emits the placeholder itself. Product Closure, System Design, and Program
+Design entries appear only when those boundaries are selected. A direct Program Design path lists
+the accepted Program Design and its frozen Stage 0 binding, not nonexistent upstream artifacts.
 
 Human-readable body:
 
