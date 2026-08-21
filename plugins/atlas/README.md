@@ -41,7 +41,7 @@ copilot plugin marketplace add dstkwll/atlas
 copilot plugin install atlas@dstkwll
 ```
 
-The deterministic controller/renderer require Python 3.9+ and the pinned packages in `plugins/atlas/requirements.txt`. Installation is explicit, never automatic: `python3 -m pip install -r plugins/atlas/requirements.txt`.
+The deterministic controller/renderer require Python 3.9+ and the pinned packages in `requirements.txt` beside this README. Installation is explicit, never automatic. Resolve the installed plugin directory and quote it so the command works from any caller directory: `python3 -m pip install -r "<atlas-plugin-root>/requirements.txt"`.
 
 ## Current boundary
 

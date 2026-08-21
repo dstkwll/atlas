@@ -17,6 +17,7 @@ from tests.test_atlas_control import (
     decision_log_body,
     decision_log_frontmatter,
     make_run,
+    initialize_cli,
     prd_body,
     prd_frontmatter,
     read_control,
@@ -38,8 +39,123 @@ class AtlasControlHardeningTests(unittest.TestCase):
             yaml.safe_dump(run_config(discovery=authority), sort_keys=False),
             encoding="utf-8",
         )
-        result = run_cli("initialize", "--run", run)
+        result = initialize_cli(run)
         self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_resolve_run_path_rejects_unsafe_slugs_and_symlink_escape(self):
+        with tempfile.TemporaryDirectory() as td:
+            base = Path(td)
+            root = base / "planning"
+            root.mkdir()
+
+            safe = run_cli("resolve-run-path", "--planning-root", root, "--slug", "offline-mode")
+            self.assertEqual(safe.returncode, 0, safe.stderr)
+            prepared = json.loads(safe.stdout)
+            self.assertEqual(Path(prepared["path"]), (root / "offline-mode").resolve())
+            self.assertGreaterEqual(prepared["device"], 0)
+            self.assertGreater(prepared["inode"], 0)
+            self.assertTrue((root / "offline-mode").is_dir())
+
+            for slug in ("../escape", "/tmp/escape", "a/b", "a\\b", "C:\\escape", ".", "..", "-bad", "bad-", "Bad", "bad--slug"):
+                with self.subTest(slug=slug):
+                    result = run_cli("resolve-run-path", "--planning-root", root, "--slug", slug)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("slug", result.stderr.lower())
+
+            root_link = base / "planning-link"
+            root_link.symlink_to(root, target_is_directory=True)
+            linked_root = run_cli("resolve-run-path", "--planning-root", root_link, "--slug", "safe-run")
+            self.assertNotEqual(linked_root.returncode, 0)
+            self.assertIn("symlink", linked_root.stderr.lower())
+
+            target = root / "symlinked-run"
+            target.symlink_to(base / "outside", target_is_directory=True)
+            escaped = run_cli("resolve-run-path", "--planning-root", root, "--slug", "symlinked-run")
+            self.assertNotEqual(escaped.returncode, 0)
+            self.assertIn("symlink", escaped.stderr.lower())
+
+    def test_initialize_rejects_target_replaced_by_symlink_after_resolution(self):
+        with tempfile.TemporaryDirectory() as td:
+            base = Path(td)
+            root = base / "planning"
+            root.mkdir()
+            target = root / "swap-run"
+            outside = base / "outside"
+            outside.mkdir()
+
+            resolved = run_cli("resolve-run-path", "--planning-root", root, "--slug", "swap-run")
+            self.assertEqual(resolved.returncode, 0, resolved.stderr)
+            prepared = json.loads(resolved.stdout)
+            target.rmdir()
+            target.symlink_to(outside, target_is_directory=True)
+
+            config = run_config()
+            config["run"] = "swap-run"
+            config["run_path"] = "swap-run"
+            (outside / "run.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+
+            result = initialize_cli(
+                target,
+                device=prepared["device"],
+                inode=prepared["inode"],
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("symlink", result.stderr.lower())
+            self.assertFalse((outside / "control.json").exists())
+
+    def test_initialize_rejects_target_replaced_by_a_different_real_directory(self):
+        with tempfile.TemporaryDirectory() as td:
+            base = Path(td)
+            root = base / "planning"
+            root.mkdir()
+            target = root / "swap-run"
+
+            resolved = run_cli("resolve-run-path", "--planning-root", root, "--slug", "swap-run")
+            self.assertEqual(resolved.returncode, 0, resolved.stderr)
+            prepared = json.loads(resolved.stdout)
+            target.rename(root / "original-run")
+            target.mkdir()
+
+            config = run_config()
+            config["run"] = "swap-run"
+            config["run_path"] = "swap-run"
+            (target / "run.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+
+            result = initialize_cli(
+                target,
+                device=prepared["device"],
+                inode=prepared["inode"],
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("prepared directory identity", result.stderr.lower())
+            self.assertFalse((target / "control.json").exists())
+
+    def test_initialize_requires_prepared_directory_identity(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            (run / "run.yaml").write_text(yaml.safe_dump(run_config(), sort_keys=False), encoding="utf-8")
+
+            result = run_cli("initialize", "--run", run)
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("prepared-device", result.stderr)
+            self.assertFalse((run / "control.json").exists())
+
+    def test_initialize_rejects_an_unsafe_run_slug(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            config = run_config()
+            config["run"] = "../escape"
+            config["run_path"] = "../escape"
+            (run / "run.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+
+            result = initialize_cli(run)
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("slug", result.stderr.lower())
+            self.assertFalse((run / "control.json").exists())
 
     def write_product_closure_candidate(self, run: Path, *, decisions=None, retrospective_rows=None, body_kwargs=None) -> None:
         write_markdown(
@@ -120,7 +236,7 @@ class AtlasControlHardeningTests(unittest.TestCase):
                 config["recommendation"]["gates"] = config["gates"]
                 (run / "run.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
 
-                result = run_cli("initialize", "--run", run)
+                result = initialize_cli(run)
 
                 self.assertNotEqual(result.returncode, 0)
                 self.assertIn("stages", result.stderr)
@@ -151,7 +267,7 @@ class AtlasControlHardeningTests(unittest.TestCase):
                 config["recommendation"]["gates"] = config["gates"]
                 (run / "run.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
 
-                initialized = run_cli("initialize", "--run", run)
+                initialized = initialize_cli(run)
 
                 self.assertEqual(initialized.returncode, 0, initialized.stderr)
                 control = read_control(run)
@@ -172,7 +288,7 @@ class AtlasControlHardeningTests(unittest.TestCase):
             (run / "20-prd.md").write_text("# Reused but untrusted PRD\n", encoding="utf-8")
             before = (run / "20-prd.md").read_bytes()
 
-            initialized = run_cli("initialize", "--run", run)
+            initialized = initialize_cli(run)
 
             self.assertEqual(initialized.returncode, 0, initialized.stderr)
             control = read_control(run)
@@ -199,7 +315,7 @@ class AtlasControlHardeningTests(unittest.TestCase):
                 config["recommendation"]["gates"] = config["gates"]
                 (run / "run.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
 
-                result = run_cli("initialize", "--run", run)
+                result = initialize_cli(run)
 
                 self.assertNotEqual(result.returncode, 0)
                 self.assertIn("discovery gate must exist exactly when discovery is selected", result.stderr)
@@ -213,7 +329,7 @@ class AtlasControlHardeningTests(unittest.TestCase):
             config["recommendation"]["gates"] = config["gates"]
             (run / "run.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
 
-            result = run_cli("initialize", "--run", run)
+            result = initialize_cli(run)
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("selected discovery must be the first stage", result.stderr)

@@ -49,8 +49,6 @@ Anything else names its side effects and gets its own explicit confirmation imme
 
 Workflow gates and action consent answer different questions: policy decides who may advance the work; confirmation authorizes a named external mutation. Neither substitutes for the other.
 
-Atlas has no executable spike runner that enforces these classifications or confirmations; this remains an agent-enforced procedure and must be disclosed rather than described as a runtime guarantee.
-
 ### 4. Build something the user can drive
 
 One directory per spike, standalone, hardcoded. Preference order for the artifact:
@@ -88,7 +86,7 @@ First rule that matches wins:
 4. Any `PARTIAL` → `PARTIAL`
 5. All `VALIDATED` → `VALIDATED`
 
-Then state confidence and, in this order: what the spike now knows, what it does **not** know, and what it implies for the decision that prompted it.
+Then state, in this order: what the spike now knows, what it does **not** know, and what it implies for the decision that prompted it.
 
 An `INVALIDATED` verdict is a successful spike. It cost an experiment to learn something that would otherwise have cost an implementation.
 

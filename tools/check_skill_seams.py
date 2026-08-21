@@ -147,15 +147,19 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
     findings: list[tuple[str, str]] = []
     paths = {
         "start": skills / "start-run" / "SKILL.md",
+        "run-file": skills / "start-run" / "references" / "run-file.md",
         "state": skills / "start-run" / "references" / "state-file.md",
         "amendment": skills / "start-run" / "references" / "run-amendment.md",
         "discovery": skills / "discovery" / "SKILL.md",
+        "decision-record": skills / "discovery" / "references" / "decision-record.md",
         "discovery-template": skills / "discovery" / "references" / "run-layout.md",
         "prd-template": skills / "discovery" / "references" / "prd-file.md",
         "control": skills / "control-run" / "SKILL.md",
         "review": skills / "control-run" / "references" / "boundary-review.md",
         "intake-correction": skills.parent / "references" / "intake-correction.md",
+        "setup": skills / "setup-atlas" / "SKILL.md",
         "spike": skills / "spike" / "SKILL.md",
+        "spike-findings": skills / "spike" / "references" / "findings-file.md",
         "controller": skills.parent / "tools" / "atlas_control.py",
         "renderer": skills.parent / "tools" / "render_prd.py",
     }
@@ -168,6 +172,7 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
 
     required = {
         "start": ["run.yaml", "control.json", "initialize", "AGENT_REVIEW", "HUMAN", "AUTO"],
+        "run-file": ["[a-z0-9]+(?:-[a-z0-9]+)*", "rejects path separators"],
         "state": ["control.json", "base_run_sha256", "accepted_amendment_count", "acceptances"],
         "amendment": ["amendments/NNN-", "accepted amendment count", "No `previous`"],
         "discovery": ["producer", "read-only", "gate_ready", "status: draft", "control.json", "20-prd.md", "render_prd.py"],
@@ -185,6 +190,45 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         for needle in needles:
             if needle.lower() not in text.lower():
                 findings.append(("cross", f"{name}: missing seam contract `{needle}`"))
+
+    operating_required = {
+        "discovery": [
+            "Work in rounds", "**The problem test.**", "**The announcement test.**",
+            "Propose candidate shapes", "never manufacture a recommendation",
+            "cite the evidence that resolved it", "Give the fresh reader only `10-decisions.md`",
+            "Nothing important exists only in the conversation", "third parent of this file",
+        ],
+        "decision-record": ["justified recommendation or explicitly says that none is supportable"],
+        "start": [
+            "Never overwrite an existing `run.yaml`", "Stage 0 is recommend-only",
+            "every other repository already known to be affected", "short, descriptive, stable",
+            "does not imply an exact stage sequence or gate map", "ask rather than invent policy",
+            "current `control.json.phase`", "`STALE`", "`REJECTED`",
+            "no first-party Atlas owner", "never substitute an incubator skill",
+            "third parent of this file", "resolve-run-path", "before writing `run.yaml`",
+            "pass the unchanged device/inode values", "--prepared-device", "--prepared-inode",
+        ],
+        "control": [
+            "report the exact error and stop", "Never emulate transition logic",
+            "structured `BLOCKED`", "expected check outcome",
+            "run.yaml.gates.discovery.authority",
+            "reject --run", "--reason", "third parent of this file",
+        ],
+        "setup": ["atomic contract-plus-code commits", "third parent of this file", "<atlas-plugin-root>/requirements.txt"],
+        "spike": ["no executable spike runner", "agent-enforced procedure", "state confidence"],
+        "spike-findings": ["**Confidence:**"],
+    }
+    for name, needles in operating_required.items():
+        text = texts.get(name, "")
+        for needle in needles:
+            if needle.lower() not in text.lower():
+                findings.append(("cross", f"{name}: missing operating contract `{needle}`"))
+
+    relative_packaged_resources = ("python3 tools/", "py -3 tools/", "plugins/atlas/requirements.txt")
+    for path in skills.parent.rglob("*.md"):
+        source = path.read_text(encoding="utf-8")
+        if any(needle in source for needle in relative_packaged_resources):
+            findings.append(("cross", f"{path}: caller-CWD-dependent packaged resource; resolve it from <atlas-plugin-root>"))
 
     try:
         controller_candidates = assigned_literal(texts.get("controller", ""), "CANDIDATE_FIELDS")

@@ -1,6 +1,8 @@
 import importlib.util
 import re
 import shutil
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -94,13 +96,13 @@ class SkillSeamHardeningTests(unittest.TestCase):
 
             self.assertTrue(any("intake-correction" in message for _, message in findings))
 
-    def test_start_run_hands_off_from_the_actual_first_phase(self):
+    def test_start_run_hands_off_from_the_current_authoritative_phase(self):
         text = (ROOT / "plugins" / "atlas" / "skills" / "start-run" / "SKILL.md").read_text(
             encoding="utf-8"
         )
         self.assertIn("When discovery is selected", text)
-        self.assertIn("If the first phase is `discovery`, offer `atlas:discovery`", text)
-        self.assertIn("Otherwise, hand off to the owner of the actual first phase", text)
+        self.assertIn("If current `control.json.phase` is `discovery`, offer `atlas:discovery`", text)
+        self.assertIn("Otherwise, hand off to the owner of the actual current phase", text)
 
     def test_stage_admission_architecture_matches_the_initializer(self):
         text = (ROOT / "architecture" / "02-workflow.md").read_text(encoding="utf-8")
@@ -134,13 +136,32 @@ class SkillSeamHardeningTests(unittest.TestCase):
         discovery = ROOT / "plugins" / "atlas" / "skills" / "discovery" / "SKILL.md"
         lines = discovery.read_text(encoding="utf-8").splitlines()
         self.assertLessEqual(len(lines), 400)
-        self.assertIn("10-decisions.md", "\n".join(lines))
-        self.assertIn("20-prd.md", "\n".join(lines))
-        self.assertIn("references/decision-record.md", "\n".join(lines))
-        self.assertIn("references/run-layout.md", "\n".join(lines))
-        self.assertIn("render_prd.py", "\n".join(lines))
-        self.assertIn("--draft .20-prd.next.md", "\n".join(lines))
-        self.assertIn("Never edit canonical `20-prd.md` directly", "\n".join(lines))
+        text = "\n".join(lines)
+        self.assertIn("10-decisions.md", text)
+        self.assertIn("20-prd.md", text)
+        self.assertIn("references/decision-record.md", text)
+        self.assertIn("references/run-layout.md", text)
+        self.assertIn("render_prd.py", text)
+        self.assertIn("--draft .20-prd.next.md", text)
+        self.assertIn("Never edit canonical `20-prd.md` directly", text)
+
+        # These are the load-bearing conversation mechanics that were present before
+        # the Stage 0–2 authority simplification. References preserve artifact shape;
+        # the always-loaded skill must still explain how to conduct discovery.
+        for clause in (
+            "The **frontier** is every open question whose prerequisites are already settled",
+            "Work in rounds",
+            "Only **grill** questions go to the user",
+            "never manufacture a recommendation",
+            "strongest counterargument",
+            "**The problem test.**",
+            "**The announcement test.**",
+            "Propose candidate shapes",
+            "File names, function signatures, and schemas are later stages",
+            "**Nothing important exists only in the conversation.**",
+        ):
+            with self.subTest(clause=clause):
+                self.assertIn(clause, text)
 
         with tempfile.TemporaryDirectory() as td:
             skills = self.copy_plugin(Path(td))
@@ -152,6 +173,174 @@ class SkillSeamHardeningTests(unittest.TestCase):
             trimmed = discovery_copy.read_text(encoding="utf-8").splitlines()
             self.assertLessEqual(len(trimmed), 400)
             self.assertNotIn("references/decision-record.md", "\n".join(trimmed))
+
+    def test_discovery_requires_agent_evidence_and_an_executable_cold_read(self):
+        skill = (ROOT / "plugins" / "atlas" / "skills" / "discovery" / "SKILL.md").read_text(encoding="utf-8")
+        decisions = (
+            ROOT / "plugins" / "atlas" / "skills" / "discovery" / "references" / "decision-record.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("cite the evidence that resolved it", skill)
+        self.assertIn("Give the fresh reader only `10-decisions.md`", skill)
+        self.assertIn("unaddressed consequence", skill)
+        self.assertIn("unsupported by its own reasoning or evidence", skill)
+        self.assertIn("reports findings and never repairs", skill)
+        self.assertIn("justified recommendation or explicitly says that none is supportable", decisions)
+
+    def test_start_run_refuses_to_overwrite_existing_immutable_intake(self):
+        start = (ROOT / "plugins" / "atlas" / "skills" / "start-run" / "SKILL.md").read_text(encoding="utf-8")
+
+        # initialize refuses an existing control.json only after run.yaml has been written.
+        # The human-facing producer must therefore resolve collisions before any write.
+        for clause in (
+            "Never overwrite an existing `run.yaml`",
+            "resume the existing run",
+            "choose a different slug",
+        ):
+            with self.subTest(clause=clause):
+                self.assertIn(clause, start)
+
+    def test_start_run_preserves_classification_scope_and_handoff_procedure(self):
+        start = (ROOT / "plugins" / "atlas" / "skills" / "start-run" / "SKILL.md").read_text(encoding="utf-8")
+
+        for clause in (
+            "Stage 0 is recommend-only",
+            "`trivial`",
+            "`normal`",
+            "`architectural`",
+            "`fog_of_war`",
+            "Inspect the current Git repository",
+            "every other repository already known to be affected",
+            "short, descriptive, stable",
+            "no first-party Atlas owner",
+            "never substitute an incubator skill",
+        ):
+            with self.subTest(clause=clause):
+                self.assertIn(clause, start)
+
+        self.assertIn("does not imply an exact stage sequence or gate map", start)
+        self.assertIn("ask rather than invent policy", start)
+
+    def test_packaged_tool_commands_do_not_depend_on_the_callers_working_directory(self):
+        plugin = ROOT / "plugins" / "atlas"
+        for name in ("start-run", "discovery", "control-run", "setup-atlas"):
+            with self.subTest(skill=name):
+                skill_path = plugin / "skills" / name / "SKILL.md"
+                text = skill_path.read_text(encoding="utf-8")
+                self.assertIn("third parent of this file", text)
+                self.assertEqual(skill_path.parents[2], plugin)
+
+        for path in plugin.rglob("*.md"):
+            with self.subTest(reference=str(path.relative_to(plugin))):
+                text = path.read_text(encoding="utf-8")
+                self.assertNotIn("python3 tools/", text)
+                self.assertNotIn("plugins/atlas/requirements.txt", text)
+
+        with tempfile.TemporaryDirectory() as td:
+            result = subprocess.run(
+                [sys.executable, str(plugin / "tools" / "atlas_control.py"), "--help"],
+                cwd=td,
+                text=True,
+                capture_output=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_start_run_resolves_a_safe_contained_target_before_writing(self):
+        start = (ROOT / "plugins" / "atlas" / "skills" / "start-run" / "SKILL.md").read_text(encoding="utf-8")
+        for clause in (
+            "resolve-run-path",
+            "lowercase letters, digits, and single hyphens",
+            "Absolute paths, separators, `.`, and `..` are invalid",
+            "Use `path` exactly as the target",
+            "pass the unchanged device/inode values",
+            "--prepared-device",
+            "--prepared-inode",
+            "before writing `run.yaml`",
+        ):
+            with self.subTest(clause=clause):
+                self.assertIn(clause, start)
+
+    def test_start_run_routes_existing_authoritative_terminal_and_recovery_states(self):
+        start = (ROOT / "plugins" / "atlas" / "skills" / "start-run" / "SKILL.md").read_text(encoding="utf-8")
+        for clause in (
+            "current `control.json.phase`",
+            "`STALE`",
+            "intake-correction.md",
+            "`REJECTED`",
+            "terminal",
+        ):
+            with self.subTest(clause=clause):
+                self.assertIn(clause, start)
+
+    def test_control_run_preserves_failure_authority_and_rejection_handoffs(self):
+        control = (ROOT / "plugins" / "atlas" / "skills" / "control-run" / "SKILL.md").read_text(encoding="utf-8")
+
+        for clause in (
+            "report the exact error and stop",
+            "never emulate transition logic",
+            "run.yaml.gates.discovery.authority",
+            "python3 \"<atlas-plugin-root>/tools/atlas_control.py\" reject --run \"<run-directory>\" --reason \"<reason>\"",
+            "never claim progression from an intended command",
+        ):
+            with self.subTest(clause=clause):
+                self.assertIn(clause.lower(), control.lower())
+
+        self.assertIn("structured `BLOCKED`", control)
+        self.assertIn("expected check outcome", control)
+
+    def test_setup_and_spike_preserve_disclosed_costs_and_limits(self):
+        setup = (ROOT / "plugins" / "atlas" / "skills" / "setup-atlas" / "SKILL.md").read_text(encoding="utf-8")
+        spike = (ROOT / "plugins" / "atlas" / "skills" / "spike" / "SKILL.md").read_text(encoding="utf-8")
+        findings = (
+            ROOT / "plugins" / "atlas" / "skills" / "spike" / "references" / "findings-file.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("atomic contract-plus-code commits", setup)
+        self.assertIn("no executable spike runner", spike)
+        self.assertIn("agent-enforced procedure", spike)
+        self.assertIn("**Confidence:**", findings)
+        self.assertIn("state confidence", spike)
+
+    def test_actual_pre_restoration_contract_is_rejected(self):
+        fixture = ROOT / "tests" / "fixtures" / "reduced-skill-contracts"
+        with tempfile.TemporaryDirectory() as td:
+            skills = self.copy_plugin(Path(td))
+            plugin = skills.parent
+            for source in fixture.rglob("*.md"):
+                if source.name == "README.md":
+                    continue
+                destination = plugin / source.relative_to(fixture)
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source, destination)
+
+            findings = SEAMS.cross_skill_contracts(skills)
+            messages = "\n".join(message for _, message in findings)
+            for name in ("discovery", "start", "control", "setup", "spike"):
+                with self.subTest(contract=name):
+                    self.assertIn(f"{name}: missing operating contract", messages)
+            self.assertIn("caller-CWD-dependent", messages)
+
+    def test_checker_rejects_each_restored_operating_contract_cluster(self):
+        cases = (
+            ("discovery/SKILL.md", "Work in rounds"),
+            ("start-run/SKILL.md", "Never overwrite an existing `run.yaml`"),
+            ("control-run/SKILL.md", "Never emulate transition logic"),
+            ("setup-atlas/SKILL.md", "atomic contract-plus-code commits"),
+            ("spike/SKILL.md", "no executable spike runner"),
+            ("spike/references/findings-file.md", "**Confidence:**"),
+        )
+        for relative, needle in cases:
+            with self.subTest(relative=relative), tempfile.TemporaryDirectory() as td:
+                skills = self.copy_plugin(Path(td))
+                path = skills / relative
+                text = path.read_text(encoding="utf-8")
+                self.assertIn(needle, text)
+                path.write_text(text.replace(needle, "[removed operating contract]", 1), encoding="utf-8")
+                findings = SEAMS.cross_skill_contracts(skills)
+                self.assertTrue(
+                    any("missing operating contract" in message for _, message in findings),
+                    findings,
+                )
 
     def test_to_spec_is_deleted_from_packaging_and_seam_contracts(self):
         self.assertFalse((ROOT / "plugins" / "atlas" / "skills" / "to-spec").exists())

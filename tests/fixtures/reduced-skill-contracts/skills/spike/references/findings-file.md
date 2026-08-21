@@ -44,8 +44,6 @@ Both are predeclared before anything runs.
 
 **Verdict:** VALIDATED | INVALIDATED | PARTIAL | MIXED | none — <what blocked the run>
 
-**Confidence:** high | medium | low — <why the evidence earns this level>
-
 **What this establishes:** <the claim now supported, and how strongly>
 
 **What remains unknown:** <what the spike did not settle, including anything an

@@ -6,16 +6,14 @@ disable-model-invocation: true
 
 # Control run
 
-Resolve `<atlas-plugin-root>` from this installed skill before invoking the packaged controller: it is the third parent of this file (`SKILL.md` → `control-run/` → `skills/` → the plugin root) and must contain `tools/atlas_control.py`. Use that resolved absolute path; never assume the caller's working directory. This skill is an adapter; it never edits `run.yaml`, candidates, amendments, `control.json`, or `00-state.md`.
-
-If the packaged tool or a required dependency is unavailable, or a command returns anything except its documented outcome, report the exact error and stop. A valid structured `BLOCKED` report from `check` is an expected check outcome even though the command exits 1; handle its gaps rather than treating it as tool failure. Never emulate transition logic in prose or mutate authority state as a fallback.
+Use packaged `tools/atlas_control.py`. This skill is an adapter; it never edits `run.yaml`, candidates, amendments, `control.json`, or `00-state.md`.
 
 ## 1. Mechanical check
 
 Run:
 
 ```shell
-python3 "<atlas-plugin-root>/tools/atlas_control.py" check --run "<run-directory>"
+python3 tools/atlas_control.py check --run <run-directory>
 ```
 
 `check` is read-only. It returns structured `PASS` or `BLOCKED` plus all mechanical gaps and exact resume points. It checks identity, version/hash, required structure, retrospective totality, bidirectional PRD citations, effective intake, HTML metadata, and stale/open markers. It is exhaustive over identifiers and best-effort over meaning. It does not grade prose or perform semantic acceptance.
@@ -23,8 +21,6 @@ python3 "<atlas-plugin-root>/tools/atlas_control.py" check --run "<run-directory
 A producer's `gate_ready: true` is necessary but never sufficient to advance.
 
 ## 2. Consume configured authority
-
-After mechanical PASS, read `run.yaml.gates.discovery.authority` and execute only that branch. `check` does not choose or return the authority.
 
 Discovery's product-closure boundary permits only:
 
@@ -38,22 +34,16 @@ Discovery's product-closure boundary permits only:
 HUMAN acceptance:
 
 ```shell
-python3 "<atlas-plugin-root>/tools/atlas_control.py" advance --run "<run-directory>" --approval human
+python3 tools/atlas_control.py advance --run <run-directory> --approval human
 ```
 
 AGENT_REVIEW acceptance:
 
 ```shell
-python3 "<atlas-plugin-root>/tools/atlas_control.py" advance --run "<run-directory>" --review "reviews/product_closure-v<version>.json"
+python3 tools/atlas_control.py advance --run <run-directory> --review reviews/product_closure-v<version>.json
 ```
 
-A BLOCKED AGENT_REVIEW envelope is evidence for repair, not an authority transition. Leave the gate `PENDING`, follow every resume action, and run the boundary again. Only an explicit HUMAN authority may record a terminal rejection:
-
-```shell
-python3 "<atlas-plugin-root>/tools/atlas_control.py" reject --run "<run-directory>" --reason "<reason>"
-```
-
-On success, report the exact output and re-read `control.json` before claiming the resulting state. For the expected nonzero structured `BLOCKED` check outcome, report and follow every gap. On any other nonzero exit, report the exact error and never claim progression from an intended command.
+A BLOCKED AGENT_REVIEW envelope is evidence for repair, not an authority transition. Leave the gate `PENDING`, follow every resume action, and run the boundary again. Only an explicit HUMAN authority may record a terminal rejection with `reject --reason <reason>`.
 
 The controller validates run identity, candidate version/hash binding, authority, and transition legality. Acceptance replaces the current discovery binding in `control.json`; it does not mutate the candidate or create `approved/` copies or receipt files.
 

@@ -8,8 +8,6 @@ disable-model-invocation: true
 
 Establish where Atlas skills read and write. One question has to be answered before any other skill can run: **what is the planning root?** Everything else is deferred until a skill actually needs it.
 
-Resolve `<atlas-plugin-root>` from this installed skill before invoking packaged resources: it is the third parent of this file (`SKILL.md` → `setup-atlas/` → `skills/` → the plugin root) and must contain `requirements.txt` and `tools/`. Use that resolved absolute path; never assume the caller's working directory.
-
 ## Where the configuration file lives
 
 Each operating system designates a location for application configuration, and Atlas uses it. Write to the platform-native path:
@@ -30,7 +28,7 @@ The root is where planning artifacts live. It takes one of two forms, and the ch
 - **Repository-relative** — `.planning/` inside the repository being changed. The default, and correct where work is confined to one repository. Planning artifacts version alongside the code they describe.
 - **External** — an absolute path to a directory that already exists. Correct where one piece of work commonly spans several repositories and no single one of them is an honest home for the artifacts describing it.
 
-An external root is a considered departure: the specification and the code no longer share a commit, atomic contract-plus-code commits are lost, and review loses the contract unless the root resolves in the reviewer's environment. Where the work fits in one repository, the repository-relative form is better.
+An external root is a considered departure: the specification and the code no longer share a commit, and review loses the contract unless the root resolves in the reviewer's environment. Where the work fits in one repository, the repository-relative form is better.
 
 **Ask. Never default to a path.** State both forms, recommend the repository-relative one where the repository is the obvious scope, and let the user answer.
 
@@ -75,13 +73,13 @@ Report the path written. Every run will land at `<planning-root>/<feature-slug>/
 
 ### 5. Verify the deterministic dependencies
 
-The installed plugin includes `<atlas-plugin-root>/tools/atlas_control.py`, the sole writer for authoritative post-intake state transitions, and `<atlas-plugin-root>/tools/render_prd.py`, the mandatory PRD renderer. They require Python 3.9 or newer plus the packages pinned in `<atlas-plugin-root>/requirements.txt`. Verify with the platform-native Python launcher:
+The installed plugin includes `tools/atlas_control.py`, the sole writer for authoritative post-intake state transitions, and `tools/render_prd.py`, the mandatory PRD renderer. They require Python 3.9 or newer plus the packages pinned in `plugins/atlas/requirements.txt`. Verify with the platform-native Python launcher:
 
 ```shell
 python3 -c "import sys, yaml, markdown_it; assert sys.version_info >= (3, 9)"
 ```
 
-On Windows, use `py -3 -c "import sys, yaml, markdown_it; assert sys.version_info >= (3, 9)"`. If Python or a pinned dependency is missing, stop and explain that discovery may only prepare non-canonical `.20-prd.next.md`; Atlas cannot update the canonical PRD or legally close discovery without the deterministic tooling. Offer the exact installation command (`python3 -m pip install -r "<atlas-plugin-root>/requirements.txt"` or `py -3 -m pip install -r "<atlas-plugin-root>/requirements.txt"`) and run it only after explicit approval; installing packages is an external side effect.
+On Windows, use `py -3 -c "import sys, yaml, markdown_it; assert sys.version_info >= (3, 9)"`. If Python or a pinned dependency is missing, stop and explain that discovery may only prepare non-canonical `.20-prd.next.md`; Atlas cannot update the canonical PRD or legally close discovery without the deterministic tooling. Offer the exact installation command (`python3 -m pip install -r plugins/atlas/requirements.txt` or `py -3 -m pip install -r plugins/atlas/requirements.txt`) and run it only after explicit approval; installing packages is an external side effect.
 
 Report whether the deterministic dependencies are ready. Never pretend a missing dependency is optional.
 
