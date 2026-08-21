@@ -15,12 +15,92 @@ assert SPEC is not None and SPEC.loader is not None
 SEAMS = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(SEAMS)
 
+SYSTEM_DESIGN_SECTIONS = (
+    "Current system",
+    "Proposed system",
+    "Responsibilities and seams",
+    "Authoritative data ownership",
+    "Contracts and interfaces",
+    "Schema and protocol",
+    "Lifecycle and data flow",
+    "Failure and recovery",
+    "Compatibility",
+    "Trust, security, and operations",
+    "Rejected alternatives",
+    "Open decisions",
+)
+
 
 class SkillSeamHardeningTests(unittest.TestCase):
     def copy_plugin(self, root: Path) -> Path:
         plugin = root / "plugins" / "atlas"
         shutil.copytree(ROOT / "plugins" / "atlas", plugin)
         return plugin / "skills"
+
+    def test_system_design_and_control_planning_form_one_explicit_internal_handoff(self):
+        plugin = ROOT / "plugins" / "atlas"
+        system_path = plugin / "skills" / "system-design" / "SKILL.md"
+        control_path = plugin / "skills" / "control-planning" / "SKILL.md"
+        template_path = plugin / "skills" / "system-design" / "references" / "system-design-file.md"
+        system = system_path.read_text(encoding="utf-8")
+        control = control_path.read_text(encoding="utf-8")
+        template = template_path.read_text(encoding="utf-8")
+
+        self.assertTrue(70 <= len(system.splitlines()) <= 110)
+        self.assertTrue(70 <= len(control.splitlines()) <= 110)
+        for text in (system, control):
+            self.assertIn("disable-model-invocation: true", text)
+            self.assertIn("third parent of this file", text)
+            self.assertIn('python3 "<atlas-plugin-root>/tools/atlas_planning.py" check --run "<run-directory>" --stage system_design', text)
+        self.assertIn("reads the frozen value and never asks again", system)
+        self.assertIn("agent_led", system)
+        self.assertIn("co_design", system)
+        self.assertIn("Slice 2", system)
+        self.assertIn("exact named internal handoff to `atlas:control-planning`", system)
+        self.assertIn("without asking the user to issue a second command", system)
+        self.assertIn("writes readiness, never acceptance", system)
+        self.assertIn("never routes", control)
+        self.assertIn("never synthesizes", control)
+        self.assertIn("never edits", control)
+        self.assertIn("never grades prose", control)
+        self.assertIn("explicit human approval", control)
+        self.assertIn("calls `advance` exactly once", control)
+        self.assertIn('advance --run "<run-directory>" --stage system_design --approval human --date "<YYYY-MM-DD>"', control)
+        self.assertIn("re-read `planning-control.json`", control)
+        self.assertIn("AGENT_REVIEW", control)
+        self.assertIn("HUMAN_IF_CHANGED", control)
+        self.assertIn("Slice 2", control)
+        self.assertNotIn("boundary-review", system + control + template)
+        self.assertNotRegex(template.lower(), r"\b(must|never|required)\b")
+        for heading in SYSTEM_DESIGN_SECTIONS:
+            self.assertIn(f"## {heading}", template)
+        for agent in (
+            plugin / "skills" / "system-design" / "agents" / "openai.yaml",
+            plugin / "skills" / "control-planning" / "agents" / "openai.yaml",
+        ):
+            self.assertIn("allow_implicit_invocation: false", agent.read_text(encoding="utf-8"))
+
+    def test_downstream_system_design_template_and_internal_handoff_drift_are_detected(self):
+        with tempfile.TemporaryDirectory() as td:
+            skills = self.copy_plugin(Path(td))
+            template = skills / "system-design" / "references" / "system-design-file.md"
+            template.write_text(
+                template.read_text(encoding="utf-8").replace("gate_ready: false\n", "", 1),
+                encoding="utf-8",
+            )
+            producer = skills / "system-design" / "SKILL.md"
+            producer.write_text(
+                producer.read_text(encoding="utf-8").replace(
+                    "atlas:control-planning", "atlas:control-run"
+                ),
+                encoding="utf-8",
+            )
+
+            findings = SEAMS.cross_skill_contracts(skills)
+            messages = "\n".join(message for _, message in findings)
+
+            self.assertIn("System Design candidate schema", messages)
+            self.assertIn("internal control-planning handoff", messages)
 
     def test_discovery_candidate_template_field_deletion_is_detected(self):
         with tempfile.TemporaryDirectory() as td:

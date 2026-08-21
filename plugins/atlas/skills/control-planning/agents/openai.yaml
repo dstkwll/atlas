@@ -1,0 +1,6 @@
+interface:
+  display_name: "Atlas Control Planning"
+  short_description: "Apply the current HUMAN System Design boundary once"
+  default_prompt: "Use $control-planning for the exact workflow-internal System Design HUMAN handoff and at most one deterministic transition."
+policy:
+  allow_implicit_invocation: false

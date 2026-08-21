@@ -1,0 +1,6 @@
+interface:
+  display_name: "Atlas System Design"
+  short_description: "Produce the exact Stage 3 candidate and hand it to planning control"
+  default_prompt: "Use $system-design to produce the current agent-led Atlas System Design candidate and continue its internal control handoff."
+policy:
+  allow_implicit_invocation: false

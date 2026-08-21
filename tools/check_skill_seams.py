@@ -162,6 +162,11 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         "spike-findings": skills / "spike" / "references" / "findings-file.md",
         "controller": skills.parent / "tools" / "atlas_control.py",
         "planning": skills.parent / "tools" / "atlas_planning.py",
+        "system-design": skills / "system-design" / "SKILL.md",
+        "system-design-template": skills / "system-design" / "references" / "system-design-file.md",
+        "system-design-agent": skills / "system-design" / "agents" / "openai.yaml",
+        "control-planning": skills / "control-planning" / "SKILL.md",
+        "control-planning-agent": skills / "control-planning" / "agents" / "openai.yaml",
         "renderer": skills.parent / "tools" / "render_prd.py",
     }
     texts: dict[str, str] = {}
@@ -193,8 +198,27 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         "planning": [
             'PLANNING_FILE = "planning-control.json"',
             'PLANNING_LOCK_FILE = ".atlas-planning.lock"',
-            "def load_planning_control", "def initialize_planning",
+            "def load_planning_control", "def initialize_planning", "def check_boundary",
+            "def advance_boundary", 'SYSTEM_DESIGN_FILE = "30-system-design.md"',
         ],
+        "system-design": [
+            "disable-model-invocation: true", "third parent of this file", "agent_led",
+            "co_design", "Slice 2", "references/system-design-file.md", "gate_ready: true",
+            "atlas:control-planning", "without asking the user to issue a second command",
+        ],
+        "system-design-template": [
+            "run: <feature-slug>", "version: 1", "status: draft", "gate_ready: false",
+            "participation: agent_led", "source_binding:", "kind: product_closure",
+            "kind: stage0", "effective_config_hash", "effective_config_revision",
+        ],
+        "system-design-agent": ["allow_implicit_invocation: false"],
+        "control-planning": [
+            "disable-model-invocation: true", "third parent of this file", "never routes",
+            "never synthesizes", "never edits", "never grades prose", "explicit human approval",
+            "atlas_planning.py", "advance --run", "--approval human", "--date",
+            "re-read `planning-control.json`", "AGENT_REVIEW", "HUMAN_IF_CHANGED", "Slice 2",
+        ],
+        "control-planning-agent": ["allow_implicit_invocation: false"],
         "renderer": ["def write_canonical", "def render", "def verify", "RENDERER_VERSION"],
     }
     for name, needles in required.items():
@@ -206,6 +230,16 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
     planning_command = 'python3 "<atlas-plugin-root>/tools/atlas_planning.py" initialize --run "<path>"'
     if planning_command not in texts.get("start", ""):
         findings.append(("cross", "start: missing planning initialize command with installed-root/CWD contract"))
+    check_command = 'python3 "<atlas-plugin-root>/tools/atlas_planning.py" check --run "<run-directory>" --stage system_design'
+    advance_command = 'python3 "<atlas-plugin-root>/tools/atlas_planning.py" advance --run "<run-directory>" --stage system_design --approval human --date "<YYYY-MM-DD>"'
+    for name in ("system-design", "control-planning"):
+        if check_command not in texts.get(name, ""):
+            findings.append(("cross", f"{name}: missing caller-CWD-independent System Design check command"))
+    if advance_command not in texts.get("control-planning", ""):
+        findings.append(("cross", "control-planning: missing exact HUMAN System Design advance command"))
+    producer = texts.get("system-design", "")
+    if producer.count("atlas:control-planning") != 1 or "without asking the user to issue a second command" not in producer:
+        findings.append(("cross", "system-design: missing exact internal control-planning handoff without a second user command"))
     try:
         run_v2_fields = set(assigned_literal(texts.get("controller", ""), "RUN_V2_FIELDS"))
         run_maps = [
@@ -218,6 +252,49 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         present = set(run_maps[0]) if run_maps else set()
         if len(run_maps) != 1 or present != run_v2_fields:
             findings.append(("cross", f"run.yaml v2 template does not match controller RUN_V2_FIELDS; missing={sorted(run_v2_fields - present)}"))
+
+    try:
+        system_fields = set(assigned_literal(texts.get("planning", ""), "SYSTEM_DESIGN_FIELDS"))
+        product_source_fields = set(assigned_literal(texts.get("planning", ""), "PRODUCT_SOURCE_FIELDS"))
+        stage0_source_fields = set(assigned_literal(texts.get("planning", ""), "STAGE0_SOURCE_FIELDS"))
+        system_sections = tuple(assigned_literal(texts.get("planning", ""), "SYSTEM_DESIGN_SECTIONS"))
+        candidate_maps = [
+            item for item in frontmatter_maps(texts.get("system-design-template", ""))
+            if {"run", "version", "status", "gate_ready"}.issubset(item)
+        ]
+        source_maps = [
+            item.get("source_binding") for item in candidate_maps
+            if isinstance(item.get("source_binding"), dict)
+        ]
+        source_maps += [
+            item.get("source_binding") for _, block in template_blocks(texts.get("system-design-template", ""))
+            if isinstance((item := yaml.safe_load(block)), dict)
+            and isinstance(item.get("source_binding"), dict)
+        ]
+    except (SyntaxError, ValueError, yaml.YAMLError) as exc:
+        findings.append(("cross", f"System Design candidate schema seam is unreadable: {exc}"))
+    else:
+        present = set(candidate_maps[0]) if candidate_maps else set()
+        if len(candidate_maps) != 1 or present != system_fields:
+            findings.append(("cross", f"System Design candidate schema does not match planning SYSTEM_DESIGN_FIELDS; missing={sorted(system_fields - present)}"))
+        source_shapes = {frozenset(item) for item in source_maps if isinstance(item, dict)}
+        expected_shapes = {frozenset(product_source_fields), frozenset(stage0_source_fields)}
+        if source_shapes != expected_shapes:
+            findings.append(("cross", "System Design source_binding templates do not match both discriminated planning schemas"))
+        headings = tuple(re.findall(r"(?m)^## ([^\n]+?)\s*$", texts.get("system-design-template", "")))
+        if headings != system_sections:
+            findings.append(("cross", "System Design template sections do not match planning SYSTEM_DESIGN_SECTIONS"))
+        governed = texts.get("system-design", "")
+        for field in sorted(system_fields | product_source_fields | stage0_source_fields):
+            if not sentences_naming(governed, field):
+                findings.append(("cross", f"system-design: template field `{field}` is ungoverned"))
+
+    for name in ("system-design", "control-planning"):
+        count = len(texts.get(name, "").splitlines())
+        if not 70 <= count <= 110:
+            findings.append(("cross", f"{name}: SKILL.md line count {count} is outside 70-110"))
+    if re.search(r"\b(?:must|never|required)\b", texts.get("system-design-template", ""), re.I):
+        findings.append(("cross", "System Design reference is not shape-only"))
 
     operating_required = {
         "discovery": [

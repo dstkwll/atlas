@@ -10,15 +10,18 @@ import re
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any, Iterator, Optional
+from typing import Any, Callable, Iterator, Optional
 
 import yaml
 
 from atlas_control import (
     ControlError,
+    canonical_date,
     file_sha256,
+    gap,
     load_json,
     managed_path,
+    read_frontmatter,
     resolve_existing_run_directory,
     validate_run,
     verified_state,
@@ -47,6 +50,32 @@ STAGE0_ANCHOR_FIELDS = {
     "effective_config_revision", "product_closure",
 }
 PRODUCT_CLOSURE_FIELDS = {"version", "sha256"}
+SYSTEM_DESIGN_FILE = "30-system-design.md"
+SYSTEM_DESIGN_FIELDS = {
+    "run", "version", "status", "gate_ready", "participation", "opened", "source_binding",
+}
+PRODUCT_SOURCE_FIELDS = {"kind", "artifact", "version", "sha256"}
+STAGE0_SOURCE_FIELDS = {
+    "kind", "artifact", "sha256", "effective_config_hash", "effective_config_revision",
+}
+PLANNING_ACCEPTANCE_FIELDS = {
+    "candidate_version", "candidate_sha256", "authority", "accepted", "review_reference",
+    "review_sha256", "source_bindings", "repository_baselines",
+}
+SYSTEM_DESIGN_SECTIONS = (
+    "Current system",
+    "Proposed system",
+    "Responsibilities and seams",
+    "Authoritative data ownership",
+    "Contracts and interfaces",
+    "Schema and protocol",
+    "Lifecycle and data flow",
+    "Failure and recovery",
+    "Compatibility",
+    "Trust, security, and operations",
+    "Rejected alternatives",
+    "Open decisions",
+)
 
 
 @contextlib.contextmanager
@@ -79,7 +108,12 @@ def planning_lock(run_dir: Path) -> Iterator[None]:
         os.close(fd)
 
 
-def write_planning_control_atomic(run_dir: Path, planning: dict[str, Any]) -> None:
+def write_planning_control_atomic(
+    run_dir: Path,
+    planning: dict[str, Any],
+    *,
+    precondition: Optional[Callable[[], None]] = None,
+) -> None:
     path = managed_path(run_dir, PLANNING_FILE)
     content = json.dumps(planning, indent=2, sort_keys=True) + "\n"
     fd, name = tempfile.mkstemp(prefix=".planning-control.json.", dir=run_dir)
@@ -87,9 +121,48 @@ def write_planning_control_atomic(run_dir: Path, planning: dict[str, Any]) -> No
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
             handle.write(content)
+        if precondition is not None:
+            precondition()
         os.replace(temp, path)
     finally:
         temp.unlink(missing_ok=True)
+
+
+def validate_system_design_acceptance(anchor: dict[str, Any], record: Any) -> None:
+    if not isinstance(record, dict) or set(record) != PLANNING_ACCEPTANCE_FIELDS:
+        raise ControlError("planning-control.json System Design acceptance is malformed")
+    try:
+        canonical_date(record.get("accepted"), "System Design acceptance date")
+    except ControlError as exc:
+        raise ControlError("planning-control.json System Design acceptance is malformed") from exc
+    product = anchor.get("product_closure")
+    expected_source = (
+        {
+            "kind": "product_closure",
+            "artifact": "20-prd.md",
+            "version": product["version"],
+            "sha256": product["sha256"],
+        }
+        if isinstance(product, dict)
+        else {
+            "kind": "stage0",
+            "artifact": "run.yaml",
+            "sha256": anchor["base_run_sha256"],
+            "effective_config_hash": anchor["effective_config_hash"],
+            "effective_config_revision": anchor["effective_config_revision"],
+        }
+    )
+    if (
+        type(record.get("candidate_version")) is not int
+        or record["candidate_version"] != 1
+        or not re.fullmatch(r"[0-9a-f]{64}", str(record.get("candidate_sha256", "")))
+        or record.get("authority") != "HUMAN"
+        or record.get("review_reference") is not None
+        or record.get("review_sha256") is not None
+        or record.get("source_bindings") != [expected_source]
+        or record.get("repository_baselines") != []
+    ):
+        raise ControlError("planning-control.json System Design acceptance is malformed")
 
 
 def load_planning_control(run_dir: Path) -> dict[str, Any]:
@@ -117,15 +190,18 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
         or anchor["effective_config_revision"] < 0
     ):
         raise ControlError("planning-control.json Stage 0 anchor is malformed")
+    for relative, field in (("run.yaml", "base_run_sha256"), ("control.json", "control_sha256")):
+        source_path = managed_path(run_dir, relative)
+        if not source_path.is_file() or file_sha256(source_path) != anchor[field]:
+            raise ControlError(f"planning-control.json Stage 0 provenance no longer matches {relative}")
     if (
         not isinstance(gates, dict)
         or set(gates) != set(DOWNSTREAM_STAGES)
-        or any(value not in {"PENDING", "NOT_REQUIRED"} for value in gates.values())
+        or any(value not in {"PENDING", "NOT_REQUIRED", "HUMAN_APPROVED"} for value in gates.values())
         or not isinstance(acceptances, dict)
         or set(acceptances) != set(DOWNSTREAM_STAGES)
-        or any(value is not None for value in acceptances.values())
     ):
-        raise ControlError("planning-control.json initial gates or acceptances are malformed")
+        raise ControlError("planning-control.json gates or acceptances are malformed")
     product_closure = anchor.get("product_closure")
     if product_closure is not None and (
         not isinstance(product_closure, dict)
@@ -136,20 +212,44 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
         or not re.fullmatch(r"[0-9a-f]{64}", str(product_closure.get("sha256", "")))
     ):
         raise ControlError("planning-control.json product-closure anchor is malformed")
+    accepted_system_design = acceptances.get("system_design") is not None
+    if accepted_system_design:
+        record = acceptances["system_design"]
+        validate_system_design_acceptance(anchor, record)
+        candidate_path = managed_path(run_dir, SYSTEM_DESIGN_FILE)
+        if not candidate_path.is_file() or file_sha256(candidate_path) != record["candidate_sha256"]:
+            raise ControlError("accepted System Design candidate bytes no longer match recorded provenance")
+        if product_closure is not None:
+            product_path = managed_path(run_dir, "20-prd.md")
+            if not product_path.is_file() or file_sha256(product_path) != product_closure["sha256"]:
+                raise ControlError("accepted System Design product source no longer matches recorded provenance")
+        coherent_boundary = (
+            gates["system_design"] == "HUMAN_APPROVED"
+            and acceptances["program_design"] is None
+            and acceptances["tickets"] is None
+            and all(gates[stage] in {"PENDING", "NOT_REQUIRED"} for stage in ("program_design", "tickets"))
+            and planning.get("revision") == 2
+        )
+    else:
+        coherent_boundary = (
+            all(value is None for value in acceptances.values())
+            and all(value in {"PENDING", "NOT_REQUIRED"} for value in gates.values())
+            and planning.get("revision") == 1
+        )
+    pending = [stage for stage in DOWNSTREAM_STAGES if gates[stage] == "PENDING"]
     if (
-        planning.get("version") != 1
-        or isinstance(planning.get("version"), bool)
+        type(planning.get("version")) is not int
+        or planning.get("version") != 1
         or not isinstance(planning.get("run"), str)
         or not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", planning["run"])
         or planning.get("status") != "PLANNING"
-        or planning.get("phase") not in DOWNSTREAM_STAGES
-        or gates.get(planning.get("phase")) != "PENDING"
-        or not any(value == "PENDING" for value in gates.values())
-        or planning.get("revision") != 1
+        or not pending
+        or planning.get("phase") != pending[0]
+        or not coherent_boundary
         or isinstance(planning.get("revision"), bool)
         or planning.get("blocked_reason") is not None
     ):
-        raise ControlError("planning-control.json initial values are malformed")
+        raise ControlError("planning-control.json values are not a coherent initial or accepted System Design state")
     return planning
 
 
@@ -281,11 +381,305 @@ def initialize_planning(run_dir: Path) -> str:
     return "initialized planning-control.json revision 1"
 
 
+def current_stage0_anchor(run_dir: Path, control: dict[str, Any], effective: dict[str, Any]) -> dict[str, Any]:
+    product_closure = None
+    if "discovery" in effective["stages"]:
+        acceptance = control.get("acceptances", {}).get("discovery")
+        if not isinstance(acceptance, dict):
+            raise ControlError("selected discovery lacks accepted product-closure provenance")
+        product_closure = {
+            "version": acceptance["candidate_version"],
+            "sha256": acceptance["candidate_sha256"],
+        }
+    return {
+        "control_sha256": file_sha256(managed_path(run_dir, "control.json")),
+        "control_revision": control["revision"],
+        "base_run_sha256": control["base_run_sha256"],
+        "effective_config_hash": control["effective_config_hash"],
+        "effective_config_revision": control["effective_config_revision"],
+        "product_closure": product_closure,
+    }
+
+
+def verified_planning_state(run_dir: Path) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+    control, effective = verified_state(run_dir)
+    validate_run(effective)
+    planning = load_planning_control(run_dir)
+    if planning["run"] != effective["run"]:
+        raise ControlError("planning-control.json run identity does not match frozen intake")
+    selected = {stage for stage in DOWNSTREAM_STAGES if stage in effective["stages"]}
+    for stage in DOWNSTREAM_STAGES:
+        if (stage in selected) == (planning["gates"][stage] == "NOT_REQUIRED"):
+            raise ControlError("planning-control.json gates do not match selected downstream stages")
+    if planning["stage0_anchor"] != current_stage0_anchor(run_dir, control, effective):
+        raise ControlError("planning-control.json Stage 0 anchor no longer matches the frozen handoff")
+    return planning, control, effective
+
+
+def system_design_report(
+    run_dir: Path,
+    planning: dict[str, Any],
+    effective: dict[str, Any],
+) -> dict[str, Any]:
+    gaps: list[dict[str, str]] = []
+    report: dict[str, Any] = {
+        "version": 1,
+        "run": planning["run"],
+        "verdict": "BLOCKED",
+        "stage": "system_design",
+        "boundary": "system_design",
+        "gaps": gaps,
+    }
+    if planning["phase"] != "system_design" or planning["gates"]["system_design"] != "PENDING":
+        gaps.append(gap(
+            PLANNING_FILE,
+            "system_design is not the current pending planning boundary",
+            "system_design",
+            "resume the current planning-control phase",
+        ))
+    try:
+        path = managed_path(run_dir, SYSTEM_DESIGN_FILE)
+    except ControlError as exc:
+        gaps.append(gap(
+            SYSTEM_DESIGN_FILE,
+            str(exc),
+            "system_design",
+            "replace the candidate with a real run-local file",
+        ))
+        return report
+    if not path.is_file():
+        gaps.append(gap(
+            SYSTEM_DESIGN_FILE,
+            "candidate file is missing",
+            "system_design",
+            f"produce {SYSTEM_DESIGN_FILE}",
+        ))
+        return report
+    report["candidate_sha256"] = file_sha256(path)
+    try:
+        frontmatter, body = read_frontmatter(path)
+    except (ControlError, yaml.YAMLError, UnicodeError) as exc:
+        gaps.append(gap(
+            SYSTEM_DESIGN_FILE,
+            str(exc),
+            "system_design",
+            "repair candidate frontmatter",
+        ))
+        return report
+    candidate_version = frontmatter.get("version")
+    if type(candidate_version) is int:
+        report["candidate_version"] = candidate_version
+    if set(frontmatter) != SYSTEM_DESIGN_FIELDS:
+        gaps.append(gap(
+            SYSTEM_DESIGN_FILE,
+            "candidate frontmatter does not match its exact schema",
+            "system_design",
+            "repair candidate frontmatter",
+        ))
+    if frontmatter.get("run") != planning["run"]:
+        gaps.append(gap(
+            SYSTEM_DESIGN_FILE,
+            "candidate run identity does not match planning-control.json",
+            "system_design",
+            "bind the candidate to this run",
+        ))
+    if type(frontmatter.get("version")) is not int or frontmatter.get("version") != 1:
+        gaps.append(gap(
+            SYSTEM_DESIGN_FILE,
+            "candidate version must equal integer 1",
+            "system_design",
+            "write candidate version 1",
+        ))
+    if frontmatter.get("status") != "draft":
+        gaps.append(gap(
+            SYSTEM_DESIGN_FILE,
+            "producer candidate status must remain draft",
+            "system_design",
+            "record readiness without acceptance",
+        ))
+    if frontmatter.get("gate_ready") is not True:
+        gaps.append(gap(
+            SYSTEM_DESIGN_FILE,
+            "producer has not recorded gate readiness",
+            "system_design",
+            "finish the candidate and set gate_ready true",
+        ))
+    if frontmatter.get("participation") != effective.get("system_design_participation"):
+        gaps.append(gap(
+            SYSTEM_DESIGN_FILE,
+            "candidate participation does not match frozen run.yaml",
+            "system_design",
+            "copy the frozen System Design participation without re-asking",
+        ))
+    try:
+        candidate_opened = canonical_date(frontmatter.get("opened"), "candidate opened")
+        intake_opened = canonical_date(effective.get("opened"), "intake opened")
+    except ControlError:
+        candidate_opened = intake_opened = None
+        gaps.append(gap(
+            SYSTEM_DESIGN_FILE,
+            "candidate opened date is not canonical YYYY-MM-DD",
+            "system_design",
+            "copy the canonical intake opened date",
+        ))
+    if candidate_opened is not None and candidate_opened != intake_opened:
+        gaps.append(gap(
+            SYSTEM_DESIGN_FILE,
+            "candidate opened date differs from frozen intake",
+            "system_design",
+            "copy the intake opened date",
+        ))
+
+    headings = tuple(re.findall(r"(?m)^## ([^\n]+?)\s*$", body))
+    if headings != SYSTEM_DESIGN_SECTIONS:
+        gaps.append(gap(
+            SYSTEM_DESIGN_FILE,
+            "System Design section sequence does not match the exact Stage 3 shape",
+            "system_design",
+            "restore each required System Design section exactly once and in order",
+        ))
+
+    source = frontmatter.get("source_binding")
+    source_valid = False
+    product = planning["stage0_anchor"]["product_closure"]
+    if product is not None:
+        expected = {
+            "kind": "product_closure",
+            "artifact": "20-prd.md",
+            "version": product["version"],
+            "sha256": product["sha256"],
+        }
+        if not isinstance(source, dict) or set(source) != PRODUCT_SOURCE_FIELDS or source != expected:
+            gaps.append(gap(
+                SYSTEM_DESIGN_FILE,
+                "source_binding does not match the exact accepted product closure",
+                "system_design",
+                "bind source_binding to the accepted 20-prd.md version and sha256",
+            ))
+        else:
+            source_valid = True
+    else:
+        anchor = planning["stage0_anchor"]
+        expected = {
+            "kind": "stage0",
+            "artifact": "run.yaml",
+            "sha256": anchor["base_run_sha256"],
+            "effective_config_hash": anchor["effective_config_hash"],
+            "effective_config_revision": anchor["effective_config_revision"],
+        }
+        if not isinstance(source, dict) or set(source) != STAGE0_SOURCE_FIELDS or source != expected:
+            gaps.append(gap(
+                SYSTEM_DESIGN_FILE,
+                "source_binding does not match the exact frozen Stage 0 admission",
+                "system_design",
+                "bind source_binding to run.yaml and the effective configuration",
+            ))
+        else:
+            source_valid = True
+    report["source_binding"] = source if source_valid else None
+    report["verdict"] = "PASS" if not gaps else "BLOCKED"
+    return report
+
+
+def check_boundary(run_dir: Path, stage: str) -> dict[str, Any]:
+    if stage != "system_design":
+        raise ControlError("Slice 1 supports only --stage system_design")
+    planning, _, effective = verified_planning_state(run_dir)
+    return system_design_report(run_dir, planning, effective)
+
+
+def advance_boundary(
+    run_dir: Path,
+    stage: str,
+    approval: Optional[str],
+    accepted: str,
+) -> str:
+    if stage != "system_design":
+        raise ControlError("Slice 1 supports only system_design acceptance")
+    planning, _, effective = verified_planning_state(run_dir)
+    if effective.get("system_design_participation") != "agent_led":
+        raise ControlError("co_design System Design is an intentionally unimplemented Slice-2 capability")
+    authority = effective.get("gates", {}).get("system_design", {}).get("authority")
+    if authority != "HUMAN":
+        raise ControlError(f"system_design authority {authority} is an intentionally unimplemented Slice-2 capability")
+    if approval != "human":
+        raise ControlError("HUMAN System Design gate requires explicit --approval human")
+    report = system_design_report(run_dir, planning, effective)
+    if report["verdict"] != "PASS":
+        raise ControlError("mechanical system_design boundary check is BLOCKED")
+    accepted = canonical_date(accepted, "acceptance date")
+    candidate_version = report.get("candidate_version")
+    candidate_sha256 = report.get("candidate_sha256")
+    source_binding = report.get("source_binding")
+
+    final_report = system_design_report(run_dir, planning, effective)
+    if (
+        final_report.get("verdict") != "PASS"
+        or final_report.get("candidate_version") != candidate_version
+        or final_report.get("candidate_sha256") != candidate_sha256
+        or final_report.get("source_binding") != source_binding
+    ):
+        raise ControlError("candidate or source binding changed before System Design acceptance")
+    try:
+        final_planning, _, final_effective = verified_planning_state(run_dir)
+    except ControlError as exc:
+        raise ControlError("candidate or source binding changed before System Design acceptance") from exc
+    if final_planning != planning:
+        raise ControlError("planning-control.json changed before System Design acceptance")
+
+    selected = [item for item in DOWNSTREAM_STAGES if item in final_effective["stages"]]
+    index = selected.index("system_design")
+    if index + 1 >= len(selected):
+        raise ControlError("system_design has no selected downstream boundary")
+    next_stage = selected[index + 1]
+
+    def revalidate_immediately_before_replace() -> None:
+        current_planning, _, current_effective = verified_planning_state(run_dir)
+        current_report = system_design_report(run_dir, current_planning, current_effective)
+        if (
+            current_planning != planning
+            or current_report.get("verdict") != "PASS"
+            or current_report.get("candidate_version") != candidate_version
+            or current_report.get("candidate_sha256") != candidate_sha256
+            or current_report.get("source_binding") != source_binding
+        ):
+            raise ControlError("candidate or source binding changed at the System Design write boundary")
+
+    final_planning["acceptances"]["system_design"] = {
+        "candidate_version": candidate_version,
+        "candidate_sha256": candidate_sha256,
+        "authority": "HUMAN",
+        "accepted": accepted,
+        "review_reference": None,
+        "review_sha256": None,
+        "source_bindings": [source_binding],
+        "repository_baselines": [],
+    }
+    final_planning["gates"]["system_design"] = "HUMAN_APPROVED"
+    final_planning["phase"] = next_stage
+    final_planning["revision"] += 1
+    write_planning_control_atomic(
+        run_dir,
+        final_planning,
+        precondition=revalidate_immediately_before_replace,
+    )
+    load_planning_control(run_dir)
+    return f"advanced system_design -> {next_stage}; planning-control revision {final_planning['revision']}"
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
     initialize = sub.add_parser("initialize")
     initialize.add_argument("--run", required=True, type=Path)
+    inspect = sub.add_parser("check")
+    inspect.add_argument("--run", required=True, type=Path)
+    inspect.add_argument("--stage", required=True, choices=("system_design",))
+    advance = sub.add_parser("advance")
+    advance.add_argument("--run", required=True, type=Path)
+    advance.add_argument("--stage", required=True, choices=("system_design",))
+    advance.add_argument("--approval", required=True, choices=("human",))
+    advance.add_argument("--date", required=True)
     return parser
 
 
@@ -293,8 +687,17 @@ def main(argv: Optional[list[str]] = None) -> int:
     args = build_parser().parse_args(argv)
     try:
         run_dir = resolve_existing_run_directory(args.run)
+        if args.command == "check":
+            report = check_boundary(run_dir, args.stage)
+            print(json.dumps(report, indent=2, sort_keys=True))
+            return 0 if report["verdict"] == "PASS" else 1
         with planning_lock(run_dir):
-            print(initialize_planning(run_dir))
+            if args.command == "initialize":
+                print(initialize_planning(run_dir))
+            elif args.command == "advance":
+                print(advance_boundary(run_dir, args.stage, args.approval, args.date))
+            else:  # pragma: no cover
+                return 2
         return 0
     except (ControlError, OSError, ValueError, yaml.YAMLError) as exc:
         print(f"atlas-planning: {exc}", file=sys.stderr)
