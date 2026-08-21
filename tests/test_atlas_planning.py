@@ -255,6 +255,17 @@ class AtlasPlanningTests(unittest.TestCase):
                 "source_bindings": [source],
                 "repository_baselines": [],
             })
+            planning_path = run / "planning-control.json"
+            before_resume = planning_path.read_bytes()
+
+            resumed = planning_cli("ensure", "--run", run, cwd=caller_td)
+
+            self.assertEqual(resumed.returncode, 0, resumed.stderr)
+            self.assertEqual(
+                resumed.stdout.strip(),
+                "planning-control.json already initialized at tickets; revision 2",
+            )
+            self.assertEqual(planning_path.read_bytes(), before_resume)
 
     def test_accepted_loader_rejects_gate_label_authority_mismatch(self):
         cases = (

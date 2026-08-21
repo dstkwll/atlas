@@ -278,6 +278,18 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
     for name in ("start", "control"):
         if planning_command not in texts.get(name, ""):
             findings.append(("cross", f"{name}: missing shared planning ensure command with installed-root/CWD contract"))
+    start_text = texts.get("start", "")
+    start_collision = start_text.split("## 1. Resolve and accept intake", 1)[0]
+    start_handoff = start_text.split("## 3. Hand off", 1)[1] if "## 3. Hand off" in start_text else ""
+    if planning_command not in start_collision:
+        findings.append(("cross", "start: missing interrupted downstream resume recovery through shared ensure"))
+    if (
+        "A `PLANNING` run resumes at current `control.json.phase`" in start_text
+        or "If authoritative `control.json.phase` is `discovery`" not in start_collision
+        or "validated `planning-control.json.phase` is the actual current planning phase" not in start_collision
+        or "validated `planning-control.json.phase` is the actual current planning phase" not in start_handoff
+    ):
+        findings.append(("cross", "start: stale live downstream resume cursor; planning-control must own downstream position"))
     check_command = 'python3 "<atlas-plugin-root>/tools/atlas_planning.py" check --run "<run-directory>" --stage system_design'
     advance_command = 'python3 "<atlas-plugin-root>/tools/atlas_planning.py" advance --run "<run-directory>" --stage system_design --approval human --date "<YYYY-MM-DD>"'
     for name in ("system-design", "control-planning"):
@@ -434,7 +446,7 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "Never overwrite an existing `run.yaml`", "Stage 0 is recommend-only",
             "every other repository already known to be affected", "short, descriptive, stable",
             "does not imply an exact stage sequence or gate map", "ask rather than invent policy",
-            "current `control.json.phase`", "`STALE`", "`REJECTED`",
+            "validated `planning-control.json.phase` is the actual current planning phase", "`STALE`", "`REJECTED`",
             "no first-party Atlas owner", "never substitute an incubator skill",
             "third parent of this file", "resolve-run-path", "before writing `run.yaml`",
             "pass the unchanged device/inode values", "--prepared-device", "--prepared-inode",

@@ -380,6 +380,54 @@ class SkillSeamHardeningTests(unittest.TestCase):
             findings = SEAMS.cross_skill_contracts(skills)
             self.assertTrue(any("shared planning ensure command" in message for _, message in findings), findings)
 
+    def test_start_run_resume_uses_live_downstream_cursor_and_recovers_missing_state(self):
+        plugin = ROOT / "plugins" / "atlas"
+        start_path = plugin / "skills" / "start-run" / "SKILL.md"
+        command = (
+            'python3 "<atlas-plugin-root>/tools/atlas_planning.py" '
+            'ensure --run "<run-directory>"'
+        )
+        start = start_path.read_text(encoding="utf-8")
+        collision_section = start.split("## 1. Resolve and accept intake", 1)[0]
+        handoff_section = start.split("## 3. Hand off", 1)[1]
+
+        self.assertIn(command, collision_section)
+        self.assertIn("If authoritative `control.json.phase` is `discovery`", collision_section)
+        self.assertIn(
+            "validated `planning-control.json.phase` is the actual current planning phase",
+            collision_section,
+        )
+        self.assertIn(
+            "validated `planning-control.json.phase` is the actual current planning phase",
+            handoff_section,
+        )
+        self.assertNotIn(
+            "A `PLANNING` run resumes at current `control.json.phase`",
+            start,
+        )
+
+        cases = (
+            (
+                "planning-control.json.phase` is the actual current planning phase",
+                "control.json.phase` is the actual current planning phase",
+                "live downstream resume cursor",
+            ),
+            (
+                command,
+                command.replace("ensure", "initialize"),
+                "interrupted downstream resume recovery",
+            ),
+        )
+        for old, new, expected in cases:
+            with self.subTest(expected=expected), tempfile.TemporaryDirectory() as td:
+                skills = self.copy_plugin(Path(td))
+                path = skills / "start-run" / "SKILL.md"
+                text = path.read_text(encoding="utf-8")
+                self.assertIn(old, text)
+                path.write_text(text.replace(old, new, 1), encoding="utf-8")
+                findings = SEAMS.cross_skill_contracts(skills)
+                self.assertTrue(any(expected in message for _, message in findings), findings)
+
     def test_downstream_run_schema_and_packaged_command_seams_are_checked(self):
         with tempfile.TemporaryDirectory() as td:
             skills = self.copy_plugin(Path(td))
@@ -399,7 +447,7 @@ class SkillSeamHardeningTests(unittest.TestCase):
             )
             findings = SEAMS.cross_skill_contracts(skills)
             self.assertTrue(any("run.yaml v2 template" in message for _, message in findings), findings)
-            self.assertTrue(any("shared planning ensure command" in message for _, message in findings), findings)
+            self.assertTrue(any("interrupted downstream resume recovery" in message for _, message in findings), findings)
 
     def test_canonical_run_file_hic_dimensions_match_planning_literal_and_drift_is_detected(self):
         plugin = ROOT / "plugins" / "atlas"
@@ -451,8 +499,9 @@ class SkillSeamHardeningTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn("When discovery is selected", text)
-        self.assertIn("If current `control.json.phase` is `discovery`, offer `atlas:discovery`", text)
-        self.assertIn("Otherwise, hand off to the owner of the actual current phase", text)
+        self.assertIn("If its current phase is `discovery`, it owns the live cursor", text)
+        self.assertIn("validated `planning-control.json.phase` is the actual current planning phase", text)
+        self.assertIn("Hand off to that owner, not to the frozen downstream handoff phase", text)
 
     def test_stage_admission_architecture_matches_the_initializer(self):
         text = (ROOT / "architecture" / "02-workflow.md").read_text(encoding="utf-8")
@@ -544,7 +593,7 @@ class SkillSeamHardeningTests(unittest.TestCase):
         # The human-facing producer must therefore resolve collisions before any write.
         for clause in (
             "Never overwrite an existing `run.yaml`",
-            "resume the existing run",
+            "Resume from the controller that currently owns the live cursor",
             "choose a different slug",
         ):
             with self.subTest(clause=clause):
@@ -615,7 +664,9 @@ class SkillSeamHardeningTests(unittest.TestCase):
     def test_start_run_routes_existing_authoritative_terminal_and_recovery_states(self):
         start = (ROOT / "plugins" / "atlas" / "skills" / "start-run" / "SKILL.md").read_text(encoding="utf-8")
         for clause in (
-            "current `control.json.phase`",
+            "If authoritative `control.json.phase` is `discovery`",
+            "validated `planning-control.json.phase` is the actual current planning phase",
+            "interrupted Product Closure → planning handoff",
             "`STALE`",
             "intake-correction.md",
             "`REJECTED`",
