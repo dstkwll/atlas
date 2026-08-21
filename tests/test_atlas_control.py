@@ -1,5 +1,6 @@
 import hashlib
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -20,6 +21,15 @@ def run_cli(*args):
         [sys.executable, str(CLI), *map(str, args)],
         text=True,
         capture_output=True,
+    )
+
+
+def initialize_cli(path, *, device=None, inode=None):
+    identity = os.stat(path, follow_symlinks=False)
+    return run_cli(
+        "initialize", "--run", path,
+        "--prepared-device", identity.st_dev if device is None else device,
+        "--prepared-inode", identity.st_ino if inode is None else inode,
     )
 
 
@@ -296,7 +306,7 @@ def write_discovery(path, *, version=1, ready=True, stale=False, cold_read="comp
 def make_run(path, *, discovery="HUMAN"):
     config = run_config(discovery)
     (path / "run.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
-    result = run_cli("initialize", "--run", path)
+    result = initialize_cli(path)
     if result.returncode != 0:
         raise AssertionError(result.stderr)
     return config
@@ -344,7 +354,7 @@ class AtlasControlTests(unittest.TestCase):
             config = run_config()
             (run / "run.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
 
-            result = run_cli("initialize", "--run", run)
+            result = initialize_cli(run)
 
             self.assertEqual(result.returncode, 0, result.stderr)
             control = read_control(run)
@@ -363,7 +373,7 @@ class AtlasControlTests(unittest.TestCase):
             config["recommendation"]["gates"] = config["gates"]
             (run / "run.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
 
-            result = run_cli("initialize", "--run", run)
+            result = initialize_cli(run)
 
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(read_control(run)["phase"], "discovery")
@@ -563,7 +573,7 @@ class AtlasControlTests(unittest.TestCase):
                 config = run_config(discovery=authority)
                 (run / "run.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
 
-                result = run_cli("initialize", "--run", run)
+                result = initialize_cli(run)
 
                 self.assertEqual(result.returncode == 0, expected, result.stderr)
                 if not expected:
@@ -589,7 +599,7 @@ class AtlasControlTests(unittest.TestCase):
             config = run_config()
             (run / "run.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
 
-            result = run_cli("initialize", "--run", run)
+            result = initialize_cli(run)
 
             self.assertEqual(result.returncode, 0, result.stderr)
             control = read_control(run)
@@ -604,7 +614,7 @@ class AtlasControlTests(unittest.TestCase):
             config["recommendation"]["gates"] = config["gates"]
             (run / "run.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
 
-            blocked = run_cli("initialize", "--run", run)
+            blocked = initialize_cli(run)
 
             self.assertNotEqual(blocked.returncode, 0)
             self.assertIn("discovery gate must exist exactly when discovery is selected", blocked.stderr)

@@ -12,6 +12,13 @@
 - If authoritative repository sources appear to contradict one another, report the conflicting files and sections. Do not silently choose, reconcile, or rewrite them unless the task explicitly authorizes that change.
 - If implementation would violate an approved upstream contract, or an approved assumption is shown false, stop and report the evidence, affected contract, and smallest decision that needs reconsideration. Use `DESIGN_BLOCKED` where appropriate.
 
+## Instruction-contract rewrites
+
+- Treat shortening, consolidating, or moving a `SKILL.md` as a behavioral change, not prose cleanup.
+- Before the rewrite, inventory every load-bearing procedure and classify it as: retained in the always-loaded skill, moved behind an explicit trigger pointer, or intentionally superseded by a named current contract. Unclassified deletion is forbidden.
+- Add a separating witness for every load-bearing behavior at risk: it must fail against the actual pre-fix/reduced document and pass after restoration. Line ceilings, keyword presence, schema seams, and a green generic checker do not prove procedural preservation.
+- Execute a materially rewritten skill with a fresh agent against a realistic input and record every guess or missing instruction before acceptance.
+
 ## Validation and delivery
 
 - For repository mutations, work on a branch, inspect the final diff, open or update a draft PR, and never merge autonomously.

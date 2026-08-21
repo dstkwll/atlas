@@ -67,7 +67,7 @@ overrides:
 ## Field rules
 
 - `version` is `1` for this candidate schema.
-- `run` and `run_path` both carry the accepted feature slug; the path is relative to the configured planning root. The slug uses only lowercase letters, digits, and single hyphens (`[a-z0-9]+(?:-[a-z0-9]+)*`); the controller rejects path separators, absolute paths, dot segments, leading/trailing hyphens, and repeated hyphens.
+- `run` and `run_path` both carry the accepted feature slug; the path is relative to the configured planning root.
 - `opened` records the intake acceptance date.
 - `goal` records the accepted fuzzy goal.
 - `planning_root` records the configuration `source`, the resolved `mode`, and a portable `path` form. Repository-relative roots record the configured relative value (`.planning` by default); external roots record `.` because the file already lives beneath that root. It never copies a machine-specific absolute path.

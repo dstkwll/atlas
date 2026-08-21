@@ -45,7 +45,7 @@ as though they had argued it.>
 
 **`origin`** records where the choice came from. `user-originated` — they answered outside the options offered. `user-rejected` — they were given a recommendation and took a different option, or supplied one of their own; record what was recommended as well as what was chosen, because the rejection is the most informative thing in the record. `accepted-recommendation` — they took what was recommended. `agent-resolved` — an explore, research or spike question settled by finding or measuring the answer, never put to the user as a choice.
 
-All four are legitimate; conflating them is not. Every grill question carries either a justified recommendation or explicitly says that none is supportable, so a log that does not distinguish them attributes the agent's judgement to the user.
+All four are legitimate; conflating them is not. Every grill question arrives with a recommended answer, so a log that does not distinguish them attributes the agent's judgement to the user.
 
 **`confidence`** is the decider's, not the agent's, and it is checked at the grading pass. Low-confidence decisions that turn out load-bearing are the highest-value entries in the log.
 

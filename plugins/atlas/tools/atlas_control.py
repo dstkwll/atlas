@@ -14,6 +14,7 @@ import hashlib
 import json
 import os
 import re
+import stat
 import sys
 import tempfile
 from datetime import date, datetime
@@ -82,6 +83,7 @@ DECISION_FIELDS = {
     "blocked_by", "supersedes", "contribution",
 }
 DECISION_LOG_FIELDS = {"run", "version"}
+RUN_SLUG = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 
 
 class ControlError(RuntimeError):
@@ -249,12 +251,75 @@ def validate_repos(value: Any) -> list[dict[str, str]]:
     return value
 
 
+def validate_run_slug(value: Any) -> str:
+    slug = require_string(value, "run slug")
+    if not RUN_SLUG.fullmatch(slug):
+        raise ControlError("run slug must use lowercase letters, digits, and single hyphens")
+    return slug
+
+
+def resolve_run_path(planning_root: Path, slug_value: Any) -> dict[str, Any]:
+    slug = validate_run_slug(slug_value)
+    if not planning_root.is_absolute():
+        raise ControlError("planning root must be an absolute path")
+    if planning_root.is_symlink():
+        raise ControlError("planning root may not be a symlink")
+    if not planning_root.is_dir():
+        raise ControlError("planning root must already exist as a directory")
+    root = planning_root.resolve(strict=True)
+    target = root / slug
+    if target.is_symlink():
+        raise ControlError("run target may not be a symlink")
+    try:
+        target.mkdir(mode=0o700)
+    except FileExistsError:
+        if target.is_symlink() or not target.is_dir():
+            raise ControlError("existing run target must be a real directory")
+    resolved = target.resolve(strict=False)
+    if resolved.parent != root:
+        raise ControlError("run target must remain directly beneath the planning root")
+    identity = os.stat(resolved, follow_symlinks=False)
+    return {
+        "path": str(resolved),
+        "device": identity.st_dev,
+        "inode": identity.st_ino,
+    }
+
+
+def resolve_existing_run_directory(
+    path: Path,
+    *,
+    prepared_device: Optional[int] = None,
+    prepared_inode: Optional[int] = None,
+) -> Path:
+    if path.is_symlink():
+        raise ControlError("run directory may not be a symlink")
+    try:
+        before = os.stat(path, follow_symlinks=False)
+    except FileNotFoundError as exc:
+        raise ControlError("run directory does not exist") from exc
+    if not stat.S_ISDIR(before.st_mode):
+        raise ControlError("run path must be a directory")
+    if (prepared_device is None) != (prepared_inode is None):
+        raise ControlError("prepared directory identity is incomplete")
+    if prepared_device is not None:
+        if prepared_device < 0 or prepared_inode is None or prepared_inode <= 0:
+            raise ControlError("prepared directory identity is invalid")
+        if (before.st_dev, before.st_ino) != (prepared_device, prepared_inode):
+            raise ControlError("run path no longer matches the prepared directory identity")
+    resolved = path.resolve(strict=True)
+    after = os.stat(resolved, follow_symlinks=False)
+    if (before.st_dev, before.st_ino) != (after.st_dev, after.st_ino):
+        raise ControlError("run directory changed while it was being opened")
+    return resolved
+
+
 def validate_run(config: dict[str, Any]) -> None:
     if set(config) != RUN_FIELDS:
         raise ControlError("run.yaml fields do not match version-1 schema")
     if config.get("version") != 1 or isinstance(config.get("version"), bool):
         raise ControlError("run.yaml version must be 1")
-    run = require_string(config.get("run"), "run.yaml run")
+    run = validate_run_slug(config.get("run"))
     if config.get("run_path") != run:
         raise ControlError("run.yaml run_path must equal run")
     canonical_date(config.get("opened"), "run.yaml opened")
@@ -1154,8 +1219,13 @@ def apply_amendment(run_dir: Path) -> str:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
+    locate = sub.add_parser("resolve-run-path")
+    locate.add_argument("--planning-root", required=True, type=Path)
+    locate.add_argument("--slug", required=True)
     init = sub.add_parser("initialize")
     init.add_argument("--run", required=True, type=Path)
+    init.add_argument("--prepared-device", required=True, type=int)
+    init.add_argument("--prepared-inode", required=True, type=int)
     inspect = sub.add_parser("check")
     inspect.add_argument("--run", required=True, type=Path)
     cmd = sub.add_parser("advance")
@@ -1177,7 +1247,17 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: Optional[list[str]] = None) -> int:
     args = build_parser().parse_args(argv)
     try:
-        run_dir = args.run.resolve()
+        if args.command == "resolve-run-path":
+            print(json.dumps(resolve_run_path(args.planning_root, args.slug), sort_keys=True))
+            return 0
+        if args.command == "initialize":
+            run_dir = resolve_existing_run_directory(
+                args.run,
+                prepared_device=args.prepared_device,
+                prepared_inode=args.prepared_inode,
+            )
+        else:
+            run_dir = resolve_existing_run_directory(args.run)
         if args.command == "check":
             report = check(run_dir)
             print(json.dumps(report, indent=2, sort_keys=True))
