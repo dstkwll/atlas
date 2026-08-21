@@ -55,13 +55,13 @@ Initialization validates intake, writes authoritative `<run>/control.json` by at
 
 Initialization may coexist with a pre-existing `20-prd.md`, but creates no acceptance for it. It rejects pre-existing `10-decisions.md` and amendments. If initialization fails, stop. Never calculate authority fields in prose, edit `control.json` directly, or treat `00-state.md` as state authority.
 
-Read the resulting `control.json.phase`. When it is `system_design`, `program_design`, or `tickets`, initialize the separate downstream planning snapshot exactly once:
+Read the resulting `control.json.phase`. When it is `system_design`, `program_design`, or `tickets`, ensure the separate downstream planning snapshot at the direct handoff:
 
 ```shell
-python3 "<atlas-plugin-root>/tools/atlas_planning.py" initialize --run "<path>"
+python3 "<atlas-plugin-root>/tools/atlas_planning.py" ensure --run "<run-directory>"
 ```
 
-This command uses its own `.atlas-planning.lock` and creates only `planning-control.json`; it never edits Stage 0–2 `control.json`. If it fails, report the exact error and stop. Do not retry by editing either control file. Do not run it while `control.json.phase` is `discovery`.
+This idempotent command uses its own `.atlas-planning.lock`. It strictly initializes `planning-control.json` when absent; when present, it verifies the complete current planning state and succeeds without mutation. It never edits Stage 0–2 `control.json`. Invalid or mismatched existing state fails loudly and is never overwritten. If it fails, report the exact error and stop. Do not retry by editing either control file. Do not run it while `control.json.phase` is `discovery`.
 
 ## 3. Hand off
 

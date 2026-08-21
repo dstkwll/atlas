@@ -201,7 +201,7 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         "planning": [
             'PLANNING_FILE = "planning-control.json"',
             'PLANNING_LOCK_FILE = ".atlas-planning.lock"',
-            "def load_planning_control", "def initialize_planning", "def check_boundary",
+            "def load_planning_control", "def initialize_planning", "def ensure_planning", "def check_boundary",
             "def advance_boundary", 'SYSTEM_DESIGN_FILE = "30-system-design.md"',
             "verify_system_design_board", "30-system-design.html",
         ],
@@ -249,9 +249,35 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             if needle.lower() not in text.lower():
                 findings.append(("cross", f"{name}: missing seam contract `{needle}`"))
 
-    planning_command = 'python3 "<atlas-plugin-root>/tools/atlas_planning.py" initialize --run "<path>"'
-    if planning_command not in texts.get("start", ""):
-        findings.append(("cross", "start: missing planning initialize command with installed-root/CWD contract"))
+    try:
+        system_agent = yaml.safe_load(texts.get("system-design-agent", ""))
+        control_agent = yaml.safe_load(texts.get("control-planning-agent", ""))
+        system_prompt = system_agent["interface"]["default_prompt"]
+        control_text = " ".join(control_agent["interface"].values())
+        system_implicit = system_agent["policy"]["allow_implicit_invocation"]
+        control_implicit = control_agent["policy"]["allow_implicit_invocation"]
+    except (TypeError, KeyError, yaml.YAMLError) as exc:
+        findings.append(("cross", f"System Design model metadata is unreadable: {exc}"))
+    else:
+        if (
+            "current agent-led" in system_prompt.lower()
+            or "frozen agent_led or co_design participation" not in system_prompt
+            or "candidate" not in system_prompt
+            or "internal control handoff" not in system_prompt
+        ):
+            findings.append(("cross", "system-design-agent: stale Slice 1 agent-led priming remains in model metadata"))
+        if (
+            "HUMAN handoff" in control_text
+            or "configured HUMAN, AGENT_REVIEW, or HUMAN_IF_CHANGED System Design boundary once" not in control_text
+        ):
+            findings.append(("cross", "control-planning-agent: stale Slice 1 HUMAN-only priming remains in model metadata"))
+        if system_implicit is not False or control_implicit is not False:
+            findings.append(("cross", "System Design model metadata must keep implicit invocation false"))
+
+    planning_command = 'python3 "<atlas-plugin-root>/tools/atlas_planning.py" ensure --run "<run-directory>"'
+    for name in ("start", "control"):
+        if planning_command not in texts.get(name, ""):
+            findings.append(("cross", f"{name}: missing shared planning ensure command with installed-root/CWD contract"))
     check_command = 'python3 "<atlas-plugin-root>/tools/atlas_planning.py" check --run "<run-directory>" --stage system_design'
     advance_command = 'python3 "<atlas-plugin-root>/tools/atlas_planning.py" advance --run "<run-directory>" --stage system_design --approval human --date "<YYYY-MM-DD>"'
     for name in ("system-design", "control-planning"):
@@ -278,6 +304,7 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         findings.append(("cross", "system-design: missing exact internal control-planning handoff without a second user command"))
     try:
         run_v2_fields = set(assigned_literal(texts.get("controller", ""), "RUN_V2_FIELDS"))
+        system_design_dimensions = tuple(assigned_literal(texts.get("planning", ""), "SYSTEM_DESIGN_DIMENSIONS"))
         run_maps = [
             value for _, block in template_blocks(texts.get("run-file", ""))
             if isinstance((value := yaml.safe_load(block)), dict) and value.get("version") == 2
@@ -288,6 +315,12 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         present = set(run_maps[0]) if run_maps else set()
         if len(run_maps) != 1 or present != run_v2_fields:
             findings.append(("cross", f"run.yaml v2 template does not match controller RUN_V2_FIELDS; missing={sorted(run_v2_fields - present)}"))
+        run_dimensions = (
+            run_maps[0].get("gates", {}).get("system_design", {}).get("material_dimensions")
+            if len(run_maps) == 1 else None
+        )
+        if not isinstance(run_dimensions, list) or tuple(run_dimensions) != system_design_dimensions:
+            findings.append(("cross", "canonical run-file HUMAN_IF_CHANGED dimensions do not match planning SYSTEM_DESIGN_DIMENSIONS"))
 
     try:
         system_fields = set(assigned_literal(texts.get("planning", ""), "SYSTEM_DESIGN_FIELDS"))
@@ -411,6 +444,9 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "structured `BLOCKED`", "expected check outcome",
             "run.yaml.gates.discovery.authority",
             "reject --run", "--reason", "third parent of this file",
+            "already names `system_design`, `program_design`, or `tickets`",
+            "do not rerun Product Closure", "After a successful Product Closure transition",
+            "re-read `planning-control.json`", "discovery never starts execution",
         ],
         "setup": ["atomic contract-plus-code commits", "third parent of this file", "<atlas-plugin-root>/requirements.txt"],
         "spike": ["no executable spike runner", "agent-enforced procedure", "state confidence"],

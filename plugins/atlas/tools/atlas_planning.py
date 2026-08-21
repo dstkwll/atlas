@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deterministic Slice-0 initializer for Atlas downstream planning state."""
+"""Deterministic controller for Atlas downstream planning state."""
 from __future__ import annotations
 
 import argparse
@@ -21,7 +21,6 @@ from atlas_control import (
     file_sha256,
     gap,
     load_json,
-    load_run,
     managed_path,
     read_frontmatter,
     resolve_existing_run_directory,
@@ -197,7 +196,7 @@ def load_system_design_review(
         or type(envelope.get("candidate_version")) is not int
         or envelope.get("candidate_version") != candidate_version
         or envelope.get("candidate_sha256") != candidate_sha256
-        or envelope.get("repository_baselines") != load_run(run_dir)["repos"]
+        or envelope.get("repository_baselines") != effective["repos"]
     ):
         raise ControlError("System Design review evidence does not match current policy, candidate, or baselines")
     if configured == "AGENT_REVIEW":
@@ -579,6 +578,12 @@ def current_stage0_anchor(run_dir: Path, control: dict[str, Any], effective: dic
 def verified_planning_state(run_dir: Path) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
     control, effective = verified_state(run_dir)
     validate_run(effective)
+    validate_downstream_policies(effective)
+    selected_order = validate_downstream_order(effective["stages"])
+    if not selected_order:
+        raise ControlError("run selects no downstream planning boundary")
+    if control.get("phase") != selected_order[0]:
+        raise ControlError("Stage 0 control does not preserve the earliest downstream handoff")
     planning = load_planning_control(run_dir)
     if planning["run"] != effective["run"]:
         raise ControlError("planning-control.json run identity does not match frozen intake")
@@ -589,6 +594,16 @@ def verified_planning_state(run_dir: Path) -> tuple[dict[str, Any], dict[str, An
     if planning["stage0_anchor"] != current_stage0_anchor(run_dir, control, effective):
         raise ControlError("planning-control.json Stage 0 anchor no longer matches the frozen handoff")
     return planning, control, effective
+
+
+def ensure_planning(run_dir: Path) -> str:
+    if not managed_path(run_dir, PLANNING_FILE).exists():
+        return initialize_planning(run_dir)
+    planning, _, _ = verified_planning_state(run_dir)
+    return (
+        f"planning-control.json already initialized at {planning['phase']}; "
+        f"revision {planning['revision']}"
+    )
 
 
 def system_design_report(
@@ -910,6 +925,8 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
     initialize = sub.add_parser("initialize")
     initialize.add_argument("--run", required=True, type=Path)
+    ensure = sub.add_parser("ensure")
+    ensure.add_argument("--run", required=True, type=Path)
     inspect = sub.add_parser("check")
     inspect.add_argument("--run", required=True, type=Path)
     inspect.add_argument("--stage", required=True, choices=("system_design",))
@@ -933,6 +950,8 @@ def main(argv: Optional[list[str]] = None) -> int:
         with planning_lock(run_dir):
             if args.command == "initialize":
                 print(initialize_planning(run_dir))
+            elif args.command == "ensure":
+                print(ensure_planning(run_dir))
             elif args.command == "advance":
                 print(advance_boundary(run_dir, args.stage, args.approval, args.review, args.date))
             else:  # pragma: no cover

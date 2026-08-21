@@ -45,7 +45,7 @@ The exact top-level shape is:
 
 Rules:
 
-- Top-level fields are exact. `version`, `stage`, `candidate_version`, filename, run identity, candidate SHA-256, and `repository_baselines` bind the exact frozen inputs. Baselines are the exact ordered `run.yaml.repos` repository/baseline pairs.
+- Top-level fields are exact. `version`, `stage`, `candidate_version`, filename, run identity, candidate SHA-256, and `repository_baselines` bind the exact current inputs. Baselines are the exact ordered effective repository/baseline pairs after applying every accepted Stage 0 amendment; unamended runs therefore match `run.yaml.repos` exactly.
 - `policy` is exactly `AGENT_REVIEW` or `HUMAN_IF_CHANGED`. Direct `AGENT_REVIEW` sets `materiality` to null. `HUMAN_IF_CHANGED` uses the exact materiality object above.
 - A usable materiality row has exactly `dimension`, `result`, and nonempty `evidence`. `result` is `MATERIAL`, `NOT_MATERIAL`, or `UNAVAILABLE`. The seven canonical dimensions occur exactly once; aliases are invalid.
 - Seven `NOT_MATERIAL` rows plus null `unavailable_reason` map deterministically to `AGENT_REVIEW`. Any `MATERIAL` or `UNAVAILABLE` row maps to `HUMAN`.

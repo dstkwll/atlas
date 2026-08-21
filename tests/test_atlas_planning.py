@@ -13,9 +13,11 @@ from tests.test_atlas_control import (
     advance_discovery,
     initialize_cli,
     read_control,
+    run_cli,
     run_config,
     sha256,
     write_discovery,
+    write_markdown,
 )
 
 
@@ -122,7 +124,7 @@ def initialize_product_planning(run: Path) -> dict:
     write_stage0_run(run, config)
     write_discovery(run)
     accepted = advance_discovery(run)
-    initialized = planning_cli("initialize", "--run", run)
+    initialized = planning_cli("ensure", "--run", run)
     if initialized.returncode != 0:
         raise AssertionError(initialized.stderr)
     return accepted
@@ -432,21 +434,62 @@ class AtlasPlanningTests(unittest.TestCase):
                 self.assertNotEqual(result.returncode, 0)
                 self.assertEqual((run / "planning-control.json").read_bytes(), before)
 
-    def test_system_design_review_baselines_are_exact_immutable_run_yaml_pairs(self):
+    def test_system_design_review_uses_effective_repos_after_accepted_intake_amendment(self):
         with tempfile.TemporaryDirectory() as td:
             run = Path(td)
-            initialize_authority_planning(run, "AGENT_REVIEW")
+            config = run_config()
+            config["version"] = 2
+            config["system_design_participation"] = "agent_led"
+            config["stages"] = ["discovery", "system_design", "tickets", "execute"]
+            config["gates"].pop("program_design")
+            config["gates"]["system_design"] = {"authority": "AGENT_REVIEW"}
+            config["gates"]["tickets"] = {"authority": "HUMAN"}
+            write_stage0_run(run, config)
+            write_discovery(run, ready=False, stale=True)
+            marked = run_cli("mark-stale", "--run", run, "--reason", "baseline corrected")
+            self.assertEqual(marked.returncode, 0, marked.stderr)
+            corrected_repos = [{"repository": "fixture", "baseline": "def4567"}]
+            amendments = run / "amendments"
+            amendments.mkdir()
+            write_markdown(amendments / "001-repository-baseline.md", {
+                "version": 1,
+                "amendment": 1,
+                "applies_to": "run.yaml",
+                "status": "accepted",
+                "accepted": "2026-08-20",
+                "reason": "Discovery proved the original baseline was wrong",
+                "changes": {"repos": corrected_repos},
+            }, "# Repository baseline correction\n")
+            amended = run_cli("apply-amendment", "--run", run)
+            self.assertEqual(amended.returncode, 0, amended.stderr)
+            write_discovery(run, revision=1)
+            accepted = advance_discovery(run)
+            ensured = planning_cli("ensure", "--run", run)
+            self.assertEqual(ensured.returncode, 0, ensured.stderr)
+            planning = PLANNING.load_planning_control(run)
+            self.assertEqual(planning["phase"], "system_design")
+            write_system_design(run, {
+                "kind": "product_closure",
+                "artifact": "20-prd.md",
+                "version": accepted["candidate_version"],
+                "sha256": accepted["candidate_sha256"],
+            })
             review = write_system_review(
                 run, policy="AGENT_REVIEW", materiality=None, review=semantic_review()
             )
-            effective = yaml.safe_load((run / "run.yaml").read_text(encoding="utf-8"))
-            effective["repos"] = [{"repository": "fixture", "baseline": "def4567"}]
+            _, effective = PLANNING.verified_state(run)
 
+            with self.assertRaisesRegex(PLANNING.ControlError, "baselines"):
+                PLANNING.load_system_design_review(
+                    run, effective, 1, sha256(run / "30-system-design.md"),
+                    "reviews/system-design-v1.json",
+                )
+
+            envelope = json.loads(review.read_text(encoding="utf-8"))
+            envelope["repository_baselines"] = corrected_repos
+            review.write_text(json.dumps(envelope, indent=2) + "\n", encoding="utf-8")
             _, review_hash, mapped = PLANNING.load_system_design_review(
-                run,
-                effective,
-                1,
-                sha256(run / "30-system-design.md"),
+                run, effective, 1, sha256(run / "30-system-design.md"),
                 "reviews/system-design-v1.json",
             )
 
@@ -508,8 +551,8 @@ class AtlasPlanningTests(unittest.TestCase):
             self.assertFalse((run / "history.json").exists())
             self.assertFalse((run / "journal.json").exists())
 
-    def test_initialize_planning_binds_exact_accepted_product_closure(self):
-        with tempfile.TemporaryDirectory() as td:
+    def test_ensure_planning_after_product_closure_is_idempotent_and_exact(self):
+        with tempfile.TemporaryDirectory() as td, tempfile.TemporaryDirectory() as caller_td:
             run = Path(td)
             config = run_config()
             config["version"] = 2
@@ -522,14 +565,116 @@ class AtlasPlanningTests(unittest.TestCase):
             write_discovery(run)
             accepted = advance_discovery(run)
 
-            result = planning_cli("initialize", "--run", run)
+            first = planning_cli("ensure", "--run", run, cwd=caller_td)
 
-            self.assertEqual(result.returncode, 0, result.stderr)
-            planning = json.loads((run / "planning-control.json").read_text(encoding="utf-8"))
+            self.assertEqual(first.returncode, 0, first.stderr)
+            self.assertEqual(first.stdout.strip(), "initialized planning-control.json revision 1")
+            planning_path = run / "planning-control.json"
+            planning = json.loads(planning_path.read_text(encoding="utf-8"))
+            self.assertEqual(planning["phase"], "system_design")
             self.assertEqual(planning["stage0_anchor"]["product_closure"], {
                 "version": accepted["candidate_version"],
                 "sha256": accepted["candidate_sha256"],
             })
+            before = planning_path.read_bytes()
+
+            second = planning_cli("ensure", "--run", run, cwd=caller_td)
+
+            self.assertEqual(second.returncode, 0, second.stderr)
+            self.assertEqual(
+                second.stdout.strip(),
+                "planning-control.json already initialized at system_design; revision 1",
+            )
+            self.assertEqual(planning_path.read_bytes(), before)
+
+            strict = planning_cli("initialize", "--run", run, cwd=caller_td)
+            self.assertNotEqual(strict.returncode, 0)
+            self.assertIn("already exists", strict.stderr)
+            self.assertEqual(planning_path.read_bytes(), before)
+
+            malformed = json.loads(before)
+            malformed["phase"] = "tickets"
+            planning_path.write_text(json.dumps(malformed), encoding="utf-8")
+            malformed_before = planning_path.read_bytes()
+            rejected = planning_cli("ensure", "--run", run, cwd=caller_td)
+            self.assertNotEqual(rejected.returncode, 0)
+            self.assertEqual(planning_path.read_bytes(), malformed_before)
+
+    def test_ensure_rejects_existing_state_that_bypasses_initialization_order(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            config = direct_config()
+            config["stages"] = ["tickets", "system_design", "execute"]
+            write_stage0_run(run, config)
+            control, effective = PLANNING.verified_state(run)
+            planning = {
+                "version": 1,
+                "run": effective["run"],
+                "status": "PLANNING",
+                "phase": "system_design",
+                "revision": 1,
+                "stage0_anchor": PLANNING.current_stage0_anchor(run, control, effective),
+                "gates": {
+                    "system_design": "PENDING",
+                    "program_design": "NOT_REQUIRED",
+                    "tickets": "PENDING",
+                },
+                "acceptances": {
+                    "system_design": None,
+                    "program_design": None,
+                    "tickets": None,
+                },
+                "blocked_reason": None,
+            }
+            planning_path = run / "planning-control.json"
+            planning_path.write_text(json.dumps(planning, indent=2) + "\n", encoding="utf-8")
+            before = planning_path.read_bytes()
+
+            result = planning_cli("ensure", "--run", run)
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("order", result.stderr.lower())
+            self.assertEqual(planning_path.read_bytes(), before)
+
+    def test_ensure_rejects_existing_state_that_bypasses_policy_validation(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            config = direct_config()
+            config["gates"]["system_design"] = {
+                "authority": "HUMAN_IF_CHANGED",
+                "material_dimensions": ["stale_slice_one_dimension"],
+                "otherwise": "AGENT_REVIEW",
+            }
+            write_stage0_run(run, config)
+            control, effective = PLANNING.verified_state(run)
+            planning = {
+                "version": 1,
+                "run": effective["run"],
+                "status": "PLANNING",
+                "phase": "system_design",
+                "revision": 1,
+                "stage0_anchor": PLANNING.current_stage0_anchor(run, control, effective),
+                "gates": {
+                    "system_design": "PENDING",
+                    "program_design": "NOT_REQUIRED",
+                    "tickets": "PENDING",
+                },
+                "acceptances": {
+                    "system_design": None,
+                    "program_design": None,
+                    "tickets": None,
+                },
+                "blocked_reason": None,
+            }
+            planning_path = run / "planning-control.json"
+            planning_path.write_text(json.dumps(planning, indent=2) + "\n", encoding="utf-8")
+            before = planning_path.read_bytes()
+
+            result = planning_cli("ensure", "--run", run)
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("exact seven", result.stderr.lower())
+            self.assertEqual(planning_path.read_bytes(), before)
 
     def test_downstream_initialize_rejects_missing_or_malformed_selected_stage_gate_policy(self):
         cases = {

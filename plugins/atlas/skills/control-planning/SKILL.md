@@ -34,7 +34,7 @@ A `BLOCKED` result is expected control output even though the process exits nonz
 
 ## 3. Resolve the frozen authority
 
-Follow the exact schema, dimensions, fail-closed mapping, reviewer output, and authority matrix in [`references/system-design-authority.md`](references/system-design-authority.md). Evidence lives only at `reviews/system-design-v1.json`; the invoker assembles its exact duplicate-safe JSON bytes. The envelope carries the exact immutable `run.yaml.repos` pairs and current candidate identity/hash. It is evidence, not authority.
+Follow the exact schema, dimensions, fail-closed mapping, reviewer output, and authority matrix in [`references/system-design-authority.md`](references/system-design-authority.md). Evidence lives only at `reviews/system-design-v1.json`; the invoker assembles its exact duplicate-safe JSON bytes. The envelope carries the exact ordered current effective repository/baseline pairs after accepted Stage 0 amendments and the current candidate identity/hash. It is evidence, not authority.
 
 - `HUMAN`: do not invoke a reviewer or create an envelope. Present the exact canonical Markdown, version/SHA-256, source binding, and boundary; obtain explicit human approval.
 - `AGENT_REVIEW`: invoke one fresh read-only semantic reviewer using the seven Stage 3 dimensions. It reads mechanics, source/baselines, then the exact candidate; it edits no candidate, state, evidence, or repository and grants no authority. Assemble materiality null plus its exact semantic result.

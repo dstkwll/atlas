@@ -162,6 +162,51 @@ class SkillSeamHardeningTests(unittest.TestCase):
         ):
             self.assertIn("allow_implicit_invocation: false", agent.read_text(encoding="utf-8"))
 
+    def test_model_metadata_describes_current_participation_and_authority_without_slice1_priming(self):
+        plugin = ROOT / "plugins" / "atlas"
+        system_path = plugin / "skills" / "system-design" / "agents" / "openai.yaml"
+        control_path = plugin / "skills" / "control-planning" / "agents" / "openai.yaml"
+        system_data = SEAMS.yaml.safe_load(system_path.read_text(encoding="utf-8"))
+        control_data = SEAMS.yaml.safe_load(control_path.read_text(encoding="utf-8"))
+        system_prompt = system_data["interface"]["default_prompt"]
+        control_text = " ".join(control_data["interface"].values())
+
+        self.assertIn("frozen agent_led or co_design participation", system_prompt)
+        self.assertIn("candidate", system_prompt)
+        self.assertIn("internal control handoff", system_prompt)
+        self.assertNotIn("current agent-led", system_prompt.lower())
+        self.assertIn(
+            "configured HUMAN, AGENT_REVIEW, or HUMAN_IF_CHANGED System Design boundary once",
+            control_text,
+        )
+        self.assertNotIn("HUMAN handoff", control_text)
+        self.assertFalse(system_data["policy"]["allow_implicit_invocation"])
+        self.assertFalse(control_data["policy"]["allow_implicit_invocation"])
+
+        cases = (
+            (
+                "system-design/agents/openai.yaml",
+                "frozen agent_led or co_design participation",
+                "current agent-led participation",
+                "stale Slice 1 agent-led",
+            ),
+            (
+                "control-planning/agents/openai.yaml",
+                "configured HUMAN, AGENT_REVIEW, or HUMAN_IF_CHANGED System Design boundary once",
+                "current HUMAN System Design boundary once",
+                "stale Slice 1 HUMAN-only",
+            ),
+        )
+        for relative, old, new, expected in cases:
+            with self.subTest(relative=relative), tempfile.TemporaryDirectory() as td:
+                skills = self.copy_plugin(Path(td))
+                path = skills / relative
+                text = path.read_text(encoding="utf-8")
+                self.assertIn(old, text)
+                path.write_text(text.replace(old, new, 1), encoding="utf-8")
+                findings = SEAMS.cross_skill_contracts(skills)
+                self.assertTrue(any(expected in message for _, message in findings), findings)
+
     def test_system_design_board_renderer_and_skill_contracts_are_bound(self):
         plugin = ROOT / "plugins" / "atlas"
         renderer_path = plugin / "tools" / "render_system_design.py"
@@ -307,6 +352,34 @@ class SkillSeamHardeningTests(unittest.TestCase):
 
             self.assertTrue(any("intake-correction" in message for _, message in findings))
 
+    def test_start_and_control_run_share_ensure_handoff_with_recovery_ownership(self):
+        plugin = ROOT / "plugins" / "atlas"
+        command = (
+            'python3 "<atlas-plugin-root>/tools/atlas_planning.py" '
+            'ensure --run "<run-directory>"'
+        )
+        start = (plugin / "skills" / "start-run" / "SKILL.md").read_text(encoding="utf-8")
+        control = (plugin / "skills" / "control-run" / "SKILL.md").read_text(encoding="utf-8")
+
+        self.assertIn(command, start)
+        self.assertIn(command, control)
+        self.assertIn("already names `system_design`, `program_design`, or `tickets`", control)
+        self.assertIn("do not rerun Product Closure", control)
+        self.assertIn("After a successful Product Closure transition", control)
+        self.assertIn("re-read `control.json`", control)
+        self.assertFalse([
+            item for item in SEAMS.cross_skill_contracts(plugin / "skills")
+            if item[0] == "cross"
+        ])
+
+        with tempfile.TemporaryDirectory() as td:
+            skills = self.copy_plugin(Path(td))
+            control_path = skills / "control-run" / "SKILL.md"
+            text = control_path.read_text(encoding="utf-8")
+            control_path.write_text(text.replace(command, command.replace("ensure", "initialize"), 1), encoding="utf-8")
+            findings = SEAMS.cross_skill_contracts(skills)
+            self.assertTrue(any("shared planning ensure command" in message for _, message in findings), findings)
+
     def test_downstream_run_schema_and_packaged_command_seams_are_checked(self):
         with tempfile.TemporaryDirectory() as td:
             skills = self.copy_plugin(Path(td))
@@ -326,7 +399,39 @@ class SkillSeamHardeningTests(unittest.TestCase):
             )
             findings = SEAMS.cross_skill_contracts(skills)
             self.assertTrue(any("run.yaml v2 template" in message for _, message in findings), findings)
-            self.assertTrue(any("planning initialize command" in message for _, message in findings), findings)
+            self.assertTrue(any("shared planning ensure command" in message for _, message in findings), findings)
+
+    def test_canonical_run_file_hic_dimensions_match_planning_literal_and_drift_is_detected(self):
+        plugin = ROOT / "plugins" / "atlas"
+        run_file = (plugin / "skills" / "start-run" / "references" / "run-file.md").read_text(
+            encoding="utf-8"
+        )
+        maps = [
+            value for _, block in SEAMS.template_blocks(run_file)
+            if isinstance((value := SEAMS.yaml.safe_load(block)), dict) and value.get("version") == 2
+        ]
+        self.assertEqual(len(maps), 1)
+        dimensions = tuple(maps[0]["gates"]["system_design"]["material_dimensions"])
+        planning_dimensions = tuple(SEAMS.assigned_literal(
+            (plugin / "tools" / "atlas_planning.py").read_text(encoding="utf-8"),
+            "SYSTEM_DESIGN_DIMENSIONS",
+        ))
+        self.assertEqual(dimensions, planning_dimensions)
+
+        with tempfile.TemporaryDirectory() as td:
+            skills = self.copy_plugin(Path(td))
+            path = skills / "start-run" / "references" / "run-file.md"
+            text = path.read_text(encoding="utf-8")
+            path.write_text(
+                text.replace(
+                    "      - responsibilities_and_system_seams\n",
+                    "      - stale_slice_one_dimension\n",
+                    1,
+                ),
+                encoding="utf-8",
+            )
+            findings = SEAMS.cross_skill_contracts(skills)
+            self.assertTrue(any("canonical run-file HUMAN_IF_CHANGED dimensions" in message for _, message in findings), findings)
 
     def test_classifier_contract_never_recommends_or_selects_participation(self):
         start = (ROOT / "plugins" / "atlas" / "skills" / "start-run" / "SKILL.md").read_text(encoding="utf-8")

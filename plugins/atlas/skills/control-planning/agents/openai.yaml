@@ -1,6 +1,6 @@
 interface:
   display_name: "Atlas Control Planning"
-  short_description: "Apply the current HUMAN System Design boundary once"
-  default_prompt: "Use $control-planning for the exact workflow-internal System Design HUMAN handoff and at most one deterministic transition."
+  short_description: "Apply configured System Design authority once"
+  default_prompt: "Use $control-planning to apply the configured HUMAN, AGENT_REVIEW, or HUMAN_IF_CHANGED System Design boundary once in the workflow-internal handoff."
 policy:
   allow_implicit_invocation: false
