@@ -49,10 +49,21 @@ Deterministic code consumes these envelopes and decides which state transition i
 Stages 0–2 use `<planning-root>/<feature>/control.json` as their machine-canonical planning
 state. It records only planning phase/gate outcomes and version/hash provenance. In v0.6 the
 accepted product-contract candidate is `20-prd.md`, and its `derived_from` field binds the exact
-`10-decisions.md` version/hash product closure reconciled. This closes the pre-execution
-authority gap for a planning effort that may span repositories without putting repository-scoped
-execution state in the planning root. `00-state.md` is generated from this file and is never
-transition authority.
+`10-decisions.md` version/hash product closure reconciled. This closes the initial planning
+authority gap for an effort that may span repositories without putting repository-scoped execution
+state in the planning root. `00-state.md` is generated from this file and is never transition
+authority.
+
+After that handoff, one downstream planning controller owns the selected Stage 3–5 candidate
+bindings, separate gate outcomes, dependency/staleness chain, and final accepted ticket-graph
+binding. Its accepted graph names every applicable accepted upstream source and the frozen baseline
+for each target repository. The controller records upstream changes and all directly caused
+downstream invalidations as one logical atomic transition. Architecture does not fix its exact file,
+storage representation, schema, or module/CLI decomposition.
+
+The downstream planning controller ends at Stage 5. It hands execution an exact accepted
+ticket-graph version/hash; it owns no worktree, active-ticket, attempt, retry, repair, validation,
+commit, branch, or event state. No separate compilation controller exists.
 
 ## Machine-canonical runtime state
 

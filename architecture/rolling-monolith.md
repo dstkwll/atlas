@@ -433,6 +433,12 @@ report feasibility findings upstream but cannot accept or silently rewrite a Sys
 commitment. If Program Design requires such a change, it returns `DESIGN_BLOCKED`; any accepted
 System Design change makes the Program Design candidate stale.
 
+The same monotonic rule continues through execution compilation. The downstream planning controller
+owns System Design, Program Design, and ticket-graph acceptance as separate outcomes under one
+pre-execution authority. A changed accepted upstream design makes every dependent accepted ticket
+graph stale in the same logical atomic transition. Execution may verify an accepted graph; it may
+not create the acceptance it depends on.
+
 If execution requires violating an approved contract, the correct state is:
 
 ```text
@@ -625,6 +631,13 @@ System Design participation: agent_led (user-selectable as co_design)
 ```
 
 The resolved run configuration is snapshotted into the planning directory and becomes part of the run's audit trail.
+
+A small number of intake clarifications may make an already-small task bounded enough for the
+`trivial` path. If the accepted goal can be expressed as one independently verifiable ticket, intake
+selects direct ticket execution; it does not invoke Discovery merely to produce a smaller PRD. If
+real product decisions remain unresolved after intake, Discovery is selected regardless of the
+expected code-change size. If system-observable or code-shape decisions remain, select the matching
+design producer rather than hiding design inside a “trivial” ticket.
 
 Stage selection and boundary acceptance are different decisions. Stage 0 always initializes and
 classifies the run, but the first **producer** action may occur later in the pipeline:
@@ -841,6 +854,9 @@ Inputs are the applicable accepted sources for the actual selected path:
 
 An omitted boundary contributes neither an artifact nor an approval. Compilation preserves the
 accepted bindings carried by the selected path rather than requiring every possible upstream file.
+When product closure, System Design, and Program Design are all omitted, the `trivial` path compiles
+one one-node ticket graph directly from the accepted/frozen Stage 0 intake, effective configuration,
+and target repository baseline. It creates no substitute PRD or design artifact.
 
 Outputs:
 
@@ -850,7 +866,22 @@ Outputs:
 - deterministic validation contracts
 - explicit references to upstream sections
 
-Tickets should reference upstream source-of-truth sections rather than copying them.
+Stage 5 is the final pre-execution planning boundary. The compiler proposes the complete ticket
+graph; it does not accept its own output. A read-only ticket-graph judge evaluates verticality,
+dependency completeness, validation contracts, repository targeting, and exact upstream references.
+The configured `tickets` authority decides whether the downstream planning controller may record
+acceptance. That controller records the exact graph version/SHA-256, every applicable accepted
+upstream binding, and each target repository baseline.
+
+The downstream planning controller is one logical authority for Stages 3–5, while preserving each
+stage's distinct outcome. A System Design or Program Design change marks every dependent accepted
+ticket graph stale in the same logical atomic transition as the upstream state change. Its exact
+file, schema, lock, and implementation decomposition remain Program Design choices. There is no
+separate compilation controller.
+
+Tickets should reference upstream source-of-truth sections rather than copying them. Execution
+receives only an exact accepted ticket-graph binding; it may verify that acceptance and its currency
+but may not create or record it.
 
 ---
 
@@ -861,15 +892,17 @@ For high-risk or foundational changes, run one minimal end-to-end tracer slice b
 Possible policy:
 
 ```text
-approved design
+exact accepted ticket graph
    ↓
-tracer ticket factory
+preflight verifies graph acceptance, applicable upstream bindings, and repository baseline
+   ↓
+selected tracer ticket factory
    ↓
 automated validation/review
    ↓
 HUMAN CHECKPOINT
    ↓
-remaining tickets
+remaining accepted graph
 ```
 
 This captures Dex's incremental steering principle without forcing human review of every ticket.
@@ -907,7 +940,7 @@ The feature runner owns dependency traversal.
 Pseudo-flow:
 
 ```text
-load approved ticket graph
+load exact accepted ticket-graph version/hash and verify its accepted upstream/baseline bindings
 while unblocked tickets exist:
     select next ticket
     run TicketFactory(ticket)
@@ -1110,10 +1143,13 @@ post-closure reopen. A version increment replaces a previously accepted candidat
 future downstream reopen owner; until that owner exists, any live mismatch against an accepted
 binding fails closed (see 08 — State and Governance).
 
-Stages 3–4 do not widen this file. A downstream design controller will own their separate gate and
-acceptance state, including exact candidate version/hash bindings and staleness. Its implementation
-must add only the minimum state required for those boundaries; v0.7 does not introduce a generalized
-router or move Stage 3–4 state into `control.json`.
+Stages 3–5 do not widen this file. One downstream planning controller is the logical mutable authority
+for their separate System Design, Program Design, and ticket-graph outcomes, exact
+candidate/version/hash bindings, and monotonic staleness. A changed accepted upstream design marks
+all directly dependent downstream acceptances stale in the same logical atomic transition. The
+controller ends at Stage 5 and owns no repository-scoped execution state. Its exact file, storage
+representation, schema fields, lock, and module/CLI decomposition remain implementation choices;
+v0.8 adds no separate compilation controller or generalized router.
 
 ---
 
@@ -1358,7 +1394,18 @@ review:
 The compiler replaces the placeholder with one entry for each applicable accepted source on the
 selected path. It never emits the placeholder itself. Product Closure, System Design, and Program
 Design entries appear only when those boundaries are selected. A direct Program Design path lists
-the accepted Program Design and its frozen Stage 0 binding, not nonexistent upstream artifacts.
+the accepted Program Design and its frozen Stage 0 binding, not nonexistent upstream artifacts. A
+`trivial` path with no semantic producer has one ticket and therefore one one-node graph; its sole
+planning source is the frozen Stage 0 intake/effective configuration, plus the target repository
+baseline. It neither requires nor manufactures a PRD, System Design, or Program Design artifact.
+
+The complete set of ticket files plus dependency relationships forms the **ticket-graph candidate**.
+Before execution, the downstream planning controller records an acceptance binding over the exact
+graph version and SHA-256, its applicable accepted upstream sources, and the frozen baseline of each
+target repository. This is an acceptance of the complete graph, not permission for each ticket to
+self-approve. Any bound upstream acceptance or baseline change makes the graph stale. The artifact
+model fixes those semantic bindings but does not yet fix whether a future implementation represents
+the graph with an index, manifest, canonical serialization, or another deterministic form.
 
 Human-readable body:
 
@@ -1728,13 +1775,16 @@ reviewer under `AGENT_REVIEW`, or by the human under `HUMAN`. The controller val
 candidate identity/hash, the applicable judge or human authority, and transition legality; it
 does not grade prose.
 
-### Stage 3–4 boundary seam
+### Stages 3–5 downstream planning seam
 
-Stages 3 and 4 use the same separation of producer, independent read-only judge, configured
+Stages 3 through 5 use the same separation of producer, independent read-only judge, configured
 authority, and deterministic transition recording, but their state does not belong in the Stage
-0–2 `control.json`. A downstream design controller will own separate exact candidate/version/hash
-bindings, distinct Stage 3 and Stage 4 outcomes, and staleness propagation. Its implementation adds
-only the minimum state these boundaries require; v0.7 does not introduce a generalized router.
+0–2 `control.json`. One downstream planning controller is the logical mutable authority for their
+separate exact candidate/version/hash bindings, distinct outcomes, dependency chain, and staleness
+propagation. It records every downstream invalidation directly caused by an upstream state change in
+the same logical atomic transition. Its exact storage/schema remains an implementation choice; it
+ends at Stage 5 and owns no execution state. v0.8 adds neither a separate compilation controller nor
+a generalized router.
 
 Paired drafting does not merge gates. When selected, System Design is accepted first. Program Design
 is then bound, rechecked, and finalized against the selected path's applicable source: the accepted
@@ -1743,9 +1793,24 @@ closure is selected; or the accepted/frozen Stage 0 intake and effective-configu
 both upstream semantic boundaries are `NOT_REQUIRED`. The downstream judge reads the effective
 selected stages, chooses exactly one branch, and never treats `NOT_REQUIRED` as approval. Program
 Design requires independent semantic review and never raw `AUTO`; the recommended standard
-authority is `AGENT_REVIEW`, with
-`HUMAN` available under governance/high assurance. A Stage 4 finding that would change a Stage 3
-commitment returns `DESIGN_BLOCKED` upstream.
+authority is `AGENT_REVIEW`, with `HUMAN` available under governance/high assurance. A Stage 4
+finding that would change a Stage 3 commitment returns `DESIGN_BLOCKED` upstream.
+
+Stage 5 has its own boundary inside that same controller:
+
+```text
+execution compiler proposes complete ticket graph
+  → independent read-only ticket-graph judge returns PASS/BLOCKED with all gaps
+  → PASS goes to the configured tickets authority; BLOCKED returns to compilation
+  → downstream planning controller records exact graph/version/hash acceptance
+  → execution preflight verifies the accepted binding and currency
+```
+
+The Stage 5 judge examines verticality, dependency completeness, validation contracts, repository
+targeting, and exact applicable-upstream references. The controller binds the accepted graph to
+each applicable accepted upstream source and each target repository baseline. It does not grade the
+graph's prose. Execution preflight may reject a missing or stale acceptance, but it cannot create,
+record, or manufacture one.
 
 ---
 
@@ -1797,7 +1862,8 @@ This stability allows agents and deterministic tools to consume artifacts reliab
 
 Input:
 
-> An approved, ready vertical ticket plus references to approved design artifacts.
+> An approved, ready vertical ticket drawn from an exact accepted ticket graph, plus references to its
+> applicable accepted design artifacts and frozen repository baseline.
 
 Output:
 
@@ -1809,11 +1875,13 @@ Do not initially make the core factory responsible for inventing the feature des
 
 ## Ticket factory
 
-Suggested interface:
+Conceptual invocation inputs:
 
 ```text
-factory run <ticket.md>
+exact accepted ticket-graph binding + selected ticket identity
 ```
+
+The concrete CLI is a Program Design choice. A ticket path by itself is never sufficient authority.
 
 Conceptual pipeline:
 
@@ -1839,15 +1907,25 @@ Bounded repair attempts prevent infinite loops.
 
 Deterministic checks should include as appropriate:
 
+- exact accepted ticket-graph version/hash exists and contains this ticket
+- the graph's acceptance is current under the downstream planning controller
+- all applicable accepted upstream bindings still match their exact versions/hashes
+- the execution run manifest's immutable source baseline matches the graph's frozen target baseline
+- the current worktree HEAD matches the expected chain of accepted ticket commits rooted at that baseline
 - ticket schema valid
 - all referenced upstream artifacts exist
 - required gates are approved
 - blocking tickets are complete
 - repository/worktree is clean enough to start
-- baseline commit matches expected state
 - ticket is not already active elsewhere
 - validation commands are declared
 - file-scope policy can be resolved
+
+Preflight verifies and consumes the accepted ticket-graph binding. It does not create, record, or
+manufacture graph acceptance, and it does not silently recompile a stale graph. A missing, stale, or
+mismatched binding fails closed before any ticket becomes active. The frozen baseline is the run's
+immutable starting point, not a requirement that worktree HEAD remain equal to it after accepted
+ticket commits; the expected accepted-commit chain supplies that later currency check.
 
 ---
 
@@ -1957,6 +2035,14 @@ The feature runner stops and escalates to the design-control loop.
 
 Commit should be performed by deterministic code after all required ticket gates pass.
 
+Immediately before any commit, deterministic code revalidates the exact accepted ticket-graph
+binding, its applicable accepted upstream sources, the run manifest's frozen target baseline, and the
+expected accepted-commit chain against the current downstream planning acceptance. If the graph is
+stale, a binding mismatches, or worktree HEAD is not the expected chain tip, there must be no commit:
+the ticket enters `DESIGN_BLOCKED`, the worktree/evidence is retained for diagnosis,
+and the feature runner escalates upstream. This second currency check closes the interval between
+ticket preflight and commit without giving execution authority to mutate planning acceptance.
+
 Benefits:
 
 - commit boundary exactly matches accepted ticket
@@ -1974,6 +2060,9 @@ Suggested interface:
 ```text
 factory run-feature <planning-root>/<feature>
 ```
+
+The feature path is a lookup key, not execution authority. The runner must resolve and verify the
+current exact accepted ticket-graph binding before selecting any ticket.
 
 Responsibilities:
 
@@ -2327,6 +2416,32 @@ verdict.
 
 ---
 
+## Ticket-graph compilation boundary
+
+Stage 5's compiler is a producer, not its own judge. A fresh read-only ticket-graph judge evaluates
+the exact complete graph and returns `PASS` or `BLOCKED` with all gaps. It establishes applicability
+before requiring an upstream artifact and never writes a missing ticket, edge, validation contract,
+or acceptance to satisfy its own finding.
+
+Deterministic checks bind the exact graph version/SHA-256, assert unique ticket identities and valid
+dependency references, require unambiguous repository targets, verify declared validation commands,
+and prove every ticket's upstream references are drawn from the selected path's applicable accepted
+sources. The candidate also binds the frozen baseline for every target repository.
+
+Semantic review checks that slices are vertical and independently verifiable, dependencies are
+complete without hiding a global ordering, acceptance criteria are observable, validators cover the
+promised behavior, and implementation decisions do not leak back into compilation. PASS proceeds to
+the configured `tickets` authority; the downstream planning controller records the acceptance.
+BLOCKED returns to Stage 5 without changing authoritative state.
+
+Any accepted System Design or Program Design change makes every dependent ticket-graph acceptance
+stale in the same logical atomic transition as the upstream change. Execution preflight consumes and
+verifies that exact acceptance but cannot create it. This boundary does not decide whether a future
+proven mechanical-only compilation class may use `AUTO_PASSED`; the existing gate vocabulary and
+configured policy continue to govern authority.
+
+---
+
 ## Whole-feature review
 
 Ticket-level correctness is insufficient.
@@ -2603,10 +2718,17 @@ controller changes it through one atomic file replacement and may then regenerat
 `00-state.md` as a projection. Repository-scoped `.factory/runs/` state begins with execution
 and remains a separate domain.
 
-Stages 3–4 require a separate downstream design controller. It owns only the minimum gate,
-acceptance, staleness, and exact candidate/version/hash bindings needed for System Design and
-Program Design. It does not widen Stage 0–2 `control.json`, and v0.7 does not introduce a
-generalized router. The exact storage shape is left to that controller's implementation.
+Stages 3–5 use one downstream planning controller as their logical mutable authority. It owns only
+the gate, acceptance, staleness, dependency, and exact candidate/version/hash bindings needed for
+System Design, Program Design, and the compiled ticket graph. Each boundary keeps a separate outcome;
+one controller never means one joint verdict. The Stage 0–2 `control.json` remains frozen after
+handoff and is the exact upstream admission anchor, not the live downstream phase owner.
+
+A changed accepted upstream artifact and every directly dependent downstream invalidation are one
+logical atomic transition: System Design may stale Program Design and the ticket graph; Program
+Design may stale the ticket graph. The controller ends at Stage 5, owns no repository-scoped
+execution state, and is not a generalized router. Its exact file, storage representation, schema,
+lock, and module/CLI decomposition remain Program Design and implementation choices.
 
 ---
 
@@ -2684,8 +2806,11 @@ product closure is not a mechanical-only boundary in this revision.
 ## Approved artifacts are versioned contracts
 
 Once an artifact passes its gate, downstream work references its accepted version and content
-hash from the controller that owns that boundary. Stages 0–2 use `control.json`; Stages 3–4 use
-their downstream design controller.
+hash from the controller that owns that boundary. Stages 0–2 use `control.json`; Stages 3–5 use
+one downstream planning controller with separate acceptance outcomes. Stage 5's accepted ticket
+graph additionally binds all applicable accepted upstream sources and the frozen baseline of each
+target repository. `READY_FOR_EXECUTION` means that exact graph acceptance exists and is current;
+it is produced by the downstream planning controller, never inferred by the execution runtime.
 
 This prevents:
 
@@ -2801,6 +2926,14 @@ For Stages 0–2 the controller has one authoritative mutable file. It writes a 
 lock prevents two processes from committing from the same revision. Because no authoritative
 transition spans several files, V1 has no transaction journal or replay protocol here.
 
+The downstream planning controller must preserve the same semantic property: one authoritative
+transition either records an upstream change plus all directly caused Stage 4/5 staleness or records
+none of them. Architecture fixes that logical atomicity, not the storage mechanism. Program Design
+may choose one snapshot, a transactional store, or another minimal representation, but it may not
+expose an intermediate state in which an upstream acceptance changed while its dependent ticket
+graph still appears current. No acceptance-history ledger or event-sourced replay system is earned
+by this rule alone.
+
 On restart:
 
 1. read authoritative run state;
@@ -2873,7 +3006,7 @@ validation:
 workflows:
   trivial:
     stages:
-      - ticket
+      - tickets
       - execute
       - final_review
       - pr
@@ -2921,7 +3054,7 @@ governance:
       discovery: AGENT_REVIEW
       system_design: AGENT_REVIEW
       program_design: AGENT_REVIEW
-      tickets: AUTO
+      tickets: AGENT_REVIEW
       tracer: AUTO
       final_pr: HUMAN
 
@@ -3122,7 +3255,12 @@ This is useful, but the CLI command itself is **not** a V1 requirement unless re
 
 ### D-001 — Build a software factory, but start it at execution
 
-**Decision:** Initial autonomous factory boundary begins with an approved vertical ticket and can run through draft PR creation.
+**Refined by:** D-080. The execution boundary still begins after planning acceptance, but its input
+is now the exact accepted ticket graph plus a selected ticket identity. A ticket file alone is not
+execution authority.
+
+**Decision:** Initial autonomous factory boundary begins with an exact accepted ticket graph plus one
+selected ready vertical ticket and can run through draft PR creation.
 
 **Why:** This captures the strongest SSSF leverage without asking post-hoc reviewers to compensate for poor architectural decisions.
 
@@ -3257,15 +3395,22 @@ Need to validate through real usage:
 
 ---
 
-### OQ-002 — Canonical machine state format
+### OQ-002 — Canonical machine state format — **PARTIALLY RESOLVED IN v0.8**
 
-Options:
+D-080 resolves the authority topology without freezing a storage schema: one downstream planning
+controller is the logical mutable authority for separate Stage 3, Stage 4, and Stage 5 outcomes,
+and an upstream change plus every directly caused downstream invalidation is one logical atomic
+transition. Stage 0–2 `control.json` remains the frozen admission anchor; execution state remains
+repository-scoped.
 
-- YAML/JSON state file + human Markdown mirror
-- SQLite/event log
-- pure frontmatter initially
+Still open for Program Design and real-use calibration:
 
-Recommendation: begin boring and file-based; add stronger machinery only after failure modes justify it.
+- exact file/storage representation and schema fields;
+- whether one snapshot, a transactional store, or another minimal representation best preserves the
+  required atomicity;
+- when stronger history/replay machinery is earned.
+
+Do not add an event log, receipt ledger, or database merely to close this question on paper.
 
 ---
 
@@ -3357,15 +3502,22 @@ Existing Pocock primitives can remain available beneath these.
 
 ---
 
-### OQ-009 — How much of pre-implementation belongs under deterministic orchestration
+### OQ-009 — How much of pre-implementation belongs under deterministic orchestration — **STRUCTURALLY RESOLVED THROUGH STAGE 5 IN v0.8**
 
-Current recommendation:
+D-080 places all selected pre-execution acceptance through the compiled ticket graph under one
+bounded downstream planning controller. Stage 5 is the final planning boundary; the controller
+records the exact accepted graph and ends there. Repository-scoped execution begins only after that
+handoff and may verify, but never create, planning acceptance.
 
-- same control plane may eventually orchestrate all stages;
-- high-leverage design stages remain human-gated according to policy;
-- autonomy can increase without changing artifact contracts.
+Still intentionally open:
 
-The system should be able to automate generation while preserving separate acceptance authority.
+- the downstream controller's exact storage and implementation mechanics;
+- ticket sizing, graph partitioning, and tracer policy;
+- execution-runtime mechanics within the already-fixed `local_worktree` V1 baseline;
+- any future second runtime that earns revisiting that baseline and the fixed Stage 5 boundary.
+
+Autonomy can increase without merging acceptance authority into execution or changing artifact
+contracts.
 
 ---
 
@@ -3444,7 +3596,7 @@ These axes are perpendicular, not competing models.
 ┌────────────────────────────────────┐
 │              WORKCELL              │
 │ source baseline                    │
-│ approved planning packet           │
+│ exact accepted graph packet        │
 │ factory runtime                    │
 │ local trace/evidence               │
 │ deterministic feature/ticket DAG   │
@@ -3471,6 +3623,12 @@ These axes are perpendicular, not competing models.
 
 This is a **logical topology**. It does not require multiple machines, containers, VMs, or processes.
 
+The `APPROVED PACKET` is not an informal bundle. It is the exact accepted ticket-graph version/hash
+recorded by the downstream planning controller, with its applicable accepted upstream bindings and
+target repository baselines. The workcell verifies that acceptance and currency before use. It
+cannot create the acceptance, silently substitute a graph, or keep executing after a bound source
+is known stale.
+
 ---
 
 ## V1 workcell
@@ -3482,7 +3640,7 @@ local Git worktree
 +
 small factory process
 +
-approved planning packet
+exact accepted graph packet
 ```
 
 The worktree provides isolation from the developer's primary checkout while avoiding remote-runtime, lifecycle, credential, and recovery complexity before those problems exist.
@@ -3523,16 +3681,22 @@ A future second runtime should trigger:
 
 ### V1 normal path: direct execution
 
-When an approved ticket already defines the work:
+When an exact accepted ticket graph already defines the work:
 
 ```text
-approved ticket
+exact accepted ticket-graph binding
+    ↓
+preflight verifies graph currency, applicable upstream sources, and repository baseline
+    ↓
+select ready ticket from that graph
     ↓
 deterministic ticket factory
     ↓
 builder → validation → reviewers → accepted commit
 ```
 
+A ticket file alone is not execution authority. The workcell enters only through the current graph
+acceptance recorded by the downstream planning controller, including for a trivial one-node graph.
 Do not pay orchestration-model cost to rediscover a known control decision.
 
 ### Future/exception path: mediated execution
@@ -3748,10 +3912,21 @@ Deterministic code consumes these envelopes and decides which state transition i
 Stages 0–2 use `<planning-root>/<feature>/control.json` as their machine-canonical planning
 state. It records only planning phase/gate outcomes and version/hash provenance. In v0.6 the
 accepted product-contract candidate is `20-prd.md`, and its `derived_from` field binds the exact
-`10-decisions.md` version/hash product closure reconciled. This closes the pre-execution
-authority gap for a planning effort that may span repositories without putting repository-scoped
-execution state in the planning root. `00-state.md` is generated from this file and is never
-transition authority.
+`10-decisions.md` version/hash product closure reconciled. This closes the initial planning
+authority gap for an effort that may span repositories without putting repository-scoped execution
+state in the planning root. `00-state.md` is generated from this file and is never transition
+authority.
+
+After that handoff, one downstream planning controller owns the selected Stage 3–5 candidate
+bindings, separate gate outcomes, dependency/staleness chain, and final accepted ticket-graph
+binding. Its accepted graph names every applicable accepted upstream source and the frozen baseline
+for each target repository. The controller records upstream changes and all directly caused
+downstream invalidations as one logical atomic transition. Architecture does not fix its exact file,
+storage representation, schema, or module/CLI decomposition.
+
+The downstream planning controller ends at Stage 5. It hands execution an exact accepted
+ticket-graph version/hash; it owns no worktree, active-ticket, attempt, retry, repair, validation,
+commit, branch, or event state. No separate compilation controller exists.
 
 ## Machine-canonical runtime state
 
@@ -3904,10 +4079,16 @@ Use agents for remaining judgment, not for rediscovering invariant failures we c
 
 ## V1 runtime scope
 
+**Refined by:** D-080. The runtime shape and `local_worktree` baseline remain current, but execution
+now enters through an exact accepted ticket graph rather than treating a Markdown ticket as
+standalone authority.
+
 The preferred V1 is deliberately small:
 
 ```text
-approved Markdown ticket
+exact accepted ticket graph
+        ↓
+selected ready ticket
         ↓
 local Git worktree
         ↓
@@ -4608,7 +4789,8 @@ A reasonable first technical spike should compare two starting points:
 
 1. Clone/pin SSSF.
 2. Strip its planning methodology from the runtime boundary.
-3. Replace its plan input with our approved Markdown ticket + resolved contracts.
+3. Replace its plan input with an exact accepted ticket-graph packet plus the selected ticket identity;
+   a Markdown ticket alone is never execution authority.
 4. Keep/adapt phase runner, envelopes, gates, repair loops, roster, trace.
 5. Add our contract/design reviewer semantics.
 6. Run it in a local Git worktree; preserve provider-neutral vocabulary but **do not** extract a provider registry/interface yet.
@@ -4630,13 +4812,15 @@ A reasonable first technical spike should compare two starting points:
 Choose the approach that can implement this smallest credible flow with the least accidental coupling:
 
 ```text
-factory run tickets/01.md
-  → preflight approved contract
+exact accepted ticket-graph version/hash + selected ticket identity
+  → preflight current graph acceptance + applicable upstream bindings + frozen target baseline
+  → verify expected accepted-commit chain rooted at that baseline
   → builder
   → deterministic test/build command
   → contract reviewer (read-only)
   → design/quality reviewer (read-only)
   → bounded builder repair
+  → revalidate graph currency immediately before commit
   → accepted local commit
   → structured result bundle
 ```
@@ -5135,7 +5319,9 @@ It is:
 ```text
 planning contracts
       ↓
-approved ticket
+exact accepted ticket graph
+      ↓
+selected ready ticket
       ↓
 local worktree
       ↓
@@ -5560,6 +5746,36 @@ diversity treated as conditional staffing rather than authority. Add one bounded
 critic before the first grill round and repeat completeness/wrong-owner review in the existing final
 cold read. Do not create a second router, a council per question, or runtime machinery in this
 architecture-only change.
+
+---
+
+## L-019 — An “approved ticket graph” without an acceptance owner is an authority gap
+
+### Contradiction found
+
+The architecture gave `tickets` real gate policy, told the feature runner to load an approved graph,
+and required execution preflight to verify approved upstream contracts. Stage 5, however, only
+produced a graph. The Stage 0–2 controller stopped before design, the v0.7 design controller stopped
+at Stage 4, and repository-scoped runtime state began after approval. The consumer assumed an
+acceptance no producer was authorized to record.
+
+Two blind reviews split on the next move. One proposed fixing the Stage 3–4 authority aggregate
+first; the other independently confirmed the Stage 5 gap but proposed a separate compilation
+controller. The user selected the smaller staleness topology: extend the existing downstream owner
+rather than create a third place whose currency could disagree with design and execution.
+
+### Standing result
+
+One bounded downstream planning controller owns separate System Design, Program Design, and
+compiled ticket-graph outcomes through Stage 5. It binds the accepted graph to exact applicable
+upstream sources and target repository baselines, and records directly caused downstream staleness
+in the same logical atomic transition as an upstream change. Execution verifies this acceptance but
+cannot create it. A trivial run carries the same authority in miniature: one one-node graph binds
+directly to frozen Stage 0 intake/configuration plus its target repository baseline and creates no
+substitute PRD or design artifact. Execution checks graph currency at ticket preflight and again
+before deterministic commit, closing the in-flight staleness interval. The controller owns no Stage
+6+ execution state, and architecture deliberately leaves its exact file/schema to Program Design
+rather than hard-coding storage prematurely.
 
 ---
 
@@ -6819,6 +7035,10 @@ every other stage.
 
 ## D-076 — A minimal downstream design controller owns Stage 3–4 acceptance state
 
+**Refined by:** D-080, which extends the same logical authority through Stage 5 ticket-graph
+acceptance and renames it the downstream planning controller without adding a separate compiler
+controller or any execution state.
+
 The existing Stage 0–2 `control.json` is not widened. A downstream design controller will own
 separate Stage 3 and Stage 4 gate/acceptance state, exact candidate/version/hash bindings, and
 staleness propagation. Its implementation introduces only the minimum state those accepted
@@ -6905,3 +7125,90 @@ on it becomes stale transitively in the same logical downstream transition.
 > **Collaborate explicitly without confusing participation for authority; let System Design and
 > Program Design pressure-test each other without sharing a verdict; and accept system commitments
 > before binding the codebase-local realization that depends on them.**
+
+---
+
+# 23 — v0.8 Decisions
+
+v0.8 closes the authority gap between accepted Program Design and execution. It makes ticket-graph
+acceptance the final pre-execution planning boundary without adding another controller or moving
+human/design authority into the execution runtime.
+
+---
+
+## D-080 — One downstream planning controller owns Stages 3–5
+
+The downstream design controller ratified by D-076 becomes the **downstream planning controller**.
+It is one logical mutable authority for the selected pre-execution boundaries after the Stage 0–2
+handoff:
+
+1. Stage 3 — System Design acceptance when selected;
+2. Stage 4 — Program Design acceptance when selected;
+3. Stage 5 — compiled ticket-graph acceptance.
+
+Each boundary retains its own candidate binding, independent read-only judge, configured authority,
+and outcome. One controller does not mean one verdict. It means the cross-stage dependency and
+staleness chain has one deterministic owner. The controller records accepted candidate versions and
+SHA-256 hashes and never grades semantic prose itself.
+
+The Stage 5 candidate is the complete compiled ticket graph. Stage 5 applies its own applicability
+test over the effective selected stages and binds the exact graph version/hash to every source that
+actually governs compilation:
+
+1. product closure selected → exact accepted `20-prd.md`;
+2. System Design selected → exact accepted `30-system-design.md`;
+3. Program Design selected → exact accepted `40-program-design.md` plus its exact D-079 upstream
+   binding, so direct Program Design carries both the accepted Program Design and frozen Stage 0;
+4. no product closure, System Design, or Program Design selected → the exact accepted/frozen Stage 0
+   intake and effective configuration, bound by `control.json.base_run_sha256`,
+   `effective_config_hash`, and `effective_config_revision`.
+
+Every branch also binds the frozen baseline of each target repository. The fourth branch is the
+`trivial` path: its complete candidate is one one-node ticket graph. It does not require or
+manufacture a PRD, System Design, or Program Design artifact. If intake cannot bound the work to one
+ticket without unresolved product or design decisions, the run is not trivial and must select the
+applicable upstream producer rather than hide that work in compilation. Multi-repository planning
+may produce repository-scoped ticket partitions on non-trivial paths, but acceptance grants no
+cross-repository atomic execution.
+
+An accepted upstream change propagates monotonically. A System Design change can stale Program
+Design and the ticket graph; a Program Design change can stale the ticket graph. The downstream
+planning controller records all directly caused downstream invalidations in the same logical atomic
+transition as the upstream state change. Execution may begin only from the exact accepted ticket
+graph binding. Runtime preflight verifies that binding and its currency; it does not create, record,
+or manufacture ticket-graph acceptance. Execution revalidates the same current binding immediately
+before any deterministic commit; a stale or mismatched graph produces no commit and returns
+`DESIGN_BLOCKED` upstream.
+
+The controller ends at Stage 5. It does not widen the Stage 0–2 `control.json`; it owns no Stage 6+
+state and no ticket execution, worktree, active-ticket, retry, repair, validation-attempt, commit,
+branch, publication, or execution-event state. Repository-scoped `.factory/runs/` remains the
+execution authority after the accepted-graph handoff. v0.8 adds no separate compilation/handoff
+controller and no generalized router.
+
+This decision fixes authority, bindings, precedence, and staleness—not storage mechanics. The exact
+file, storage representation, schema fields, lock name, and CLI/module decomposition remain Program
+Design and implementation choices. Ticket sizing, graph partitioning, tracer selection, authority
+policy, parallel execution, and execution-runtime mechanics within the fixed `local_worktree` V1
+baseline remain governed by their existing open questions and policies. A real second runtime may
+earn reopening that baseline later.
+
+### Rejected alternatives
+
+- **A separate compilation controller:** rejected because it creates a third staleness owner between
+  design and execution; the boundary has not earned that seam.
+- **Execution-runtime acceptance:** rejected because it moves a configured semantic/human gate inside
+  the execution authority it is supposed to constrain.
+- **Automatic acceptance because Stage 5 is called a compiler:** rejected because deterministic
+  structure does not prove that semantic decomposition into vertical slices is sound. `AUTO_PASSED`
+  remains legal only for a boundary explicitly proven mechanical-only under the existing gate rules.
+- **A generalized planning router:** rejected because one additional boundary does not justify a
+  controller that owns every stage.
+
+---
+
+## v0.8 north star
+
+> **Keep all pre-execution contract acceptance and staleness under one bounded deterministic owner;
+> hand execution one exact accepted ticket graph; and never let execution create the authority it is
+> required to verify.**

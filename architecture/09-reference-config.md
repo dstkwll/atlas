@@ -38,7 +38,7 @@ validation:
 workflows:
   trivial:
     stages:
-      - ticket
+      - tickets
       - execute
       - final_review
       - pr
@@ -86,7 +86,7 @@ governance:
       discovery: AGENT_REVIEW
       system_design: AGENT_REVIEW
       program_design: AGENT_REVIEW
-      tickets: AUTO
+      tickets: AGENT_REVIEW
       tracer: AUTO
       final_pr: HUMAN
 

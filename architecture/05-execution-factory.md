@@ -4,7 +4,8 @@
 
 Input:
 
-> An approved, ready vertical ticket plus references to approved design artifacts.
+> An approved, ready vertical ticket drawn from an exact accepted ticket graph, plus references to its
+> applicable accepted design artifacts and frozen repository baseline.
 
 Output:
 
@@ -16,11 +17,13 @@ Do not initially make the core factory responsible for inventing the feature des
 
 ## Ticket factory
 
-Suggested interface:
+Conceptual invocation inputs:
 
 ```text
-factory run <ticket.md>
+exact accepted ticket-graph binding + selected ticket identity
 ```
+
+The concrete CLI is a Program Design choice. A ticket path by itself is never sufficient authority.
 
 Conceptual pipeline:
 
@@ -46,15 +49,25 @@ Bounded repair attempts prevent infinite loops.
 
 Deterministic checks should include as appropriate:
 
+- exact accepted ticket-graph version/hash exists and contains this ticket
+- the graph's acceptance is current under the downstream planning controller
+- all applicable accepted upstream bindings still match their exact versions/hashes
+- the execution run manifest's immutable source baseline matches the graph's frozen target baseline
+- the current worktree HEAD matches the expected chain of accepted ticket commits rooted at that baseline
 - ticket schema valid
 - all referenced upstream artifacts exist
 - required gates are approved
 - blocking tickets are complete
 - repository/worktree is clean enough to start
-- baseline commit matches expected state
 - ticket is not already active elsewhere
 - validation commands are declared
 - file-scope policy can be resolved
+
+Preflight verifies and consumes the accepted ticket-graph binding. It does not create, record, or
+manufacture graph acceptance, and it does not silently recompile a stale graph. A missing, stale, or
+mismatched binding fails closed before any ticket becomes active. The frozen baseline is the run's
+immutable starting point, not a requirement that worktree HEAD remain equal to it after accepted
+ticket commits; the expected accepted-commit chain supplies that later currency check.
 
 ---
 
@@ -164,6 +177,14 @@ The feature runner stops and escalates to the design-control loop.
 
 Commit should be performed by deterministic code after all required ticket gates pass.
 
+Immediately before any commit, deterministic code revalidates the exact accepted ticket-graph
+binding, its applicable accepted upstream sources, the run manifest's frozen target baseline, and the
+expected accepted-commit chain against the current downstream planning acceptance. If the graph is
+stale, a binding mismatches, or worktree HEAD is not the expected chain tip, there must be no commit:
+the ticket enters `DESIGN_BLOCKED`, the worktree/evidence is retained for diagnosis,
+and the feature runner escalates upstream. This second currency check closes the interval between
+ticket preflight and commit without giving execution authority to mutate planning acceptance.
+
 Benefits:
 
 - commit boundary exactly matches accepted ticket
@@ -181,6 +202,9 @@ Suggested interface:
 ```text
 factory run-feature <planning-root>/<feature>
 ```
+
+The feature path is a lookup key, not execution authority. The runner must resolve and verify the
+current exact accepted ticket-graph binding before selecting any ticket.
 
 Responsibilities:
 

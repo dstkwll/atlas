@@ -48,7 +48,7 @@ These axes are perpendicular, not competing models.
 ┌────────────────────────────────────┐
 │              WORKCELL              │
 │ source baseline                    │
-│ approved planning packet           │
+│ exact accepted graph packet        │
 │ factory runtime                    │
 │ local trace/evidence               │
 │ deterministic feature/ticket DAG   │
@@ -75,6 +75,12 @@ These axes are perpendicular, not competing models.
 
 This is a **logical topology**. It does not require multiple machines, containers, VMs, or processes.
 
+The `APPROVED PACKET` is not an informal bundle. It is the exact accepted ticket-graph version/hash
+recorded by the downstream planning controller, with its applicable accepted upstream bindings and
+target repository baselines. The workcell verifies that acceptance and currency before use. It
+cannot create the acceptance, silently substitute a graph, or keep executing after a bound source
+is known stale.
+
 ---
 
 ## V1 workcell
@@ -86,7 +92,7 @@ local Git worktree
 +
 small factory process
 +
-approved planning packet
+exact accepted graph packet
 ```
 
 The worktree provides isolation from the developer's primary checkout while avoiding remote-runtime, lifecycle, credential, and recovery complexity before those problems exist.
@@ -127,16 +133,22 @@ A future second runtime should trigger:
 
 ### V1 normal path: direct execution
 
-When an approved ticket already defines the work:
+When an exact accepted ticket graph already defines the work:
 
 ```text
-approved ticket
+exact accepted ticket-graph binding
+    ↓
+preflight verifies graph currency, applicable upstream sources, and repository baseline
+    ↓
+select ready ticket from that graph
     ↓
 deterministic ticket factory
     ↓
 builder → validation → reviewers → accepted commit
 ```
 
+A ticket file alone is not execution authority. The workcell enters only through the current graph
+acceptance recorded by the downstream planning controller, including for a trivial one-node graph.
 Do not pay orchestration-model cost to rediscover a known control decision.
 
 ### Future/exception path: mediated execution

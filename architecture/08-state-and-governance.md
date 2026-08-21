@@ -21,10 +21,17 @@ controller changes it through one atomic file replacement and may then regenerat
 `00-state.md` as a projection. Repository-scoped `.factory/runs/` state begins with execution
 and remains a separate domain.
 
-Stages 3–4 require a separate downstream design controller. It owns only the minimum gate,
-acceptance, staleness, and exact candidate/version/hash bindings needed for System Design and
-Program Design. It does not widen Stage 0–2 `control.json`, and v0.7 does not introduce a
-generalized router. The exact storage shape is left to that controller's implementation.
+Stages 3–5 use one downstream planning controller as their logical mutable authority. It owns only
+the gate, acceptance, staleness, dependency, and exact candidate/version/hash bindings needed for
+System Design, Program Design, and the compiled ticket graph. Each boundary keeps a separate outcome;
+one controller never means one joint verdict. The Stage 0–2 `control.json` remains frozen after
+handoff and is the exact upstream admission anchor, not the live downstream phase owner.
+
+A changed accepted upstream artifact and every directly dependent downstream invalidation are one
+logical atomic transition: System Design may stale Program Design and the ticket graph; Program
+Design may stale the ticket graph. The controller ends at Stage 5, owns no repository-scoped
+execution state, and is not a generalized router. Its exact file, storage representation, schema,
+lock, and module/CLI decomposition remain Program Design and implementation choices.
 
 ---
 
@@ -102,8 +109,11 @@ product closure is not a mechanical-only boundary in this revision.
 ## Approved artifacts are versioned contracts
 
 Once an artifact passes its gate, downstream work references its accepted version and content
-hash from the controller that owns that boundary. Stages 0–2 use `control.json`; Stages 3–4 use
-their downstream design controller.
+hash from the controller that owns that boundary. Stages 0–2 use `control.json`; Stages 3–5 use
+one downstream planning controller with separate acceptance outcomes. Stage 5's accepted ticket
+graph additionally binds all applicable accepted upstream sources and the frozen baseline of each
+target repository. `READY_FOR_EXECUTION` means that exact graph acceptance exists and is current;
+it is produced by the downstream planning controller, never inferred by the execution runtime.
 
 This prevents:
 
@@ -218,6 +228,14 @@ For Stages 0–2 the controller has one authoritative mutable file. It writes a 
 `control.json` beside the current one and atomically replaces it. A run-local single-writer
 lock prevents two processes from committing from the same revision. Because no authoritative
 transition spans several files, V1 has no transaction journal or replay protocol here.
+
+The downstream planning controller must preserve the same semantic property: one authoritative
+transition either records an upstream change plus all directly caused Stage 4/5 staleness or records
+none of them. Architecture fixes that logical atomicity, not the storage mechanism. Program Design
+may choose one snapshot, a transactional store, or another minimal representation, but it may not
+expose an intermediate state in which an upstream acceptance changed while its dependent ticket
+graph still appears current. No acceptance-history ledger or event-sourced replay system is earned
+by this rule alone.
 
 On restart:
 
