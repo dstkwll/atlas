@@ -23,18 +23,72 @@ def codesign_classifier_violations(text):
         sentence = " ".join(sentence.split())
         if "classifier" not in sentence or "co_design" not in sentence:
             continue
-        if not re.search(actions, sentence):
+        for segment in re.split(r"(?:,\s*)?\b(?:and|but|while|yet)\b\s+", sentence):
+            if "co_design" not in segment or not re.search(actions, segment):
+                continue
+            safe = (
+                re.search(rf"classifier\s+(?:does not|never)\s+(?:\w+\s+){{0,8}}(?:{actions})", segment)
+                or re.search(rf"classifier\s+(?:must|should|may|can|shall|will)\s+not\s+(?:\w+\s+){{0,8}}(?:{actions})", segment)
+                or re.search(rf"classifier\s+cannot\s+(?:\w+\s+){{0,8}}(?:{actions})", segment)
+                or re.search(rf"classifier\s+neither\s+(?:\w+\s+){{0,8}}(?:{actions})", segment)
+                or re.search(rf"(?:does not|never|must not|should not|may not|cannot)\s+(?:\w+\s+){{0,8}}(?:{actions})", segment)
+                or re.search(rf"co_design.{{0,100}}(?:never|not).{{0,60}}(?:{actions}).{{0,60}}classifier", segment)
+                or "not a classifier output" in segment
+            )
+            if not safe:
+                violations.append(segment)
+    return violations
+
+
+def model_skill_identity_routing_violations(text):
+    """Return affirmative clauses that make skill identity a model-routing key."""
+    violations = []
+    normalized_text = " ".join(text.split())
+    for clause in re.split(r"(?<=[.!?;])\s+|\n+", normalized_text):
+        for segment in re.split(r"(?:,\s*)?\b(?:but|while|yet)\b\s+", clause, flags=re.IGNORECASE):
+            lower = segment.lower()
+            if not re.search(r"skill (?:name|identity)|whole skill|skill itself", lower):
+                continue
+            if not re.search(r"bind|bound|rout|select|assign|staff|fix|adhere|model tier|worker tier", lower):
+                continue
+            if re.search(r"\b(?:never|cannot|must not|may not|should not|does not|do not|not)\b|rather than", lower):
+                continue
+            violations.append(segment)
+    return violations
+
+
+def frontier_preexposure_violations(text):
+    """Return affirmative clauses that expose the producer frontier to the blind critic."""
+    violations = []
+    normalized_text = " ".join(text.split())
+    for clause in re.split(r"(?<=[.!?;])\s+|\n+", normalized_text):
+        clause_lower = clause.lower()
+        if not re.search(r"critic|challenger|fresh reader", clause_lower):
             continue
-        safe = (
-            re.search(rf"classifier\s+(?:does not|never)\s+(?:\w+\s+){{0,8}}(?:{actions})", sentence)
-            or re.search(rf"classifier\s+(?:must|should|may|can|shall|will)\s+not\s+(?:\w+\s+){{0,8}}(?:{actions})", sentence)
-            or re.search(rf"classifier\s+cannot\s+(?:\w+\s+){{0,8}}(?:{actions})", sentence)
-            or re.search(rf"classifier\s+neither\s+(?:\w+\s+){{0,8}}(?:{actions})", sentence)
-            or re.search(rf"co_design.{{0,100}}(?:never|not).{{0,60}}(?:{actions}).{{0,60}}classifier", sentence)
-            or "not a classifier output" in sentence
-        )
-        if not safe:
-            violations.append(sentence)
+        for segment in re.split(r"(?:,\s*)?\b(?:and|but|while|yet)\b\s+", clause, flags=re.IGNORECASE):
+            lower = segment.lower()
+            if not re.search(r"producer(?:'s)? (?:proposed )?frontier", lower):
+                continue
+            if not re.search(r"read|see|review|receive|given|expos", lower):
+                continue
+            if re.search(r"\b(?:never|cannot|must not|may not|should not|does not|do not|not)\b|without (?:reading|seeing)", lower):
+                continue
+            violations.append(segment)
+    return violations
+
+
+def unconditional_system_design_acceptance_violations(text):
+    """Return clauses that require System Design acceptance even when it was not selected."""
+    violations = []
+    for clause in re.split(r"(?<=[.!?;])\s+|\n+", " ".join(text.split())):
+        lower = clause.lower()
+        if "system design" not in lower or "accept" not in lower:
+            continue
+        if not re.search(r"(?:accepted|accept).{0,60}(?:first|before)|(?:first|before).{0,60}(?:accepted|accept)", lower):
+            continue
+        if re.search(r"when (?:it is |that stage is |both stages are )?selected|if (?:it is |system design is )?selected", lower):
+            continue
+        violations.append(clause)
     return violations
 
 
@@ -56,7 +110,7 @@ class PairedDesignArchitectureTests(unittest.TestCase):
         self.assertIn("architecture/22-v0.7-decisions.md", root_readme)
         self.assertIn("**v0.7**", root_readme)
         self.assertIn("**v0.7**", architecture_readme)
-        for identifier in ("D-071", "D-072", "D-073", "D-074", "D-075", "D-076"):
+        for identifier in ("D-071", "D-072", "D-073", "D-074", "D-075", "D-076", "D-077", "D-078", "D-079"):
             self.assertIn(identifier, decisions)
 
     def test_codesign_is_user_selected_participation_not_gate_authority(self):
@@ -82,6 +136,7 @@ class PairedDesignArchitectureTests(unittest.TestCase):
             "The classifier nudges toward co_design.",
             "The classifier should recommend co-design.",
             "The classifier routes the user to co_design.",
+            "The classifier does not recommend co_design but may choose co_design.",
         ):
             with self.subTest(forbidden=statement):
                 self.assertTrue(codesign_classifier_violations(statement))
@@ -129,10 +184,27 @@ class PairedDesignArchitectureTests(unittest.TestCase):
         combined = workflow + " " + review
 
         self.assertRegex(combined, r"(side by side|side-by-side|in parallel)")
-        self.assertRegex(combined, r"accept.{0,100}system design.{0,160}(before|first)")
-        self.assertRegex(combined, r"program design.{0,240}exact accepted.{0,100}system design")
+        self.assertRegex(combined.lower(), r"(?:accept system design first when.{0,80}selected|system design is accepted first)")
+        self.assertRegex(combined.lower(), r"program design.{0,500}selected system design.{0,100}exact accepted")
         self.assertRegex(combined, r"joint bundle.{0,100}(forbidden|not|never)|no joint bundle")
         self.assertIn("DESIGN_BLOCKED", combined)
+
+        for name in (
+            "01-principles.md",
+            "02-workflow.md",
+            "04-control-plane.md",
+            "06-review-and-validation.md",
+            "22-v0.7-decisions.md",
+        ):
+            self.assertEqual([], unconditional_system_design_acceptance_violations(read(name)), name)
+
+        for clause, forbidden in (
+            ("System Design must always be accepted first, even when omitted.", True),
+            ("When selected, System Design is accepted first.", False),
+            ("The process must accept System Design first when that stage is selected.", False),
+        ):
+            with self.subTest(clause=clause):
+                self.assertEqual(bool(unconditional_system_design_acceptance_violations(clause)), forbidden)
 
     def test_standard_design_governance_matches_the_ratified_defaults(self):
         config = read("09-reference-config.md")
@@ -167,6 +239,119 @@ class PairedDesignArchitectureTests(unittest.TestCase):
         self.assertIn("staleness", combined)
         self.assertRegex(combined, r"does not widen (?:the )?Stage 0–2 `control.json`|does not widen this file")
         self.assertRegex(combined, r"does not introduce a generalized router|not a generalized router")
+
+    def test_model_staffing_routes_invocations_by_role_and_task_shape_not_by_skill(self):
+        policy = normalized("17-agent-roles-rosters-and-model-policy.md")
+        decisions = normalized("22-v0.7-decisions.md")
+        combined = policy + " " + decisions
+
+        self.assertRegex(combined, r"model invocation.{0,160}role.{0,80}task shape")
+        self.assertRegex(combined, r"never.{0,100}skill (?:name|identity)|not.{0,100}skill (?:name|identity)")
+        self.assertRegex(combined, r"skill.{0,180}multiple.{0,100}task shapes")
+        self.assertEqual([], model_skill_identity_routing_violations(combined))
+
+        for clause, forbidden in (
+            ("Discovery's skill identity binds every invocation to one fixed model tier.", True),
+            ("The whole skill is staffed by one worker tier.", True),
+            ("The skill itself adheres to the frontier model tier.", True),
+            ("The role is not the routing key, while skill identity assigns the worker tier.", True),
+            ("The role is not the routing key but skill identity assigns the worker tier.", True),
+            ("A skill name must not select a model tier.", False),
+            ("The whole skill should not be staffed by one worker tier.", False),
+            ("The skill itself cannot adhere to a fixed model tier.", False),
+            ("Model staffing is never bound to skill identity.", False),
+        ):
+            with self.subTest(clause=clause):
+                self.assertEqual(bool(model_skill_identity_routing_violations(clause)), forbidden)
+
+    def test_worker_diversity_is_conditional_staffing_not_authority(self):
+        policy = normalized("17-agent-roles-rosters-and-model-policy.md").lower()
+        decisions = normalized("22-v0.7-decisions.md").lower()
+        combined = policy + " " + decisions
+        diversity_policy = policy.split("# 8. builder/reviewer diversity", 1)[1].split("# 9. outcome telemetry", 1)[0]
+
+        self.assertIn("fresh_context: required", diversity_policy)
+        self.assertIn("different_worker_config: preferred", diversity_policy)
+        self.assertIn("different_model_family: conditional", diversity_policy)
+        self.assertRegex(diversity_policy, r"different model family is required for a model.{0,120}`high_assurance`")
+        self.assertRegex(diversity_policy, r"and after repeated review failures or evidence of correlated blind spots")
+        self.assertRegex(diversity_policy, r"outside those conditions it is optional")
+        self.assertRegex(combined, r"model diversity.{0,180}(not authority|no authority|never.{0,80}authority)")
+
+    def test_discovery_challenges_the_question_frontier_before_the_first_round_and_at_closure(self):
+        discovery = normalized("07-spikes-and-discovery.md").lower()
+        decisions = normalized("22-v0.7-decisions.md").lower()
+        combined = discovery + " " + decisions
+
+        self.assertRegex(combined, r"before.{0,100}first.{0,80}(grill )?round")
+        self.assertRegex(combined, r"fresh.{0,120}(frontier critic|challenger)")
+        self.assertRegex(combined, r"independent.{0,120}(question|decision).{0,80}(frontier|set)")
+        self.assertRegex(combined, r"missing.{0,80}mis-?rout.{0,80}(question|decision)")
+        self.assertRegex(combined, r"cold read.{0,200}(missing|absent).{0,120}(mis-?rout|wrong owner)")
+        self.assertRegex(decisions, r"packaged skills.{0,120}follow-on implementation")
+        self.assertEqual([], frontier_preexposure_violations(combined))
+
+        for clause, forbidden in (
+            ("The frontier critic reads the producer's proposed frontier before deriving questions.", True),
+            ("The critic does not derive independently, and reads the producer's frontier first.", True),
+            ("The critic does not derive independently but reads the producer's frontier first.", True),
+            ("The critic does not read the producer's proposed frontier before producing its own.", False),
+            ("The critic must not receive the producer's frontier.", False),
+            ("The fresh reader cannot see the producer's proposed frontier.", False),
+            ("Give the critic the framing, but not the producer's frontier.", False),
+        ):
+            with self.subTest(clause=clause):
+                self.assertEqual(bool(frontier_preexposure_violations(clause)), forbidden)
+
+    def test_program_design_admission_binds_to_the_actual_selected_upstream_path(self):
+        decisions = normalized("22-v0.7-decisions.md").lower()
+        review = normalized("06-review-and-validation.md").lower()
+        workflow = normalized("02-workflow.md").lower()
+        artifacts = normalized("03-artifact-model.md").lower()
+        combined = " ".join((decisions, review, workflow, artifacts))
+
+        self.assertRegex(decisions, r"system design selected.{0,180}exact accepted `30-system-design\.md`")
+        self.assertRegex(
+            decisions,
+            r"system design `not_required`.{0,120}product closure selected.{0,180}exact accepted `20-prd\.md`",
+        )
+        direct = re.search(
+            r"both upstream semantic boundaries `not_required`(.{0,700})",
+            decisions,
+        )
+        self.assertIsNotNone(direct)
+        direct_rule = direct.group(1) if direct else ""
+        self.assertRegex(direct_rule, r"`control\.json\.base_run_sha256`")
+        self.assertRegex(direct_rule, r"`effective_config_hash`")
+        self.assertRegex(direct_rule, r"`effective_config_revision`")
+        self.assertNotIn("accepted `20-prd.md`", direct_rule)
+        self.assertRegex(review, r"applicability test.{0,240}(selected stages|selected path).{0,240}exactly one")
+        self.assertRegex(review, r"must not.{0,160}(manufacture|fabricate).{0,80}approval")
+        self.assertRegex(combined, r"system design (?:is )?selected.{0,260}inside.{0,100}accepted.{0,100}seam")
+        self.assertRegex(
+            combined,
+            r"direct(?:-admission| program design).{0,500}(?:frozen stage 0|stage 0.{0,100}frozen).{0,500}design_blocked",
+        )
+
+        stage_five = workflow.split("## stage 5 — execution compilation", 1)[1].split("## stage 6", 1)[0]
+        self.assertRegex(stage_five, r"applicable.{0,180}(selected path|selected upstream)")
+        self.assertRegex(stage_five, r"accepted product prd.{0,100}when product closure is selected")
+        self.assertRegex(stage_five, r"accepted system design.{0,100}when system design is selected")
+        self.assertRegex(stage_five, r"accepted/frozen stage 0.{0,240}direct")
+        self.assertRegex(artifacts, r"direct(?:-admission| program design).{0,500}ticket.{0,240}(?:omit|not reference).{0,160}(?:prd|system design)")
+
+        ticket_section = read("03-artifact-model.md").split("## `tickets/*.md`", 1)[1]
+        ticket_template = ticket_section.split("```yaml", 1)[1].split("```", 1)[0]
+        self.assertIn("applicable_upstream:", ticket_template)
+        self.assertNotRegex(ticket_template, re.compile(r"^\s+prd:\s+", re.MULTILINE))
+        self.assertNotRegex(ticket_template, re.compile(r"^\s+system_design:\s+", re.MULTILINE))
+
+        stage_nine = workflow.split("## stage 9 — whole-feature validation and review", 1)[1].split("## stage 10", 1)[0]
+        whole_feature_review = review.split("## whole-feature review", 1)[1].split("## human review policy", 1)[0]
+        self.assertIn("applicable accepted upstream sources", stage_nine)
+        self.assertIn("the product contract when selected", stage_nine)
+        self.assertIn("applicable accepted upstream sources", whole_feature_review)
+        self.assertIn("the product contract when selected", whole_feature_review)
 
     def test_resolved_open_questions_no_longer_read_as_open(self):
         questions = normalized("10-decisions-and-open-questions.md")

@@ -262,7 +262,8 @@ authority.
 
 Owns:
 
-> Codebase-local realization inside the exact accepted system seams.
+> Codebase-local realization inside the exact accepted System Design seams when that stage is selected,
+> or inside the accepted/frozen applicable upstream source on a direct path.
 
 Typical details:
 
@@ -280,12 +281,22 @@ src/
 and language-level signatures, internal state mutation, call chains, locking/concurrency/lifetime
 mechanics, migration implementation order, and test seams.
 
-It is provisional while paired drafting pressure-tests System Design. Before acceptance it binds to
-and is rechecked against the exact accepted `30-system-design.md` version/hash, or the exact accepted
-`20-prd.md` version/hash when System Design is `NOT_REQUIRED`. It has a distinct judge and outcome;
-there is no joint design-bundle verdict. An accepted System Design change makes it stale. A finding
-that requires changing a system commitment returns `DESIGN_BLOCKED` upstream rather than being
-approved inside Stage 4.
+It is provisional while paired drafting pressure-tests System Design. Before acceptance, its
+applicability test reads the run's actual selected stages and chooses exactly one upstream binding:
+
+- exact accepted `30-system-design.md` version/hash when System Design is selected;
+- exact accepted `20-prd.md` version/hash when System Design is `NOT_REQUIRED` and product closure
+  is selected;
+- exact accepted/frozen Stage 0 intake and effective configuration when both upstream semantic
+  boundaries are `NOT_REQUIRED`, using `control.json.base_run_sha256`, `effective_config_hash`, and
+  `effective_config_revision`.
+
+The direct-admission branch does not manufacture an approval or require a nonexistent PRD. Tickets
+compiled from direct Program Design cite the accepted Program Design and its frozen Stage 0 binding;
+they omit references to nonexistent PRD or System Design artifacts. Program Design has a distinct
+judge and outcome; there is no joint design-bundle verdict. An accepted System Design change makes it
+stale. A finding that requires changing a system commitment returns `DESIGN_BLOCKED` upstream rather
+than being approved inside Stage 4.
 
 ---
 
@@ -336,9 +347,8 @@ blocked_by:
 risk: medium
 
 references:
-  prd: ../20-prd.md
-  system_design: ../30-system-design.md
-  program_design: ../40-program-design.md
+  applicable_upstream:
+    - <path-to-applicable-accepted-source>
 
 validation:
   - dotnet test --filter JobCancellation
@@ -349,6 +359,11 @@ review:
   design: required
 ---
 ```
+
+The compiler replaces the placeholder with one entry for each applicable accepted source on the
+selected path. It never emits the placeholder itself. Product Closure, System Design, and Program
+Design entries appear only when those boundaries are selected. A direct Program Design path lists
+the accepted Program Design and its frozen Stage 0 binding, not nonexistent upstream artifacts.
 
 Human-readable body:
 

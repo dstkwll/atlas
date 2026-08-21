@@ -291,12 +291,16 @@ authority, and deterministic transition recording, but their state does not belo
 bindings, distinct Stage 3 and Stage 4 outcomes, and staleness propagation. Its implementation adds
 only the minimum state these boundaries require; v0.7 does not introduce a generalized router.
 
-Paired drafting does not merge gates. System Design is accepted first. Program Design is then bound,
-rechecked, and finalized against that accepted candidate, or the accepted PRD when System Design is
-`NOT_REQUIRED`. Program Design requires independent semantic review and never raw `AUTO`; the
-recommended standard authority is `AGENT_REVIEW`, with `HUMAN` available under governance/high
-assurance. A Stage 4 finding that would change a Stage 3 commitment returns `DESIGN_BLOCKED`
-upstream.
+Paired drafting does not merge gates. When selected, System Design is accepted first. Program Design
+is then bound, rechecked, and finalized against the selected path's applicable source: the accepted
+System Design when selected; the accepted PRD when System Design is `NOT_REQUIRED` but product
+closure is selected; or the accepted/frozen Stage 0 intake and effective-configuration hashes when
+both upstream semantic boundaries are `NOT_REQUIRED`. The downstream judge reads the effective
+selected stages, chooses exactly one branch, and never treats `NOT_REQUIRED` as approval. Program
+Design requires independent semantic review and never raw `AUTO`; the recommended standard
+authority is `AGENT_REVIEW`, with
+`HUMAN` available under governance/high assurance. A Stage 4 finding that would change a Stage 3
+commitment returns `DESIGN_BLOCKED` upstream.
 
 ---
 

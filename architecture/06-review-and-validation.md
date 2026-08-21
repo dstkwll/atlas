@@ -182,6 +182,13 @@ Observed in a real run of a non-canonical skill; recorded as L-012. The mechanis
 
 ## Discovery product-closure boundary
 
+Discovery question formation has its own bounded producer-side challenge before the first grill
+round. A fresh, read-only frontier critic independently derives candidate questions and routes from
+the effective intake and initial framing, then the producer dispositions differences against its
+persisted frontier. This improves the inputs to deliberation; it is not an acceptance review and has
+no gate authority. The final producer cold read repeats the missing-decision and wrong-owner-route
+check against the complete decision record and PRD before `gate_ready` becomes true.
+
 The discovery exit boundary is product closure. Its judge is read-only and returns `PASS` or
 `BLOCKED`. A blocked result reports all material gaps found in that pass; each gap names the
 affected artifact and the exact stage and action that can resume it. `BLOCKED` returns to the
@@ -254,10 +261,20 @@ semantic questions. It never uses raw `AUTO`. The recommended standard authority
 `AGENT_REVIEW`; policy may select `HUMAN`, including for high assurance.
 
 Paired drafting may produce both design candidates side-by-side, but the Program Design result is
-provisional until System Design is accepted. Its boundary then verifies an exact binding to the
-accepted `30-system-design.md` version/hash, or to the accepted `20-prd.md` when System Design is
-legitimately `NOT_REQUIRED`, and rechecks the candidate against that source. Any accepted System
-Design change makes the Program Design candidate and prior result stale.
+provisional until selected upstream acceptance completes. Its boundary carries an applicability test:
+read the effective selected stages, treat selected `discovery` as selection of its product-closure
+boundary, choose exactly one of the following branches, and verify the candidate against that exact
+source:
+
+1. System Design selected → exact accepted `30-system-design.md` version/hash.
+2. System Design `NOT_REQUIRED`; product closure selected → exact accepted `20-prd.md` version/hash.
+3. Both upstream semantic boundaries `NOT_REQUIRED` → exact accepted/frozen Stage 0 intake and
+   effective configuration, bound by `control.json.base_run_sha256`, `effective_config_hash`, and
+   `effective_config_revision`.
+
+The reviewer must not manufacture or fabricate approval for an omitted boundary, require a
+nonexistent artifact, or accept more than one branch. Any accepted System Design change makes the
+Program Design candidate and prior result stale.
 
 The Stage 4 judge evaluates files/packages/types, language signatures, internal state mutation and
 call graph, locking/concurrency/lifetime mechanics, migration implementation order, and test seams.
@@ -272,9 +289,11 @@ verdict.
 
 Ticket-level correctness is insufficient.
 
-After all tickets:
+After all tickets, review against the applicable accepted upstream sources: the product contract when
+selected, System Design when selected, Program Design when selected, and the frozen Stage 0 binding
+on a direct path.
 
-1. full product-contract compliance
+1. full applicable-contract compliance
 2. architecture drift across combined change
 3. program-design drift
 4. cross-ticket interactions

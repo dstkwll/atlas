@@ -416,9 +416,12 @@ without another party adjusting and without changing an accepted guarantee belon
 Design. Composite decisions split: the invariant is upstream; its realization is downstream.
 
 The two artifacts may be drafted side-by-side to pressure-test interfaces, but their acceptance is
-sequential. System Design is accepted first. Program Design remains provisional until it is bound,
-rechecked, and finalized against that exact accepted System Design candidate, or against the exact
-accepted PRD when System Design is legitimately `NOT_REQUIRED`.
+sequential when both stages are selected: System Design is accepted first. Program Design remains
+provisional until it is bound, rechecked, and finalized against the exact upstream source selected
+by the run: accepted System Design when selected; the accepted PRD when System Design is
+`NOT_REQUIRED` but product closure is selected; or the exact frozen Stage 0 effective intake when
+both upstream semantic boundaries are `NOT_REQUIRED`. An omitted boundary never manufactures an
+approval or a nonexistent artifact.
 
 ## 4. Downstream stages may discover problems, but cannot silently redesign upstream decisions
 
@@ -749,7 +752,10 @@ Question:
 
 > What shape should the implementation take inside the codebase?
 
-Stage 4 owns **codebase-local realization** inside accepted seams:
+Stage 4 owns **codebase-local realization** without changing system-observable commitments. When
+System Design is selected, this means realization inside its exact accepted seams. On a direct
+Program Design path, the accepted/frozen Stage 0 intake and effective run configuration supply the
+applicable upstream constraints:
 
 - file/package/module placement
 - new vs modified files
@@ -775,11 +781,18 @@ can pressure-test interfaces. The Program Design draft is provisional: it may re
 findings upstream, but it cannot accept or silently rewrite Stage 3.
 
 There are two distinct judges and outcomes, never one bundle verdict. The process must accept
-system design first. It then binds, rechecks, and finalizes program design against the exact accepted
-system design candidate in `30-system-design.md`, or the exact accepted `20-prd.md` when Stage 3 is
-legitimately `NOT_REQUIRED`. Any accepted Stage 3 change makes Stage 4 stale. If Stage 4 discovers
-that a system commitment must change, it returns `DESIGN_BLOCKED` upstream rather than escalating
-merely to a human inside Stage 4.
+System Design first when that stage is selected. Program Design then binds, rechecks, and finalizes
+against the source required by the actual selected path:
+
+- selected System Design → exact accepted `30-system-design.md` candidate;
+- System Design `NOT_REQUIRED` with selected product closure → exact accepted `20-prd.md` candidate;
+- both upstream semantic boundaries `NOT_REQUIRED` → exact accepted/frozen Stage 0 intake and
+  effective run configuration that authorized direct Program Design admission.
+
+The last branch binds `control.json.base_run_sha256`, `effective_config_hash`, and
+`effective_config_revision`; it does not manufacture an upstream artifact or approval. Any accepted
+Stage 3 change makes Stage 4 stale. If Stage 4 discovers that a system commitment must change, it
+returns `DESIGN_BLOCKED` upstream rather than escalating merely to a human inside Stage 4.
 
 Program Design always has semantic questions and therefore never uses raw `AUTO`. Its recommended
 standard authority is `AGENT_REVIEW`; `HUMAN` remains available under governance or high assurance.
@@ -806,11 +819,16 @@ Question:
 
 This stage should be treated as a **compiler**, not another open-ended design step.
 
-Inputs:
+Inputs are the applicable accepted sources for the actual selected path:
 
-- accepted product PRD
-- approved system design when present
-- approved program design when present
+- exact accepted product PRD when product closure is selected;
+- exact accepted System Design when System Design is selected;
+- exact accepted Program Design when Program Design is selected;
+- accepted/frozen Stage 0 intake and effective run configuration for a direct admission path across
+  omitted upstream semantic boundaries.
+
+An omitted boundary contributes neither an artifact nor an approval. Compilation preserves the
+accepted bindings carried by the selected path rather than requiring every possible upstream file.
 
 Outputs:
 
@@ -899,12 +917,14 @@ Parallel execution may be introduced later when tickets are truly independent an
 
 ## Stage 9 — Whole-feature validation and review
 
-After all tickets are complete:
+After all tickets are complete, review against the applicable accepted upstream sources: the product
+contract when selected, System Design when selected, Program Design when selected, and the frozen
+Stage 0 binding on a direct path. Then run:
 
 - full build/test/lint suite
 - integration/system tests
 - architecture/scope checks
-- whole-branch product-contract compliance review
+- whole-branch applicable-contract compliance review
 - whole-branch architecture/program-design drift review
 - maintainability/standards review
 - conditional ops/security/migration/UI review
@@ -1213,7 +1233,8 @@ authority.
 
 Owns:
 
-> Codebase-local realization inside the exact accepted system seams.
+> Codebase-local realization inside the exact accepted System Design seams when that stage is selected,
+> or inside the accepted/frozen applicable upstream source on a direct path.
 
 Typical details:
 
@@ -1231,12 +1252,22 @@ src/
 and language-level signatures, internal state mutation, call chains, locking/concurrency/lifetime
 mechanics, migration implementation order, and test seams.
 
-It is provisional while paired drafting pressure-tests System Design. Before acceptance it binds to
-and is rechecked against the exact accepted `30-system-design.md` version/hash, or the exact accepted
-`20-prd.md` version/hash when System Design is `NOT_REQUIRED`. It has a distinct judge and outcome;
-there is no joint design-bundle verdict. An accepted System Design change makes it stale. A finding
-that requires changing a system commitment returns `DESIGN_BLOCKED` upstream rather than being
-approved inside Stage 4.
+It is provisional while paired drafting pressure-tests System Design. Before acceptance, its
+applicability test reads the run's actual selected stages and chooses exactly one upstream binding:
+
+- exact accepted `30-system-design.md` version/hash when System Design is selected;
+- exact accepted `20-prd.md` version/hash when System Design is `NOT_REQUIRED` and product closure
+  is selected;
+- exact accepted/frozen Stage 0 intake and effective configuration when both upstream semantic
+  boundaries are `NOT_REQUIRED`, using `control.json.base_run_sha256`, `effective_config_hash`, and
+  `effective_config_revision`.
+
+The direct-admission branch does not manufacture an approval or require a nonexistent PRD. Tickets
+compiled from direct Program Design cite the accepted Program Design and its frozen Stage 0 binding;
+they omit references to nonexistent PRD or System Design artifacts. Program Design has a distinct
+judge and outcome; there is no joint design-bundle verdict. An accepted System Design change makes it
+stale. A finding that requires changing a system commitment returns `DESIGN_BLOCKED` upstream rather
+than being approved inside Stage 4.
 
 ---
 
@@ -1287,9 +1318,8 @@ blocked_by:
 risk: medium
 
 references:
-  prd: ../20-prd.md
-  system_design: ../30-system-design.md
-  program_design: ../40-program-design.md
+  applicable_upstream:
+    - <path-to-applicable-accepted-source>
 
 validation:
   - dotnet test --filter JobCancellation
@@ -1300,6 +1330,11 @@ review:
   design: required
 ---
 ```
+
+The compiler replaces the placeholder with one entry for each applicable accepted source on the
+selected path. It never emits the placeholder itself. Product Closure, System Design, and Program
+Design entries appear only when those boundaries are selected. A direct Program Design path lists
+the accepted Program Design and its frozen Stage 0 binding, not nonexistent upstream artifacts.
 
 Human-readable body:
 
@@ -1677,12 +1712,16 @@ authority, and deterministic transition recording, but their state does not belo
 bindings, distinct Stage 3 and Stage 4 outcomes, and staleness propagation. Its implementation adds
 only the minimum state these boundaries require; v0.7 does not introduce a generalized router.
 
-Paired drafting does not merge gates. System Design is accepted first. Program Design is then bound,
-rechecked, and finalized against that accepted candidate, or the accepted PRD when System Design is
-`NOT_REQUIRED`. Program Design requires independent semantic review and never raw `AUTO`; the
-recommended standard authority is `AGENT_REVIEW`, with `HUMAN` available under governance/high
-assurance. A Stage 4 finding that would change a Stage 3 commitment returns `DESIGN_BLOCKED`
-upstream.
+Paired drafting does not merge gates. When selected, System Design is accepted first. Program Design
+is then bound, rechecked, and finalized against the selected path's applicable source: the accepted
+System Design when selected; the accepted PRD when System Design is `NOT_REQUIRED` but product
+closure is selected; or the accepted/frozen Stage 0 intake and effective-configuration hashes when
+both upstream semantic boundaries are `NOT_REQUIRED`. The downstream judge reads the effective
+selected stages, chooses exactly one branch, and never treats `NOT_REQUIRED` as approval. Program
+Design requires independent semantic review and never raw `AUTO`; the recommended standard
+authority is `AGENT_REVIEW`, with
+`HUMAN` available under governance/high assurance. A Stage 4 finding that would change a Stage 3
+commitment returns `DESIGN_BLOCKED` upstream.
 
 ---
 
@@ -2149,6 +2188,13 @@ Observed in a real run of a non-canonical skill; recorded as L-012. The mechanis
 
 ## Discovery product-closure boundary
 
+Discovery question formation has its own bounded producer-side challenge before the first grill
+round. A fresh, read-only frontier critic independently derives candidate questions and routes from
+the effective intake and initial framing, then the producer dispositions differences against its
+persisted frontier. This improves the inputs to deliberation; it is not an acceptance review and has
+no gate authority. The final producer cold read repeats the missing-decision and wrong-owner-route
+check against the complete decision record and PRD before `gate_ready` becomes true.
+
 The discovery exit boundary is product closure. Its judge is read-only and returns `PASS` or
 `BLOCKED`. A blocked result reports all material gaps found in that pass; each gap names the
 affected artifact and the exact stage and action that can resume it. `BLOCKED` returns to the
@@ -2221,10 +2267,20 @@ semantic questions. It never uses raw `AUTO`. The recommended standard authority
 `AGENT_REVIEW`; policy may select `HUMAN`, including for high assurance.
 
 Paired drafting may produce both design candidates side-by-side, but the Program Design result is
-provisional until System Design is accepted. Its boundary then verifies an exact binding to the
-accepted `30-system-design.md` version/hash, or to the accepted `20-prd.md` when System Design is
-legitimately `NOT_REQUIRED`, and rechecks the candidate against that source. Any accepted System
-Design change makes the Program Design candidate and prior result stale.
+provisional until selected upstream acceptance completes. Its boundary carries an applicability test:
+read the effective selected stages, treat selected `discovery` as selection of its product-closure
+boundary, choose exactly one of the following branches, and verify the candidate against that exact
+source:
+
+1. System Design selected → exact accepted `30-system-design.md` version/hash.
+2. System Design `NOT_REQUIRED`; product closure selected → exact accepted `20-prd.md` version/hash.
+3. Both upstream semantic boundaries `NOT_REQUIRED` → exact accepted/frozen Stage 0 intake and
+   effective configuration, bound by `control.json.base_run_sha256`, `effective_config_hash`, and
+   `effective_config_revision`.
+
+The reviewer must not manufacture or fabricate approval for an omitted boundary, require a
+nonexistent artifact, or accept more than one branch. Any accepted System Design change makes the
+Program Design candidate and prior result stale.
 
 The Stage 4 judge evaluates files/packages/types, language signatures, internal state mutation and
 call graph, locking/concurrency/lifetime mechanics, migration implementation order, and test seams.
@@ -2239,9 +2295,11 @@ verdict.
 
 Ticket-level correctness is insufficient.
 
-After all tickets:
+After all tickets, review against the applicable accepted upstream sources: the product contract when
+selected, System Design when selected, Program Design when selected, and the frozen Stage 0 binding
+on a direct path.
 
-1. full product-contract compliance
+1. full applicable-contract compliance
 2. architecture drift across combined change
 3. program-design drift
 4. cross-ticket interactions
@@ -2315,6 +2373,23 @@ OPEN QUESTION
 ```
 
 This avoids asking humans factual questions agents can answer and avoids “researching” questions that require an empirical experiment.
+
+---
+
+## Challenge the frontier, not only its answers
+
+Before the first grill round, the producer persists its complete initial frontier and one fresh
+frontier critic independently derives a candidate question set and route for each question from the
+effective intake, problem test, announcement test, and available evidence. The critic does not read
+the producer's proposed frontier before producing its own. The producer compares the two sets and
+records every missing or misrouted question plus its disposition before asking the user anything.
+The critic is read-only: it proposes questions and routes, never answers them, repairs the artifacts,
+or accepts the stage.
+
+This is one bounded challenge per Discovery run, not a council for every question. At closure, the
+existing fresh cold read independently checks again for any absent decision or wrong owner route
+revealed by the now-complete decision record and PRD. The later product-closure reviewer remains a
+separate acceptance role; neither challenge has gate authority.
 
 ---
 
@@ -5400,6 +5475,50 @@ co-design tiers.
 
 ---
 
+## L-017 — A downstream binding follows the selected path, not a preferred upstream artifact
+
+### Contradiction found
+
+v0.7 initially required Program Design to bind accepted System Design, or an accepted PRD when
+System Design was `NOT_REQUIRED`. The existing stage-admission contract also permits Program Design
+to be the earliest selected producer when both upstream semantic boundaries are `NOT_REQUIRED`.
+That valid path has neither accepted artifact, so the new binding rule accidentally made an older
+admission path impossible.
+
+### Standing result
+
+A downstream reviewer and execution compiler carry the applicability test for alternative upstream
+paths. Program Design binds accepted System Design when selected, accepted product closure when that
+is the selected upstream semantic boundary, or the exact accepted/frozen Stage 0 effective intake
+when both are omitted. Compilation and downstream review consume only the applicable accepted
+sources and never restore a requirement for an omitted PRD or System Design. `NOT_REQUIRED` still
+means absence, never approval; no runtime controller is implemented by this architecture correction.
+
+---
+
+## L-018 — The model router already existed; Discovery's question frontier was the thin seam
+
+### Reframe
+
+The initial request sounded like two new subsystems: model-tier routing for skills and model sparring
+for Discovery. Repository-grounded review showed the first already existed as role × task-shape roster
+resolution. Binding a whole skill to one model tier would have coupled reusable procedure to worker
+identity and duplicated the existing precedence chain.
+
+The real gap was earlier: independent review challenged answers and completed artifacts, but nothing
+independently challenged whether Discovery's initial question frontier was complete and correctly
+routed before user deliberation began.
+
+### Standing result
+
+Staff model invocations through role × task shape, with exact workers in configuration and model
+diversity treated as conditional staffing rather than authority. Add one bounded, blind frontier
+critic before the first grill round and repeat completeness/wrong-owner review in the existing final
+cold read. Do not create a second router, a council per question, or runtime machinery in this
+architecture-only change.
+
+---
+
 # 17 — Agent Roles, Rosters, Model Policy, and Outcome Telemetry
 
 **Added in:** v0.3  
@@ -5444,6 +5563,7 @@ A **role package** defines behavior and authority independent of whichever model
 Example roles:
 
 - `discovery_researcher`
+- `discovery_frontier_critic`
 - `spike_worker`
 - `system_design_critic`
 - `program_design_critic`
@@ -5483,7 +5603,14 @@ roles:
     writes: []
 ```
 
-The role package should not contain model-specific prompting quirks unless a real need later earns that mechanism.
+A role package should not contain model-specific prompting quirks unless a real need later earns that mechanism.
+
+Every model invocation is staffed by its **role and task shape**, never by a skill name or skill
+identity. A skill may orchestrate multiple model invocations with multiple task shapes—for example,
+cheap factual lookup, frontier synthesis, and an independent semantic review—and the roster may staff
+each differently without coupling the reusable procedure to one worker tier. An in-skill action only
+affects staffing when it is exposed as a stable task shape; arbitrary action-level routing would
+explode the taxonomy and is not part of V1.
 
 ---
 
@@ -5597,6 +5724,7 @@ rosters:
   default:
     defaults:
       discovery_researcher: frontier_reasoner
+      discovery_frontier_critic: frontier_reasoner
       spike_worker: frontier_coder
       builder: standard_coder
       contract_reviewer: frontier_reasoner
@@ -5658,20 +5786,28 @@ No automatic model promotion is required for the factory to function.
 
 # 8. Builder/reviewer diversity
 
-Independence is primarily about fresh context and independent evaluation, not vendor diversity for its own sake.
+Independence begins with fresh context and independent evaluation; model diversity is a staffing
+constraint, not authority.
 
-Possible future policy:
+V1 policy:
 
 ```yaml
 review_independence:
   fresh_context: required
   different_worker_config: preferred
-  different_model_family: optional
+  different_model_family: conditional
 ```
 
-Do not force different vendors/models unless evidence shows correlated blind spots justify the added cost/complexity.
+A different worker configuration is preferred where available, but ordinary review remains valid
+when a fresh reviewer uses the same strong model. A different model family is required for a model
+critic or reviewer under `high_assurance`, and after repeated review failures or evidence of
+correlated blind spots. Outside those conditions it is optional: do not multiply model calls or
+force vendor diversity for its own sake.
 
-A fresh reviewer using the same strong model can still provide meaningful independent evaluation because it does not inherit the builder's conversational rationalization.
+The family requirement changes staffing only. Model diversity grants no authority, never resolves a
+gate, and never substitutes for configured human acceptance. If the required family separation
+cannot be established, record that the diverse model pass is unavailable rather than claiming it
+occurred; governance decides the legal next step.
 
 ---
 
@@ -5950,7 +6086,7 @@ Explicitly defer:
 - autonomous model bakeoffs;
 - sophisticated evidence decay;
 - model-specific steering lifecycle;
-- forced cross-model reviewer diversity;
+- universal cross-model reviewer diversity outside the named conditional triggers;
 - a dedicated model-benchmarking platform.
 
 ---
@@ -6575,9 +6711,12 @@ Stage 3 owns system-observable commitments and choices requiring coordinated cha
 responsibilities, system seams, authoritative data owner, cross-module/external contracts, target
 schema/protocol, end-to-end lifecycle/failure/recovery, compatibility, and trust/security/operations.
 
-Stage 4 owns codebase-local realization inside accepted seams: files/packages/types, language
-signatures, internal state mutation, call graph, locking/concurrency/lifetime mechanics, migration
-implementation order, and test seams.
+Stage 4 owns codebase-local realization: files/packages/types, language signatures, internal state
+mutation, call graph, locking/concurrency/lifetime mechanics, migration implementation order, and
+test seams. When System Design is selected, those choices stay inside its exact accepted seams. A
+direct Program Design path stays inside the accepted/frozen Stage 0 intake and effective run
+configuration. If local realization would require a new system-observable commitment, it returns
+`DESIGN_BLOCKED` rather than inventing that commitment merely because no Stage 3 artifact exists.
 
 The decision test is:
 
@@ -6591,15 +6730,18 @@ recorded in Stage 3 and its realization in Stage 4.
 
 ## D-074 — System Design and Program Design pair for drafting but accept sequentially
 
+**Refined by:** D-079, which makes the Program Design binding conditional on the actual selected
+upstream path and preserves direct admission when both upstream semantic boundaries are omitted.
+
 `30-system-design.md` and `40-program-design.md` may be drafted side-by-side to pressure-test
 interfaces. The Program Design draft is provisional and may report codebase-feasibility findings
 upstream, but it cannot accept or silently rewrite Stage 3.
 
-System Design is accepted first. Program Design is then bound, rechecked, and finalized against the
-exact accepted `30-system-design.md` candidate, or against the exact accepted `20-prd.md` when
-System Design is legitimately `NOT_REQUIRED`. Any accepted Stage 3 change makes Stage 4 stale.
-Stage 4 discovery of a required system-commitment change returns `DESIGN_BLOCKED` upstream rather
-than escalating merely to a human inside Stage 4.
+When selected, System Design is accepted first. Program Design is then bound, rechecked, and
+finalized against the exact source required by the actual selected upstream path, as specified by
+D-079. Any accepted Stage 3 change makes Stage 4 stale. Stage 4 discovery of a required
+system-commitment change returns `DESIGN_BLOCKED` upstream rather than escalating merely to a human
+inside Stage 4.
 
 The stages have two independent judges and outcomes. There is no joint design-bundle verdict.
 Program Design always has semantic questions, so it never uses raw `AUTO`; the recommended standard
@@ -6640,6 +6782,64 @@ boundaries require.
 
 v0.7 does not introduce a generalized router, merge the two design outcomes, or move execution
 runtime state into planning control.
+
+---
+
+## D-077 — Model staffing attaches to role × task shape, never to skill identity
+
+The existing roster is the model-routing architecture. Every model invocation resolves a worker
+configuration from its role and task shape under the documented precedence chain; exact provider,
+model, harness, access route, and reasoning settings remain configuration. A skill may orchestrate
+multiple model invocations with multiple task shapes and therefore does not adhere to one model tier.
+Arbitrary in-skill actions are not routing keys unless repeated evidence promotes one into the small,
+stable task-shape taxonomy.
+
+This decision adds no second router, autonomous model promotion, or model-specific skill variants.
+Staffing remains inside workflow, governance, review, and human-authority contracts rather than
+altering them. Fresh context is required for independent model review; a different worker
+configuration is preferred. A different model family is required only under `high_assurance` or
+after repeated review failures or evidence of correlated blind spots, and that diversity never
+creates authority or replaces an acceptance gate.
+
+---
+
+## D-078 — Discovery challenges its question frontier before deliberation and at closure
+
+Before the first grill round, Discovery persists its initial frontier and obtains one fresh,
+read-only frontier critic. Given the effective intake, problem test, announcement test, and available
+evidence—but not the producer's frontier—the critic independently derives a candidate question set
+and route for each question. The producer records every missing or misrouted question and its
+disposition before asking the user anything.
+
+The existing final cold read also asks whether any decision required by the goal is absent or routed
+to the wrong answer owner. These are producer-side completeness challenges, not approval: the critic
+never answers questions, edits artifacts, or resolves a gate, and the independent product-closure
+review remains mandatory. One bounded initial challenge is required per Discovery run; v0.7 does not
+introduce a council for every question or universal cross-model-family diversity. The conditional
+family-separation policy in D-077 still applies under `high_assurance` or after repeated review
+failures/correlated blind spots. This PR ratifies the procedure contract only; packaged skills,
+controller enforcement, and model-dispatch runtime remain follow-on implementation.
+
+---
+
+## D-079 — Program Design binds to the actual selected upstream path
+
+Program Design's boundary and reviewer apply an explicit applicability test over the effective
+selected stages and choose exactly one binding:
+
+1. System Design selected → exact accepted `30-system-design.md` version/hash.
+2. System Design `NOT_REQUIRED`; product closure selected → exact accepted `20-prd.md`
+   version/hash.
+3. Both upstream semantic boundaries `NOT_REQUIRED` → exact accepted/frozen Stage 0 intake and
+   effective run configuration that authorized direct Program Design admission, bound by
+   `control.json.base_run_sha256`, `effective_config_hash`, and `effective_config_revision`.
+
+The direct-admission path neither makes Discovery mandatory nor manufactures an approval or
+artifact for an omitted boundary. Execution compilation and downstream review carry the same
+applicability rule: a direct path consumes the accepted Program Design plus its frozen Stage 0
+binding, not a nonexistent PRD or System Design. The reliance-horizon ownership rule, paired
+drafting, separate judges, sequential acceptance when System Design is selected, and Program
+Design's independent semantic review remain unchanged.
 
 ---
 

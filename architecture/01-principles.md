@@ -70,9 +70,12 @@ without another party adjusting and without changing an accepted guarantee belon
 Design. Composite decisions split: the invariant is upstream; its realization is downstream.
 
 The two artifacts may be drafted side-by-side to pressure-test interfaces, but their acceptance is
-sequential. System Design is accepted first. Program Design remains provisional until it is bound,
-rechecked, and finalized against that exact accepted System Design candidate, or against the exact
-accepted PRD when System Design is legitimately `NOT_REQUIRED`.
+sequential when both stages are selected: System Design is accepted first. Program Design remains
+provisional until it is bound, rechecked, and finalized against the exact upstream source selected
+by the run: accepted System Design when selected; the accepted PRD when System Design is
+`NOT_REQUIRED` but product closure is selected; or the exact frozen Stage 0 effective intake when
+both upstream semantic boundaries are `NOT_REQUIRED`. An omitted boundary never manufactures an
+approval or a nonexistent artifact.
 
 ## 4. Downstream stages may discover problems, but cannot silently redesign upstream decisions
 

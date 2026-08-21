@@ -207,7 +207,10 @@ Question:
 
 > What shape should the implementation take inside the codebase?
 
-Stage 4 owns **codebase-local realization** inside accepted seams:
+Stage 4 owns **codebase-local realization** without changing system-observable commitments. When
+System Design is selected, this means realization inside its exact accepted seams. On a direct
+Program Design path, the accepted/frozen Stage 0 intake and effective run configuration supply the
+applicable upstream constraints:
 
 - file/package/module placement
 - new vs modified files
@@ -233,11 +236,18 @@ can pressure-test interfaces. The Program Design draft is provisional: it may re
 findings upstream, but it cannot accept or silently rewrite Stage 3.
 
 There are two distinct judges and outcomes, never one bundle verdict. The process must accept
-system design first. It then binds, rechecks, and finalizes program design against the exact accepted
-system design candidate in `30-system-design.md`, or the exact accepted `20-prd.md` when Stage 3 is
-legitimately `NOT_REQUIRED`. Any accepted Stage 3 change makes Stage 4 stale. If Stage 4 discovers
-that a system commitment must change, it returns `DESIGN_BLOCKED` upstream rather than escalating
-merely to a human inside Stage 4.
+System Design first when that stage is selected. Program Design then binds, rechecks, and finalizes
+against the source required by the actual selected path:
+
+- selected System Design → exact accepted `30-system-design.md` candidate;
+- System Design `NOT_REQUIRED` with selected product closure → exact accepted `20-prd.md` candidate;
+- both upstream semantic boundaries `NOT_REQUIRED` → exact accepted/frozen Stage 0 intake and
+  effective run configuration that authorized direct Program Design admission.
+
+The last branch binds `control.json.base_run_sha256`, `effective_config_hash`, and
+`effective_config_revision`; it does not manufacture an upstream artifact or approval. Any accepted
+Stage 3 change makes Stage 4 stale. If Stage 4 discovers that a system commitment must change, it
+returns `DESIGN_BLOCKED` upstream rather than escalating merely to a human inside Stage 4.
 
 Program Design always has semantic questions and therefore never uses raw `AUTO`. Its recommended
 standard authority is `AGENT_REVIEW`; `HUMAN` remains available under governance or high assurance.
@@ -264,11 +274,16 @@ Question:
 
 This stage should be treated as a **compiler**, not another open-ended design step.
 
-Inputs:
+Inputs are the applicable accepted sources for the actual selected path:
 
-- accepted product PRD
-- approved system design when present
-- approved program design when present
+- exact accepted product PRD when product closure is selected;
+- exact accepted System Design when System Design is selected;
+- exact accepted Program Design when Program Design is selected;
+- accepted/frozen Stage 0 intake and effective run configuration for a direct admission path across
+  omitted upstream semantic boundaries.
+
+An omitted boundary contributes neither an artifact nor an approval. Compilation preserves the
+accepted bindings carried by the selected path rather than requiring every possible upstream file.
 
 Outputs:
 
@@ -357,12 +372,14 @@ Parallel execution may be introduced later when tickets are truly independent an
 
 ## Stage 9 — Whole-feature validation and review
 
-After all tickets are complete:
+After all tickets are complete, review against the applicable accepted upstream sources: the product
+contract when selected, System Design when selected, Program Design when selected, and the frozen
+Stage 0 binding on a direct path. Then run:
 
 - full build/test/lint suite
 - integration/system tests
 - architecture/scope checks
-- whole-branch product-contract compliance review
+- whole-branch applicable-contract compliance review
 - whole-branch architecture/program-design drift review
 - maintainability/standards review
 - conditional ops/security/migration/UI review
