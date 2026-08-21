@@ -1,6 +1,6 @@
 # atlas plugin
 
-First-party Stage 0–3 skills implementing the Atlas architecture through the agent-led/co-design + HUMAN System Design tracer. `architecture/` remains authoritative; report conflicts rather than silently reconciling them. The neighboring `incubator` plugin is not part of this workflow and intentionally retains its own independent example transition material.
+First-party Stage 0–3 skills implementing the Atlas architecture through exact System Design participation and HUMAN/AGENT_REVIEW/HUMAN_IF_CHANGED authority paths. `architecture/` remains authoritative; report conflicts rather than silently reconciling them. The neighboring `incubator` plugin is not part of this workflow and intentionally retains its own independent example transition material.
 
 ## Implemented flow
 
@@ -12,7 +12,7 @@ start-run freezes run.yaml and initializes control.json
   → system-design reads frozen agent_led/co_design participation and produces exact 30-system-design.md readiness
   → co_design writes through render_system_design.py and requires current non-authoritative 30-system-design.html
   → read-only System Design check
-  → workflow-internal control-planning obtains explicit HUMAN approval
+  → workflow-internal control-planning applies HUMAN or assembles exact classifier/reviewer evidence
   → atlas_planning.py records one exact acceptance and advances to the next selected boundary
   → unsupported downstream stages remain fail-closed
 ```
@@ -25,7 +25,7 @@ start-run freezes run.yaml and initializes control.json
 | `spike` | Produce bounded discovery evidence. |
 | `control-run` | Run the read-only product-closure check, consume authority, and invoke one deterministic transition. |
 | `system-design` | Produce the exact agent-led or co-design Stage 3 candidate/board, record readiness, and continue the internal control handoff. |
-| `control-planning` | Check the current System Design candidate, obtain explicit HUMAN approval, and invoke one deterministic planning transition. |
+| `control-planning` | Check System Design, consume the frozen authority matrix, assemble exact evidence when required, and invoke one deterministic planning transition. |
 
 Invoke explicitly as `atlas:<skill>`.
 
@@ -37,7 +37,7 @@ Discovery keeps provenance in `10-decisions.md` and stages each complete PRD rep
 
 Current accepted Stage 0–2 provenance is the stage binding under `control.json.acceptances`, containing candidate version/hash, authority, date, and review reference/hash when applicable. Stage 0–2 creates no historical acceptance ledger, `approved/` copies, receipt files, transaction journal, replay log, amendment ledger, event stream, or hash chain.
 
-Separate feature-root `planning-control.json` is the authoritative mutable Stage 3–5 planning snapshot. Slice 2A preserves Slice 1's agent-led + HUMAN path and adds co-design + HUMAN. `atlas_planning.py check --stage system_design` is read-only and mechanical; for `co_design` it additionally verifies current `30-system-design.html` source/hash/version metadata and all stable board views, and accepted co-design state fails closed if that mandatory projection later becomes missing or stale. `advance` holds `.atlas-planning.lock`, revalidates the frozen Stage 0 anchor and candidate/source bytes, reruns the same check at the write boundary, and atomically replaces only `planning-control.json`. Acceptance leaves canonical `30-system-design.md` at `status: draft`, records its exact candidate/source bindings with empty repository baselines and null review references, never hashes or accepts the non-authoritative HTML independently, and never edits `run.yaml` or `control.json`.
+Separate feature-root `planning-control.json` is the authoritative mutable Stage 3–5 planning snapshot. Slice 2B preserves agent-led/co-design and direct HUMAN behavior, and adds exact System Design AGENT_REVIEW and HUMAN_IF_CHANGED evidence paths. `atlas_planning.py check --stage system_design` stays read-only and mechanical; co-design still requires a current exact deterministic board. `advance` accepts parser-optional `--approval human` and `--review reviews/system-design-v1.json`, then enforces the frozen authority matrix. The duplicate-safe exact envelope binds immutable `run.yaml.repos`, current candidate, policy, materiality, and semantic review; it is evidence, not authority. Under the planning lock, the controller rereads planning, candidate, source, and envelope immediately before atomic replacement. Accepted evidence authorities remain loadable only while those exact current bytes and bindings remain valid. Acceptance leaves candidate/board/run/control/evidence unchanged, stores only the review ref/hash when required, and never accepts HTML independently.
 
 Repository/baseline corrections use ordered `amendments/NNN-*.md`. Control stores only accepted amendment count and resulting effective configuration hash.
 
@@ -52,11 +52,11 @@ The deterministic controller/renderer require Python 3.9+ and the pinned package
 
 ## Current boundary
 
-Slice 2A supports `system_design_participation: agent_led` or `co_design` only with `run.yaml.gates.system_design.authority: HUMAN`, using either the exact accepted Product Closure binding or exact frozen direct Stage 0 binding. Agent-led behavior remains the Slice 1 path. Co-design works one labelled seam/decision at a time and uses `render_system_design.py write --draft .30-system-design.next.md` as the canonical paired Markdown/HTML write path; pre-install failures preserve the prior pair and an interrupted install leaves a mismatch that blocks checking. The HTML is deterministic, self-contained, metadata-bound, and non-authoritative.
+Slice 2B supports frozen `agent_led` or `co_design` participation independently of exact `HUMAN`, `AGENT_REVIEW`, or canonical `HUMAN_IF_CHANGED` policy. Direct HUMAN uses explicit approval and no envelope. Direct AGENT_REVIEW requires a fresh seven-dimension PASS envelope. HUMAN_IF_CHANGED uses the same exact D-073 dimensions: material/unavailable/explained classifier failure maps to HUMAN with review evidence plus explicit approval, while seven NOT_MATERIAL rows map to a distinct fresh semantic reviewer and AGENT_REVIEW. No configured path falls back. The producer still writes only candidate/board/readiness and hands internally to control.
 
-The user invokes `atlas:system-design` once; that producer contract requires the exact internal handoff to `atlas:control-planning`, which obtains explicit approval of the exact Markdown/hash/source and calls the deterministic transition without a second user command. This repository statically verifies the handoff contract but has not executed installed-host skill-to-skill chaining in Copilot/Codex; Slice 5 owns that proof. If the host cannot perform the named handoff, the adapter becomes a shared internal procedure rather than another manual user command.
+The user invokes `atlas:system-design` once; that producer contract requires the exact internal handoff to `atlas:control-planning`, which consumes the exact configured authority/evidence for the Markdown/hash/source and calls the deterministic transition without a second user command. This repository statically verifies the handoff contract but has not executed installed-host skill-to-skill chaining in Copilot/Codex; Slice 5 owns that proof. If the host cannot perform the named handoff, the adapter becomes a shared internal procedure rather than another manual user command.
 
-`HUMAN_IF_CHANGED`, `AGENT_REVIEW`, review/classification envelopes, System Design rejection/reopen/staleness, Program Design, ticket compilation/acceptance, and execution remain intentionally unimplemented and fail closed for Slice 2B or later. `atlas_planning.py` still accepts only `initialize`, `check --stage system_design`, and `advance --stage system_design --approval human --date YYYY-MM-DD`; it does not route or own Stage 6+ behavior. The Stage 0–2 controller remains separate, never widens `control.json`, and never calls incubator workers or creates orchestration machinery.
+System Design rejection/reopen/staleness, Program Design, ticket compilation/acceptance, and execution remain intentionally unimplemented and fail closed for later slices. `atlas_planning.py` still accepts only `initialize`, `check --stage system_design`, and `advance --stage system_design [--approval human] [--review reviews/system-design-v1.json] --date YYYY-MM-DD`; it does not route or own Stage 6+ behavior. The Stage 0–2 controller remains separate, never widens `control.json`, and no model router, controller, state file, renderer, manifest dependency, or revision snapshot was added. Static contracts still do not prove installed-host chaining; Slice 5 owns that proof.
 
 ## Licence
 

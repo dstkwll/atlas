@@ -81,6 +81,15 @@ SYSTEM_DESIGN_SECTIONS = (
     "Rejected alternatives",
     "Open decisions",
 )
+SYSTEM_DESIGN_DIMENSIONS = (
+    "responsibilities_and_system_seams",
+    "authoritative_data_ownership",
+    "cross_module_external_contracts_and_dependencies",
+    "target_schema_protocol",
+    "end_to_end_lifecycle_failure_recovery",
+    "compatibility_guarantees",
+    "trust_security_operational_commitments",
+)
 
 
 def write_system_design(run: Path, source_binding: dict, **overrides) -> None:
@@ -127,7 +136,323 @@ def initialize_direct_planning(run: Path) -> dict:
     return json.loads((run / "planning-control.json").read_text(encoding="utf-8"))
 
 
+def system_policy(authority: str) -> dict:
+    if authority == "HUMAN_IF_CHANGED":
+        return {
+            "authority": authority,
+            "material_dimensions": list(SYSTEM_DESIGN_DIMENSIONS),
+            "otherwise": "AGENT_REVIEW",
+        }
+    return {"authority": authority}
+
+
+def initialize_authority_planning(run: Path, authority: str, *, participation="agent_led") -> tuple[dict, dict]:
+    config = direct_config(participation=participation)
+    config["gates"]["system_design"] = system_policy(authority)
+    write_stage0_run(run, config)
+    initialized = planning_cli("initialize", "--run", run)
+    if initialized.returncode != 0:
+        raise AssertionError(initialized.stderr)
+    planning = json.loads((run / "planning-control.json").read_text(encoding="utf-8"))
+    anchor = planning["stage0_anchor"]
+    source = {
+        "kind": "stage0",
+        "artifact": "run.yaml",
+        "sha256": anchor["base_run_sha256"],
+        "effective_config_hash": anchor["effective_config_hash"],
+        "effective_config_revision": anchor["effective_config_revision"],
+    }
+    write_system_design(run, source, participation=participation)
+    return planning, source
+
+
+def semantic_review(*, verdict="PASS", blocked_dimensions=()) -> dict:
+    blocked = set(blocked_dimensions)
+    rows = [
+        {
+            "dimension": dimension,
+            "result": "BLOCKED" if dimension in blocked else "PASS",
+            "evidence": f"Independent review evidence for {dimension}.",
+        }
+        for dimension in SYSTEM_DESIGN_DIMENSIONS
+    ]
+    gaps = [
+        {
+            "code": f"gap-{index}",
+            "dimension": dimension,
+            "problem": f"Unresolved {dimension} commitment.",
+            "resume_action": f"Repair {dimension} in 30-system-design.md.",
+        }
+        for index, dimension in enumerate(blocked_dimensions, 1)
+    ]
+    return {"verdict": verdict, "dimensions": rows, "gaps": gaps}
+
+
+def materiality(*, results=None, unavailable_reason=None) -> dict:
+    results = results or {}
+    return {
+        "dimensions": [
+            {
+                "dimension": dimension,
+                "result": results.get(dimension, "NOT_MATERIAL"),
+                "evidence": f"Classification evidence for {dimension}.",
+            }
+            for dimension in SYSTEM_DESIGN_DIMENSIONS
+        ],
+        "unavailable_reason": unavailable_reason,
+    }
+
+
+def write_system_review(run: Path, *, policy: str, materiality, review=None) -> Path:
+    config = yaml.safe_load((run / "run.yaml").read_text(encoding="utf-8"))
+    path = run / "reviews" / "system-design-v1.json"
+    path.parent.mkdir()
+    path.write_text(json.dumps({
+        "version": 1,
+        "run": config["run"],
+        "stage": "system_design",
+        "policy": policy,
+        "candidate_version": 1,
+        "candidate_sha256": sha256(run / "30-system-design.md"),
+        "repository_baselines": config["repos"],
+        "materiality": materiality,
+        "semantic_review": review,
+    }, indent=2) + "\n", encoding="utf-8")
+    return path
+
+
 class AtlasPlanningTests(unittest.TestCase):
+    def test_direct_agent_review_pass_records_exact_evidence_acceptance(self):
+        with tempfile.TemporaryDirectory() as td, tempfile.TemporaryDirectory() as caller_td:
+            run = Path(td)
+            _, source = initialize_authority_planning(run, "AGENT_REVIEW")
+            review = write_system_review(
+                run,
+                policy="AGENT_REVIEW",
+                materiality=None,
+                review=semantic_review(),
+            )
+
+            result = planning_cli(
+                "advance", "--run", run, "--stage", "system_design",
+                "--review", "reviews/system-design-v1.json", "--date", "2026-08-21",
+                cwd=caller_td,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            updated = PLANNING.load_planning_control(run)
+            self.assertEqual(updated["gates"]["system_design"], "AGENT_APPROVED")
+            self.assertEqual(updated["phase"], "tickets")
+            self.assertEqual(updated["acceptances"]["system_design"], {
+                "candidate_version": 1,
+                "candidate_sha256": sha256(run / "30-system-design.md"),
+                "authority": "AGENT_REVIEW",
+                "accepted": "2026-08-21",
+                "review_reference": "reviews/system-design-v1.json",
+                "review_sha256": sha256(review),
+                "source_bindings": [source],
+                "repository_baselines": [],
+            })
+
+    def test_accepted_loader_rejects_gate_label_authority_mismatch(self):
+        cases = (
+            ("AGENT_REVIEW", None, semantic_review(), None, "HUMAN_APPROVED"),
+            (
+                "HUMAN_IF_CHANGED",
+                materiality(results={SYSTEM_DESIGN_DIMENSIONS[0]: "MATERIAL"}),
+                None,
+                "human",
+                "AGENT_APPROVED",
+            ),
+        )
+        for policy, materiality_value, review_value, approval, wrong_gate in cases:
+            with self.subTest(policy=policy), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                initialize_authority_planning(run, policy)
+                write_system_review(
+                    run,
+                    policy=policy,
+                    materiality=materiality_value,
+                    review=review_value,
+                )
+                args = [
+                    "advance", "--run", run, "--stage", "system_design",
+                    "--review", "reviews/system-design-v1.json",
+                    "--date", "2026-08-21",
+                ]
+                if approval is not None:
+                    args.extend(("--approval", approval))
+                accepted = planning_cli(*args)
+                self.assertEqual(accepted.returncode, 0, accepted.stderr)
+                planning_path = run / "planning-control.json"
+                state = json.loads(planning_path.read_text(encoding="utf-8"))
+                state["gates"]["system_design"] = wrong_gate
+                planning_path.write_text(json.dumps(state), encoding="utf-8")
+
+                with self.assertRaisesRegex(PLANNING.ControlError, "gate.*authority"):
+                    PLANNING.load_planning_control(run)
+
+    def test_direct_agent_review_rejects_materiality_classification(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            initialize_authority_planning(run, "AGENT_REVIEW")
+            write_system_review(
+                run,
+                policy="AGENT_REVIEW",
+                materiality=materiality(),
+                review=semantic_review(),
+            )
+            before = (run / "planning-control.json").read_bytes()
+
+            result = planning_cli(
+                "advance", "--run", run, "--stage", "system_design",
+                "--review", "reviews/system-design-v1.json", "--date", "2026-08-21",
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("null materiality", result.stderr)
+            self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+    def test_human_if_changed_all_clear_maps_to_agent_review(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            initialize_authority_planning(run, "HUMAN_IF_CHANGED")
+            write_system_review(
+                run,
+                policy="HUMAN_IF_CHANGED",
+                materiality=materiality(),
+                review=semantic_review(),
+            )
+
+            result = planning_cli(
+                "advance", "--run", run, "--stage", "system_design",
+                "--review", "reviews/system-design-v1.json", "--date", "2026-08-21",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            record = PLANNING.load_planning_control(run)["acceptances"]["system_design"]
+            self.assertEqual(record["authority"], "AGENT_REVIEW")
+            self.assertEqual(record["review_reference"], "reviews/system-design-v1.json")
+            self.assertRegex(record["review_sha256"], r"^[0-9a-f]{64}$")
+
+    def test_human_if_changed_material_dimension_requires_review_and_explicit_human(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            initialize_authority_planning(run, "HUMAN_IF_CHANGED")
+            review = write_system_review(
+                run,
+                policy="HUMAN_IF_CHANGED",
+                materiality=materiality(results={SYSTEM_DESIGN_DIMENSIONS[0]: "MATERIAL"}),
+                review=None,
+            )
+
+            result = planning_cli(
+                "advance", "--run", run, "--stage", "system_design",
+                "--review", "reviews/system-design-v1.json", "--approval", "human",
+                "--date", "2026-08-21",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            updated = PLANNING.load_planning_control(run)
+            self.assertEqual(updated["gates"]["system_design"], "HUMAN_APPROVED")
+            record = updated["acceptances"]["system_design"]
+            self.assertEqual(record["authority"], "HUMAN")
+            self.assertEqual(record["review_reference"], "reviews/system-design-v1.json")
+            self.assertEqual(record["review_sha256"], sha256(review))
+
+    def test_human_if_changed_explained_classifier_failures_route_human(self):
+        mutations = {
+            "unavailable": lambda rows: [],
+            "missing": lambda rows: rows[:-1],
+            "duplicate": lambda rows: rows[:-1] + [dict(rows[0])],
+            "unknown": lambda rows: rows[:-1] + [{
+                "dimension": "unknown_dimension", "result": "NOT_MATERIAL", "evidence": "Unknown output.",
+            }],
+            "malformed": lambda rows: rows[:-1] + [{
+                "dimension": SYSTEM_DESIGN_DIMENSIONS[-1], "result": "NOT_MATERIAL",
+            }],
+        }
+        for name, mutate in mutations.items():
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                initialize_authority_planning(run, "HUMAN_IF_CHANGED")
+                evidence = materiality(unavailable_reason=f"Classifier {name} prevented complete classification.")
+                evidence["dimensions"] = mutate(evidence["dimensions"])
+                write_system_review(
+                    run,
+                    policy="HUMAN_IF_CHANGED",
+                    materiality=evidence,
+                    review=None,
+                )
+
+                result = planning_cli(
+                    "advance", "--run", run, "--stage", "system_design",
+                    "--review", "reviews/system-design-v1.json", "--approval", "human",
+                    "--date", "2026-08-21",
+                )
+
+                self.assertEqual(result.returncode, 0, result.stderr)
+                record = PLANNING.load_planning_control(run)["acceptances"]["system_design"]
+                self.assertEqual(record["authority"], "HUMAN")
+
+    def test_human_if_changed_requires_canonical_policy_and_rejects_unexplained_bad_evidence(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            config = direct_config()
+            config["gates"]["system_design"] = {
+                "authority": "HUMAN_IF_CHANGED",
+                "material_dimensions": ["system seams"],
+                "otherwise": "AGENT_REVIEW",
+            }
+            write_stage0_run(run, config)
+
+            initialized = planning_cli("initialize", "--run", run)
+
+            self.assertNotEqual(initialized.returncode, 0)
+            self.assertIn("exact", initialized.stderr.lower())
+            self.assertFalse((run / "planning-control.json").exists())
+
+        for reason in (None, ""):
+            with self.subTest(reason=reason), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                initialize_authority_planning(run, "HUMAN_IF_CHANGED")
+                evidence = materiality(unavailable_reason=reason)
+                evidence["dimensions"] = evidence["dimensions"][:-1]
+                write_system_review(
+                    run, policy="HUMAN_IF_CHANGED", materiality=evidence, review=None
+                )
+                before = (run / "planning-control.json").read_bytes()
+
+                result = planning_cli(
+                    "advance", "--run", run, "--stage", "system_design",
+                    "--review", "reviews/system-design-v1.json", "--approval", "human",
+                    "--date", "2026-08-21",
+                )
+
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+    def test_system_design_review_baselines_are_exact_immutable_run_yaml_pairs(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            initialize_authority_planning(run, "AGENT_REVIEW")
+            review = write_system_review(
+                run, policy="AGENT_REVIEW", materiality=None, review=semantic_review()
+            )
+            effective = yaml.safe_load((run / "run.yaml").read_text(encoding="utf-8"))
+            effective["repos"] = [{"repository": "fixture", "baseline": "def4567"}]
+
+            _, review_hash, mapped = PLANNING.load_system_design_review(
+                run,
+                effective,
+                1,
+                sha256(run / "30-system-design.md"),
+                "reviews/system-design-v1.json",
+            )
+
+            self.assertEqual(review_hash, sha256(review))
+            self.assertEqual(mapped, "AGENT_REVIEW")
+
     def test_downstream_initialize_rejects_legacy_system_design_run_without_participation(self):
         with tempfile.TemporaryDirectory() as td:
             run = Path(td)
@@ -250,7 +575,7 @@ class AtlasPlanningTests(unittest.TestCase):
             config = direct_config()
             config["gates"]["system_design"] = {
                 "authority": "HUMAN_IF_CHANGED",
-                "material_dimensions": ["system seams"],
+                "material_dimensions": list(SYSTEM_DESIGN_DIMENSIONS),
                 "otherwise": "AGENT_REVIEW",
             }
             config["gates"]["tickets"] = {
@@ -629,7 +954,7 @@ class AtlasPlanningTests(unittest.TestCase):
                 with mock.patch.object(PLANNING, "system_design_report", side_effect=change_after_first_report):
                     with PLANNING.planning_lock(run):
                         with self.assertRaisesRegex(PLANNING.ControlError, "changed"):
-                            PLANNING.advance_boundary(run, "system_design", "human", "2026-08-21")
+                            PLANNING.advance_boundary(run, "system_design", "human", None, "2026-08-21")
 
                 self.assertGreaterEqual(calls, 2)
                 self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
@@ -661,11 +986,78 @@ class AtlasPlanningTests(unittest.TestCase):
             ):
                 with PLANNING.planning_lock(run):
                     with self.assertRaises(PLANNING.ControlError):
-                        PLANNING.advance_boundary(run, "system_design", "human", "2026-08-21")
+                        PLANNING.advance_boundary(run, "system_design", "human", None, "2026-08-21")
 
             self.assertEqual((run / "planning-control.json").read_bytes(), before)
             persisted = json.loads(before)
             self.assertEqual((persisted["revision"], persisted["gates"]["system_design"]), (1, "PENDING"))
+
+    def test_review_parse_and_recorded_hash_use_one_byte_snapshot(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            initialize_authority_planning(run, "AGENT_REVIEW")
+            review = write_system_review(
+                run, policy="AGENT_REVIEW", materiality=None, review=semantic_review()
+            )
+            original_bytes = review.read_bytes()
+            replacement = json.loads(original_bytes)
+            replacement["semantic_review"]["dimensions"][0]["evidence"] = "Different valid evidence."
+            replacement_bytes = (json.dumps(replacement, indent=2) + "\n").encode("utf-8")
+            real_file_sha256 = PLANNING.file_sha256
+            changed = False
+
+            def mutate_between_parse_and_hash(path):
+                nonlocal changed
+                if Path(path) == review and not changed:
+                    changed = True
+                    review.write_bytes(replacement_bytes)
+                return real_file_sha256(path)
+
+            with mock.patch.object(PLANNING, "file_sha256", side_effect=mutate_between_parse_and_hash):
+                with PLANNING.planning_lock(run):
+                    PLANNING.advance_boundary(
+                        run,
+                        "system_design",
+                        None,
+                        "reviews/system-design-v1.json",
+                        "2026-08-21",
+                    )
+
+            self.assertFalse(changed)
+            self.assertEqual(review.read_bytes(), original_bytes)
+            record = PLANNING.load_planning_control(run)["acceptances"]["system_design"]
+            self.assertEqual(record["review_sha256"], sha256(review))
+
+    def test_agent_review_acceptance_rechecks_envelope_at_atomic_write_boundary(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            initialize_authority_planning(run, "AGENT_REVIEW")
+            review = write_system_review(
+                run, policy="AGENT_REVIEW", materiality=None, review=semantic_review()
+            )
+            before = (run / "planning-control.json").read_bytes()
+            original_write = PLANNING.write_planning_control_atomic
+
+            def mutate_review_immediately_before_write(*args, **kwargs):
+                review.write_bytes(review.read_bytes() + b" \n")
+                return original_write(*args, **kwargs)
+
+            with mock.patch.object(
+                PLANNING,
+                "write_planning_control_atomic",
+                side_effect=mutate_review_immediately_before_write,
+            ):
+                with PLANNING.planning_lock(run):
+                    with self.assertRaisesRegex(PLANNING.ControlError, "review|evidence|boundary"):
+                        PLANNING.advance_boundary(
+                            run,
+                            "system_design",
+                            None,
+                            "reviews/system-design-v1.json",
+                            "2026-08-21",
+                        )
+
+            self.assertEqual((run / "planning-control.json").read_bytes(), before)
 
     def test_direct_accepted_state_loader_rejects_stage_zero_source_drift(self):
         with tempfile.TemporaryDirectory() as td:
@@ -690,47 +1082,139 @@ class AtlasPlanningTests(unittest.TestCase):
             with self.assertRaisesRegex(PLANNING.ControlError, "Stage 0|run.yaml|provenance"):
                 PLANNING.load_planning_control(run)
 
-    def test_slice2a_rejects_non_human_system_design_authority(self):
-        cases = (
-            ("agent_led", {"authority": "AGENT_REVIEW"}, "AGENT_REVIEW"),
-            (
-                "agent_led",
-                {
-                    "authority": "HUMAN_IF_CHANGED",
-                    "material_dimensions": ["system seams"],
-                    "otherwise": "AGENT_REVIEW",
-                },
-                "HUMAN_IF_CHANGED",
+    def test_direct_agent_review_blocked_no_fallback_and_exact_semantic_rows_and_gaps(self):
+        def valid_blocked():
+            return semantic_review(
+                verdict="BLOCKED", blocked_dimensions=(SYSTEM_DESIGN_DIMENSIONS[0],)
+            )
+
+        cases = {
+            "blocked": (valid_blocked(), []),
+            "no-human-fallback": (semantic_review(), ["--approval", "human"]),
+            "missing-row": (semantic_review(), []),
+            "duplicate-row": (semantic_review(), []),
+            "unknown-row": (semantic_review(), []),
+            "empty-evidence": (semantic_review(), []),
+            "blocked-without-gap": (valid_blocked(), []),
+            "blocked-wrong-gap-dimension": (valid_blocked(), []),
+            "blocked-missing-one-gap": (
+                semantic_review(
+                    verdict="BLOCKED",
+                    blocked_dimensions=(SYSTEM_DESIGN_DIMENSIONS[0], SYSTEM_DESIGN_DIMENSIONS[1]),
+                ),
+                [],
             ),
-        )
-        for participation, policy, expected in cases:
-            with self.subTest(expected=expected), tempfile.TemporaryDirectory() as td:
+        }
+        cases["missing-row"][0]["dimensions"].pop()
+        cases["duplicate-row"][0]["dimensions"][-1] = dict(cases["duplicate-row"][0]["dimensions"][0])
+        cases["unknown-row"][0]["dimensions"][-1]["dimension"] = "unknown_dimension"
+        cases["empty-evidence"][0]["dimensions"][-1]["evidence"] = ""
+        cases["blocked-without-gap"][0]["gaps"] = []
+        cases["blocked-wrong-gap-dimension"][0]["gaps"][0]["dimension"] = SYSTEM_DESIGN_DIMENSIONS[1]
+        cases["blocked-missing-one-gap"][0]["gaps"].pop()
+
+        for name, (semantic, extra) in cases.items():
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as td:
                 run = Path(td)
-                config = direct_config(participation=participation)
-                config["gates"]["system_design"] = policy
-                write_stage0_run(run, config)
-                initialized = planning_cli("initialize", "--run", run)
-                self.assertEqual(initialized.returncode, 0, initialized.stderr)
-                planning = json.loads((run / "planning-control.json").read_text(encoding="utf-8"))
-                anchor = planning["stage0_anchor"]
-                write_system_design(run, {
-                    "kind": "stage0",
-                    "artifact": "run.yaml",
-                    "sha256": anchor["base_run_sha256"],
-                    "effective_config_hash": anchor["effective_config_hash"],
-                    "effective_config_revision": anchor["effective_config_revision"],
-                }, participation=participation)
+                initialize_authority_planning(run, "AGENT_REVIEW")
+                write_system_review(
+                    run, policy="AGENT_REVIEW", materiality=None, review=semantic
+                )
                 before = (run / "planning-control.json").read_bytes()
 
                 result = planning_cli(
                     "advance", "--run", run, "--stage", "system_design",
-                    "--approval", "human", "--date", "2026-08-21",
+                    "--review", "reviews/system-design-v1.json", *extra,
+                    "--date", "2026-08-21",
                 )
 
-                self.assertEqual(result.returncode, 1)
-                self.assertIn(expected, result.stderr)
-                self.assertIn("Slice-2", result.stderr)
+                self.assertNotEqual(result.returncode, 0)
                 self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+    def test_semantic_review_gap_coverage_is_exact_before_blocked_outcome(self):
+        malformed = semantic_review(
+            verdict="BLOCKED",
+            blocked_dimensions=(SYSTEM_DESIGN_DIMENSIONS[0], SYSTEM_DESIGN_DIMENSIONS[1]),
+        )
+        malformed["gaps"].pop()
+
+        with self.assertRaisesRegex(PLANNING.ControlError, "exactly cover"):
+            PLANNING.validate_semantic_review(malformed)
+
+    def test_system_design_review_rejects_wrong_bindings_paths_symlinks_and_duplicate_keys(self):
+        mutations = (
+            "candidate", "baseline", "policy", "wrong-filename", "escape", "symlink", "duplicate-key",
+        )
+        for mutation in mutations:
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as td, tempfile.TemporaryDirectory() as outside_td:
+                run = Path(td)
+                initialize_authority_planning(run, "AGENT_REVIEW")
+                review = write_system_review(
+                    run, policy="AGENT_REVIEW", materiality=None, review=semantic_review()
+                )
+                review_ref = "reviews/system-design-v1.json"
+                if mutation in {"candidate", "baseline", "policy"}:
+                    envelope = json.loads(review.read_text(encoding="utf-8"))
+                    if mutation == "candidate":
+                        envelope["candidate_sha256"] = "0" * 64
+                    elif mutation == "baseline":
+                        envelope["repository_baselines"][0]["baseline"] = "def4567"
+                    else:
+                        envelope["policy"] = "HUMAN_IF_CHANGED"
+                    review.write_text(json.dumps(envelope), encoding="utf-8")
+                elif mutation == "wrong-filename":
+                    wrong = review.with_name("system-design-v2.json")
+                    review.replace(wrong)
+                    review_ref = "reviews/system-design-v2.json"
+                elif mutation == "escape":
+                    review_ref = "../system-design-v1.json"
+                elif mutation == "symlink":
+                    outside = Path(outside_td) / "review.json"
+                    outside.write_bytes(review.read_bytes())
+                    review.unlink()
+                    review.symlink_to(outside)
+                else:
+                    text = review.read_text(encoding="utf-8")
+                    review.write_text(text.replace('  "version": 1,', '  "version": 1,\n  "version": 1,', 1), encoding="utf-8")
+                before = (run / "planning-control.json").read_bytes()
+
+                result = planning_cli(
+                    "advance", "--run", run, "--stage", "system_design",
+                    "--review", review_ref, "--date", "2026-08-21",
+                )
+
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+    def test_accepted_loader_requires_current_evidence_for_agent_and_hic_human_authorities(self):
+        cases = (
+            ("AGENT_REVIEW", None, semantic_review(), []),
+            (
+                "HUMAN_IF_CHANGED",
+                materiality(results={SYSTEM_DESIGN_DIMENSIONS[0]: "MATERIAL"}),
+                None,
+                ["--approval", "human"],
+            ),
+        )
+        for configured, classification, semantic, extra in cases:
+            with self.subTest(configured=configured), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                initialize_authority_planning(run, configured)
+                review = write_system_review(
+                    run, policy=configured, materiality=classification, review=semantic
+                )
+                accepted = planning_cli(
+                    "advance", "--run", run, "--stage", "system_design",
+                    "--review", "reviews/system-design-v1.json", *extra,
+                    "--date", "2026-08-21",
+                )
+                self.assertEqual(accepted.returncode, 0, accepted.stderr)
+                PLANNING.load_planning_control(run)
+
+                review.write_bytes(review.read_bytes() + b" \n")
+
+                with self.assertRaisesRegex(PLANNING.ControlError, "evidence|review"):
+                    PLANNING.load_planning_control(run)
 
     def test_planning_loader_rejects_gate_acceptance_incoherence(self):
         for mutation in ("record-with-pending-gate", "approved-gate-without-record"):

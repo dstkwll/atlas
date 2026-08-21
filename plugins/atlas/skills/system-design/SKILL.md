@@ -12,9 +12,9 @@ Resolve `<atlas-plugin-root>` from this installed skill before invoking a packag
 
 ## 1. Resume frozen authority
 
-Read `run.yaml`, authoritative Stage 0 `control.json`, and `planning-control.json`. Require current phase `system_design`, gate `PENDING`, frozen participation `agent_led` or `co_design`, and `run.yaml.gates.system_design.authority: HUMAN`.
+Read `run.yaml`, authoritative Stage 0 `control.json`, and `planning-control.json`. Require current phase `system_design`, gate `PENDING`, frozen participation `agent_led` or `co_design`, and an exact supported policy: `HUMAN`, `AGENT_REVIEW`, or canonical `HUMAN_IF_CHANGED`.
 
-System Design reads the frozen value and never asks again for participation. If authority is `AGENT_REVIEW` or `HUMAN_IF_CHANGED`, stop and report the intentionally unimplemented Slice 2B authority path. Do not reinterpret policy, invoke a reviewer, or fall back to HUMAN.
+System Design reads the frozen value and never asks again for participation. It also reads policy literally; participation stays orthogonal. The producer does not classify materiality, invoke the acceptance reviewer, assemble evidence, obtain approval, or reinterpret/fall back from policy; those belong to the internal control handoff.
 
 ## 2. Bind the one applicable source
 
@@ -74,5 +74,5 @@ After `PASS`, keep the exact Markdown and, for co-design, current HTML unchanged
 - `30-system-design.md` remains `status: draft` after acceptance; `gate_ready: true` is readiness only.
 - Product Closure and direct Stage 0 are exclusive source branches.
 - Mechanical `PASS` never claims semantic quality or approval.
-- Slice 2A adds no semantic reviewer, classification envelope, rejection, reopen, or staleness operation.
+- Slice 2B leaves all classification, semantic review, evidence assembly, and authority consumption in the internal control handoff; it adds no rejection, reopen, or staleness operation.
 - Nothing in conversation overrides frozen intake or deterministic planning state.

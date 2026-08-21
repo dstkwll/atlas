@@ -40,6 +40,15 @@ SYSTEM_DESIGN_VIEWS = (
     "open-decisions",
     "rejected-alternatives",
 )
+SYSTEM_DESIGN_DIMENSIONS = (
+    "responsibilities_and_system_seams",
+    "authoritative_data_ownership",
+    "cross_module_external_contracts_and_dependencies",
+    "target_schema_protocol",
+    "end_to_end_lifecycle_failure_recovery",
+    "compatibility_guarantees",
+    "trust_security_operational_commitments",
+)
 
 
 class SkillSeamHardeningTests(unittest.TestCase):
@@ -47,6 +56,68 @@ class SkillSeamHardeningTests(unittest.TestCase):
         plugin = root / "plugins" / "atlas"
         shutil.copytree(ROOT / "plugins" / "atlas", plugin)
         return plugin / "skills"
+
+    def test_system_design_authority_reference_binds_exact_schema_dimensions_and_matrix(self):
+        plugin = ROOT / "plugins" / "atlas"
+        reference_path = plugin / "skills" / "control-planning" / "references" / "system-design-authority.md"
+        self.assertTrue(reference_path.is_file())
+        reference = reference_path.read_text(encoding="utf-8")
+        control = (plugin / "skills" / "control-planning" / "SKILL.md").read_text(encoding="utf-8")
+        planning = (plugin / "tools" / "atlas_planning.py").read_text(encoding="utf-8")
+
+        for dimension in SYSTEM_DESIGN_DIMENSIONS:
+            self.assertIn(dimension, reference)
+            self.assertIn(dimension, planning)
+        for field in (
+            "version", "run", "stage", "policy", "candidate_version", "candidate_sha256",
+            "repository_baselines", "materiality", "semantic_review",
+        ):
+            self.assertIn(f'"{field}"', reference)
+        self.assertIn("reviews/system-design-v1.json", reference)
+        self.assertIn("fresh read-only classifier", control)
+        self.assertIn("distinct fresh semantic reviewer", control)
+        self.assertIn("invoker assembles", control.lower())
+        for command in (
+            '--approval human --date "<YYYY-MM-DD>"',
+            '--review reviews/system-design-v1.json --date "<YYYY-MM-DD>"',
+            '--review reviews/system-design-v1.json --approval human --date "<YYYY-MM-DD>"',
+        ):
+            self.assertIn(command, control)
+
+        findings = SEAMS.cross_skill_contracts(plugin / "skills")
+        self.assertFalse([item for item in findings if item[0] == "cross"], findings)
+
+    def test_system_design_authority_schema_dimension_filename_and_matrix_drift_are_detected(self):
+        cases = (
+            ("dimension", "responsibilities_and_system_seams", "responsibilities_and_seams", "dimensions"),
+            ('schema', '  "policy": "HUMAN_IF_CHANGED",\n', "", "envelope"),
+            ("filename", "reviews/system-design-v1.json", "reviews/system-design-v2.json", "filename"),
+            (
+                "matrix",
+                'python3 "<atlas-plugin-root>/tools/atlas_planning.py" advance --run "<run-directory>" --stage system_design --review reviews/system-design-v1.json --date "<YYYY-MM-DD>"\n',
+                "",
+                "authority-matrix",
+            ),
+        )
+        for name, old, new, expected in cases:
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as td:
+                skills = self.copy_plugin(Path(td))
+                target = (
+                    skills / "control-planning" / "SKILL.md"
+                    if name == "matrix"
+                    else skills / "control-planning" / "references" / "system-design-authority.md"
+                )
+                text = target.read_text(encoding="utf-8")
+                self.assertIn(old, text)
+                target.write_text(
+                    text.replace(old, new) if name == "filename" else text.replace(old, new, 1),
+                    encoding="utf-8",
+                )
+
+                findings = SEAMS.cross_skill_contracts(skills)
+                messages = "\n".join(message for kind, message in findings if kind == "cross")
+
+                self.assertIn(expected, messages.lower())
 
     def test_system_design_and_control_planning_form_one_explicit_internal_handoff(self):
         plugin = ROOT / "plugins" / "atlas"
@@ -118,7 +189,7 @@ class SkillSeamHardeningTests(unittest.TestCase):
         self.assertIn("co_design", control)
         self.assertIn("explicit human approval", control)
         self.assertIn("never treat conversational agreement as approval", control.lower())
-        self.assertIn("Slice 2A", readme)
+        self.assertIn("Slice 2B", readme)
         self.assertIn("co_design", readme)
         self.assertIn("render_system_design.py", readme)
         self.assertIn("non-authoritative", readme)

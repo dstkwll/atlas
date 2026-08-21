@@ -167,6 +167,7 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         "system-design-board": skills / "system-design" / "references" / "system-design-board.md",
         "system-design-agent": skills / "system-design" / "agents" / "openai.yaml",
         "control-planning": skills / "control-planning" / "SKILL.md",
+        "system-design-authority": skills / "control-planning" / "references" / "system-design-authority.md",
         "control-planning-agent": skills / "control-planning" / "agents" / "openai.yaml",
         "renderer": skills.parent / "tools" / "render_prd.py",
         "system-renderer": skills.parent / "tools" / "render_system_design.py",
@@ -226,6 +227,13 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "agent_led", "co_design", "30-system-design.html", "non-authoritative",
             "atlas_planning.py", "advance --run", "--approval human", "--date",
             "re-read `planning-control.json`", "AGENT_REVIEW", "HUMAN_IF_CHANGED", "Slice 2",
+            "fresh read-only classifier", "distinct fresh semantic reviewer", "invoker assembles",
+            "reviews/system-design-v1.json",
+        ],
+        "system-design-authority": [
+            "reviews/system-design-v1.json", "candidate_version", "candidate_sha256",
+            "repository_baselines", "materiality", "semantic_review", "unavailable_reason",
+            "MATERIAL", "NOT_MATERIAL", "UNAVAILABLE", "PASS", "BLOCKED",
         ],
         "control-planning-agent": ["allow_implicit_invocation: false"],
         "renderer": ["def write_canonical", "def render", "def verify", "RENDERER_VERSION"],
@@ -251,6 +259,12 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             findings.append(("cross", f"{name}: missing caller-CWD-independent System Design check command"))
     if advance_command not in texts.get("control-planning", ""):
         findings.append(("cross", "control-planning: missing exact HUMAN System Design advance command"))
+    for command in (
+        'advance --run "<run-directory>" --stage system_design --review reviews/system-design-v1.json --date "<YYYY-MM-DD>"',
+        'advance --run "<run-directory>" --stage system_design --review reviews/system-design-v1.json --approval human --date "<YYYY-MM-DD>"',
+    ):
+        if command not in texts.get("control-planning", ""):
+            findings.append(("cross", f"control-planning: missing System Design authority-matrix command `{command}`"))
     renderer_commands = (
         'python3 "<atlas-plugin-root>/tools/render_system_design.py" write --run "<run-directory>" --draft .30-system-design.next.md',
         'python3 "<atlas-plugin-root>/tools/render_system_design.py" render --run "<run-directory>"',
@@ -329,6 +343,44 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             findings.append(("cross", "System Design board views do not match renderer, reference, and skill contracts"))
         if not board_sections.issubset(system_sections):
             findings.append(("cross", "System Design board source sections are outside planning SYSTEM_DESIGN_SECTIONS"))
+
+    try:
+        review_reference = assigned_literal(texts.get("planning", ""), "SYSTEM_DESIGN_REVIEW_REFERENCE")
+        review_fields = set(assigned_literal(texts.get("planning", ""), "SYSTEM_DESIGN_REVIEW_FIELDS"))
+        dimensions = tuple(assigned_literal(texts.get("planning", ""), "SYSTEM_DESIGN_DIMENSIONS"))
+        materiality_fields = set(assigned_literal(texts.get("planning", ""), "MATERIALITY_FIELDS"))
+        semantic_fields = set(assigned_literal(texts.get("planning", ""), "SEMANTIC_REVIEW_FIELDS"))
+        dimension_fields = set(assigned_literal(texts.get("planning", ""), "DIMENSION_REVIEW_FIELDS"))
+        semantic_gap_fields = set(assigned_literal(texts.get("planning", ""), "SEMANTIC_GAP_FIELDS"))
+        authority_maps = json_maps(texts.get("system-design-authority", ""))
+    except (SyntaxError, ValueError, json.JSONDecodeError) as exc:
+        findings.append(("cross", f"System Design authority schema seam is unreadable: {exc}"))
+    else:
+        envelopes = [item for item in authority_maps if {"candidate_version", "materiality", "semantic_review"}.issubset(item)]
+        envelope = envelopes[0] if len(envelopes) == 1 else {}
+        materiality = envelope.get("materiality") if isinstance(envelope, dict) else None
+        semantic = envelope.get("semantic_review") if isinstance(envelope, dict) else None
+        material_rows = materiality.get("dimensions") if isinstance(materiality, dict) else None
+        semantic_rows = semantic.get("dimensions") if isinstance(semantic, dict) else None
+        gap_maps = [item for item in authority_maps if set(item) == semantic_gap_fields]
+        if review_reference != "reviews/system-design-v1.json" or review_reference not in texts.get("system-design-authority", ""):
+            findings.append(("cross", "System Design authority filename is not exact across controller and reference"))
+        if set(envelope) != review_fields:
+            findings.append(("cross", "System Design authority envelope does not match planning schema"))
+        if not isinstance(materiality, dict) or set(materiality) != materiality_fields:
+            findings.append(("cross", "System Design materiality reference does not match planning schema"))
+        for label, rows in (("materiality", material_rows), ("semantic review", semantic_rows)):
+            if (
+                not isinstance(rows, list)
+                or len(rows) != len(dimensions)
+                or any(not isinstance(row, dict) or set(row) != dimension_fields for row in rows)
+                or {row.get("dimension") for row in rows} != set(dimensions)
+            ):
+                findings.append(("cross", f"System Design {label} dimensions do not match the exact D-073 identifiers"))
+        if not isinstance(semantic, dict) or set(semantic) != semantic_fields:
+            findings.append(("cross", "System Design semantic review reference does not match planning schema"))
+        if len(gap_maps) != 1:
+            findings.append(("cross", "System Design semantic gap reference does not match planning schema"))
 
     for name in ("system-design", "control-planning"):
         count = len(texts.get(name, "").splitlines())

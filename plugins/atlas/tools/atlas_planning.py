@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import hashlib
 import json
 import os
 import re
@@ -20,6 +21,7 @@ from atlas_control import (
     file_sha256,
     gap,
     load_json,
+    load_run,
     managed_path,
     read_frontmatter,
     resolve_existing_run_directory,
@@ -77,6 +79,140 @@ SYSTEM_DESIGN_SECTIONS = (
     "Rejected alternatives",
     "Open decisions",
 )
+SYSTEM_DESIGN_REVIEW_REFERENCE = "reviews/system-design-v1.json"
+SYSTEM_DESIGN_REVIEW_FIELDS = {
+    "version", "run", "stage", "policy", "candidate_version", "candidate_sha256",
+    "repository_baselines", "materiality", "semantic_review",
+}
+SYSTEM_DESIGN_DIMENSIONS = (
+    "responsibilities_and_system_seams",
+    "authoritative_data_ownership",
+    "cross_module_external_contracts_and_dependencies",
+    "target_schema_protocol",
+    "end_to_end_lifecycle_failure_recovery",
+    "compatibility_guarantees",
+    "trust_security_operational_commitments",
+)
+SEMANTIC_REVIEW_FIELDS = {"verdict", "dimensions", "gaps"}
+DIMENSION_REVIEW_FIELDS = {"dimension", "result", "evidence"}
+SEMANTIC_GAP_FIELDS = {"code", "dimension", "problem", "resume_action"}
+MATERIALITY_FIELDS = {"dimensions", "unavailable_reason"}
+
+
+def nonempty_string(value: Any) -> bool:
+    return isinstance(value, str) and bool(value.strip())
+
+
+def validate_semantic_review(review: Any) -> None:
+    if not isinstance(review, dict) or set(review) != SEMANTIC_REVIEW_FIELDS:
+        raise ControlError("System Design semantic_review does not match its exact schema")
+    verdict = review.get("verdict")
+    rows = review.get("dimensions")
+    gaps = review.get("gaps")
+    if verdict not in {"PASS", "BLOCKED"} or not isinstance(rows, list) or not isinstance(gaps, list):
+        raise ControlError("System Design semantic_review is malformed")
+    if (
+        len(rows) != len(SYSTEM_DESIGN_DIMENSIONS)
+        or any(not isinstance(row, dict) or set(row) != DIMENSION_REVIEW_FIELDS for row in rows)
+        or any(row.get("dimension") not in SYSTEM_DESIGN_DIMENSIONS for row in rows)
+        or len({row.get("dimension") for row in rows}) != len(SYSTEM_DESIGN_DIMENSIONS)
+        or any(row.get("result") not in {"PASS", "BLOCKED"} for row in rows)
+        or any(not nonempty_string(row.get("evidence")) for row in rows)
+    ):
+        raise ControlError("System Design semantic_review must cover the exact seven dimensions")
+    blocked = {row["dimension"] for row in rows if row["result"] == "BLOCKED"}
+    if verdict == "PASS":
+        if blocked or gaps:
+            raise ControlError("System Design semantic PASS requires seven PASS rows and no gaps")
+        return
+    if not blocked or not gaps:
+        raise ControlError("System Design semantic BLOCKED requires blocked dimensions and gaps")
+    if (
+        any(not isinstance(item, dict) or set(item) != SEMANTIC_GAP_FIELDS for item in gaps)
+        or any(item.get("dimension") not in blocked for item in gaps)
+        or len({item.get("dimension") for item in gaps}) != len(gaps)
+        or {item.get("dimension") for item in gaps} != blocked
+        or any(not all(nonempty_string(item.get(field)) for field in ("code", "problem", "resume_action")) for item in gaps)
+    ):
+        raise ControlError("System Design semantic BLOCKED gaps must exactly cover blocked dimensions")
+
+
+def validate_complete_materiality(materiality: Any) -> str:
+    if not isinstance(materiality, dict) or set(materiality) != MATERIALITY_FIELDS:
+        raise ControlError("System Design materiality does not match its exact schema")
+    rows = materiality.get("dimensions")
+    unavailable_reason = materiality.get("unavailable_reason")
+    if unavailable_reason is not None:
+        if not isinstance(rows, list) or not nonempty_string(unavailable_reason):
+            raise ControlError("System Design fail-closed materiality requires a nonempty unavailable_reason")
+        return "HUMAN"
+    if (
+        not isinstance(rows, list)
+        or len(rows) != len(SYSTEM_DESIGN_DIMENSIONS)
+        or any(not isinstance(row, dict) or set(row) != DIMENSION_REVIEW_FIELDS for row in rows)
+        or any(row.get("dimension") not in SYSTEM_DESIGN_DIMENSIONS for row in rows)
+        or len({row.get("dimension") for row in rows}) != len(SYSTEM_DESIGN_DIMENSIONS)
+        or any(row.get("result") not in {"MATERIAL", "NOT_MATERIAL", "UNAVAILABLE"} for row in rows)
+        or any(not nonempty_string(row.get("evidence")) for row in rows)
+    ):
+        raise ControlError("System Design materiality must classify the exact seven dimensions")
+    return (
+        "HUMAN"
+        if any(row["result"] in {"MATERIAL", "UNAVAILABLE"} for row in rows)
+        else "AGENT_REVIEW"
+    )
+
+
+def load_system_design_review(
+    run_dir: Path,
+    effective: dict[str, Any],
+    candidate_version: int,
+    candidate_sha256: str,
+    review_reference: Any,
+) -> tuple[dict[str, Any], str, str]:
+    if review_reference != SYSTEM_DESIGN_REVIEW_REFERENCE:
+        raise ControlError(f"System Design review must use exact {SYSTEM_DESIGN_REVIEW_REFERENCE}")
+    path = managed_path(run_dir, review_reference)
+    if not path.is_file():
+        raise ControlError("System Design review evidence is missing or not a real file")
+    try:
+        review_bytes = path.read_bytes()
+        envelope = load_json(review_bytes.decode("utf-8"))
+    except UnicodeDecodeError as exc:
+        raise ControlError("System Design review evidence is not valid UTF-8") from exc
+    except json.JSONDecodeError as exc:
+        raise ControlError("System Design review evidence is not valid duplicate-safe JSON") from exc
+    review_sha256 = hashlib.sha256(review_bytes).hexdigest()
+    if not isinstance(envelope, dict) or set(envelope) != SYSTEM_DESIGN_REVIEW_FIELDS:
+        raise ControlError("System Design review envelope does not match its exact schema")
+    policy = effective.get("gates", {}).get("system_design", {})
+    configured = policy.get("authority") if isinstance(policy, dict) else None
+    if (
+        type(envelope.get("version")) is not int
+        or envelope.get("version") != 1
+        or envelope.get("run") != effective["run"]
+        or envelope.get("stage") != "system_design"
+        or envelope.get("policy") != configured
+        or configured not in {"AGENT_REVIEW", "HUMAN_IF_CHANGED"}
+        or type(envelope.get("candidate_version")) is not int
+        or envelope.get("candidate_version") != candidate_version
+        or envelope.get("candidate_sha256") != candidate_sha256
+        or envelope.get("repository_baselines") != load_run(run_dir)["repos"]
+    ):
+        raise ControlError("System Design review evidence does not match current policy, candidate, or baselines")
+    if configured == "AGENT_REVIEW":
+        if envelope.get("materiality") is not None:
+            raise ControlError("direct AGENT_REVIEW requires null materiality")
+        mapped = "AGENT_REVIEW"
+    else:
+        mapped = validate_complete_materiality(envelope.get("materiality"))
+    if mapped == "AGENT_REVIEW":
+        validate_semantic_review(envelope.get("semantic_review"))
+        if envelope["semantic_review"]["verdict"] != "PASS":
+            raise ControlError("System Design semantic review is BLOCKED")
+    elif envelope.get("semantic_review") is not None:
+        raise ControlError("HUMAN-mapped System Design evidence requires null semantic_review")
+    return envelope, review_sha256, mapped
 
 
 @contextlib.contextmanager
@@ -129,7 +265,12 @@ def write_planning_control_atomic(
         temp.unlink(missing_ok=True)
 
 
-def validate_system_design_acceptance(anchor: dict[str, Any], record: Any) -> None:
+def validate_system_design_acceptance(
+    run_dir: Path,
+    anchor: dict[str, Any],
+    effective: dict[str, Any],
+    record: Any,
+) -> None:
     if not isinstance(record, dict) or set(record) != PLANNING_ACCEPTANCE_FIELDS:
         raise ControlError("planning-control.json System Design acceptance is malformed")
     try:
@@ -157,13 +298,32 @@ def validate_system_design_acceptance(anchor: dict[str, Any], record: Any) -> No
         type(record.get("candidate_version")) is not int
         or record["candidate_version"] != 1
         or not re.fullmatch(r"[0-9a-f]{64}", str(record.get("candidate_sha256", "")))
-        or record.get("authority") != "HUMAN"
-        or record.get("review_reference") is not None
-        or record.get("review_sha256") is not None
+        or record.get("authority") not in {"HUMAN", "AGENT_REVIEW"}
         or record.get("source_bindings") != [expected_source]
         or record.get("repository_baselines") != []
     ):
         raise ControlError("planning-control.json System Design acceptance is malformed")
+    policy = effective.get("gates", {}).get("system_design", {})
+    configured = policy.get("authority") if isinstance(policy, dict) else None
+    if configured == "HUMAN":
+        if (
+            record["authority"] != "HUMAN"
+            or record.get("review_reference") is not None
+            or record.get("review_sha256") is not None
+        ):
+            raise ControlError("planning-control.json System Design acceptance is malformed")
+    elif configured in {"AGENT_REVIEW", "HUMAN_IF_CHANGED"}:
+        _, review_sha256, mapped = load_system_design_review(
+            run_dir,
+            effective,
+            record["candidate_version"],
+            record["candidate_sha256"],
+            record.get("review_reference"),
+        )
+        if record["authority"] != mapped or record.get("review_sha256") != review_sha256:
+            raise ControlError("planning-control.json System Design acceptance evidence is not current")
+    else:
+        raise ControlError("planning-control.json System Design acceptance uses an unsupported policy")
 
 
 def load_planning_control(run_dir: Path) -> dict[str, Any]:
@@ -198,7 +358,7 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
     if (
         not isinstance(gates, dict)
         or set(gates) != set(DOWNSTREAM_STAGES)
-        or any(value not in {"PENDING", "NOT_REQUIRED", "HUMAN_APPROVED"} for value in gates.values())
+        or any(value not in {"PENDING", "NOT_REQUIRED", "HUMAN_APPROVED", "AGENT_APPROVED"} for value in gates.values())
         or not isinstance(acceptances, dict)
         or set(acceptances) != set(DOWNSTREAM_STAGES)
     ):
@@ -222,13 +382,18 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
     approved_stages: list[str] = []
     for stage in DOWNSTREAM_STAGES:
         record = acceptances[stage]
-        approved = gates[stage] == "HUMAN_APPROVED"
+        approved = gates[stage] in {"HUMAN_APPROVED", "AGENT_APPROVED"}
         if approved != (record is not None):
             raise ControlError("planning-control.json gate/acceptance coherence is invalid")
         if record is not None:
             if stage != "system_design":
                 raise ControlError("planning-control.json contains an unsupported downstream acceptance")
-            validate_system_design_acceptance(anchor, record)
+            validate_system_design_acceptance(run_dir, anchor, effective, record)
+            expected_gate = (
+                "HUMAN_APPROVED" if record["authority"] == "HUMAN" else "AGENT_APPROVED"
+            )
+            if gates[stage] != expected_gate:
+                raise ControlError("planning-control.json gate label does not match acceptance authority")
             approved_stages.append(stage)
 
     record = acceptances["system_design"]
@@ -280,10 +445,9 @@ def validate_system_design_policy(policy: Any) -> None:
         policy.get("authority") != "HUMAN_IF_CHANGED"
         or policy.get("otherwise") != "AGENT_REVIEW"
         or not isinstance(dimensions, list)
-        or not dimensions
-        or any(not isinstance(item, str) or not item.strip() for item in dimensions)
+        or dimensions != list(SYSTEM_DESIGN_DIMENSIONS)
     ):
-        raise ControlError("system_design HUMAN_IF_CHANGED requires nonempty material_dimensions and AGENT_REVIEW otherwise")
+        raise ControlError("system_design HUMAN_IF_CHANGED requires the exact seven material_dimensions and AGENT_REVIEW otherwise")
 
 
 def validate_tickets_policy(policy: Any) -> None:
@@ -609,30 +773,63 @@ def check_boundary(run_dir: Path, stage: str) -> dict[str, Any]:
     return system_design_report(run_dir, planning, effective)
 
 
+def resolve_system_design_authority(
+    run_dir: Path,
+    effective: dict[str, Any],
+    candidate_version: int,
+    candidate_sha256: str,
+    approval: Optional[str],
+    review_reference: Optional[str],
+) -> tuple[str, Optional[str]]:
+    policy = effective.get("gates", {}).get("system_design", {})
+    configured = policy.get("authority") if isinstance(policy, dict) else None
+    if configured == "HUMAN":
+        if review_reference is not None:
+            raise ControlError("configured HUMAN System Design gate does not accept --review")
+        if approval != "human":
+            raise ControlError("HUMAN System Design gate requires explicit --approval human")
+        return "HUMAN", None
+    if configured in {"AGENT_REVIEW", "HUMAN_IF_CHANGED"}:
+        _, review_sha256, mapped = load_system_design_review(
+            run_dir, effective, candidate_version, candidate_sha256, review_reference
+        )
+        if mapped == "AGENT_REVIEW":
+            if approval is not None:
+                raise ControlError(f"configured {configured} System Design gate does not fall back to human approval")
+        elif approval != "human":
+            raise ControlError("HUMAN_IF_CHANGED mapped HUMAN requires explicit --approval human")
+        return mapped, review_sha256
+    raise ControlError(f"system_design authority {configured} is an intentionally unimplemented Slice-2B capability")
+
+
 def advance_boundary(
     run_dir: Path,
     stage: str,
     approval: Optional[str],
+    review_reference: Optional[str],
     accepted: str,
 ) -> str:
     if stage != "system_design":
-        raise ControlError("Slice 2A supports only system_design acceptance")
+        raise ControlError("Slice 2B supports only system_design acceptance")
     planning, _, effective = verified_planning_state(run_dir)
     participation = effective.get("system_design_participation")
     if participation not in {"agent_led", "co_design"}:
         raise ControlError(f"unsupported frozen System Design participation: {participation}")
-    authority = effective.get("gates", {}).get("system_design", {}).get("authority")
-    if authority != "HUMAN":
-        raise ControlError(f"system_design authority {authority} is an intentionally unimplemented Slice-2B capability")
-    if approval != "human":
-        raise ControlError("HUMAN System Design gate requires explicit --approval human")
     report = system_design_report(run_dir, planning, effective)
     if report["verdict"] != "PASS":
         raise ControlError("mechanical system_design boundary check is BLOCKED")
     accepted = canonical_date(accepted, "acceptance date")
-    candidate_version = report.get("candidate_version")
-    candidate_sha256 = report.get("candidate_sha256")
-    source_binding = report.get("source_binding")
+    candidate_version: int = report["candidate_version"]
+    candidate_sha256: str = report["candidate_sha256"]
+    source_binding = report["source_binding"]
+    authority, review_sha256 = resolve_system_design_authority(
+        run_dir,
+        effective,
+        candidate_version,
+        candidate_sha256,
+        approval,
+        review_reference,
+    )
 
     final_report = system_design_report(run_dir, planning, effective)
     if (
@@ -644,10 +841,18 @@ def advance_boundary(
         raise ControlError("candidate or source binding changed before System Design acceptance")
     try:
         final_planning, _, final_effective = verified_planning_state(run_dir)
+        final_authority = resolve_system_design_authority(
+            run_dir,
+            final_effective,
+            candidate_version,
+            candidate_sha256,
+            approval,
+            review_reference,
+        )
     except ControlError as exc:
-        raise ControlError("candidate or source binding changed before System Design acceptance") from exc
-    if final_planning != planning:
-        raise ControlError("planning-control.json changed before System Design acceptance")
+        raise ControlError("candidate, source binding, policy, or review changed before System Design acceptance") from exc
+    if final_planning != planning or final_authority != (authority, review_sha256):
+        raise ControlError("planning-control.json, policy, or review changed before System Design acceptance")
 
     selected = [item for item in DOWNSTREAM_STAGES if item in final_effective["stages"]]
     index = selected.index("system_design")
@@ -658,26 +863,37 @@ def advance_boundary(
     def revalidate_immediately_before_replace() -> None:
         current_planning, _, current_effective = verified_planning_state(run_dir)
         current_report = system_design_report(run_dir, current_planning, current_effective)
+        current_authority = resolve_system_design_authority(
+            run_dir,
+            current_effective,
+            candidate_version,
+            candidate_sha256,
+            approval,
+            review_reference,
+        )
         if (
             current_planning != planning
             or current_report.get("verdict") != "PASS"
             or current_report.get("candidate_version") != candidate_version
             or current_report.get("candidate_sha256") != candidate_sha256
             or current_report.get("source_binding") != source_binding
+            or current_authority != (authority, review_sha256)
         ):
-            raise ControlError("candidate or source binding changed at the System Design write boundary")
+            raise ControlError("candidate, source binding, policy, or review changed at the System Design write boundary")
 
     final_planning["acceptances"]["system_design"] = {
         "candidate_version": candidate_version,
         "candidate_sha256": candidate_sha256,
-        "authority": "HUMAN",
+        "authority": authority,
         "accepted": accepted,
-        "review_reference": None,
-        "review_sha256": None,
+        "review_reference": review_reference,
+        "review_sha256": review_sha256,
         "source_bindings": [source_binding],
         "repository_baselines": [],
     }
-    final_planning["gates"]["system_design"] = "HUMAN_APPROVED"
+    final_planning["gates"]["system_design"] = (
+        "HUMAN_APPROVED" if authority == "HUMAN" else "AGENT_APPROVED"
+    )
     final_planning["phase"] = next_stage
     final_planning["revision"] += 1
     write_planning_control_atomic(
@@ -700,7 +916,8 @@ def build_parser() -> argparse.ArgumentParser:
     advance = sub.add_parser("advance")
     advance.add_argument("--run", required=True, type=Path)
     advance.add_argument("--stage", required=True, choices=("system_design",))
-    advance.add_argument("--approval", required=True, choices=("human",))
+    advance.add_argument("--approval", choices=("human",))
+    advance.add_argument("--review")
     advance.add_argument("--date", required=True)
     return parser
 
@@ -717,7 +934,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             if args.command == "initialize":
                 print(initialize_planning(run_dir))
             elif args.command == "advance":
-                print(advance_boundary(run_dir, args.stage, args.approval, args.date))
+                print(advance_boundary(run_dir, args.stage, args.approval, args.review, args.date))
             else:  # pragma: no cover
                 return 2
         return 0
