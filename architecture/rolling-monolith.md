@@ -744,6 +744,18 @@ ephemeral projections; HTML bytes never acquire independent acceptance authority
 
 Stage 3 stops before codebase-local realization inside the accepted seams.
 
+At its boundary, System Design reads the effective selected stages and chooses exactly one
+admission/provenance binding:
+
+- Product Closure selected → exact accepted `20-prd.md` version/hash;
+- Product Closure `NOT_REQUIRED` → exact accepted/frozen Stage 0 intake and effective configuration,
+  bound by `control.json.base_run_sha256`, `effective_config_hash`, and
+  `effective_config_revision`.
+
+An omitted Product Closure creates no PRD or approval. A change to whichever bound source makes
+accepted System Design stale; Program Design that depends on it becomes stale transitively in the
+same logical downstream transition.
+
 ---
 
 ## Stage 4 — Program design
@@ -1207,6 +1219,18 @@ The decision boundary is the reliance horizon. A choice belongs here when changi
 caller, peer, or operator to adjust, or changes an accepted guarantee. It should remain
 architecture-level rather than file/class-level. Composite decisions record the invariant here and
 leave its local realization to Program Design.
+
+Its admission/provenance applicability test reads the effective selected stages and chooses exactly
+one binding:
+
+- exact accepted `20-prd.md` version/hash when Product Closure is selected;
+- exact accepted/frozen Stage 0 intake and effective configuration when Product Closure is
+  `NOT_REQUIRED`, using `control.json.base_run_sha256`, `effective_config_hash`, and
+  `effective_config_revision`.
+
+The omitted-Product-Closure branch creates no PRD or approval. A change to the bound source makes
+accepted System Design stale and transitively stales any dependent Program Design in the same
+logical downstream transition.
 
 ---
 
@@ -2245,6 +2269,18 @@ self-contained and binds the exact Markdown source path/hash plus renderer versi
 prescribed architecture view or an explicit reason it is inapplicable. The HTML and ephemeral chat
 images remain projections and never receive an independent acceptance outcome.
 
+The required source binding follows an applicability test over the effective selected stages and
+chooses exactly one branch:
+
+1. Product Closure selected → exact accepted `20-prd.md` version/hash.
+2. Product Closure `NOT_REQUIRED` → exact accepted/frozen Stage 0 intake and effective
+   configuration, bound by `control.json.base_run_sha256`, `effective_config_hash`, and
+   `effective_config_revision`.
+
+The reviewer must not require or fabricate a PRD or approval for omitted Product Closure. A change
+to whichever bound source makes accepted System Design stale; dependent Program Design becomes
+stale transitively in the same logical downstream transition.
+
 Semantic review checks the Stage 3 reliance horizon: responsibilities and system seams,
 authoritative data ownership, cross-module/external contracts, target schema/protocol, end-to-end
 lifecycle/failure/recovery, compatibility, and trust/security/operations. The judge reports its own
@@ -2664,6 +2700,14 @@ when applicable). In v0.6 that accepted product-contract candidate is `20-prd.md
 The current Stage 0–2 controller has no post-closure reopen command. A future downstream owner may
 mark that binding stale and require the next candidate version; until that owner exists, any live
 source mismatch after acceptance fails closed rather than silently reopening discovery.
+
+System Design acceptance chooses exactly one admission/provenance binding from the selected path:
+the exact accepted `20-prd.md` version/hash when Product Closure is selected, or the exact
+accepted/frozen Stage 0 intake and effective configuration when Product Closure is `NOT_REQUIRED`,
+bound by `control.json.base_run_sha256`, `effective_config_hash`, and
+`effective_config_revision`. Omitted Product Closure creates no PRD or approval. A change to
+whichever source is bound to accepted System Design makes that acceptance stale; dependent Program
+Design becomes stale transitively in the same logical downstream transition.
 
 ---
 
@@ -6822,10 +6866,20 @@ controller enforcement, and model-dispatch runtime remain follow-on implementati
 
 ---
 
-## D-079 — Program Design binds to the actual selected upstream path
+## D-079 — System Design and Program Design bind to their actual selected upstream paths
 
-Program Design's boundary and reviewer apply an explicit applicability test over the effective
+System Design's boundary and reviewer apply an explicit applicability test over the effective
 selected stages and choose exactly one binding:
+
+1. Product Closure selected → exact accepted `20-prd.md` version/hash.
+2. Product Closure `NOT_REQUIRED` → exact accepted/frozen Stage 0 intake and effective
+   configuration, bound by `control.json.base_run_sha256`, `effective_config_hash`, and
+   `effective_config_revision`.
+
+An omitted Product Closure creates no PRD or approval.
+
+Program Design's boundary and reviewer apply the same selected-path test and choose exactly one
+binding:
 
 1. System Design selected → exact accepted `30-system-design.md` version/hash.
 2. System Design `NOT_REQUIRED`; product closure selected → exact accepted `20-prd.md`
@@ -6840,6 +6894,9 @@ applicability rule: a direct path consumes the accepted Program Design plus its 
 binding, not a nonexistent PRD or System Design. The reliance-horizon ownership rule, paired
 drafting, separate judges, sequential acceptance when System Design is selected, and Program
 Design's independent semantic review remain unchanged.
+
+A change to whichever bound source makes accepted System Design stale. Program Design that depends
+on it becomes stale transitively in the same logical downstream transition.
 
 ---
 

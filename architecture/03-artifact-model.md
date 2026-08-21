@@ -237,6 +237,18 @@ caller, peer, or operator to adjust, or changes an accepted guarantee. It should
 architecture-level rather than file/class-level. Composite decisions record the invariant here and
 leave its local realization to Program Design.
 
+Its admission/provenance applicability test reads the effective selected stages and chooses exactly
+one binding:
+
+- exact accepted `20-prd.md` version/hash when Product Closure is selected;
+- exact accepted/frozen Stage 0 intake and effective configuration when Product Closure is
+  `NOT_REQUIRED`, using `control.json.base_run_sha256`, `effective_config_hash`, and
+  `effective_config_revision`.
+
+The omitted-Product-Closure branch creates no PRD or approval. A change to the bound source makes
+accepted System Design stale and transitively stales any dependent Program Design in the same
+logical downstream transition.
+
 ---
 
 ## `30-system-design.html`

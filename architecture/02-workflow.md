@@ -199,6 +199,18 @@ ephemeral projections; HTML bytes never acquire independent acceptance authority
 
 Stage 3 stops before codebase-local realization inside the accepted seams.
 
+At its boundary, System Design reads the effective selected stages and chooses exactly one
+admission/provenance binding:
+
+- Product Closure selected → exact accepted `20-prd.md` version/hash;
+- Product Closure `NOT_REQUIRED` → exact accepted/frozen Stage 0 intake and effective configuration,
+  bound by `control.json.base_run_sha256`, `effective_config_hash`, and
+  `effective_config_revision`.
+
+An omitted Product Closure creates no PRD or approval. A change to whichever bound source makes
+accepted System Design stale; Program Design that depends on it becomes stale transitively in the
+same logical downstream transition.
+
 ---
 
 ## Stage 4 — Program design

@@ -119,6 +119,14 @@ The current Stage 0–2 controller has no post-closure reopen command. A future 
 mark that binding stale and require the next candidate version; until that owner exists, any live
 source mismatch after acceptance fails closed rather than silently reopening discovery.
 
+System Design acceptance chooses exactly one admission/provenance binding from the selected path:
+the exact accepted `20-prd.md` version/hash when Product Closure is selected, or the exact
+accepted/frozen Stage 0 intake and effective configuration when Product Closure is `NOT_REQUIRED`,
+bound by `control.json.base_run_sha256`, `effective_config_hash`, and
+`effective_config_revision`. Omitted Product Closure creates no PRD or approval. A change to
+whichever source is bound to accepted System Design makes that acceptance stale; dependent Program
+Design becomes stale transitively in the same logical downstream transition.
+
 ---
 
 ## Amendments

@@ -239,6 +239,18 @@ self-contained and binds the exact Markdown source path/hash plus renderer versi
 prescribed architecture view or an explicit reason it is inapplicable. The HTML and ephemeral chat
 images remain projections and never receive an independent acceptance outcome.
 
+The required source binding follows an applicability test over the effective selected stages and
+chooses exactly one branch:
+
+1. Product Closure selected → exact accepted `20-prd.md` version/hash.
+2. Product Closure `NOT_REQUIRED` → exact accepted/frozen Stage 0 intake and effective
+   configuration, bound by `control.json.base_run_sha256`, `effective_config_hash`, and
+   `effective_config_revision`.
+
+The reviewer must not require or fabricate a PRD or approval for omitted Product Closure. A change
+to whichever bound source makes accepted System Design stale; dependent Program Design becomes
+stale transitively in the same logical downstream transition.
+
 Semantic review checks the Stage 3 reliance horizon: responsibilities and system seams,
 authoritative data ownership, cross-module/external contracts, target schema/protocol, end-to-end
 lifecycle/failure/recovery, compatibility, and trust/security/operations. The judge reports its own

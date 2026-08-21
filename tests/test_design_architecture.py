@@ -303,6 +303,36 @@ class PairedDesignArchitectureTests(unittest.TestCase):
             with self.subTest(clause=clause):
                 self.assertEqual(bool(frontier_preexposure_violations(clause)), forbidden)
 
+    def test_system_design_admission_binds_to_the_selected_product_path(self):
+        decisions = normalized("22-v0.7-decisions.md").lower()
+        review = normalized("06-review-and-validation.md").lower()
+        workflow = normalized("02-workflow.md").lower()
+        artifacts = normalized("03-artifact-model.md").lower()
+        state = normalized("08-state-and-governance.md").lower()
+        combined = " ".join((decisions, review, workflow, artifacts, state))
+
+        self.assertRegex(decisions, r"system design's (?:boundary|admission).{0,240}choose(?:s)? exactly one")
+        self.assertRegex(
+            decisions,
+            r"product closure selected.{0,180}exact accepted `20-prd\.md` version/hash",
+        )
+        direct = re.search(
+            r"system design's (?:boundary|admission).{0,500}product closure `not_required`(.*?)(?=program design's boundary)",
+            decisions,
+        )
+        self.assertIsNotNone(direct)
+        direct_rule = direct.group(1) if direct else ""
+        self.assertRegex(direct_rule, r"accepted/frozen stage 0 intake")
+        self.assertRegex(direct_rule, r"`control\.json\.base_run_sha256`")
+        self.assertRegex(direct_rule, r"`effective_config_hash`")
+        self.assertRegex(direct_rule, r"`effective_config_revision`")
+        self.assertNotIn("accepted `20-prd.md`", direct_rule)
+        self.assertRegex(combined, r"omitted product closure.{0,180}(?:no|neither).{0,80}(?:prd|artifact).{0,80}(?:approval|acceptance)")
+        self.assertRegex(
+            combined,
+            r"bound source.{0,180}system design.{0,100}stale.{0,240}program design.{0,100}transitively.{0,160}same logical downstream transition",
+        )
+
     def test_program_design_admission_binds_to_the_actual_selected_upstream_path(self):
         decisions = normalized("22-v0.7-decisions.md").lower()
         review = normalized("06-review-and-validation.md").lower()
