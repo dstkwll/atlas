@@ -6,65 +6,73 @@ disable-model-invocation: true
 
 # System design
 
-Produce only `<run>/30-system-design.md` for the current Stage 3 boundary. The producer writes readiness, never acceptance, and does not mutate `run.yaml`, `control.json`, `planning-control.json`, upstream artifacts, or review evidence.
+Produce the current Stage 3 candidate. The producer writes readiness, never acceptance, and does not mutate `run.yaml`, `control.json`, `planning-control.json`, upstream artifacts, or review evidence. `30-system-design.md` is always canonical; co-design additionally requires the non-authoritative `30-system-design.html` board.
 
-Resolve `<atlas-plugin-root>` from this installed skill before invoking the packaged tool: it is the third parent of this file (`SKILL.md` → `system-design/` → `skills/` → the plugin root) and contains `tools/atlas_planning.py`. Use that resolved absolute path; never rely on the caller's working directory.
+Resolve `<atlas-plugin-root>` from this installed skill before invoking a packaged tool: it is the third parent of this file (`SKILL.md` → `system-design/` → `skills/` → plugin root). Use that absolute path; never rely on the caller's working directory.
 
 ## 1. Resume frozen authority
 
-Read `run.yaml`, authoritative Stage 0 `control.json`, and `planning-control.json`. Require all of the following before authoring:
+Read `run.yaml`, authoritative Stage 0 `control.json`, and `planning-control.json`. Require current phase `system_design`, gate `PENDING`, frozen participation `agent_led` or `co_design`, and `run.yaml.gates.system_design.authority: HUMAN`.
 
-- `planning-control.json.phase` is `system_design` and its gate is `PENDING`;
-- the selected `system_design_participation` is `agent_led`;
-- `run.yaml.gates.system_design.authority` is exactly `HUMAN`.
-
-System Design reads the frozen value and never asks again for participation. If participation is `co_design`, stop and report that co-design is an intentionally unimplemented Slice 2 capability. If authority is `AGENT_REVIEW` or `HUMAN_IF_CHANGED`, stop and report that the authority path is an intentionally unimplemented Slice 2 capability. Do not reinterpret either case or improvise a substitute.
+System Design reads the frozen value and never asks again for participation. If authority is `AGENT_REVIEW` or `HUMAN_IF_CHANGED`, stop and report the intentionally unimplemented Slice 2B authority path. Do not reinterpret policy, invoke a reviewer, or fall back to HUMAN.
 
 ## 2. Bind the one applicable source
 
-Read the selected stages and the immutable `stage0_anchor` in planning control. Choose exactly one source branch:
+Read selected stages and immutable `stage0_anchor`; choose exactly one `source_binding`:
 
-- selected Product Closure: bind `source_binding` to `kind: product_closure`, `artifact: 20-prd.md`, and the exact accepted version/SHA-256 in `stage0_anchor.product_closure`;
-- omitted Product Closure: bind `source_binding` to `kind: stage0`, `artifact: run.yaml`, the exact `base_run_sha256` as `sha256`, and the exact `effective_config_hash` and `effective_config_revision`.
+- selected Product Closure: record `kind: product_closure`, `artifact: 20-prd.md`, and its exact accepted integer `version` and `sha256`;
+- omitted Product Closure: record `kind: stage0`, `artifact: run.yaml`, exact base `sha256`, `effective_config_hash`, and integer `effective_config_revision`.
 
-The direct branch carries no PRD field and does not create, require, or infer a PRD. If any source bytes or recorded binding disagree, stop without writing a candidate.
+The direct branch has no PRD field. If source bytes or the recorded binding disagree, stop without writing a candidate.
 
 ## 3. Produce the Stage 3 candidate
 
-Use [`references/system-design-file.md`](references/system-design-file.md) as the exact shape. Frontmatter records `run`, integer `version: 1`, `status: draft`, boolean `gate_ready`, frozen `participation: agent_led`, intake `opened`, and the selected discriminated `source_binding`. Preserve those exact fields and no others.
+Use [`references/system-design-file.md`](references/system-design-file.md) as the exact shape. Frontmatter records `run`, integer `version: 1`, `status: draft`, boolean `gate_ready`, frozen `participation`, intake `opened`, and the selected discriminated `source_binding`; preserve exactly those fields. While drafting keep `gate_ready: false`.
 
-Write from the reliance horizon: a choice belongs here when changing it requires a caller, peer, or operator to adjust or changes an accepted guarantee. Cover the current and proposed system; responsibilities and seams; authoritative ownership; cross-module and external contracts; schema/protocol; lifecycle/data flow; failure/recovery; compatibility; trust/security/operations; rejected alternatives; and open decisions.
+Write from the reliance horizon: changing a Stage 3 choice requires a caller, peer, or operator to adjust or changes an accepted guarantee. Cover all twelve required sections. Keep file placement, language signatures, internal calls, locking mechanics, migration order, and test seams in Program Design.
 
-Keep codebase-local realization downstream. File placement, language signatures, internal call graphs, locking mechanics, migration implementation order, and test seams belong to Program Design. Record system invariants without inventing their local realization.
+### `agent_led`
 
-While drafting, keep `status: draft` and `gate_ready: false`. Inspect the relevant current system and upstream source rather than filling placeholders from inference. Existing candidate bytes may be resumed only when their run, version, participation, and source binding match this run exactly.
+Inspect the current system and applicable source, draft all sections, cold-read the candidate, and repair producer-owned gaps. Write canonical `30-system-design.md` as in Slice 1. Do not require or create HTML.
+
+### `co_design`
+
+Chat is the interactive control surface. Work on one system seam or decision at a time. Ask one plain question; present two or three concrete alternatives; give a recommendation and its strongest counterargument; assign the matching stable label from [`references/system-design-board.md`](references/system-design-board.md). The user may redirect or zoom in. Write each settled choice into Markdown; conversation alone is neither artifact nor approval.
+
+Never edit canonical `30-system-design.md` directly in co-design. Stage the complete replacement at `<run>/.30-system-design.next.md`, then run:
+
+```shell
+python3 "<atlas-plugin-root>/tools/render_system_design.py" write --run "<run-directory>" --draft .30-system-design.next.md
+```
+
+`write` renders first, then installs canonical Markdown and the mandatory deterministic HTML projection. For explicit regeneration or diagnosis use only:
+
+```shell
+python3 "<atlas-plugin-root>/tools/render_system_design.py" render --run "<run-directory>"
+python3 "<atlas-plugin-root>/tools/render_system_design.py" verify --run "<run-directory>"
+```
+
+The board must remain self-contained, metadata-bound, non-authoritative, and complete across every stable view. Put an explicit inapplicability reason in the matching Markdown section when a view does not apply. Do not generate decorative images or accept HTML bytes independently.
 
 ## 4. Record readiness and check mechanics
 
-Cold-read the complete candidate against the exact source and the twelve required section identities. Resolve every producer-owned gap, then set `gate_ready: true` last while keeping `status: draft`. This flag is necessary but is not acceptance.
-
-Run the read-only check:
+Cold-read the complete candidate against its exact source. For co-design, verify the current board. Then set `gate_ready: true` last while keeping `status: draft`, using the same co-design reserved-draft write path when applicable. Run:
 
 ```shell
 python3 "<atlas-plugin-root>/tools/atlas_planning.py" check --run "<run-directory>" --stage system_design
 ```
 
-A structured `BLOCKED` result is an expected check outcome. Follow every reported resume action, repair only the candidate, and rerun the same check. On any tool/dependency error, report the exact error and stop; never emulate checking or transition logic in prose.
+A structured `BLOCKED` result is expected control output. Follow every resume action, repair only producer-owned candidate/projection files, and rerun. On a dependency/tool error, report it exactly and stop; never emulate checking or transition logic.
 
 ## 5. Continue the same workflow
 
-After `PASS`, keep the exact candidate unchanged and perform an exact named internal handoff to `atlas:control-planning` without asking the user to issue a second command. Pass the same `<run-directory>` and stage `system_design`; do not ask for a new invocation, choose another controller, or consume approval in this producer.
-
-## Completion bar
-
-The handoff is ready only when the read-only report is `PASS`, its candidate version/hash equal the bytes still on disk, and its one source binding equals the selected-path anchor. Any other outcome remains producer work and records no authority change.
+After `PASS`, keep the exact Markdown and, for co-design, current HTML unchanged. Perform an exact named internal handoff to `atlas:control-planning` without asking the user to issue a second command. Pass the same `<run-directory>` and stage `system_design`; do not consume approval in this producer.
 
 ## Standing rules
 
-- The producer never approves its own artifact or writes a gate outcome.
-- `30-system-design.md` remains canonical and at `status: draft` after acceptance.
-- `gate_ready: true` is readiness evidence only.
-- Slice 1 has no renderer, HTML board, semantic reviewer, rejection, reopen, or staleness operation.
+- The producer never approves its artifact or writes a gate outcome.
+- `30-system-design.md` remains `status: draft` after acceptance; `gate_ready: true` is readiness only.
 - Product Closure and direct Stage 0 are exclusive source branches.
 - Mechanical `PASS` never claims semantic quality or approval.
+- Slice 2A adds no semantic reviewer, classification envelope, rejection, reopen, or staleness operation.
 - Nothing in conversation overrides frozen intake or deterministic planning state.

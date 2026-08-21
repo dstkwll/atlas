@@ -26,6 +26,7 @@ from atlas_control import (
     validate_run,
     verified_state,
 )
+from render_system_design import verify as verify_system_design_board
 
 try:
     import fcntl
@@ -212,10 +213,26 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
         or not re.fullmatch(r"[0-9a-f]{64}", str(product_closure.get("sha256", "")))
     ):
         raise ControlError("planning-control.json product-closure anchor is malformed")
-    accepted_system_design = acceptances.get("system_design") is not None
-    if accepted_system_design:
-        record = acceptances["system_design"]
-        validate_system_design_acceptance(anchor, record)
+    _, effective = verified_state(run_dir)
+    validate_run(effective)
+    selected = {stage for stage in DOWNSTREAM_STAGES if stage in effective["stages"]}
+    if any((stage in selected) != (gates[stage] != "NOT_REQUIRED") for stage in DOWNSTREAM_STAGES):
+        raise ControlError("planning-control.json gates do not match selected downstream stages")
+
+    approved_stages: list[str] = []
+    for stage in DOWNSTREAM_STAGES:
+        record = acceptances[stage]
+        approved = gates[stage] == "HUMAN_APPROVED"
+        if approved != (record is not None):
+            raise ControlError("planning-control.json gate/acceptance coherence is invalid")
+        if record is not None:
+            if stage != "system_design":
+                raise ControlError("planning-control.json contains an unsupported downstream acceptance")
+            validate_system_design_acceptance(anchor, record)
+            approved_stages.append(stage)
+
+    record = acceptances["system_design"]
+    if record is not None:
         candidate_path = managed_path(run_dir, SYSTEM_DESIGN_FILE)
         if not candidate_path.is_file() or file_sha256(candidate_path) != record["candidate_sha256"]:
             raise ControlError("accepted System Design candidate bytes no longer match recorded provenance")
@@ -223,33 +240,27 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
             product_path = managed_path(run_dir, "20-prd.md")
             if not product_path.is_file() or file_sha256(product_path) != product_closure["sha256"]:
                 raise ControlError("accepted System Design product source no longer matches recorded provenance")
-        coherent_boundary = (
-            gates["system_design"] == "HUMAN_APPROVED"
-            and acceptances["program_design"] is None
-            and acceptances["tickets"] is None
-            and all(gates[stage] in {"PENDING", "NOT_REQUIRED"} for stage in ("program_design", "tickets"))
-            and planning.get("revision") == 2
-        )
-    else:
-        coherent_boundary = (
-            all(value is None for value in acceptances.values())
-            and all(value in {"PENDING", "NOT_REQUIRED"} for value in gates.values())
-            and planning.get("revision") == 1
-        )
+        if effective.get("system_design_participation") == "co_design":
+            try:
+                verify_system_design_board(run_dir)
+            except (OSError, SystemExit, UnicodeError) as exc:
+                raise ControlError(f"accepted co-design board projection is not current: {exc}") from exc
+
     pending = [stage for stage in DOWNSTREAM_STAGES if gates[stage] == "PENDING"]
     if (
         type(planning.get("version")) is not int
         or planning.get("version") != 1
         or not isinstance(planning.get("run"), str)
         or not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", planning["run"])
+        or planning["run"] != effective["run"]
         or planning.get("status") != "PLANNING"
         or not pending
         or planning.get("phase") != pending[0]
-        or not coherent_boundary
-        or isinstance(planning.get("revision"), bool)
+        or type(planning.get("revision")) is not int
+        or planning["revision"] != 1 + len(approved_stages)
         or planning.get("blocked_reason") is not None
     ):
-        raise ControlError("planning-control.json values are not a coherent initial or accepted System Design state")
+        raise ControlError("planning-control.json values are not a coherent current planning state")
     return planning
 
 
@@ -511,6 +522,16 @@ def system_design_report(
             "system_design",
             "copy the frozen System Design participation without re-asking",
         ))
+    if effective.get("system_design_participation") == "co_design":
+        try:
+            verify_system_design_board(run_dir)
+        except (OSError, SystemExit, UnicodeError) as exc:
+            gaps.append(gap(
+                "30-system-design.html",
+                f"30-system-design.html board verification failed: {exc}",
+                "system_design",
+                "regenerate the board from the reserved System Design draft and rerun the check",
+            ))
     try:
         candidate_opened = canonical_date(frontmatter.get("opened"), "candidate opened")
         intake_opened = canonical_date(effective.get("opened"), "intake opened")
@@ -595,13 +616,14 @@ def advance_boundary(
     accepted: str,
 ) -> str:
     if stage != "system_design":
-        raise ControlError("Slice 1 supports only system_design acceptance")
+        raise ControlError("Slice 2A supports only system_design acceptance")
     planning, _, effective = verified_planning_state(run_dir)
-    if effective.get("system_design_participation") != "agent_led":
-        raise ControlError("co_design System Design is an intentionally unimplemented Slice-2 capability")
+    participation = effective.get("system_design_participation")
+    if participation not in {"agent_led", "co_design"}:
+        raise ControlError(f"unsupported frozen System Design participation: {participation}")
     authority = effective.get("gates", {}).get("system_design", {}).get("authority")
     if authority != "HUMAN":
-        raise ControlError(f"system_design authority {authority} is an intentionally unimplemented Slice-2 capability")
+        raise ControlError(f"system_design authority {authority} is an intentionally unimplemented Slice-2B capability")
     if approval != "human":
         raise ControlError("HUMAN System Design gate requires explicit --approval human")
     report = system_design_report(run_dir, planning, effective)

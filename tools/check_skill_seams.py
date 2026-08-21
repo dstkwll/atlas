@@ -164,10 +164,12 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         "planning": skills.parent / "tools" / "atlas_planning.py",
         "system-design": skills / "system-design" / "SKILL.md",
         "system-design-template": skills / "system-design" / "references" / "system-design-file.md",
+        "system-design-board": skills / "system-design" / "references" / "system-design-board.md",
         "system-design-agent": skills / "system-design" / "agents" / "openai.yaml",
         "control-planning": skills / "control-planning" / "SKILL.md",
         "control-planning-agent": skills / "control-planning" / "agents" / "openai.yaml",
         "renderer": skills.parent / "tools" / "render_prd.py",
+        "system-renderer": skills.parent / "tools" / "render_system_design.py",
     }
     texts: dict[str, str] = {}
     for name, path in paths.items():
@@ -200,10 +202,12 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             'PLANNING_LOCK_FILE = ".atlas-planning.lock"',
             "def load_planning_control", "def initialize_planning", "def check_boundary",
             "def advance_boundary", 'SYSTEM_DESIGN_FILE = "30-system-design.md"',
+            "verify_system_design_board", "30-system-design.html",
         ],
         "system-design": [
             "disable-model-invocation: true", "third parent of this file", "agent_led",
-            "co_design", "Slice 2", "references/system-design-file.md", "gate_ready: true",
+            "co_design", "Slice 2", "references/system-design-file.md", "references/system-design-board.md",
+            "gate_ready: true", "render_system_design.py", ".30-system-design.next.md",
             "atlas:control-planning", "without asking the user to issue a second command",
         ],
         "system-design-template": [
@@ -212,14 +216,24 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "kind: stage0", "effective_config_hash", "effective_config_revision",
         ],
         "system-design-agent": ["allow_implicit_invocation: false"],
+        "system-design-board": [
+            "30-system-design.md", "30-system-design.html", "Inapplicable:",
+            "non-authoritative", "no independent acceptance hash",
+        ],
         "control-planning": [
             "disable-model-invocation: true", "third parent of this file", "never routes",
             "never synthesizes", "never edits", "never grades prose", "explicit human approval",
+            "agent_led", "co_design", "30-system-design.html", "non-authoritative",
             "atlas_planning.py", "advance --run", "--approval human", "--date",
             "re-read `planning-control.json`", "AGENT_REVIEW", "HUMAN_IF_CHANGED", "Slice 2",
         ],
         "control-planning-agent": ["allow_implicit_invocation: false"],
         "renderer": ["def write_canonical", "def render", "def verify", "RENDERER_VERSION"],
+        "system-renderer": [
+            "def write_canonical", "def render", "def verify", "RENDERER_VERSION",
+            'SOURCE_FILE = "30-system-design.md"', 'OUTPUT_FILE = "30-system-design.html"',
+            "REQUIRED_VIEWS", "atlas-source", "atlas-source-sha256", "atlas-renderer-version",
+        ],
     }
     for name, needles in required.items():
         text = texts.get(name, "")
@@ -237,6 +251,14 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             findings.append(("cross", f"{name}: missing caller-CWD-independent System Design check command"))
     if advance_command not in texts.get("control-planning", ""):
         findings.append(("cross", "control-planning: missing exact HUMAN System Design advance command"))
+    renderer_commands = (
+        'python3 "<atlas-plugin-root>/tools/render_system_design.py" write --run "<run-directory>" --draft .30-system-design.next.md',
+        'python3 "<atlas-plugin-root>/tools/render_system_design.py" render --run "<run-directory>"',
+        'python3 "<atlas-plugin-root>/tools/render_system_design.py" verify --run "<run-directory>"',
+    )
+    for command in renderer_commands:
+        if command not in texts.get("system-design", ""):
+            findings.append(("cross", f"system-design: missing caller-CWD-independent renderer command `{command}`"))
     producer = texts.get("system-design", "")
     if producer.count("atlas:control-planning") != 1 or "without asking the user to issue a second command" not in producer:
         findings.append(("cross", "system-design: missing exact internal control-planning handoff without a second user command"))
@@ -288,6 +310,25 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         for field in sorted(system_fields | product_source_fields | stage0_source_fields):
             if not sentences_naming(governed, field):
                 findings.append(("cross", f"system-design: template field `{field}` is ungoverned"))
+
+    try:
+        board_views = tuple(assigned_literal(texts.get("system-renderer", ""), "REQUIRED_VIEWS"))
+        board_labels = tuple(item[0] for item in board_views)
+        board_sections = {section for _, _, sections in board_views for section in sections}
+        system_sections = set(assigned_literal(texts.get("planning", ""), "SYSTEM_DESIGN_SECTIONS"))
+    except (SyntaxError, ValueError, TypeError, IndexError) as exc:
+        findings.append(("cross", f"System Design board views are unreadable: {exc}"))
+    else:
+        board_text = texts.get("system-design-board", "")
+        skill_text = texts.get("system-design", "")
+        if (
+            len(board_labels) != len(set(board_labels))
+            or any(label not in board_text for label in board_labels)
+            or any(label not in skill_text and "stable label" not in skill_text for label in board_labels)
+        ):
+            findings.append(("cross", "System Design board views do not match renderer, reference, and skill contracts"))
+        if not board_sections.issubset(system_sections):
+            findings.append(("cross", "System Design board source sections are outside planning SYSTEM_DESIGN_SECTIONS"))
 
     for name in ("system-design", "control-planning"):
         count = len(texts.get(name, "").splitlines())

@@ -21,6 +21,7 @@ from tests.test_atlas_control import (
 
 ROOT = Path(__file__).resolve().parents[1]
 PLANNING_CLI = ROOT / "plugins" / "atlas" / "tools" / "atlas_planning.py"
+SYSTEM_RENDERER = ROOT / "plugins" / "atlas" / "tools" / "render_system_design.py"
 if str(PLANNING_CLI.parent) not in sys.path:
     sys.path.insert(0, str(PLANNING_CLI.parent))
 PLANNING_SPEC = importlib.util.spec_from_file_location("atlas_planning", PLANNING_CLI)
@@ -33,6 +34,14 @@ def planning_cli(*args, cwd=None):
     return subprocess.run(
         [sys.executable, str(PLANNING_CLI), *map(str, args)],
         cwd=cwd,
+        text=True,
+        capture_output=True,
+    )
+
+
+def render_system_board(run: Path):
+    return subprocess.run(
+        [sys.executable, str(SYSTEM_RENDERER), "render", "--run", str(run)],
         text=True,
         capture_output=True,
     )
@@ -427,6 +436,44 @@ class AtlasPlanningTests(unittest.TestCase):
             self.assertEqual(report["verdict"], "BLOCKED")
             self.assertTrue(any("symlink" in item["problem"] for item in report["gaps"]))
 
+    def test_co_design_check_blocks_without_or_with_stale_board_and_passes_when_current(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            config = direct_config(participation="co_design")
+            write_stage0_run(run, config)
+            initialized = planning_cli("initialize", "--run", run)
+            self.assertEqual(initialized.returncode, 0, initialized.stderr)
+            planning = json.loads((run / "planning-control.json").read_text(encoding="utf-8"))
+            anchor = planning["stage0_anchor"]
+            write_system_design(run, {
+                "kind": "stage0",
+                "artifact": "run.yaml",
+                "sha256": anchor["base_run_sha256"],
+                "effective_config_hash": anchor["effective_config_hash"],
+                "effective_config_revision": anchor["effective_config_revision"],
+            }, participation="co_design")
+
+            missing = planning_cli("check", "--run", run, "--stage", "system_design")
+            self.assertEqual(missing.returncode, 1, missing.stderr)
+            missing_report = json.loads(missing.stdout)
+            self.assertEqual(missing_report["verdict"], "BLOCKED")
+            self.assertTrue(any("30-system-design.html" in item["problem"] for item in missing_report["gaps"]))
+            self.assertTrue(all(item["resume_action"] for item in missing_report["gaps"]))
+
+            rendered = render_system_board(run)
+            self.assertEqual(rendered.returncode, 0, rendered.stderr)
+            current = planning_cli("check", "--run", run, "--stage", "system_design")
+            self.assertEqual(current.returncode, 0, current.stderr)
+            self.assertEqual(json.loads(current.stdout)["verdict"], "PASS")
+
+            with (run / "30-system-design.md").open("a", encoding="utf-8") as handle:
+                handle.write("\nstale board source\n")
+            stale = planning_cli("check", "--run", run, "--stage", "system_design")
+            self.assertEqual(stale.returncode, 1, stale.stderr)
+            stale_report = json.loads(stale.stdout)
+            self.assertEqual(stale_report["verdict"], "BLOCKED")
+            self.assertTrue(any("sha256" in item["problem"].lower() for item in stale_report["gaps"]))
+
     def test_human_system_design_acceptance_records_exact_binding_and_advances_one_phase(self):
         with tempfile.TemporaryDirectory() as td:
             run = Path(td)
@@ -473,6 +520,87 @@ class AtlasPlanningTests(unittest.TestCase):
             self.assertEqual((run / "run.yaml").read_bytes(), run_before)
             for forbidden in ("approved", "history.json", "events.json", "journal.json"):
                 self.assertFalse((run / forbidden).exists())
+
+    def test_co_design_human_acceptance_requires_current_board_and_keeps_html_non_authoritative(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            config = direct_config(participation="co_design")
+            write_stage0_run(run, config)
+            initialized = planning_cli("initialize", "--run", run)
+            self.assertEqual(initialized.returncode, 0, initialized.stderr)
+            planning = json.loads((run / "planning-control.json").read_text(encoding="utf-8"))
+            anchor = planning["stage0_anchor"]
+            source_binding = {
+                "kind": "stage0",
+                "artifact": "run.yaml",
+                "sha256": anchor["base_run_sha256"],
+                "effective_config_hash": anchor["effective_config_hash"],
+                "effective_config_revision": anchor["effective_config_revision"],
+            }
+            write_system_design(run, source_binding, participation="co_design")
+            rendered = render_system_board(run)
+            self.assertEqual(rendered.returncode, 0, rendered.stderr)
+            html_before = (run / "30-system-design.html").read_bytes()
+
+            accepted = planning_cli(
+                "advance", "--run", run, "--stage", "system_design",
+                "--approval", "human", "--date", "2026-08-21",
+            )
+
+            self.assertEqual(accepted.returncode, 0, accepted.stderr)
+            updated = PLANNING.load_planning_control(run)
+            record = updated["acceptances"]["system_design"]
+            self.assertEqual(record["candidate_sha256"], sha256(run / "30-system-design.md"))
+            self.assertEqual(record["authority"], "HUMAN")
+            self.assertEqual(record["source_bindings"], [source_binding])
+            self.assertNotIn("html", " ".join(record).lower())
+            self.assertEqual((run / "30-system-design.html").read_bytes(), html_before)
+            self.assertEqual(updated["phase"], "tickets")
+
+    def test_accepted_co_design_loader_requires_a_current_board_projection(self):
+        for mutation in ("missing", "metadata", "body"):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                config = direct_config(participation="co_design")
+                write_stage0_run(run, config)
+                initialized = planning_cli("initialize", "--run", run)
+                self.assertEqual(initialized.returncode, 0, initialized.stderr)
+                planning = json.loads((run / "planning-control.json").read_text(encoding="utf-8"))
+                anchor = planning["stage0_anchor"]
+                write_system_design(run, {
+                    "kind": "stage0",
+                    "artifact": "run.yaml",
+                    "sha256": anchor["base_run_sha256"],
+                    "effective_config_hash": anchor["effective_config_hash"],
+                    "effective_config_revision": anchor["effective_config_revision"],
+                }, participation="co_design")
+                self.assertEqual(render_system_board(run).returncode, 0)
+                accepted = planning_cli(
+                    "advance", "--run", run, "--stage", "system_design",
+                    "--approval", "human", "--date", "2026-08-21",
+                )
+                self.assertEqual(accepted.returncode, 0, accepted.stderr)
+
+                board = run / "30-system-design.html"
+                if mutation == "missing":
+                    board.unlink()
+                elif mutation == "metadata":
+                    board.write_text(
+                        board.read_text(encoding="utf-8").replace(
+                            'content="30-system-design.md"', 'content="wrong.md"', 1
+                        ),
+                        encoding="utf-8",
+                    )
+                else:
+                    board.write_text(
+                        board.read_text(encoding="utf-8").replace(
+                            "Concrete current system decisions.", "Tampered topology.", 1
+                        ),
+                        encoding="utf-8",
+                    )
+
+                with self.assertRaisesRegex(PLANNING.ControlError, "board|projection"):
+                    PLANNING.load_planning_control(run)
 
     def test_human_system_design_acceptance_rechecks_candidate_and_source_under_lock(self):
         for changed_artifact in ("30-system-design.md", "20-prd.md"):
@@ -562,9 +690,8 @@ class AtlasPlanningTests(unittest.TestCase):
             with self.assertRaisesRegex(PLANNING.ControlError, "Stage 0|run.yaml|provenance"):
                 PLANNING.load_planning_control(run)
 
-    def test_slice1_rejects_co_design_and_non_human_system_design_authority(self):
+    def test_slice2a_rejects_non_human_system_design_authority(self):
         cases = (
-            ("co_design", {"authority": "HUMAN"}, "co_design"),
             ("agent_led", {"authority": "AGENT_REVIEW"}, "AGENT_REVIEW"),
             (
                 "agent_led",
@@ -604,6 +731,53 @@ class AtlasPlanningTests(unittest.TestCase):
                 self.assertIn(expected, result.stderr)
                 self.assertIn("Slice-2", result.stderr)
                 self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+    def test_planning_loader_rejects_gate_acceptance_incoherence(self):
+        for mutation in ("record-with-pending-gate", "approved-gate-without-record"):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                planning = initialize_direct_planning(run)
+                anchor = planning["stage0_anchor"]
+                write_system_design(run, {
+                    "kind": "stage0",
+                    "artifact": "run.yaml",
+                    "sha256": anchor["base_run_sha256"],
+                    "effective_config_hash": anchor["effective_config_hash"],
+                    "effective_config_revision": anchor["effective_config_revision"],
+                })
+                accepted = planning_cli(
+                    "advance", "--run", run, "--stage", "system_design",
+                    "--approval", "human", "--date", "2026-08-21",
+                )
+                self.assertEqual(accepted.returncode, 0, accepted.stderr)
+                planning_path = run / "planning-control.json"
+                state = json.loads(planning_path.read_text(encoding="utf-8"))
+                if mutation == "record-with-pending-gate":
+                    state["gates"]["system_design"] = "PENDING"
+                    state["phase"] = "system_design"
+                else:
+                    state["acceptances"]["system_design"] = None
+                    state["revision"] = 1
+                planning_path.write_text(json.dumps(state), encoding="utf-8")
+
+                with self.assertRaisesRegex(PLANNING.ControlError, "gate/acceptance"):
+                    PLANNING.load_planning_control(run)
+
+    def test_planning_loader_rejects_phase_and_revision_incoherence(self):
+        for field, value, expected in (
+            ("phase", "tickets", "coherent current planning state"),
+            ("revision", 2, "coherent current planning state"),
+        ):
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                initialize_direct_planning(run)
+                planning_path = run / "planning-control.json"
+                state = json.loads(planning_path.read_text(encoding="utf-8"))
+                state[field] = value
+                planning_path.write_text(json.dumps(state), encoding="utf-8")
+
+                with self.assertRaisesRegex(PLANNING.ControlError, expected):
+                    PLANNING.load_planning_control(run)
 
     def test_planning_loader_accepts_only_current_initial_or_human_accepted_system_design_state(self):
         with tempfile.TemporaryDirectory() as td:

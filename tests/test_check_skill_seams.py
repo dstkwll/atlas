@@ -29,6 +29,17 @@ SYSTEM_DESIGN_SECTIONS = (
     "Rejected alternatives",
     "Open decisions",
 )
+SYSTEM_DESIGN_VIEWS = (
+    "current-topology",
+    "proposed-topology",
+    "seam-ownership",
+    "interface-contract",
+    "lifecycle-sequence-data-flow",
+    "schema-protocol",
+    "failure-recovery",
+    "open-decisions",
+    "rejected-alternatives",
+)
 
 
 class SkillSeamHardeningTests(unittest.TestCase):
@@ -79,6 +90,55 @@ class SkillSeamHardeningTests(unittest.TestCase):
             plugin / "skills" / "control-planning" / "agents" / "openai.yaml",
         ):
             self.assertIn("allow_implicit_invocation: false", agent.read_text(encoding="utf-8"))
+
+    def test_system_design_board_renderer_and_skill_contracts_are_bound(self):
+        plugin = ROOT / "plugins" / "atlas"
+        renderer_path = plugin / "tools" / "render_system_design.py"
+        board_path = plugin / "skills" / "system-design" / "references" / "system-design-board.md"
+        system = (plugin / "skills" / "system-design" / "SKILL.md").read_text(encoding="utf-8")
+        control = (plugin / "skills" / "control-planning" / "SKILL.md").read_text(encoding="utf-8")
+        readme = (plugin / "README.md").read_text(encoding="utf-8")
+
+        self.assertTrue(renderer_path.is_file())
+        self.assertTrue(board_path.is_file())
+        renderer = renderer_path.read_text(encoding="utf-8")
+        board = board_path.read_text(encoding="utf-8")
+        for command in (
+            'render_system_design.py" write --run "<run-directory>" --draft .30-system-design.next.md',
+            'render_system_design.py" render --run "<run-directory>"',
+            'render_system_design.py" verify --run "<run-directory>"',
+        ):
+            self.assertIn(command, system)
+        self.assertIn("reads the frozen value and never asks again", system)
+        self.assertIn("one system seam or decision at a time", system)
+        self.assertIn("two or three concrete alternatives", system)
+        self.assertIn("strongest counterargument", system)
+        self.assertIn("exact named internal handoff to `atlas:control-planning`", system)
+        self.assertIn("agent_led", control)
+        self.assertIn("co_design", control)
+        self.assertIn("explicit human approval", control)
+        self.assertIn("never treat conversational agreement as approval", control.lower())
+        self.assertIn("Slice 2A", readme)
+        self.assertIn("co_design", readme)
+        self.assertIn("render_system_design.py", readme)
+        self.assertIn("non-authoritative", readme)
+        self.assertIn("AGENT_REVIEW", readme)
+        self.assertIn("HUMAN_IF_CHANGED", readme)
+        self.assertIn("installed-host", readme)
+        self.assertNotIn("boundary-review", system + control + board)
+        for label in SYSTEM_DESIGN_VIEWS:
+            self.assertIn(label, renderer)
+            self.assertIn(label, board)
+
+        with tempfile.TemporaryDirectory() as td:
+            skills = self.copy_plugin(Path(td))
+            renderer_copy = skills.parent / "tools" / "render_system_design.py"
+            renderer_copy.write_text(
+                renderer_copy.read_text(encoding="utf-8").replace("current-topology", "current-shape"),
+                encoding="utf-8",
+            )
+            findings = SEAMS.cross_skill_contracts(skills)
+            self.assertTrue(any("System Design board views" in message for _, message in findings), findings)
 
     def test_downstream_system_design_template_and_internal_handoff_drift_are_detected(self):
         with tempfile.TemporaryDirectory() as td:
