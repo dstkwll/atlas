@@ -57,7 +57,7 @@ The deterministic controller/renderer require Python 3.9+ and the pinned package
 
 Operational references:
 
-- [`skills/setup-atlas/references/installed-host-calibration.md`](skills/setup-atlas/references/installed-host-calibration.md) separates installed bytes, host recognition, discovery, procedure completion, and handoff evidence.
+- [`skills/setup-atlas/references/installed-host-calibration.md`](skills/setup-atlas/references/installed-host-calibration.md) separates installed bytes, deterministic runtime readiness, host recognition, discovery, procedure completion, and handoff evidence.
 - [`references/program-design-blocked.md`](references/program-design-blocked.md) preserves and classifies Program Design `BLOCKED`/`DESIGN_BLOCKED` stops without inventing a reopen path.
 
 ## Current boundary

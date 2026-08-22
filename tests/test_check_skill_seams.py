@@ -457,6 +457,7 @@ class SkillSeamHardeningTests(unittest.TestCase):
         )
         for clause in (
             "installation bytes",
+            "deterministic runtime readiness",
             "host recognition",
             "skill discovery",
             "procedure completion",
@@ -467,6 +468,7 @@ class SkillSeamHardeningTests(unittest.TestCase):
             "tools/atlas_planning.py",
             "using that same launcher",
             "Without this run plus oracle, procedure completion is `UNVERIFIED`",
+            "without changing a byte-equality PASS",
         ):
             self.assertIn(clause, commissioning_text)
         for clause in (

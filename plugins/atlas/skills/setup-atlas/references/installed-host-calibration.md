@@ -1,6 +1,6 @@
 # Installed-host calibration
 
-Use this runbook after installation/update, when a host cannot find an Atlas skill, or before claiming that an installed host executes the current plugin. It verifies five separate claims: **installation bytes**, **host recognition**, **skill discovery**, **procedure completion**, and **cross-skill handoff**. Passing one never implies the next.
+Use this runbook after installation/update, when a host cannot find an Atlas skill, or before claiming that an installed host executes the current plugin. It verifies six separate claims: **installation bytes**, **deterministic runtime readiness**, **host recognition**, **skill discovery**, **procedure completion**, and **cross-skill handoff**. Passing one never implies the next. A dependency/CLI failure makes runtime readiness FAIL without changing a byte-equality PASS.
 
 Inputs are an exact `<installed-plugin-root>`, optional `<source-plugin-root>`, the host executable/version when available, and an optional disposable `<calibration-run>` with its expected starting/ending state declared before invocation. The runbook is complete when every claim is reported `PASS`, `FAIL`, or `UNVERIFIED` with its evidence/reason; unavailable host or fixture surfaces never become inferred PASS.
 

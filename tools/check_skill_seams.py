@@ -809,11 +809,13 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "<atlas-plugin-root>/requirements.txt", "references/installed-host-calibration.md",
         ],
         "installed-host-calibration": [
-            "installation bytes", "host recognition", "skill discovery", "procedure completion",
+            "installation bytes", "deterministic runtime readiness", "host recognition",
+            "skill discovery", "procedure completion",
             "cross-skill handoff", "dated calibration", "PASS/FAIL/UNVERIFIED",
             "session.skills_loaded", "tools/atlas_planning.py",
             "using that same launcher",
             "Without this run plus oracle, procedure completion is `UNVERIFIED`",
+            "without changing a byte-equality PASS",
         ],
         "program-design-blocked": [
             "producer pre-readiness", "reviewer evidence", "`planning-control.json` remains `PENDING`",

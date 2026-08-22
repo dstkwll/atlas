@@ -87,7 +87,7 @@ Report whether the deterministic dependencies are ready. Never pretend a missing
 
 ### 6. Calibrate an installed host when needed
 
-After a new install or update, before claiming the installed host runs the current source, or when a host reports an enabled skill missing, follow [`references/installed-host-calibration.md`](references/installed-host-calibration.md). Keep installation bytes, host recognition, skill discovery, procedure completion, and cross-skill handoff as separate claims. A one-host success is dated calibration only.
+After a new install or update, before claiming the installed host runs the current source, or when a host reports an enabled skill missing, follow [`references/installed-host-calibration.md`](references/installed-host-calibration.md). Keep installation bytes, deterministic runtime readiness, host recognition, skill discovery, procedure completion, and cross-skill handoff as separate claims. A one-host success is dated calibration only.
 
 ## Standing rules
 
