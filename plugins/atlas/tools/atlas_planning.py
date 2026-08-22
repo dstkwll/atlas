@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterator, Optional
 
 import yaml
+from markdown_it import MarkdownIt
 
 from atlas_control import (
     ControlError,
@@ -53,8 +54,12 @@ STAGE0_ANCHOR_FIELDS = {
 }
 PRODUCT_CLOSURE_FIELDS = {"version", "sha256"}
 SYSTEM_DESIGN_FILE = "30-system-design.md"
+PROGRAM_DESIGN_FILE = "40-program-design.md"
 SYSTEM_DESIGN_FIELDS = {
     "run", "version", "status", "gate_ready", "participation", "opened", "source_binding",
+}
+PROGRAM_DESIGN_FIELDS = {
+    "run", "version", "status", "gate_ready", "opened", "source_binding",
 }
 PRODUCT_SOURCE_FIELDS = {"kind", "artifact", "version", "sha256"}
 STAGE0_SOURCE_FIELDS = {
@@ -78,10 +83,27 @@ SYSTEM_DESIGN_SECTIONS = (
     "Rejected alternatives",
     "Open decisions",
 )
+PROGRAM_DESIGN_SECTIONS = (
+    "Repository grounding",
+    "Upstream commitment realization",
+    "File-tree diff",
+    "Types and boundary signatures",
+    "Call and data flow",
+    "State, locking, concurrency, and lifetime",
+    "Migration and local failure-path implementation",
+    "Test seams and validation plan",
+    "Least-confident decisions",
+    "Implementation constraints and sequencing",
+)
 SYSTEM_DESIGN_REVIEW_REFERENCE = "reviews/system-design-v1.json"
+PROGRAM_DESIGN_REVIEW_REFERENCE = "reviews/program-design-v1.json"
 SYSTEM_DESIGN_REVIEW_FIELDS = {
     "version", "run", "stage", "policy", "candidate_version", "candidate_sha256",
     "repository_baselines", "materiality", "semantic_review",
+}
+PROGRAM_DESIGN_REVIEW_FIELDS = {
+    "version", "run", "stage", "policy", "candidate_version", "candidate_sha256",
+    "repository_baselines", "semantic_review",
 }
 SYSTEM_DESIGN_DIMENSIONS = (
     "responsibilities_and_system_seams",
@@ -92,14 +114,36 @@ SYSTEM_DESIGN_DIMENSIONS = (
     "compatibility_guarantees",
     "trust_security_operational_commitments",
 )
+PROGRAM_DESIGN_DIMENSIONS = (
+    "upstream_commitment_realization",
+    "repository_grounding_and_feasibility",
+    "files_packages_types_and_responsibilities",
+    "signatures_call_and_data_flow",
+    "state_locking_concurrency_and_lifetime",
+    "migration_and_local_failure_path_implementation",
+    "testability_and_compilation_readiness",
+)
 SEMANTIC_REVIEW_FIELDS = {"verdict", "dimensions", "gaps"}
 DIMENSION_REVIEW_FIELDS = {"dimension", "result", "evidence"}
 SEMANTIC_GAP_FIELDS = {"code", "dimension", "problem", "resume_action"}
+DESIGN_BLOCKED_GAP_FIELDS = {
+    "code", "dimension", "problem", "upstream_source", "upstream_issue",
+    "resume_boundary", "resume_action",
+}
 MATERIALITY_FIELDS = {"dimensions", "unavailable_reason"}
 
 
 def nonempty_string(value: Any) -> bool:
     return isinstance(value, str) and bool(value.strip())
+
+
+def program_design_headings(body: str) -> tuple[str, ...]:
+    tokens = MarkdownIt("commonmark").parse(body)
+    return tuple(
+        tokens[index + 1].content
+        for index, token in enumerate(tokens[:-1])
+        if token.type == "heading_open" and token.tag == "h2"
+    )
 
 
 def validate_semantic_review(review: Any) -> None:
@@ -214,6 +258,96 @@ def load_system_design_review(
     return envelope, review_sha256, mapped
 
 
+def validate_program_design_semantic_review(review: Any, source_kind: str) -> None:
+    if not isinstance(review, dict) or set(review) != SEMANTIC_REVIEW_FIELDS:
+        raise ControlError("Program Design semantic_review does not match its exact schema")
+    verdict = review.get("verdict")
+    rows = review.get("dimensions")
+    gaps = review.get("gaps")
+    if verdict not in {"PASS", "BLOCKED", "DESIGN_BLOCKED"} or not isinstance(rows, list) or not isinstance(gaps, list):
+        raise ControlError("Program Design semantic_review is malformed")
+    if (
+        len(rows) != len(PROGRAM_DESIGN_DIMENSIONS)
+        or any(not isinstance(row, dict) or set(row) != DIMENSION_REVIEW_FIELDS for row in rows)
+        or any(row.get("dimension") not in PROGRAM_DESIGN_DIMENSIONS for row in rows)
+        or len({row.get("dimension") for row in rows}) != len(PROGRAM_DESIGN_DIMENSIONS)
+        or any(row.get("result") not in {"PASS", "BLOCKED", "DESIGN_BLOCKED"} for row in rows)
+        or any(not nonempty_string(row.get("evidence")) for row in rows)
+    ):
+        raise ControlError("Program Design semantic_review must cover the exact seven Stage 4 dimensions")
+    results = {row["dimension"]: row["result"] for row in rows}
+    expected_verdict = (
+        "DESIGN_BLOCKED"
+        if "DESIGN_BLOCKED" in results.values()
+        else "BLOCKED"
+        if "BLOCKED" in results.values()
+        else "PASS"
+    )
+    if verdict != expected_verdict:
+        raise ControlError("Program Design verdict must be derived from its dimension rows")
+    nonpass = {dimension for dimension, result in results.items() if result != "PASS"}
+    if len(gaps) != len(nonpass) or {item.get("dimension") for item in gaps if isinstance(item, dict)} != nonpass:
+        raise ControlError("Program Design gaps must exactly cover every non-PASS dimension")
+    for item in gaps:
+        dimension = item.get("dimension") if isinstance(item, dict) else None
+        result = results.get(dimension)
+        expected_fields = DESIGN_BLOCKED_GAP_FIELDS if result == "DESIGN_BLOCKED" else SEMANTIC_GAP_FIELDS
+        if not isinstance(item, dict) or set(item) != expected_fields:
+            raise ControlError("Program Design gap does not match the exact result-specific schema")
+        required = expected_fields - {"dimension"}
+        if any(not nonempty_string(item.get(field)) for field in required):
+            raise ControlError("Program Design gaps require nonempty evidence fields")
+        if result == "DESIGN_BLOCKED":
+            if dimension != "upstream_commitment_realization":
+                raise ControlError("Program Design DESIGN_BLOCKED belongs to upstream_commitment_realization")
+            if item.get("upstream_source") != source_kind or item.get("resume_boundary") != source_kind:
+                raise ControlError("Program Design DESIGN_BLOCKED must resume at the actual source boundary")
+
+
+def load_program_design_review(
+    run_dir: Path,
+    effective: dict[str, Any],
+    candidate_version: int,
+    candidate_sha256: str,
+    source_kind: str,
+    review_reference: Any,
+) -> tuple[dict[str, Any], str]:
+    if review_reference != PROGRAM_DESIGN_REVIEW_REFERENCE:
+        raise ControlError(f"Program Design review must use exact {PROGRAM_DESIGN_REVIEW_REFERENCE}")
+    path = managed_path(run_dir, review_reference)
+    if not path.is_file():
+        raise ControlError("Program Design review evidence is missing or not a real file")
+    try:
+        review_bytes = path.read_bytes()
+        envelope = load_json(review_bytes.decode("utf-8"))
+    except UnicodeDecodeError as exc:
+        raise ControlError("Program Design review evidence is not valid UTF-8") from exc
+    except json.JSONDecodeError as exc:
+        raise ControlError("Program Design review evidence is not valid duplicate-safe JSON") from exc
+    review_sha256 = hashlib.sha256(review_bytes).hexdigest()
+    if not isinstance(envelope, dict) or set(envelope) != PROGRAM_DESIGN_REVIEW_FIELDS:
+        raise ControlError("Program Design review envelope does not match its exact schema")
+    policy = effective.get("gates", {}).get("program_design", {})
+    configured = policy.get("authority") if isinstance(policy, dict) else None
+    if (
+        type(envelope.get("version")) is not int
+        or envelope.get("version") != 1
+        or envelope.get("run") != effective["run"]
+        or envelope.get("stage") != "program_design"
+        or configured not in {"AGENT_REVIEW", "HUMAN"}
+        or envelope.get("policy") != configured
+        or type(envelope.get("candidate_version")) is not int
+        or envelope.get("candidate_version") != candidate_version
+        or envelope.get("candidate_sha256") != candidate_sha256
+        or envelope.get("repository_baselines") != effective["repos"]
+    ):
+        raise ControlError("Program Design review evidence does not match current policy, candidate, or baselines")
+    validate_program_design_semantic_review(envelope.get("semantic_review"), source_kind)
+    if envelope["semantic_review"]["verdict"] != "PASS":
+        raise ControlError(f"Program Design semantic review is {envelope['semantic_review']['verdict']}")
+    return envelope, review_sha256
+
+
 @contextlib.contextmanager
 def planning_lock(run_dir: Path) -> Iterator[None]:
     path = managed_path(run_dir, PLANNING_LOCK_FILE)
@@ -325,6 +459,78 @@ def validate_system_design_acceptance(
         raise ControlError("planning-control.json System Design acceptance uses an unsupported policy")
 
 
+def expected_program_design_source(
+    planning: dict[str, Any], effective: dict[str, Any]
+) -> dict[str, Any]:
+    if "system_design" in effective["stages"]:
+        system = planning["acceptances"].get("system_design")
+        if not isinstance(system, dict):
+            raise ControlError("Program Design requires an accepted System Design source")
+        return {
+            "kind": "system_design",
+            "artifact": SYSTEM_DESIGN_FILE,
+            "version": system["candidate_version"],
+            "sha256": system["candidate_sha256"],
+        }
+    product = planning["stage0_anchor"].get("product_closure")
+    if "discovery" in effective["stages"]:
+        if not isinstance(product, dict):
+            raise ControlError("Program Design requires an accepted product-closure source")
+        return {
+            "kind": "product_closure",
+            "artifact": "20-prd.md",
+            "version": product["version"],
+            "sha256": product["sha256"],
+        }
+    anchor = planning["stage0_anchor"]
+    return {
+        "kind": "stage0",
+        "artifact": "run.yaml",
+        "sha256": anchor["base_run_sha256"],
+        "effective_config_hash": anchor["effective_config_hash"],
+        "effective_config_revision": anchor["effective_config_revision"],
+    }
+
+
+def validate_program_design_acceptance(
+    run_dir: Path,
+    planning: dict[str, Any],
+    effective: dict[str, Any],
+    record: Any,
+) -> None:
+    if not isinstance(record, dict) or set(record) != PLANNING_ACCEPTANCE_FIELDS:
+        raise ControlError("planning-control.json Program Design acceptance is malformed")
+    try:
+        canonical_date(record.get("accepted"), "Program Design acceptance date")
+    except ControlError as exc:
+        raise ControlError("planning-control.json Program Design acceptance is malformed") from exc
+    expected_source = expected_program_design_source(planning, effective)
+    policy = effective.get("gates", {}).get("program_design", {})
+    configured = policy.get("authority") if isinstance(policy, dict) else None
+    expected_authority = "HUMAN" if configured == "HUMAN" else "AGENT_REVIEW"
+    if (
+        type(record.get("candidate_version")) is not int
+        or record["candidate_version"] != 1
+        or not re.fullmatch(r"[0-9a-f]{64}", str(record.get("candidate_sha256", "")))
+        or configured not in {"AGENT_REVIEW", "HUMAN"}
+        or record.get("authority") != expected_authority
+        or record.get("review_reference") != PROGRAM_DESIGN_REVIEW_REFERENCE
+        or record.get("source_bindings") != [expected_source]
+        or record.get("repository_baselines") != []
+    ):
+        raise ControlError("planning-control.json Program Design acceptance is malformed")
+    _, review_sha256 = load_program_design_review(
+        run_dir,
+        effective,
+        record["candidate_version"],
+        record["candidate_sha256"],
+        expected_source["kind"],
+        record["review_reference"],
+    )
+    if record.get("review_sha256") != review_sha256:
+        raise ControlError("planning-control.json Program Design acceptance evidence is not current")
+
+
 def load_planning_control(run_dir: Path) -> dict[str, Any]:
     path = managed_path(run_dir, PLANNING_FILE)
     try:
@@ -385,9 +591,12 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
         if approved != (record is not None):
             raise ControlError("planning-control.json gate/acceptance coherence is invalid")
         if record is not None:
-            if stage != "system_design":
+            if stage == "system_design":
+                validate_system_design_acceptance(run_dir, anchor, effective, record)
+            elif stage == "program_design":
+                validate_program_design_acceptance(run_dir, planning, effective, record)
+            else:
                 raise ControlError("planning-control.json contains an unsupported downstream acceptance")
-            validate_system_design_acceptance(run_dir, anchor, effective, record)
             expected_gate = (
                 "HUMAN_APPROVED" if record["authority"] == "HUMAN" else "AGENT_APPROVED"
             )
@@ -409,6 +618,21 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
                 verify_system_design_board(run_dir)
             except (OSError, SystemExit, UnicodeError) as exc:
                 raise ControlError(f"accepted co-design board projection is not current: {exc}") from exc
+
+    program_record = acceptances["program_design"]
+    if program_record is not None:
+        candidate_path = managed_path(run_dir, PROGRAM_DESIGN_FILE)
+        if not candidate_path.is_file() or file_sha256(candidate_path) != program_record["candidate_sha256"]:
+            raise ControlError("accepted Program Design candidate bytes no longer match recorded provenance")
+        source = program_record["source_bindings"][0]
+        if source["kind"] == "product_closure":
+            product_path = managed_path(run_dir, "20-prd.md")
+            if not product_path.is_file() or file_sha256(product_path) != source["sha256"]:
+                raise ControlError("accepted Program Design product source no longer matches recorded provenance")
+        elif source["kind"] == "system_design":
+            system_path = managed_path(run_dir, SYSTEM_DESIGN_FILE)
+            if not system_path.is_file() or file_sha256(system_path) != source["sha256"]:
+                raise ControlError("accepted Program Design System Design source no longer matches recorded provenance")
 
     pending = [stage for stage in DOWNSTREAM_STAGES if gates[stage] == "PENDING"]
     if (
@@ -781,11 +1005,212 @@ def system_design_report(
     return report
 
 
+def program_design_report(
+    run_dir: Path,
+    planning: dict[str, Any],
+    effective: dict[str, Any],
+) -> dict[str, Any]:
+    gaps: list[dict[str, str]] = []
+    report: dict[str, Any] = {
+        "version": 1,
+        "run": planning["run"],
+        "verdict": "BLOCKED",
+        "stage": "program_design",
+        "boundary": "program_design",
+        "gaps": gaps,
+    }
+    if planning["phase"] != "program_design" or planning["gates"]["program_design"] != "PENDING":
+        gaps.append(gap(
+            PLANNING_FILE,
+            "program_design is not the current pending planning boundary",
+            "program_design",
+            "resume the current planning-control phase",
+        ))
+    try:
+        path = managed_path(run_dir, PROGRAM_DESIGN_FILE)
+    except ControlError as exc:
+        gaps.append(gap(
+            PROGRAM_DESIGN_FILE,
+            str(exc),
+            "program_design",
+            "replace the candidate with a real run-local file",
+        ))
+        return report
+    if not path.is_file():
+        gaps.append(gap(
+            PROGRAM_DESIGN_FILE,
+            "candidate file is missing",
+            "program_design",
+            f"produce {PROGRAM_DESIGN_FILE}",
+        ))
+        return report
+    report["candidate_sha256"] = file_sha256(path)
+    try:
+        frontmatter, body = read_frontmatter(path)
+    except (ControlError, yaml.YAMLError, UnicodeError) as exc:
+        gaps.append(gap(
+            PROGRAM_DESIGN_FILE,
+            str(exc),
+            "program_design",
+            "repair candidate frontmatter",
+        ))
+        return report
+    candidate_version = frontmatter.get("version")
+    if type(candidate_version) is int:
+        report["candidate_version"] = candidate_version
+    if set(frontmatter) != PROGRAM_DESIGN_FIELDS:
+        gaps.append(gap(
+            PROGRAM_DESIGN_FILE,
+            "candidate frontmatter does not match its exact schema",
+            "program_design",
+            "repair candidate frontmatter",
+        ))
+    if "participation" in frontmatter:
+        gaps.append(gap(
+            PROGRAM_DESIGN_FILE,
+            "Program Design candidate must not declare participation",
+            "program_design",
+            "remove participation from Program Design frontmatter",
+        ))
+    if frontmatter.get("run") != planning["run"]:
+        gaps.append(gap(
+            PROGRAM_DESIGN_FILE,
+            "candidate run identity does not match planning-control.json",
+            "program_design",
+            "bind the candidate to this run",
+        ))
+    if type(frontmatter.get("version")) is not int or frontmatter.get("version") != 1:
+        gaps.append(gap(
+            PROGRAM_DESIGN_FILE,
+            "candidate version must equal integer 1",
+            "program_design",
+            "write candidate version 1",
+        ))
+    if frontmatter.get("status") != "draft":
+        gaps.append(gap(
+            PROGRAM_DESIGN_FILE,
+            "producer candidate status must remain draft",
+            "program_design",
+            "record readiness without acceptance",
+        ))
+    if frontmatter.get("gate_ready") is not True:
+        gaps.append(gap(
+            PROGRAM_DESIGN_FILE,
+            "producer has not recorded gate readiness",
+            "program_design",
+            "finish the candidate and set gate_ready true",
+        ))
+    try:
+        candidate_opened = canonical_date(frontmatter.get("opened"), "candidate opened")
+        intake_opened = canonical_date(effective.get("opened"), "intake opened")
+    except ControlError:
+        candidate_opened = intake_opened = None
+        gaps.append(gap(
+            PROGRAM_DESIGN_FILE,
+            "candidate opened date is not canonical YYYY-MM-DD",
+            "program_design",
+            "copy the canonical intake opened date",
+        ))
+    if candidate_opened is not None and candidate_opened != intake_opened:
+        gaps.append(gap(
+            PROGRAM_DESIGN_FILE,
+            "candidate opened date differs from frozen intake",
+            "program_design",
+            "copy the intake opened date",
+        ))
+
+    headings = program_design_headings(body)
+    if headings != PROGRAM_DESIGN_SECTIONS:
+        gaps.append(gap(
+            PROGRAM_DESIGN_FILE,
+            "Program Design section sequence does not match the exact Stage 4 shape",
+            "program_design",
+            "restore each required Program Design section exactly once and in order",
+        ))
+
+    source = frontmatter.get("source_binding")
+    source_valid = False
+    system_acceptance = planning["acceptances"]["system_design"]
+    if "system_design" in effective["stages"]:
+        expected = {
+            "kind": "system_design",
+            "artifact": SYSTEM_DESIGN_FILE,
+            "version": system_acceptance["candidate_version"] if isinstance(system_acceptance, dict) else None,
+            "sha256": system_acceptance["candidate_sha256"] if isinstance(system_acceptance, dict) else None,
+        }
+        if (
+            not isinstance(system_acceptance, dict)
+            or not isinstance(source, dict)
+            or set(source) != PRODUCT_SOURCE_FIELDS
+            or type(source.get("version")) is not int
+            or source != expected
+        ):
+            gaps.append(gap(
+                PROGRAM_DESIGN_FILE,
+                "source_binding does not match the exact accepted System Design",
+                "program_design",
+                "bind source_binding to the accepted 30-system-design.md version and sha256",
+            ))
+        else:
+            source_valid = True
+    elif "discovery" in effective["stages"]:
+        product = planning["stage0_anchor"]["product_closure"]
+        expected = {
+            "kind": "product_closure",
+            "artifact": "20-prd.md",
+            "version": product["version"] if isinstance(product, dict) else None,
+            "sha256": product["sha256"] if isinstance(product, dict) else None,
+        }
+        if (
+            not isinstance(product, dict)
+            or not isinstance(source, dict)
+            or set(source) != PRODUCT_SOURCE_FIELDS
+            or type(source.get("version")) is not int
+            or source != expected
+        ):
+            gaps.append(gap(
+                PROGRAM_DESIGN_FILE,
+                "source_binding does not match the exact accepted product closure",
+                "program_design",
+                "bind source_binding to the accepted 20-prd.md version and sha256",
+            ))
+        else:
+            source_valid = True
+    else:
+        anchor = planning["stage0_anchor"]
+        expected = {
+            "kind": "stage0",
+            "artifact": "run.yaml",
+            "sha256": anchor["base_run_sha256"],
+            "effective_config_hash": anchor["effective_config_hash"],
+            "effective_config_revision": anchor["effective_config_revision"],
+        }
+        if (
+            not isinstance(source, dict)
+            or set(source) != STAGE0_SOURCE_FIELDS
+            or type(source.get("effective_config_revision")) is not int
+            or source != expected
+        ):
+            gaps.append(gap(
+                PROGRAM_DESIGN_FILE,
+                "source_binding does not match the exact frozen Stage 0 admission",
+                "program_design",
+                "bind source_binding to run.yaml and the effective configuration",
+            ))
+        else:
+            source_valid = True
+    report["source_binding"] = source if source_valid else None
+    report["verdict"] = "PASS" if not gaps else "BLOCKED"
+    return report
+
+
 def check_boundary(run_dir: Path, stage: str) -> dict[str, Any]:
-    if stage != "system_design":
-        raise ControlError("Slice 1 supports only --stage system_design")
     planning, _, effective = verified_planning_state(run_dir)
-    return system_design_report(run_dir, planning, effective)
+    if stage == "system_design":
+        return system_design_report(run_dir, planning, effective)
+    if stage == "program_design":
+        return program_design_report(run_dir, planning, effective)
+    raise ControlError("check supports only --stage system_design or program_design")
 
 
 def resolve_system_design_authority(
@@ -817,6 +1242,135 @@ def resolve_system_design_authority(
     raise ControlError(f"system_design authority {configured} is an intentionally unimplemented Slice-2B capability")
 
 
+def resolve_program_design_authority(
+    run_dir: Path,
+    effective: dict[str, Any],
+    candidate_version: int,
+    candidate_sha256: str,
+    source_kind: str,
+    approval: Optional[str],
+    review_reference: Optional[str],
+) -> tuple[str, str]:
+    policy = effective.get("gates", {}).get("program_design", {})
+    configured = policy.get("authority") if isinstance(policy, dict) else None
+    _, review_sha256 = load_program_design_review(
+        run_dir,
+        effective,
+        candidate_version,
+        candidate_sha256,
+        source_kind,
+        review_reference,
+    )
+    if configured == "AGENT_REVIEW":
+        if approval is not None:
+            raise ControlError("configured AGENT_REVIEW Program Design gate does not accept human approval")
+        return "AGENT_REVIEW", review_sha256
+    if configured == "HUMAN":
+        if approval != "human":
+            raise ControlError("HUMAN Program Design gate requires explicit --approval human after PASS review")
+        return "HUMAN", review_sha256
+    raise ControlError("Program Design supports only configured AGENT_REVIEW or HUMAN authority")
+
+
+def advance_program_design_boundary(
+    run_dir: Path,
+    approval: Optional[str],
+    review_reference: Optional[str],
+    accepted: str,
+) -> str:
+    planning, _, effective = verified_planning_state(run_dir)
+    report = program_design_report(run_dir, planning, effective)
+    if report["verdict"] != "PASS":
+        raise ControlError("mechanical program_design boundary check is BLOCKED")
+    accepted = canonical_date(accepted, "acceptance date")
+    candidate_version: int = report["candidate_version"]
+    candidate_sha256: str = report["candidate_sha256"]
+    source_binding = report["source_binding"]
+    authority, review_sha256 = resolve_program_design_authority(
+        run_dir,
+        effective,
+        candidate_version,
+        candidate_sha256,
+        source_binding["kind"],
+        approval,
+        review_reference,
+    )
+
+    selected = [item for item in DOWNSTREAM_STAGES if item in effective["stages"]]
+    index = selected.index("program_design")
+    if index + 1 >= len(selected) or selected[index + 1] != "tickets":
+        raise ControlError("program_design has no selected later tickets boundary")
+
+    final_report = program_design_report(run_dir, planning, effective)
+    if (
+        final_report.get("verdict") != "PASS"
+        or final_report.get("candidate_version") != candidate_version
+        or final_report.get("candidate_sha256") != candidate_sha256
+        or final_report.get("source_binding") != source_binding
+    ):
+        raise ControlError("candidate or source binding changed before Program Design acceptance")
+    try:
+        final_planning, _, final_effective = verified_planning_state(run_dir)
+        final_authority = resolve_program_design_authority(
+            run_dir,
+            final_effective,
+            candidate_version,
+            candidate_sha256,
+            source_binding["kind"],
+            approval,
+            review_reference,
+        )
+    except ControlError as exc:
+        raise ControlError("candidate, source binding, policy, or review changed before Program Design acceptance") from exc
+    if final_planning != planning or final_authority != (authority, review_sha256):
+        raise ControlError("planning-control.json, policy, or review changed before Program Design acceptance")
+
+    def revalidate_immediately_before_replace() -> None:
+        current_planning, _, current_effective = verified_planning_state(run_dir)
+        current_report = program_design_report(run_dir, current_planning, current_effective)
+        current_authority = resolve_program_design_authority(
+            run_dir,
+            current_effective,
+            candidate_version,
+            candidate_sha256,
+            source_binding["kind"],
+            approval,
+            review_reference,
+        )
+        if (
+            current_planning != planning
+            or current_report.get("verdict") != "PASS"
+            or current_report.get("candidate_version") != candidate_version
+            or current_report.get("candidate_sha256") != candidate_sha256
+            or current_report.get("source_binding") != source_binding
+            or current_authority != (authority, review_sha256)
+        ):
+            raise ControlError("candidate, source binding, policy, or review changed at the Program Design write boundary")
+
+    final_planning["acceptances"]["program_design"] = {
+        "candidate_version": candidate_version,
+        "candidate_sha256": candidate_sha256,
+        "authority": authority,
+        "accepted": accepted,
+        "review_reference": review_reference,
+        "review_sha256": review_sha256,
+        "source_bindings": [source_binding],
+        "repository_baselines": [],
+    }
+    final_planning["gates"]["program_design"] = (
+        "HUMAN_APPROVED" if authority == "HUMAN" else "AGENT_APPROVED"
+    )
+    final_planning["phase"] = "tickets"
+    final_planning["revision"] += 1
+    write_planning_control_atomic(
+        run_dir,
+        final_planning,
+        precondition=revalidate_immediately_before_replace,
+    )
+    load_planning_control(run_dir)
+    return f"advanced program_design -> tickets; planning-control revision {final_planning['revision']}"
+
+
 def advance_boundary(
     run_dir: Path,
     stage: str,
@@ -824,8 +1378,10 @@ def advance_boundary(
     review_reference: Optional[str],
     accepted: str,
 ) -> str:
+    if stage == "program_design":
+        return advance_program_design_boundary(run_dir, approval, review_reference, accepted)
     if stage != "system_design":
-        raise ControlError("Slice 2B supports only system_design acceptance")
+        raise ControlError("advance supports only system_design or program_design acceptance")
     planning, _, effective = verified_planning_state(run_dir)
     participation = effective.get("system_design_participation")
     if participation not in {"agent_led", "co_design"}:
@@ -929,10 +1485,10 @@ def build_parser() -> argparse.ArgumentParser:
     ensure.add_argument("--run", required=True, type=Path)
     inspect = sub.add_parser("check")
     inspect.add_argument("--run", required=True, type=Path)
-    inspect.add_argument("--stage", required=True, choices=("system_design",))
+    inspect.add_argument("--stage", required=True, choices=("system_design", "program_design"))
     advance = sub.add_parser("advance")
     advance.add_argument("--run", required=True, type=Path)
-    advance.add_argument("--stage", required=True, choices=("system_design",))
+    advance.add_argument("--stage", required=True, choices=("system_design", "program_design"))
     advance.add_argument("--approval", choices=("human",))
     advance.add_argument("--review")
     advance.add_argument("--date", required=True)

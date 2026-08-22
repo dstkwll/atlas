@@ -49,6 +49,18 @@ SYSTEM_DESIGN_DIMENSIONS = (
     "compatibility_guarantees",
     "trust_security_operational_commitments",
 )
+PROGRAM_DESIGN_SECTIONS = (
+    "Repository grounding",
+    "Upstream commitment realization",
+    "File-tree diff",
+    "Types and boundary signatures",
+    "Call and data flow",
+    "State, locking, concurrency, and lifetime",
+    "Migration and local failure-path implementation",
+    "Test seams and validation plan",
+    "Least-confident decisions",
+    "Implementation constraints and sequencing",
+)
 
 
 class SkillSeamHardeningTests(unittest.TestCase):
@@ -56,6 +68,373 @@ class SkillSeamHardeningTests(unittest.TestCase):
         plugin = root / "plugins" / "atlas"
         shutil.copytree(ROOT / "plugins" / "atlas", plugin)
         return plugin / "skills"
+
+    def test_program_design_producer_metadata_and_inventory_are_exact(self):
+        plugin = ROOT / "plugins" / "atlas"
+        skill_path = plugin / "skills" / "program-design" / "SKILL.md"
+        agent_path = plugin / "skills" / "program-design" / "agents" / "openai.yaml"
+        readme_path = plugin / "README.md"
+
+        self.assertTrue(skill_path.is_file())
+        self.assertTrue(agent_path.is_file())
+        agent = SEAMS.yaml.safe_load(agent_path.read_text(encoding="utf-8"))
+        self.assertEqual(agent["interface"], {
+            "display_name": "Atlas Program Design",
+            "short_description": "Produce Stage 4 and hand it to planning control",
+            "default_prompt": (
+                "Use $program-design to produce the exact Atlas Program Design candidate "
+                "and continue its internal control handoff."
+            ),
+        })
+        self.assertFalse(agent["policy"]["allow_implicit_invocation"])
+        skill = skill_path.read_text(encoding="utf-8")
+        self.assertIn("name: program-design", skill)
+        self.assertIn("disable-model-invocation: true", skill)
+        readme = readme_path.read_text(encoding="utf-8")
+        self.assertIn(
+            "| `program-design` | Produce the exact Stage 4 candidate, record readiness, and continue the internal control handoff. |",
+            readme,
+        )
+
+        findings = SEAMS.cross_skill_contracts(plugin / "skills")
+        self.assertFalse([item for item in findings if item[0] == "cross"], findings)
+
+    def test_program_design_inspects_actual_target_repository_before_drafting(self):
+        plugin = ROOT / "plugins" / "atlas"
+        skill_path = plugin / "skills" / "program-design" / "SKILL.md"
+        skill = skill_path.read_text(encoding="utf-8")
+        grounding = (
+            "Before drafting anything, inspect every actual target repository named in effective intake at its frozen baseline"
+        )
+        self.assertIn(grounding, skill)
+        self.assertLess(skill.index(grounding), skill.index("## 3. Produce the Stage 4 candidate"))
+        self.assertIn("current file tree, language and tooling conventions, relevant implementations, tests, and working-tree state", skill)
+
+        with tempfile.TemporaryDirectory() as td:
+            skills = self.copy_plugin(Path(td))
+            path = skills / "program-design" / "SKILL.md"
+            text = path.read_text(encoding="utf-8")
+            path.write_text(text.replace(grounding, "Before drafting anything, reason about the target repository", 1), encoding="utf-8")
+            findings = SEAMS.cross_skill_contracts(skills)
+            self.assertTrue(any("repository grounding before drafting" in message for _, message in findings), findings)
+
+    def test_program_design_selects_exactly_one_of_three_upstream_sources_from_selected_stages(self):
+        plugin = ROOT / "plugins" / "atlas"
+        skill_path = plugin / "skills" / "program-design" / "SKILL.md"
+        skill = skill_path.read_text(encoding="utf-8")
+        selection = (
+            "Derive the applicable branch only from effective selected stages, never from candidate prose or artifact presence"
+        )
+        self.assertIn(selection, skill)
+        self.assertIn("Read exactly one applicable upstream source and do not read either omitted source", skill)
+        for clause in (
+            "System Design selected: read exact accepted `30-system-design.md`",
+            "System Design omitted and Product Closure selected: read exact accepted `20-prd.md`",
+            "both upstream semantic boundaries omitted: read frozen effective Stage 0 `run.yaml` and its recorded effective configuration binding",
+        ):
+            self.assertIn(clause, skill)
+
+        with tempfile.TemporaryDirectory() as td:
+            skills = self.copy_plugin(Path(td))
+            path = skills / "program-design" / "SKILL.md"
+            text = path.read_text(encoding="utf-8")
+            path.write_text(text.replace(selection, "Choose a likely source from the candidate", 1), encoding="utf-8")
+            findings = SEAMS.cross_skill_contracts(skills)
+            self.assertTrue(any("exact three-source selection" in message for _, message in findings), findings)
+
+    def test_program_design_candidate_template_is_exact_without_participation_or_html(self):
+        plugin = ROOT / "plugins" / "atlas"
+        skill = (plugin / "skills" / "program-design" / "SKILL.md").read_text(encoding="utf-8")
+        template_path = plugin / "skills" / "program-design" / "references" / "program-design-file.md"
+        self.assertTrue(template_path.is_file())
+        template = template_path.read_text(encoding="utf-8")
+        planning = (plugin / "tools" / "atlas_planning.py").read_text(encoding="utf-8")
+
+        candidate_maps = [
+            item for item in SEAMS.frontmatter_maps(template)
+            if {"run", "version", "status", "gate_ready"}.issubset(item)
+        ]
+        self.assertEqual(len(candidate_maps), 1)
+        self.assertEqual(set(candidate_maps[0]), set(SEAMS.assigned_literal(planning, "PROGRAM_DESIGN_FIELDS")))
+        self.assertEqual(candidate_maps[0]["version"], 1)
+        self.assertEqual(candidate_maps[0]["status"], "draft")
+        self.assertIs(candidate_maps[0]["gate_ready"], True)
+        headings = tuple(re.findall(r"(?m)^## ([^\n]+?)\s*$", template))
+        self.assertEqual(headings, PROGRAM_DESIGN_SECTIONS)
+        self.assertIn("references/program-design-file.md", skill)
+        self.assertIn("cite every upstream commitment", skill)
+        self.assertNotIn("participation:", (skill + template).lower())
+        self.assertNotIn("40-program-design.html", (skill + template).lower())
+
+        findings = SEAMS.cross_skill_contracts(plugin / "skills")
+        self.assertFalse([item for item in findings if item[0] == "cross"], findings)
+
+    def test_program_design_normal_path_owns_candidate_and_readiness_only(self):
+        plugin = ROOT / "plugins" / "atlas"
+        skill_path = plugin / "skills" / "program-design" / "SKILL.md"
+        skill = skill_path.read_text(encoding="utf-8")
+        ownership = (
+            "On the normal path, write only canonical `40-program-design.md` candidate/readiness bytes"
+        )
+        self.assertIn(ownership, skill)
+        self.assertIn("never create or modify `reviews/program-design-v1.json`", skill)
+        self.assertIn("never write `planning-control.json`", skill)
+        self.assertIn("never rewrite an upstream artifact", skill)
+
+        with tempfile.TemporaryDirectory() as td:
+            skills = self.copy_plugin(Path(td))
+            path = skills / "program-design" / "SKILL.md"
+            text = path.read_text(encoding="utf-8")
+            path.write_text(text.replace(ownership, "Write the Program Design outputs", 1), encoding="utf-8")
+            findings = SEAMS.cross_skill_contracts(skills)
+            self.assertTrue(any("candidate-only ownership" in message for _, message in findings), findings)
+
+    def test_program_design_producer_design_blocked_is_structured_read_only_and_pre_readiness(self):
+        plugin = ROOT / "plugins" / "atlas"
+        skill_path = plugin / "skills" / "program-design" / "SKILL.md"
+        skill = skill_path.read_text(encoding="utf-8")
+        stop = (
+            "Before writing candidate or readiness bytes, return structured read-only `DESIGN_BLOCKED` and stop"
+        )
+        self.assertIn(stop, skill)
+        for field in ("upstream_source", "upstream_issue", "resume_boundary", "resume_action"):
+            self.assertIn(f"`{field}`", skill)
+        self.assertIn("nonempty `upstream_issue`", skill)
+        self.assertIn("both equal the actual selected source-binding kind", skill)
+        self.assertIn("smallest upstream decision or change required", skill)
+        self.assertIn("creates no review file", skill)
+        self.assertIn("does not rewrite any upstream artifact", skill)
+        self.assertIn("does not mutate planning state", skill)
+        self.assertIn("Reviewer-discovered `DESIGN_BLOCKED` belongs only in a fresh `reviews/program-design-v1.json`", skill)
+
+        with tempfile.TemporaryDirectory() as td:
+            skills = self.copy_plugin(Path(td))
+            path = skills / "program-design" / "SKILL.md"
+            text = path.read_text(encoding="utf-8")
+            path.write_text(text.replace(stop, "Return `DESIGN_BLOCKED` when appropriate", 1), encoding="utf-8")
+            findings = SEAMS.cross_skill_contracts(skills)
+            self.assertTrue(any("pre-readiness DESIGN_BLOCKED stop" in message for _, message in findings), findings)
+
+    def test_program_design_mechanical_pass_performs_one_exact_internal_handoff(self):
+        plugin = ROOT / "plugins" / "atlas"
+        skill_path = plugin / "skills" / "program-design" / "SKILL.md"
+        skill = skill_path.read_text(encoding="utf-8")
+        handoff = (
+            "After mechanical `PASS`, perform the exact named internal handoff to `atlas:control-planning`"
+        )
+        self.assertIn(handoff, skill)
+        self.assertEqual(skill.count("atlas:control-planning"), 1)
+        self.assertIn("without asking the user to issue a second routing command", skill)
+        self.assertIn("unchanged `<run-directory>` and explicit stage `program_design`", skill)
+
+        with tempfile.TemporaryDirectory() as td:
+            skills = self.copy_plugin(Path(td))
+            path = skills / "program-design" / "SKILL.md"
+            text = path.read_text(encoding="utf-8")
+            path.write_text(text.replace(handoff, "After mechanical `PASS`, report readiness", 1), encoding="utf-8")
+            findings = SEAMS.cross_skill_contracts(skills)
+            self.assertTrue(any("exact internal control-planning handoff" in message for _, message in findings), findings)
+
+    def test_control_planning_supports_only_two_explicit_stages_and_loads_program_authority(self):
+        plugin = ROOT / "plugins" / "atlas"
+        control_path = plugin / "skills" / "control-planning" / "SKILL.md"
+        agent_path = plugin / "skills" / "control-planning" / "agents" / "openai.yaml"
+        control = control_path.read_text(encoding="utf-8")
+        self.assertIn("supports exactly the explicit stages `system_design` and `program_design`", control)
+        self.assertIn("never discovers, infers, or reroutes a stage", control)
+        self.assertIn("references/system-design-authority.md", control)
+        self.assertIn("references/program-design-authority.md", control)
+        self.assertIn("## Program Design branch", control)
+        self.assertIn("configured `AGENT_REVIEW` or `HUMAN` authority", control)
+        self.assertIn("fresh exact PASS review", control)
+        self.assertIn("reviews/program-design-v1.json", control)
+        for command in (
+            'check --run "<run-directory>" --stage program_design',
+            'advance --run "<run-directory>" --stage program_design --review reviews/program-design-v1.json --date "<YYYY-MM-DD>"',
+            'advance --run "<run-directory>" --stage program_design --review reviews/program-design-v1.json --approval human --date "<YYYY-MM-DD>"',
+        ):
+            self.assertIn(command, control)
+        agent = SEAMS.yaml.safe_load(agent_path.read_text(encoding="utf-8"))
+        self.assertEqual(agent["interface"]["short_description"], "Apply configured System or Program Design authority once")
+        self.assertIn("explicit system_design or program_design boundary once", agent["interface"]["default_prompt"])
+
+        findings = SEAMS.cross_skill_contracts(plugin / "skills")
+        self.assertFalse([item for item in findings if item[0] == "cross"], findings)
+
+    def test_control_planning_runs_only_the_check_for_the_explicit_stage(self):
+        plugin = ROOT / "plugins" / "atlas"
+        control_path = plugin / "skills" / "control-planning" / "SKILL.md"
+        control = control_path.read_text(encoding="utf-8")
+        selector = "Run exactly one mechanical check selected by the explicit stage; never run both commands"
+        self.assertIn(selector, control)
+        self.assertIn(
+            "For explicit stage `system_design`, run only:", control
+        )
+        self.assertIn(
+            "For explicit stage `program_design`, run only:", control
+        )
+
+        with tempfile.TemporaryDirectory() as td:
+            skills = self.copy_plugin(Path(td))
+            path = skills / "control-planning" / "SKILL.md"
+            text = path.read_text(encoding="utf-8")
+            path.write_text(
+                text.replace(selector, "Run the mechanical checks below", 1),
+                encoding="utf-8",
+            )
+            findings = SEAMS.cross_skill_contracts(skills)
+            self.assertTrue(
+                any("explicit-stage-only check selection" in message for _, message in findings),
+                findings,
+            )
+
+    def test_program_design_authority_dimensions_are_bound_to_the_controller(self):
+        with tempfile.TemporaryDirectory() as td:
+            skills = self.copy_plugin(Path(td))
+            reference = (
+                skills / "control-planning" / "references" / "program-design-authority.md"
+            )
+            source = reference.read_text(encoding="utf-8")
+            self.assertIn("testability_and_compilation_readiness", source)
+            reference.write_text(
+                source.replace(
+                    "testability_and_compilation_readiness",
+                    "drifted_stage4_dimension",
+                    1,
+                ),
+                encoding="utf-8",
+            )
+
+            findings = SEAMS.cross_skill_contracts(skills)
+
+            self.assertTrue(
+                any(
+                    "Program Design semantic review dimensions" in message
+                    for _, message in findings
+                ),
+                findings,
+            )
+
+    def test_program_design_authority_defining_filename_is_bound_to_the_controller(self):
+        with tempfile.TemporaryDirectory() as td:
+            skills = self.copy_plugin(Path(td))
+            reference = (
+                skills / "control-planning" / "references" / "program-design-authority.md"
+            )
+            source = reference.read_text(encoding="utf-8")
+            exact = "`reviews/program-design-v1.json` is the one exact run-relative envelope."
+            self.assertIn(exact, source)
+            reference.write_text(
+                source.replace(
+                    exact,
+                    "`reviews/drifted-program-design.json` is the one exact run-relative envelope.",
+                    1,
+                ),
+                encoding="utf-8",
+            )
+
+            findings = SEAMS.cross_skill_contracts(skills)
+
+            self.assertTrue(
+                any("Program Design authority filename" in message for _, message in findings),
+                findings,
+            )
+
+    def test_start_run_routes_program_design_internally_and_stops_honestly_at_tickets(self):
+        plugin = ROOT / "plugins" / "atlas"
+        start_path = plugin / "skills" / "start-run" / "SKILL.md"
+        start = start_path.read_text(encoding="utf-8")
+        for clause in (
+            "If validated planning phase is `system_design`, invoke `atlas:system-design` internally",
+            "If validated planning phase is `program_design`, invoke `atlas:program-design` internally",
+            "If validated planning phase is `tickets`, stop loudly",
+            "no first-party ticket producer exists",
+            "Preserve the existing Product Closure and System Design paths",
+        ):
+            self.assertIn(clause, start)
+
+        with tempfile.TemporaryDirectory() as td:
+            skills = self.copy_plugin(Path(td))
+            path = skills / "start-run" / "SKILL.md"
+            text = path.read_text(encoding="utf-8")
+            path.write_text(text.replace("invoke `atlas:program-design` internally", "report Program Design", 1), encoding="utf-8")
+            findings = SEAMS.cross_skill_contracts(skills)
+            self.assertTrue(any("Program Design route and tickets stop" in message for _, message in findings), findings)
+
+    def test_program_design_packaged_commands_are_caller_cwd_independent(self):
+        plugin = ROOT / "plugins" / "atlas"
+        program_path = plugin / "skills" / "program-design" / "SKILL.md"
+        control_path = plugin / "skills" / "control-planning" / "SKILL.md"
+        program = program_path.read_text(encoding="utf-8")
+        control = control_path.read_text(encoding="utf-8")
+        resolver = "it is the third parent of this file (`SKILL.md` → `program-design/` → `skills/` → plugin root)"
+        self.assertIn(resolver, program)
+        self.assertEqual(program_path.parents[2], plugin)
+        check = 'python3 "<atlas-plugin-root>/tools/atlas_planning.py" check --run "<run-directory>" --stage program_design'
+        self.assertIn(check, program)
+        self.assertIn(check, control)
+        for command in (
+            'python3 "<atlas-plugin-root>/tools/atlas_planning.py" advance --run "<run-directory>" --stage program_design --review reviews/program-design-v1.json --date "<YYYY-MM-DD>"',
+            'python3 "<atlas-plugin-root>/tools/atlas_planning.py" advance --run "<run-directory>" --stage program_design --review reviews/program-design-v1.json --approval human --date "<YYYY-MM-DD>"',
+        ):
+            self.assertIn(command, control)
+
+        with tempfile.TemporaryDirectory() as td:
+            skills = self.copy_plugin(Path(td))
+            path = skills / "program-design" / "SKILL.md"
+            text = path.read_text(encoding="utf-8")
+            path.write_text(text.replace(resolver, "find the plugin root", 1), encoding="utf-8")
+            findings = SEAMS.cross_skill_contracts(skills)
+            self.assertTrue(any("caller-CWD-independent Program Design skill root" in message for _, message in findings), findings)
+
+    def test_readme_exposes_the_single_program_design_producer_and_stage4_flow(self):
+        plugin = ROOT / "plugins" / "atlas"
+        readme_path = plugin / "README.md"
+        readme = readme_path.read_text(encoding="utf-8")
+        self.assertIn("First-party Stage 0–4 skills", readme)
+        self.assertIn("→ program-design inspects the target repositories and one selected source, then produces exact 40-program-design.md readiness", readme)
+        self.assertIn("→ workflow-internal control-planning requires fresh Program Design review and applies AGENT_REVIEW or HUMAN authority", readme)
+        self.assertIn("The user invokes `atlas:program-design` once", readme)
+        self.assertIn("tickets remain intentionally unsupported", readme)
+        self.assertNotIn("Program Design, ticket compilation/acceptance", readme)
+
+        with tempfile.TemporaryDirectory() as td:
+            skills = self.copy_plugin(Path(td))
+            path = skills.parent / "README.md"
+            text = path.read_text(encoding="utf-8")
+            path.write_text(text.replace("The user invokes `atlas:program-design` once", "Invoke Program Design", 1), encoding="utf-8")
+            findings = SEAMS.cross_skill_contracts(skills)
+            self.assertTrue(any("README Program Design inventory" in message for _, message in findings), findings)
+
+    def test_program_design_resumes_exact_frozen_boundary_without_participation(self):
+        plugin = ROOT / "plugins" / "atlas"
+        skill = (plugin / "skills" / "program-design" / "SKILL.md").read_text(encoding="utf-8")
+        for clause in (
+            "Read immutable `run.yaml`, authoritative Stage 0 `control.json`, and `planning-control.json`",
+            "Require current phase `program_design`, gate `PENDING`, and exact configured authority `AGENT_REVIEW` or `HUMAN`",
+            "Program Design never asks a participation question",
+        ):
+            self.assertIn(clause, skill)
+        self.assertNotIn("HUMAN_IF_CHANGED", skill)
+        self.assertNotRegex(skill, r"(?m)^.*Program Design.*\bAUTO\b.*$")
+
+        with tempfile.TemporaryDirectory() as td:
+            skills = self.copy_plugin(Path(td))
+            path = skills / "program-design" / "SKILL.md"
+            text = path.read_text(encoding="utf-8")
+            path.write_text(text.replace("Program Design never asks a participation question", "Participation is optional", 1), encoding="utf-8")
+            findings = SEAMS.cross_skill_contracts(skills)
+            self.assertTrue(any("frozen boundary without participation" in message for _, message in findings), findings)
+
+    def test_program_design_agent_metadata_structure_drift_is_detected(self):
+        with tempfile.TemporaryDirectory() as td:
+            skills = self.copy_plugin(Path(td))
+            path = skills / "program-design" / "agents" / "openai.yaml"
+            text = path.read_text(encoding="utf-8")
+            self.assertIn("interface:\n", text)
+            path.write_text(text.replace("interface:\n", "stale_interface:\n", 1), encoding="utf-8")
+            findings = SEAMS.cross_skill_contracts(skills)
+            self.assertTrue(any("Program Design model metadata" in message for _, message in findings), findings)
 
     def test_system_design_authority_reference_binds_exact_schema_dimensions_and_matrix(self):
         plugin = ROOT / "plugins" / "atlas"
