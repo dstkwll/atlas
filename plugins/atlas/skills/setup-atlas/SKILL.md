@@ -1,6 +1,6 @@
 ---
 name: setup-atlas
-description: Configure a machine for the Atlas skills — establish where planning artifacts live. Run once per machine before the other skills are used.
+description: Configure or verify Atlas on a machine; establish the planning root, dependencies, and installed-host calibration.
 disable-model-invocation: true
 ---
 
@@ -84,6 +84,10 @@ python3 -c "import sys, yaml, markdown_it; assert sys.version_info >= (3, 9)"
 On Windows, use `py -3 -c "import sys, yaml, markdown_it; assert sys.version_info >= (3, 9)"`. If Python or a pinned dependency is missing, stop and explain that discovery may only prepare non-canonical `.20-prd.next.md`; Atlas cannot update the canonical PRD or legally close discovery without the deterministic tooling. Offer the exact installation command (`python3 -m pip install -r "<atlas-plugin-root>/requirements.txt"` or `py -3 -m pip install -r "<atlas-plugin-root>/requirements.txt"`) and run it only after explicit approval; installing packages is an external side effect.
 
 Report whether the deterministic dependencies are ready. Never pretend a missing dependency is optional.
+
+### 6. Calibrate an installed host when needed
+
+After a new install or update, before claiming the installed host runs the current source, or when a host reports an enabled skill missing, follow [`references/installed-host-calibration.md`](references/installed-host-calibration.md). Keep installation bytes, host recognition, skill discovery, procedure completion, and cross-skill handoff as separate claims. A one-host success is dated calibration only.
 
 ## Standing rules
 

@@ -1,5 +1,5 @@
 interface:
   display_name: "Start Atlas Run"
-  short_description: "Resolve Stage 0 intake and create an Atlas run"
+  short_description: "Create or resume an Atlas run from authoritative state"
 policy:
   allow_implicit_invocation: false

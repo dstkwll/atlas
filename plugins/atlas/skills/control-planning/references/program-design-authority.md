@@ -38,7 +38,7 @@ Rules:
 - A semantic row has exactly `dimension`, `result`, and nonempty `evidence`. `result` is `PASS`, `BLOCKED`, or `DESIGN_BLOCKED`. The seven Stage 4 dimensions above occur exactly once; aliases are invalid.
 - Verdict is derived mechanically: any `DESIGN_BLOCKED` row yields `DESIGN_BLOCKED`; otherwise any `BLOCKED` row yields `BLOCKED`; otherwise the verdict is `PASS`.
 - `gaps` contains exactly one gap for every non-PASS dimension and no gap for a PASS dimension.
-- A Stage 4-local implementation defect is `BLOCKED`. An accepted upstream guarantee or missing upstream truth that cannot be realized is `DESIGN_BLOCKED` under `upstream_commitment_realization`. The controller validates the declared result and evidence schema; it does not classify reviewer prose.
+- A Stage 4-local implementation defect is `BLOCKED`. An accepted upstream guarantee or missing upstream truth that cannot be realized is `DESIGN_BLOCKED` under `upstream_commitment_realization`. An unresolved local code-shape choice is `BLOCKED`; a resolved choice with bounded residual uncertainty may appear in `Least-confident decisions`. `testability_and_compilation_readiness` requires that Stage 5 receives no design question it must answer. The controller validates the declared result and evidence schema; it does not classify reviewer prose.
 
 Each `BLOCKED` gap has exactly:
 

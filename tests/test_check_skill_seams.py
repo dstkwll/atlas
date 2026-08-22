@@ -1,4 +1,5 @@
 import importlib.util
+import json
 import re
 import shutil
 import subprocess
@@ -104,11 +105,13 @@ class SkillSeamHardeningTests(unittest.TestCase):
         skill_path = plugin / "skills" / "program-design" / "SKILL.md"
         skill = skill_path.read_text(encoding="utf-8")
         grounding = (
-            "Before drafting anything, inspect every actual target repository named in effective intake at its frozen baseline"
+            "Before drafting anything, require a readable repository for every stable identity and prove the exact frozen baseline commit/tree is available"
         )
         self.assertIn(grounding, skill)
         self.assertLess(skill.index(grounding), skill.index("## 3. Produce the Stage 4 candidate"))
-        self.assertIn("current file tree, language and tooling conventions, relevant implementations, tests, and working-tree state", skill)
+        self.assertIn("Inspect those frozen-baseline bytes for language and tooling conventions, relevant implementations, and tests", skill)
+        self.assertIn("current HEAD and working-tree state only as drift/context", skill)
+        self.assertIn("neither may silently replace the frozen baseline as design truth", skill)
 
         with tempfile.TemporaryDirectory() as td:
             skills = self.copy_plugin(Path(td))
@@ -392,19 +395,119 @@ class SkillSeamHardeningTests(unittest.TestCase):
         readme_path = plugin / "README.md"
         readme = readme_path.read_text(encoding="utf-8")
         self.assertIn("First-party Stage 0–4 skills", readme)
-        self.assertIn("→ program-design inspects the target repositories and one selected source, then produces exact 40-program-design.md readiness", readme)
-        self.assertIn("→ workflow-internal control-planning requires fresh Program Design review and applies AGENT_REVIEW or HUMAN authority", readme)
-        self.assertIn("The user invokes `atlas:program-design` once", readme)
+        self.assertIn(
+            "| `program-design` | Produce the exact Stage 4 candidate, record readiness, and continue the internal control handoff. |",
+            readme,
+        )
         self.assertIn("tickets remain intentionally unsupported", readme)
         self.assertNotIn("Program Design, ticket compilation/acceptance", readme)
 
+    def test_readme_protects_automatic_program_design_orchestration_not_user_routing(self):
+        plugin = ROOT / "plugins" / "atlas"
+        readme = (plugin / "README.md").read_text(encoding="utf-8")
+        self.assertNotIn("The user invokes `atlas:program-design` once", readme)
+        start = (plugin / "skills" / "start-run" / "SKILL.md").read_text(encoding="utf-8")
+        program = (plugin / "skills" / "program-design" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("invoke `atlas:program-design` internally", start)
+        self.assertIn("If validated planning phase is `tickets`, stop loudly", start)
+        self.assertIn("exact named internal handoff to `atlas:control-planning`", program)
+        self.assertIn("without asking the user to issue a second routing command", program)
+
         with tempfile.TemporaryDirectory() as td:
             skills = self.copy_plugin(Path(td))
-            path = skills.parent / "README.md"
+            path = skills / "start-run" / "SKILL.md"
             text = path.read_text(encoding="utf-8")
-            path.write_text(text.replace("The user invokes `atlas:program-design` once", "Invoke Program Design", 1), encoding="utf-8")
+            path.write_text(
+                text.replace("invoke `atlas:program-design` internally", "report Program Design", 1),
+                encoding="utf-8",
+            )
             findings = SEAMS.cross_skill_contracts(skills)
-            self.assertTrue(any("README Program Design inventory" in message for _, message in findings), findings)
+            self.assertTrue(any("Program Design route and tickets stop" in message for _, message in findings), findings)
+
+    def test_operational_runbooks_are_owned_and_reachable_without_new_stage_skills(self):
+        plugin = ROOT / "plugins" / "atlas"
+        setup = (plugin / "skills" / "setup-atlas" / "SKILL.md").read_text(encoding="utf-8")
+        start = (plugin / "skills" / "start-run" / "SKILL.md").read_text(encoding="utf-8")
+        program = (plugin / "skills" / "program-design" / "SKILL.md").read_text(encoding="utf-8")
+        control = (plugin / "skills" / "control-planning" / "SKILL.md").read_text(encoding="utf-8")
+        commissioning = plugin / "skills" / "setup-atlas" / "references" / "installed-host-calibration.md"
+        blocked = plugin / "references" / "program-design-blocked.md"
+
+        self.assertTrue(commissioning.is_file())
+        self.assertTrue(blocked.is_file())
+        self.assertIn("references/installed-host-calibration.md", setup)
+        self.assertIn("description: Create or resume an Atlas run", start)
+        self.assertIn("../../references/program-design-blocked.md", program)
+        self.assertIn("../../references/program-design-blocked.md", control)
+        commissioning_text = commissioning.read_text(encoding="utf-8")
+        blocked_text = blocked.read_text(encoding="utf-8")
+        setup_agent = SEAMS.yaml.safe_load(
+            (plugin / "skills" / "setup-atlas" / "agents" / "openai.yaml").read_text(encoding="utf-8")
+        )
+        self.assertEqual(
+            setup_agent["interface"]["short_description"],
+            "Configure or verify Atlas on this machine",
+        )
+        start_agent = SEAMS.yaml.safe_load(
+            (plugin / "skills" / "start-run" / "agents" / "openai.yaml").read_text(encoding="utf-8")
+        )
+        self.assertEqual(
+            start_agent["interface"]["short_description"],
+            "Create or resume an Atlas run from authoritative state",
+        )
+        for clause in (
+            "installation bytes",
+            "host recognition",
+            "skill discovery",
+            "procedure completion",
+            "cross-skill handoff",
+            "dated calibration",
+            "PASS/FAIL/UNVERIFIED",
+            "session.skills_loaded",
+            "tools/atlas_planning.py",
+            "using that same launcher",
+            "Without this run plus oracle, procedure completion is `UNVERIFIED`",
+        ):
+            self.assertIn(clause, commissioning_text)
+        for clause in (
+            "producer pre-readiness",
+            "reviewer evidence",
+            "`planning-control.json` remains `PENDING`",
+            "no supported reopen or replacement-acceptance path",
+            "frozen repository baseline cannot be located and read",
+            "does not decide where a future repository binding lives",
+            "Do not prescribe a `run.yaml` field, Stage 0 amendment/effective-configuration field",
+        ):
+            self.assertIn(clause, blocked_text)
+
+    def test_least_confident_decisions_are_resolved_before_stage5(self):
+        plugin = ROOT / "plugins" / "atlas"
+        program = (plugin / "skills" / "program-design" / "SKILL.md").read_text(encoding="utf-8")
+        template = (
+            plugin / "skills" / "program-design" / "references" / "program-design-file.md"
+        ).read_text(encoding="utf-8")
+        authority = (
+            plugin / "skills" / "control-planning" / "references" / "program-design-authority.md"
+        ).read_text(encoding="utf-8")
+        for text in (program, template, authority):
+            self.assertIn("Stage 5 receives no design question it must answer", text)
+        self.assertIn("settled Stage 4 decisions with bounded residual uncertainty", program)
+        self.assertIn("unresolved local code-shape choice is `BLOCKED`", authority)
+
+        with tempfile.TemporaryDirectory() as td:
+            skills = self.copy_plugin(Path(td))
+            path = skills / "program-design" / "references" / "program-design-file.md"
+            text = path.read_text(encoding="utf-8")
+            path.write_text(
+                text.replace(
+                    "Stage 5 receives no design question it must answer",
+                    "Stage 5 may settle remaining design questions",
+                    1,
+                ),
+                encoding="utf-8",
+            )
+            findings = SEAMS.cross_skill_contracts(skills)
+            self.assertTrue(any("resolved-only Stage 4 decisions" in message for _, message in findings), findings)
 
     def test_program_design_resumes_exact_frozen_boundary_without_participation(self):
         plugin = ROOT / "plugins" / "atlas"
@@ -1139,6 +1242,27 @@ class SkillSeamHardeningTests(unittest.TestCase):
             (skills / "to-spec").mkdir()
             findings = SEAMS.cross_skill_contracts(skills)
             self.assertTrue(any("to-spec remains" in message for _, message in findings))
+
+    def test_atlas_manifests_describe_the_current_stage0_through_stage4_surface(self):
+        manifests = (
+            ROOT / "plugins" / "atlas" / "plugin.json",
+            ROOT / "plugins" / "atlas" / ".codex-plugin" / "plugin.json",
+        )
+        descriptions = [
+            json.loads(path.read_text(encoding="utf-8"))["description"] for path in manifests
+        ]
+        self.assertEqual(len(set(descriptions)), 1)
+        for clause in ("Stage 0", "System", "Program Design", "Stage 4"):
+            self.assertIn(clause, descriptions[0])
+
+        with tempfile.TemporaryDirectory() as td:
+            skills = self.copy_plugin(Path(td))
+            path = skills.parent / ".codex-plugin" / "plugin.json"
+            data = json.loads(path.read_text(encoding="utf-8"))
+            data["description"] = "Atlas setup and discovery skills."
+            path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+            findings = SEAMS.cross_skill_contracts(skills)
+            self.assertTrue(any("plugin manifest descriptions" in message for _, message in findings), findings)
 
     def test_immutable_run_mutation_is_detected_but_negation_is_not(self):
         for sentence, expected in (

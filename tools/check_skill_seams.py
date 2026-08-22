@@ -147,7 +147,10 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
     findings: list[tuple[str, str]] = []
     paths = {
         "readme": skills.parent / "README.md",
+        "plugin-manifest": skills.parent / "plugin.json",
+        "codex-plugin-manifest": skills.parent / ".codex-plugin" / "plugin.json",
         "start": skills / "start-run" / "SKILL.md",
+        "start-agent": skills / "start-run" / "agents" / "openai.yaml",
         "run-file": skills / "start-run" / "references" / "run-file.md",
         "state": skills / "start-run" / "references" / "state-file.md",
         "amendment": skills / "start-run" / "references" / "run-amendment.md",
@@ -159,6 +162,8 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         "review": skills / "control-run" / "references" / "boundary-review.md",
         "intake-correction": skills.parent / "references" / "intake-correction.md",
         "setup": skills / "setup-atlas" / "SKILL.md",
+        "setup-agent": skills / "setup-atlas" / "agents" / "openai.yaml",
+        "installed-host-calibration": skills / "setup-atlas" / "references" / "installed-host-calibration.md",
         "spike": skills / "spike" / "SKILL.md",
         "spike-findings": skills / "spike" / "references" / "findings-file.md",
         "controller": skills.parent / "tools" / "atlas_control.py",
@@ -173,6 +178,7 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         "control-planning": skills / "control-planning" / "SKILL.md",
         "system-design-authority": skills / "control-planning" / "references" / "system-design-authority.md",
         "program-design-authority": skills / "control-planning" / "references" / "program-design-authority.md",
+        "program-design-blocked": skills.parent / "references" / "program-design-blocked.md",
         "control-planning-agent": skills / "control-planning" / "agents" / "openai.yaml",
         "renderer": skills.parent / "tools" / "render_prd.py",
         "system-renderer": skills.parent / "tools" / "render_system_design.py",
@@ -184,16 +190,44 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         else:
             texts[name] = path.read_text(encoding="utf-8")
 
+    required_plugin_description_clauses = ("Stage 0", "System", "Program Design", "Stage 4")
+    try:
+        plugin_manifest = json.loads(texts.get("plugin-manifest", ""))
+        codex_plugin_manifest = json.loads(texts.get("codex-plugin-manifest", ""))
+    except json.JSONDecodeError as exc:
+        findings.append(("cross", f"Atlas plugin manifests are unreadable: {exc}"))
+    else:
+        descriptions = (
+            plugin_manifest.get("description"),
+            codex_plugin_manifest.get("description"),
+        )
+        if (
+            not all(isinstance(item, str) for item in descriptions)
+            or descriptions[0] != descriptions[1]
+            or any(clause not in descriptions[0] for clause in required_plugin_description_clauses)
+        ):
+            findings.append(("cross", "Atlas plugin manifest descriptions do not expose the current Stage 0-4 surface"))
+
     required = {
         "readme": [
             "First-party Stage 0–4 skills",
+            "| `setup-atlas` | Configure the planning root and verify an installed host. |",
+            "| `start-run` | Accept immutable Stage 0 `run.yaml`, initialize control, or resume from authoritative state. |",
             "| `program-design` | Produce the exact Stage 4 candidate, record readiness, and continue the internal control handoff. |",
-            "The user invokes `atlas:program-design` once",
             "tickets remain intentionally unsupported",
         ],
+        "setup-agent": [
+            'short_description: "Configure or verify Atlas on this machine"',
+            "allow_implicit_invocation: false",
+        ],
         "start": [
-            "run.yaml", "control.json", "initialize", "AGENT_REVIEW", "HUMAN", "AUTO",
+            "description: Create or resume an Atlas run", "run.yaml", "control.json",
+            "initialize", "AGENT_REVIEW", "HUMAN", "AUTO",
             "atlas_planning.py", "planning-control.json", ".atlas-planning.lock",
+        ],
+        "start-agent": [
+            'short_description: "Create or resume an Atlas run from authoritative state"',
+            "allow_implicit_invocation: false",
         ],
         "run-file": [
             "[a-z0-9]+(?:-[a-z0-9]+)*", "rejects path separators",
@@ -287,17 +321,36 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
     readme_program_contract = (
         "First-party Stage 0–4 skills",
         "| `program-design` | Produce the exact Stage 4 candidate, record readiness, and continue the internal control handoff. |",
-        "The user invokes `atlas:program-design` once",
         "tickets remain intentionally unsupported",
     )
     if any(clause not in texts.get("readme", "") for clause in readme_program_contract):
-        findings.append(("cross", "README Program Design inventory and single-producer flow are incomplete"))
+        findings.append(("cross", "README Program Design inventory is incomplete"))
 
     program = texts.get("program-design", "")
-    grounding = "Before drafting anything, inspect every actual target repository named in effective intake at its frozen baseline"
+    grounding = "Before drafting anything, require a readable repository for every stable identity and prove the exact frozen baseline commit/tree is available"
     drafting_heading = "## 3. Produce the Stage 4 candidate"
     if grounding not in program or drafting_heading not in program or program.index(grounding) > program.index(drafting_heading):
         findings.append(("cross", "program-design: missing repository grounding before drafting"))
+
+    baseline_access_contract = (
+        "current HEAD and working-tree state only as drift/context",
+        "neither may silently replace the frozen baseline as design truth",
+        "Current V1 descriptive repository metadata grants no access",
+        "../../references/program-design-blocked.md",
+    )
+    if any(clause not in program for clause in baseline_access_contract):
+        findings.append(("cross", "program-design: missing fail-closed exact frozen-baseline access preflight"))
+
+    resolved_only_contract = (
+        "settled Stage 4 decisions with bounded residual uncertainty",
+        "Stage 5 receives no design question it must answer",
+    )
+    if (
+        any(clause not in program for clause in resolved_only_contract)
+        or any(clause not in texts.get("program-design-template", "") for clause in resolved_only_contract[1:])
+        or "unresolved local code-shape choice is `BLOCKED`" not in texts.get("program-design-authority", "")
+    ):
+        findings.append(("cross", "Program Design least-confidence seam does not contain resolved-only Stage 4 decisions"))
 
     frozen_program_contract = (
         "Read immutable `run.yaml`, authoritative Stage 0 `control.json`, and `planning-control.json`",
@@ -751,7 +804,24 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "do not rerun Product Closure", "After a successful Product Closure transition",
             "re-read `planning-control.json`", "discovery never starts execution",
         ],
-        "setup": ["atomic contract-plus-code commits", "third parent of this file", "<atlas-plugin-root>/requirements.txt"],
+        "setup": [
+            "atomic contract-plus-code commits", "third parent of this file",
+            "<atlas-plugin-root>/requirements.txt", "references/installed-host-calibration.md",
+        ],
+        "installed-host-calibration": [
+            "installation bytes", "host recognition", "skill discovery", "procedure completion",
+            "cross-skill handoff", "dated calibration", "PASS/FAIL/UNVERIFIED",
+            "session.skills_loaded", "tools/atlas_planning.py",
+            "using that same launcher",
+            "Without this run plus oracle, procedure completion is `UNVERIFIED`",
+        ],
+        "program-design-blocked": [
+            "producer pre-readiness", "reviewer evidence", "`planning-control.json` remains `PENDING`",
+            "no supported reopen or replacement-acceptance path",
+            "frozen repository baseline cannot be located and read",
+            "does not decide where a future repository binding lives",
+            "Do not prescribe a `run.yaml` field, Stage 0 amendment/effective-configuration field",
+        ],
         "spike": ["no executable spike runner", "agent-enforced procedure", "state confidence"],
         "spike-findings": ["**Confidence:**"],
     }

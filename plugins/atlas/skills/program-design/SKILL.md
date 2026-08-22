@@ -16,7 +16,7 @@ Read immutable `run.yaml`, authoritative Stage 0 `control.json`, and `planning-c
 
 ## 2. Inspect the actual repository and bind the source
 
-Before drafting anything, inspect every actual target repository named in effective intake at its frozen baseline: examine the current file tree, language and tooling conventions, relevant implementations, tests, and working-tree state. Base every code-shape decision on those inspected bytes rather than candidate prose or memory.
+Before drafting anything, require a readable repository for every stable identity and prove the exact frozen baseline commit/tree is available. Inspect those frozen-baseline bytes for language and tooling conventions, relevant implementations, and tests. Inspect current HEAD and working-tree state only as drift/context; neither may silently replace the frozen baseline as design truth. If the identity cannot be resolved to a readable repository or the exact baseline tree cannot be read, follow [`../../references/program-design-blocked.md`](../../references/program-design-blocked.md) and stop before candidate readiness. Current V1 descriptive repository metadata grants no access, so prose claiming baseline inspection is not a substitute for a ratified resolver.
 
 Derive the applicable branch only from effective selected stages, never from candidate prose or artifact presence. Read exactly one applicable upstream source and do not read either omitted source:
 
@@ -34,7 +34,7 @@ Reviewer-discovered `DESIGN_BLOCKED` belongs only in a fresh `reviews/program-de
 
 Use [`references/program-design-file.md`](references/program-design-file.md) as the exact `40-program-design.md` shape. Preserve exactly its six frontmatter fields and ten ordered sections. Ground every placement, type, signature, call, state, migration, failure-path, test-seam, and sequencing decision in the inspected repository. In `Upstream commitment realization`, cite every upstream commitment and name its codebase-local realization.
 
-Keep Stage 4 inside the reliance horizon: resolve code shape so Stage 5 can decompose rather than design, but do not write line-by-line pseudocode, choose ticket slices, or construct a ticket graph. The final canonical candidate has integer `version: 1`, `status: draft`, and boolean `gate_ready: true`.
+Keep Stage 4 inside the reliance horizon: resolve code shape so Stage 5 can decompose rather than design, but do not write line-by-line pseudocode, choose ticket slices, or construct a ticket graph. `Least-confident decisions` contains only settled Stage 4 decisions with bounded residual uncertainty. Any unresolved choice that could materially alter files/packages, types/signatures, call/data flow, state ownership, concurrency/lifetime, migration/failure behavior, or test seams is not compilation-ready: a local defect is `BLOCKED`; missing or conflicting upstream truth is `DESIGN_BLOCKED`. Stage 5 receives no design question it must answer. The final canonical candidate has integer `version: 1`, `status: draft`, and boolean `gate_ready: true`.
 
 ## 4. Preserve producer ownership
 

@@ -50,7 +50,9 @@ source_binding:
 
 ## Least-confident decisions
 
-<decision, evidence, uncertainty, and bounded consequence>
+<settled Stage 4 decision, evidence, bounded residual uncertainty, and bounded consequence>
+
+Stage 5 receives no design question it must answer. Any unresolved choice that could materially alter file/package ownership, important types/signatures, call/data flow, state ownership, concurrency/lifetime, migration/failure behavior, or test seams means this candidate is not compilation-ready.
 
 ## Implementation constraints and sequencing
 

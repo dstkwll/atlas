@@ -1,6 +1,6 @@
 ---
 name: start-run
-description: Create immutable Atlas Stage 0 intake and initialize its tiny planning controller.
+description: Create or resume an Atlas run; initialize Stage 0 or route from authoritative on-disk state.
 disable-model-invocation: true
 ---
 
