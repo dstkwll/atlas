@@ -168,6 +168,7 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         "spike-findings": skills / "spike" / "references" / "findings-file.md",
         "controller": skills.parent / "tools" / "atlas_control.py",
         "planning": skills.parent / "tools" / "atlas_planning.py",
+        "repository": skills.parent / "tools" / "atlas_repository.py",
         "system-design": skills / "system-design" / "SKILL.md",
         "system-design-template": skills / "system-design" / "references" / "system-design-file.md",
         "system-design-board": skills / "system-design" / "references" / "system-design-board.md",
@@ -250,6 +251,12 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "def advance_boundary", 'SYSTEM_DESIGN_FILE = "30-system-design.md"',
             "verify_system_design_board", "30-system-design.html",
         ],
+        "repository": [
+            "def load_bindings", "def bind_repository", "def verify_run",
+            "def list_tree", "def search_tree", "def read_tree_path",
+            'sub.add_parser("verify"', 'sub.add_parser("list"',
+            'sub.add_parser("search"', 'sub.add_parser("read"',
+        ],
         "system-design": [
             "disable-model-invocation: true", "third parent of this file", "agent_led",
             "co_design", "Slice 2", "references/system-design-file.md", "references/system-design-board.md",
@@ -318,6 +325,34 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             if needle.lower() not in text.lower():
                 findings.append(("cross", f"{name}: missing seam contract `{needle}`"))
 
+    repository_surface = required["repository"]
+    if any(marker not in texts.get("repository", "") for marker in repository_surface):
+        findings.append(("cross", "repository adapter public surface is incomplete"))
+
+    setup = texts.get("setup", "")
+    setup_binding_contract = (
+        "Preserve every existing configuration key and value not explicitly changed",
+        "one stable repository identity to one canonical absolute path to an existing local Git repository or object source",
+        "Show the exact configuration diff, the exact configuration path, and the exact identity/source pair",
+        "Wait for explicit confirmation before creating or changing a binding",
+        "Normal runs reuse a confirmed binding without asking again",
+        "never infer a binding from a remote or the current checkout",
+        "never sync, clone, fetch, authenticate, checkout, create a worktree, or mutate a repository",
+        'python3 "<atlas-plugin-root>/tools/atlas_repository.py" verify --run "<run-directory>"',
+        "Report every gap and resume action from the complete verification report",
+        "only V1 artifact-location setting, not the only machine configuration",
+    )
+    if any(clause not in setup for clause in setup_binding_contract):
+        findings.append(("cross", "setup: incomplete D-081 binding commissioning contract"))
+
+    calibration_five_clis = (
+        "Invoke exactly these five packaged CLIs with `--help` using that same recorded interpreter: "
+        "`tools/atlas_control.py`, `tools/atlas_planning.py`, `tools/atlas_repository.py`, "
+        "`tools/render_prd.py`, and `tools/render_system_design.py`."
+    )
+    if calibration_five_clis not in texts.get("installed-host-calibration", ""):
+        findings.append(("cross", "installed-host-calibration: missing five packaged CLIs with the recorded interpreter"))
+
     readme_program_contract = (
         "First-party Stage 0–4 skills",
         "| `program-design` | Produce the exact Stage 4 candidate, record readiness, and continue the internal control handoff. |",
@@ -335,11 +370,48 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
     baseline_access_contract = (
         "current HEAD and working-tree state only as drift/context",
         "neither may silently replace the frozen baseline as design truth",
-        "Current V1 descriptive repository metadata grants no access",
+        "Treat current `HEAD`, index, and working-tree bytes only as drift",
+        "never substitute them for the exact baseline",
         "../../references/program-design-blocked.md",
     )
     if any(clause not in program for clause in baseline_access_contract):
         findings.append(("cross", "program-design: missing fail-closed exact frozen-baseline access preflight"))
+
+    repository_verify = 'python3 "<atlas-plugin-root>/tools/atlas_repository.py" verify --run "<run-directory>"'
+    repository_list = 'python3 "<atlas-plugin-root>/tools/atlas_repository.py" list --run "<run-directory>" --repository "<stable-repository-id>"'
+    repository_search = 'python3 "<atlas-plugin-root>/tools/atlas_repository.py" search --run "<run-directory>" --repository "<stable-repository-id>" --needle "<literal>"'
+    repository_read = 'python3 "<atlas-plugin-root>/tools/atlas_repository.py" read --run "<run-directory>" --repository "<stable-repository-id>" --path "<baseline-path>"'
+    repository_commands = (repository_verify, repository_list, repository_search, repository_read)
+    if (
+        drafting_heading not in program
+        or any(command not in program for command in repository_commands)
+        or any(program.index(command) > program.index(drafting_heading) for command in repository_commands if command in program)
+        or (
+            repository_verify in program
+            and repository_list in program
+            and program.index(repository_verify) > program.index(repository_list)
+        )
+        or "Use only these adapter `list`, `search`, and `read` commands for baseline inspection" not in program
+    ):
+        findings.append(("cross", "program-design: missing exact adapter verification and inspection before drafting"))
+
+    program_blocked_contract = (
+        "Missing binding, source, full canonical object ID, commit/tree/blob object, required submodule content, or required Git LFS content is ordinary non-mutating `BLOCKED`",
+        "`DESIGN_BLOCKED` is reserved for an exact-code contradiction that requires accepted upstream truth to change",
+    )
+    blocked_runbook_contract = (
+        "ordinary repository dependency `BLOCKED`",
+        "true upstream `DESIGN_BLOCKED`",
+        "Resume a missing local dependency through `setup-atlas` or an offline repository repair, then rerun",
+        "requires no authority decision or reopen",
+        "If Discovery no longer owns the cursor, an abbreviated baseline requires a corrected new run",
+        "`PENDING` means no acceptance was written",
+    )
+    if (
+        any(clause not in program for clause in program_blocked_contract)
+        or any(clause not in texts.get("program-design-blocked", "") for clause in blocked_runbook_contract)
+    ):
+        findings.append(("cross", "Program Design D-081 BLOCKED classification is incomplete"))
 
     resolved_only_contract = (
         "settled Stage 4 decisions with bounded residual uncertainty",
@@ -425,6 +497,29 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         or control_planning.count(program_check) != 1
     ):
         findings.append(("cross", "control-planning: missing explicit-stage-only check selection"))
+
+    reviewer_marker = "Invoke one distinct fresh read-only semantic reviewer"
+    control_repository_contract = (
+        "return its complete mechanical repository `BLOCKED` report before invoking a reviewer or writing evidence",
+        "The fresh reviewer reads the exact baseline only through the adapter commands above",
+        "Current `HEAD`, index, and working-tree bytes are never substitute review inputs",
+    )
+    if (
+        reviewer_marker not in control_planning
+        or any(command not in control_planning for command in repository_commands)
+        or any(
+            control_planning.index(command) > control_planning.index(reviewer_marker)
+            for command in repository_commands
+            if command in control_planning and reviewer_marker in control_planning
+        )
+        or (
+            repository_verify in control_planning
+            and repository_list in control_planning
+            and control_planning.index(repository_verify) > control_planning.index(repository_list)
+        )
+        or any(clause not in control_planning for clause in control_repository_contract)
+    ):
+        findings.append(("cross", "control-planning: missing repository preflight before Program Design review"))
 
     try:
         system_agent = yaml.safe_load(texts.get("system-design-agent", ""))
@@ -731,6 +826,11 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             if isinstance(program_semantic, dict)
             else None
         )
+        program_baselines = (
+            program_envelope.get("repository_baselines")
+            if isinstance(program_envelope, dict)
+            else None
+        )
         blocked_gap_maps = [
             item for item in program_authority_maps if set(item) == semantic_gap_fields
         ]
@@ -770,6 +870,26 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             findings.append(
                 ("cross", "Program Design DESIGN_BLOCKED gap reference does not match planning schema")
             )
+        portable_authority_contract = (
+            "Baselines are exact portable effective repository/full-canonical-OID pairs",
+            "Acceptance records those exact portable pairs",
+            "never a machine-local source path",
+            "Missing local bindings, objects, submodule content, or Git LFS content are mechanical `BLOCKED`, not `DESIGN_BLOCKED`",
+        )
+        if (
+            not isinstance(program_baselines, list)
+            or not program_baselines
+            or any(
+                not isinstance(item, dict)
+                or set(item) != {"repository", "baseline"}
+                or not isinstance(item.get("repository"), str)
+                or not isinstance(item.get("baseline"), str)
+                or re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", item["baseline"]) is None
+                for item in program_baselines
+            )
+            or any(clause not in program_authority_text for clause in portable_authority_contract)
+        ):
+            findings.append(("cross", "Program Design portable repository baseline authority is incomplete"))
 
     for name in ("system-design", "control-planning"):
         count = len(texts.get(name, "").splitlines())
@@ -813,6 +933,7 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "skill discovery", "procedure completion",
             "cross-skill handoff", "dated calibration", "PASS/FAIL/UNVERIFIED",
             "session.skills_loaded", "tools/atlas_planning.py",
+            "tools/atlas_repository.py",
             "using that same launcher",
             "Without this run plus oracle, procedure completion is `UNVERIFIED`",
             "without changing a byte-equality PASS",
@@ -896,6 +1017,8 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         "recover_transaction": "transaction replay machinery is not part of Stage 0–2",
         "write_files_atomic": "multi-file transaction machinery is not part of Stage 0–2",
         "<planning-root>/<project>/runs": "feature layout is fixed beneath planning root",
+        "repository_baselines: []": "stale pre-D-081 repository contract",
+        "unratified repository-binding/baseline-reader mechanism": "stale pre-D-081 repository contract",
     }
     for phrase, reason in banned.items():
         if phrase.lower() in joined.lower():

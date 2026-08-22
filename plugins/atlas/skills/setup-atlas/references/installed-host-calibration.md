@@ -24,7 +24,7 @@ Any source/install difference blocks a current-source claim. Reinstall or update
 
 ## 3. Verify deterministic dependencies
 
-Run the dependency probe from `setup-atlas/SKILL.md` and record the exact Python launcher/interpreter path that passed it. Invoke exactly these packaged CLIs with `--help` using that same launcher and each installed absolute path: `tools/atlas_control.py`, `tools/atlas_planning.py`, `tools/render_prd.py`, and `tools/render_system_design.py`. A missing dependency or CLI is installation failure, not an optional degradation; success under a different temporary interpreter does not prove the configured/default host launcher is ready.
+Run the dependency probe from `setup-atlas/SKILL.md` and record the exact Python launcher/interpreter path that passed it. Invoke exactly these five packaged CLIs with `--help` using that same recorded interpreter: `tools/atlas_control.py`, `tools/atlas_planning.py`, `tools/atlas_repository.py`, `tools/render_prd.py`, and `tools/render_system_design.py`. Use each installed absolute path, using that same launcher rather than a temporary interpreter. A missing dependency or CLI is installation failure, not an optional degradation; success under a different temporary interpreter does not prove the configured/default host launcher is ready.
 
 ## 4. Verify host recognition and skill discovery
 

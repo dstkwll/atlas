@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Setup Atlas
 
-Establish where Atlas skills read and write. One question has to be answered before any other skill can run: **what is the planning root?** Everything else is deferred until a skill actually needs it.
+Establish the machine-local planning-artifact location and any repository bindings needed by a run. The planning root remains an artifact-location choice; repository bindings route stable portable identities to exact local Git object sources.
 
 Resolve `<atlas-plugin-root>` from this installed skill before invoking packaged resources: it is the third parent of this file (`SKILL.md` → `setup-atlas/` → `skills/` → the plugin root) and must contain `requirements.txt` and `tools/`. Use that resolved absolute path; never assume the caller's working directory.
 
@@ -21,7 +21,7 @@ Each operating system designates a location for application configuration, and A
 
 When reading, check the platform-native path first, then `~/.atlas/config.yaml`. The second is a legacy location that still resolves, so a configuration written under either convention is found.
 
-**Configuration is per machine.** The planning root is an absolute path that differs between machines, so a configuration file that syncs would carry one machine's path onto another where it does not resolve — which is why the platform-native locations, outside synchronized document folders, are used. Run this skill once on each machine.
+**Configuration is per machine.** An external planning root and repository bindings contain machine-specific absolute paths, so a configuration file that syncs would carry one machine's paths onto another where they do not resolve — which is why the platform-native locations, outside synchronized document folders, are used. Run this skill once on each machine.
 
 ## The planning root
 
@@ -42,7 +42,9 @@ An external root must already exist and be readable. This configuration names a 
 
 Read the configuration file, checking the platform-native path and then `~/.atlas/config.yaml`. Report what is already configured, and where it was found.
 
-A configured machine needs no root rewrite. Say so and skip to the controller-dependency check rather than re-asking settled questions.
+Preserve every existing configuration key and value not explicitly changed. A configured planning root needs no rewrite, and each existing confirmed repository binding remains authoritative unless the user explicitly commissions a replacement.
+
+A configured machine needs no root rewrite. Say so rather than re-asking settled questions.
 
 Check whether the working directory is inside a git repository, and name it — it decides which root form to recommend.
 
@@ -54,7 +56,9 @@ Skip the question only when an existing configuration already settles the planni
 
 ### 3. Confirm before writing
 
-Show the exact configuration to be written and the path it goes to, using that platform's separators. Wait for the user to accept it.
+For each repository needed by the run, commission or change exactly one stable repository identity to one canonical absolute path to an existing local Git repository or object source. Validate that the path is absolute, already exists, resolves without symlink substitution, and is a readable Git source. Atlas may ask the user for the identity/source pair, but must never infer a binding from a remote or the current checkout.
+
+Show the exact configuration diff, the exact configuration path, and the exact identity/source pair. Wait for explicit confirmation before creating or changing a binding. Normal runs reuse a confirmed binding without asking again. Setup may inspect and write machine configuration, but must never sync, clone, fetch, authenticate, checkout, create a worktree, or mutate a repository.
 
 Report and stop if an external root does not exist or is not readable. This skill does not create the root.
 
@@ -67,15 +71,18 @@ Warn, and continue, if the planning root itself sits inside one. Synchronized pl
 ```yaml
 artifacts:
   planning_root: .planning        # or an absolute path
+repositories:
+  bindings:
+    "stable-repository-id": /canonical/absolute/existing/local/git/source
 ```
 
-This is the only V1 artifact-location setting. `evidence/` and `spikes/` are fixed beneath each run by `architecture/03-artifact-model.md`; setup does not configure them.
+`artifacts.planning_root` is the only V1 artifact-location setting, not the only machine configuration. `repositories.bindings` is machine-local routing and never enters portable run, control, candidate, review, or acceptance artifacts. `evidence/` and `spikes/` are fixed beneath each run by `architecture/03-artifact-model.md`; setup does not configure them.
 
-Report the path written. Every run will land at `<planning-root>/<feature-slug>/`; `atlas:start-run` chooses and validates the slug. An external root changes only the configured root, never the layout beneath it.
+Merge only the confirmed changes into the existing configuration; do not replace unrelated keys or bindings. Report the path written. Every run will land at `<planning-root>/<feature-slug>/`; `atlas:start-run` chooses and validates the slug. An external root changes only the configured root, never the layout beneath it.
 
 ### 5. Verify the deterministic dependencies
 
-The installed plugin includes `<atlas-plugin-root>/tools/atlas_control.py`, the sole writer for authoritative post-intake state transitions, and `<atlas-plugin-root>/tools/render_prd.py`, the mandatory PRD renderer. They require Python 3.9 or newer plus the packages pinned in `<atlas-plugin-root>/requirements.txt`. Verify with the platform-native Python launcher:
+The installed plugin includes `<atlas-plugin-root>/tools/atlas_control.py`, `<atlas-plugin-root>/tools/atlas_planning.py`, `<atlas-plugin-root>/tools/atlas_repository.py`, and the mandatory renderers. They require Python 3.9 or newer plus the packages pinned in `<atlas-plugin-root>/requirements.txt`. Verify with the platform-native Python launcher:
 
 ```shell
 python3 -c "import sys, yaml, markdown_it; assert sys.version_info >= (3, 9)"
@@ -85,12 +92,22 @@ On Windows, use `py -3 -c "import sys, yaml, markdown_it; assert sys.version_inf
 
 Report whether the deterministic dependencies are ready. Never pretend a missing dependency is optional.
 
-### 6. Calibrate an installed host when needed
+### 6. Verify repository readiness for the run
+
+After preserving or confirming bindings, run the deterministic non-mutating preflight:
+
+```shell
+python3 "<atlas-plugin-root>/tools/atlas_repository.py" verify --run "<run-directory>"
+```
+
+On Windows use the same recorded `py -3` launcher. Report every gap and resume action from the complete verification report. A `BLOCKED` result is ordinary setup/dependency output: repair machine config or make the exact objects available offline, then rerun; setup does not canonicalize intake or provision repositories.
+
+### 7. Calibrate an installed host when needed
 
 After a new install or update, before claiming the installed host runs the current source, or when a host reports an enabled skill missing, follow [`references/installed-host-calibration.md`](references/installed-host-calibration.md). Keep installation bytes, deterministic runtime readiness, host recognition, skill discovery, procedure completion, and cross-skill handoff as separate claims. A one-host success is dated calibration only.
 
 ## Standing rules
 
-**Configuration is the only source of truth for the root.** No skill hardcodes a path, and no artifact records an absolute path that would resolve differently for a different reader. A root reachable only by its author cannot be referenced by anyone else.
+**Configuration is the only source of truth for the root and local repository routes.** No skill hardcodes a path, and no portable artifact records a machine-local absolute path. A root reachable only by its author cannot be referenced by anyone else.
 
 **Ask about what is needed now.** Later skills will want configuration this one does not collect. Each earns its question when a skill actually reads it — a setup that asks twenty questions to save twenty seconds is worse than one that asks two.

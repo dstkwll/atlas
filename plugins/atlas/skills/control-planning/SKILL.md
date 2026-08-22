@@ -42,6 +42,17 @@ python3 "<atlas-plugin-root>/tools/atlas_planning.py" check --run "<run-director
 
 A `BLOCKED` result is expected control output even though the process exits nonzero: return the complete report to the named producer and make no transition. For Program Design, producer-discovered `DESIGN_BLOCKED` never enters this adapter; reviewer-discovered `DESIGN_BLOCKED` belongs only in fresh `reviews/program-design-v1.json` and also makes no transition or planning-state mutation. Any other nonzero result is a dependency/tool failure; report exact stderr and stop. A PASS establishes mechanics only, not approval.
 
+For explicit stage `program_design`, after candidate mechanics pass and before invoking a reviewer or writing evidence, run:
+
+```shell
+python3 "<atlas-plugin-root>/tools/atlas_repository.py" verify --run "<run-directory>"
+python3 "<atlas-plugin-root>/tools/atlas_repository.py" list --run "<run-directory>" --repository "<stable-repository-id>"
+python3 "<atlas-plugin-root>/tools/atlas_repository.py" search --run "<run-directory>" --repository "<stable-repository-id>" --needle "<literal>"
+python3 "<atlas-plugin-root>/tools/atlas_repository.py" read --run "<run-directory>" --repository "<stable-repository-id>" --path "<baseline-path>"
+```
+
+Run `verify` first. On failure, return its complete mechanical repository `BLOCKED` report before invoking a reviewer or writing evidence; do not run `list`, `search`, or `read`. On PASS, proceed to exact baseline inspection. The fresh reviewer reads the exact baseline only through the adapter commands above, repeating `list`, `search`, and `read` as needed. Current `HEAD`, index, and working-tree bytes are never substitute review inputs.
+
 ## 3. Resolve the frozen authority
 
 Follow the exact schema, dimensions, fail-closed mapping, reviewer output, and authority matrix in [`references/system-design-authority.md`](references/system-design-authority.md). Evidence lives only at `reviews/system-design-v1.json`; the invoker assembles its exact duplicate-safe JSON bytes. The envelope carries the exact ordered current effective repository/baseline pairs after accepted Stage 0 amendments and the current candidate identity/hash. It is evidence, not authority.

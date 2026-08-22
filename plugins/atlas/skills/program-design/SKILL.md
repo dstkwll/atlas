@@ -14,9 +14,25 @@ Resolve `<atlas-plugin-root>` from this installed skill before invoking a packag
 
 Read immutable `run.yaml`, authoritative Stage 0 `control.json`, and `planning-control.json` before any producer action. Require current phase `program_design`, gate `PENDING`, and exact configured authority `AGENT_REVIEW` or `HUMAN`. Reject contradictory, aliased, or incomplete state rather than repairing it or falling back. Program Design never asks a participation question; Stage 4 has no participation mode.
 
-## 2. Inspect the actual repository and bind the source
+## 2. Verify and inspect the exact repository baseline
 
-Before drafting anything, require a readable repository for every stable identity and prove the exact frozen baseline commit/tree is available. Inspect those frozen-baseline bytes for language and tooling conventions, relevant implementations, and tests. Inspect current HEAD and working-tree state only as drift/context; neither may silently replace the frozen baseline as design truth. If the identity cannot be resolved to a readable repository or the exact baseline tree cannot be read, follow [`../../references/program-design-blocked.md`](../../references/program-design-blocked.md) and stop before candidate readiness. Current V1 descriptive repository metadata grants no access, so prose claiming baseline inspection is not a substitute for a ratified resolver.
+Before drafting anything, require a readable repository for every stable identity and prove the exact frozen baseline commit/tree is available. First run:
+
+```shell
+python3 "<atlas-plugin-root>/tools/atlas_repository.py" verify --run "<run-directory>"
+```
+
+If verification returns `BLOCKED`, report every gap and resume action, follow [`../../references/program-design-blocked.md`](../../references/program-design-blocked.md), and stop before candidate readiness. Missing binding, source, full canonical object ID, commit/tree/blob object, required submodule content, or required Git LFS content is ordinary non-mutating `BLOCKED`.
+
+After `verify` passes, begin exact baseline inspection. Inspect those frozen-baseline bytes for language and tooling conventions, relevant implementations, and tests. Use only these adapter `list`, `search`, and `read` commands for baseline inspection, repeating them with exact identities, literals, and paths as needed:
+
+```shell
+python3 "<atlas-plugin-root>/tools/atlas_repository.py" list --run "<run-directory>" --repository "<stable-repository-id>"
+python3 "<atlas-plugin-root>/tools/atlas_repository.py" search --run "<run-directory>" --repository "<stable-repository-id>" --needle "<literal>"
+python3 "<atlas-plugin-root>/tools/atlas_repository.py" read --run "<run-directory>" --repository "<stable-repository-id>" --path "<baseline-path>"
+```
+
+Treat current `HEAD`, index, and working-tree bytes only as drift; never substitute them for the exact baseline. Inspect current HEAD and working-tree state only as drift/context; neither may silently replace the frozen baseline as design truth. Repository identity and baseline metadata are portable claims, while the confirmed machine binding and adapter provide local read access.
 
 Derive the applicable branch only from effective selected stages, never from candidate prose or artifact presence. Read exactly one applicable upstream source and do not read either omitted source:
 
@@ -26,7 +42,7 @@ Derive the applicable branch only from effective selected stages, never from can
 
 Reject a missing, extra, stale, or mismatched source rather than inferring a branch.
 
-If repository inspection shows that local realization requires a new or changed upstream commitment, do not draft around it. Before writing candidate or readiness bytes, return structured read-only `DESIGN_BLOCKED` and stop. Name `upstream_source`, a nonempty `upstream_issue`, source-constrained `resume_boundary`, and the smallest `resume_action`; `upstream_source` and `resume_boundary` both equal the actual selected source-binding kind, and `resume_action` states the smallest upstream decision or change required. This producer result creates no review file, does not rewrite any upstream artifact, and does not mutate planning state.
+`DESIGN_BLOCKED` is reserved for an exact-code contradiction that requires accepted upstream truth to change. If exact baseline inspection proves that local realization requires a new or changed accepted upstream commitment, do not draft around it. Before writing candidate or readiness bytes, return structured read-only `DESIGN_BLOCKED` and stop. Name `upstream_source`, a nonempty `upstream_issue`, source-constrained `resume_boundary`, and the smallest `resume_action`; `upstream_source` and `resume_boundary` both equal the actual selected source-binding kind, and `resume_action` states the smallest upstream decision or change required. This producer result creates no review file, does not rewrite any upstream artifact, and does not mutate planning state.
 
 Reviewer-discovered `DESIGN_BLOCKED` belongs only in a fresh `reviews/program-design-v1.json` assembled through the internal authority adapter; it is distinct from this producer pre-readiness stop.
 

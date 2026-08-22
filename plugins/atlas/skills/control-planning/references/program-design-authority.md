@@ -13,7 +13,7 @@ The exact top-level shape is:
   "candidate_version": 1,
   "candidate_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
   "repository_baselines": [
-    {"repository": "stable-repository-id", "baseline": "abc1234"}
+    {"repository": "stable-repository-id", "baseline": "0123456789abcdef0123456789abcdef01234567"}
   ],
   "semantic_review": {
     "verdict": "PASS",
@@ -33,12 +33,13 @@ The exact top-level shape is:
 
 Rules:
 
-- Top-level fields are exact. `version` and `candidate_version` are exact integers. `run`, `stage`, configured `policy`, candidate SHA-256, and `repository_baselines` bind the exact current inputs. Baselines are the exact ordered effective repository/baseline pairs after accepted Stage 0 amendments.
+- Top-level fields are exact. `version` and `candidate_version` are exact integers. `run`, `stage`, configured `policy`, candidate SHA-256, and `repository_baselines` bind the exact current inputs. Baselines are exact portable effective repository/full-canonical-OID pairs in their effective order after accepted Stage 0 amendments. They never contain a machine-local source path.
 - `policy` is exactly `AGENT_REVIEW` or `HUMAN`. Program Design has no `materiality`, `AUTO`, or `HUMAN_IF_CHANGED` branch.
 - A semantic row has exactly `dimension`, `result`, and nonempty `evidence`. `result` is `PASS`, `BLOCKED`, or `DESIGN_BLOCKED`. The seven Stage 4 dimensions above occur exactly once; aliases are invalid.
 - Verdict is derived mechanically: any `DESIGN_BLOCKED` row yields `DESIGN_BLOCKED`; otherwise any `BLOCKED` row yields `BLOCKED`; otherwise the verdict is `PASS`.
 - `gaps` contains exactly one gap for every non-PASS dimension and no gap for a PASS dimension.
 - A Stage 4-local implementation defect is `BLOCKED`. An accepted upstream guarantee or missing upstream truth that cannot be realized is `DESIGN_BLOCKED` under `upstream_commitment_realization`. An unresolved local code-shape choice is `BLOCKED`; a resolved choice with bounded residual uncertainty may appear in `Least-confident decisions`. `testability_and_compilation_readiness` requires that Stage 5 receives no design question it must answer. The controller validates the declared result and evidence schema; it does not classify reviewer prose.
+- Missing local bindings, objects, submodule content, or Git LFS content are mechanical `BLOCKED`, not `DESIGN_BLOCKED`. Resolve those dependencies outside review and rerun repository verification before assembling evidence.
 
 Each `BLOCKED` gap has exactly:
 
@@ -74,6 +75,6 @@ Every required string is nonempty. `upstream_source` and `resume_boundary` both 
 | `AGENT_REVIEW` | `--review reviews/program-design-v1.json`; no human approval | `AGENT_REVIEW` |
 | `HUMAN` | the same exact PASS review and `--approval human` | `HUMAN` |
 
-Both authorities require a fresh exact PASS review. Human approval never bypasses review, and neither `BLOCKED` nor `DESIGN_BLOCKED` advances state. A successful acceptance always records the candidate version/hash, derived authority, date, review reference/hash, exactly one source binding, and `repository_baselines: []` in existing `planning-control.json`.
+Both authorities require a fresh exact PASS review. Human approval never bypasses review, and neither `BLOCKED` nor `DESIGN_BLOCKED` advances state. A successful acceptance always records the candidate version/hash, derived authority, date, review reference/hash, and exactly one source binding. Acceptance records those exact portable pairs from `repository_baselines`, never a machine-local source path, in existing `planning-control.json`.
 
 Duplicate-key-safe JSON, valid UTF-8, managed real-file/path confinement, exact filename, current candidate/source/repository/policy binding, review hash, and semantic coherence are mechanical preconditions. Under `.atlas-planning.lock`, the controller rereads candidate, source, review, and planning inputs immediately before atomic replacement. Acceptance increments the planning revision once and advances only to a selected `tickets` boundary; it launches no ticket work.
