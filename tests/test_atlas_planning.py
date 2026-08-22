@@ -3195,6 +3195,46 @@ class AtlasPlanningTests(unittest.TestCase):
                 PLANNING.install_upstream_block_evidence(run, review_bytes)
             self.assertEqual(canonical.read_bytes(), review_bytes)
 
+    def test_repair_state_rejects_bool_and_impossible_tuples(self):
+        for case in ("boolean-attempts", "boolean-system-version", "stale-tickets", "forged-revisions"):
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                planning = initialize_program_after_system(run)
+                review_input = write_upstream_block_review_input(run, planning)
+                result = planning_cli(
+                    "return-upstream", "--run", run,
+                    "--review-input", review_input.relative_to(run),
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                planning_path = run / "planning-control.json"
+                state = json.loads(planning_path.read_text(encoding="utf-8"))
+
+                if case == "boolean-attempts":
+                    state["blocked_reason"]["attempts_used"] = False
+                elif case == "boolean-system-version":
+                    review = run / "reviews" / "program-design-upstream-block-v1.json"
+                    envelope = json.loads(review.read_text(encoding="utf-8"))
+                    envelope["system_design_binding"]["version"] = True
+                    review.write_text(json.dumps(envelope, indent=2) + "\n", encoding="utf-8")
+                    state["blocked_reason"]["review_sha256"] = sha256(review)
+                elif case == "stale-tickets":
+                    state["gates"]["tickets"] = "STALE"
+                else:
+                    state["blocked_reason"]["started_from_revision"] = 100
+                    state["revision"] = 101
+                    review = run / "reviews" / "program-design-upstream-block-v1.json"
+                    envelope = json.loads(review.read_text(encoding="utf-8"))
+                    envelope["planning_revision"] = 100
+                    review.write_text(json.dumps(envelope, indent=2) + "\n", encoding="utf-8")
+                    state["blocked_reason"]["review_sha256"] = sha256(review)
+                planning_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
+
+                with self.assertRaisesRegex(
+                    PLANNING.ControlError,
+                    "repair episode|does not bind current System Design",
+                ):
+                    PLANNING.load_planning_control(run)
+
 
 if __name__ == "__main__":
     unittest.main()

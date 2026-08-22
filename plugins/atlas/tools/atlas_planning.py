@@ -161,6 +161,12 @@ def nonempty_string(value: Any) -> bool:
     return isinstance(value, str) and bool(value.strip())
 
 
+def json_equal_exact(left: Any, right: Any) -> bool:
+    return json.dumps(left, sort_keys=True, separators=(",", ":")) == json.dumps(
+        right, sort_keys=True, separators=(",", ":")
+    )
+
+
 def contains_machine_local_path(value: Any) -> bool:
     if isinstance(value, str):
         return bool(re.search(r"(?:[A-Za-z]:[\\/]|/(?:Users|home|private|tmp|var|etc)/)", value))
@@ -428,7 +434,7 @@ def validate_upstream_block_review(
     if (
         not isinstance(binding, dict)
         or set(binding) != UPSTREAM_BLOCK_SYSTEM_FIELDS
-        or binding != expected_system_design_binding(system_acceptance)
+        or not json_equal_exact(binding, expected_system_design_binding(system_acceptance))
     ):
         raise ControlError("Program Design upstream-block evidence does not bind current System Design")
     finding = envelope.get("finding")
@@ -899,23 +905,33 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
 
     blocked_reason = planning.get("blocked_reason")
     if blocked_reason is not None:
+        expected_started_revision = 1 + sum(
+            record is not None for record in acceptances.values()
+        )
+        expected_ticket_gate = "PENDING" if "tickets" in selected else "NOT_REQUIRED"
         if (
             not isinstance(blocked_reason, dict)
             or set(blocked_reason) != REPAIR_EPISODE_FIELDS
             or blocked_reason.get("kind") != "SYSTEM_DESIGN_REPAIR"
             or blocked_reason.get("state") != "SYSTEM_DESIGN_STALE"
             or type(blocked_reason.get("started_from_revision")) is not int
-            or blocked_reason["started_from_revision"] < 1
+            or blocked_reason["started_from_revision"] != expected_started_revision
             or blocked_reason.get("review_reference") != UPSTREAM_BLOCK_REVIEW_REFERENCE
             or not re.fullmatch(r"[0-9a-f]{64}", str(blocked_reason.get("review_sha256", "")))
-            or blocked_reason.get("superseded_system_design") != acceptances["system_design"]
-            or blocked_reason.get("attempts_used") != 0
+            or not json_equal_exact(
+                blocked_reason.get("superseded_system_design"),
+                acceptances["system_design"],
+            )
+            or type(blocked_reason.get("attempts_used")) is not int
+            or blocked_reason["attempts_used"] != 0
             or blocked_reason.get("current_attempt") is not None
             or planning.get("status") != "BLOCKED"
             or planning.get("phase") != "system_design"
             or gates["system_design"] != "STALE"
             or gates["program_design"] != "PENDING"
+            or gates["tickets"] != expected_ticket_gate
             or acceptances["program_design"] is not None
+            or acceptances["tickets"] is not None
             or planning["revision"] != blocked_reason["started_from_revision"] + 1
         ):
             raise ControlError("planning-control.json repair episode is malformed")
@@ -947,6 +963,7 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
     pending = [stage for stage in DOWNSTREAM_STAGES if gates[stage] == "PENDING"]
     if (
         planning.get("status") != "PLANNING"
+        or "STALE" in gates.values()
         or not pending
         or planning.get("phase") != pending[0]
         or planning["revision"] != 1 + len(approved_stages)
