@@ -1076,6 +1076,7 @@ def return_to_system_design(run_dir: Path, review_input: Path) -> str:
 
     def revalidate_immediately_before_replace() -> None:
         current, _, current_effective = verified_planning_state(run_dir)
+        require_program_design_repository_access(run_dir)
         current_bytes, current_envelope, current_sha256 = load_upstream_block_review_input(
             run_dir, review_input, current, current_effective
         )

@@ -3107,6 +3107,28 @@ class AtlasPlanningTests(unittest.TestCase):
             self.assertEqual(canonical.read_text(encoding="utf-8"), "different bytes\n")
             self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
 
+    def test_return_revalidates_repository_access_at_write_boundary(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            planning = initialize_program_after_system(run)
+            review_input = write_upstream_block_review_input(run, planning)
+            planning_before = (run / "planning-control.json").read_bytes()
+            original_write = PLANNING.write_planning_control_atomic
+
+            def remove_binding_before_write(*args, **kwargs):
+                write_repository_bindings({})
+                return original_write(*args, **kwargs)
+
+            with mock.patch.object(
+                PLANNING,
+                "write_planning_control_atomic",
+                side_effect=remove_binding_before_write,
+            ):
+                with self.assertRaisesRegex(PLANNING.ControlError, "repository|binding"), PLANNING.planning_lock(run):
+                    PLANNING.return_to_system_design(run, review_input.relative_to(run))
+
+            self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
+
 
 if __name__ == "__main__":
     unittest.main()
