@@ -134,15 +134,17 @@ def known_stage_five_contract_regressions(text):
 
 
 class PairedDesignArchitectureTests(unittest.TestCase):
-    def test_v08_is_the_declared_baseline_and_has_a_decision_record(self):
+    def test_v09_is_the_declared_baseline_and_preserves_v08_history(self):
         root_readme = (ROOT / "README.md").read_text(encoding="utf-8")
         architecture_readme = read("README.md")
-        decisions = read("23-v0.8-decisions.md") if (ARCH / "23-v0.8-decisions.md").exists() else ""
+        v08_decisions = read("23-v0.8-decisions.md")
+        v09_decisions = read("24-v0.9-decisions.md") if (ARCH / "24-v0.9-decisions.md").exists() else ""
 
-        self.assertIn("architecture/23-v0.8-decisions.md", root_readme)
-        self.assertIn("**v0.8**", root_readme)
-        self.assertIn("**v0.8**", architecture_readme)
-        self.assertIn("D-080", decisions)
+        self.assertIn("architecture/24-v0.9-decisions.md", root_readme)
+        self.assertIn("**v0.9**", root_readme)
+        self.assertIn("**v0.9**", architecture_readme)
+        self.assertIn("D-080", v08_decisions)
+        self.assertIn("D-081", v09_decisions)
 
     def test_codesign_is_user_selected_participation_not_gate_authority(self):
         control = normalized("04-control-plane.md")

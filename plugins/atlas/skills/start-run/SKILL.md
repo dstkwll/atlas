@@ -1,6 +1,6 @@
 ---
 name: start-run
-description: Create immutable Atlas Stage 0 intake and initialize its tiny planning controller.
+description: Create or resume an Atlas run; initialize Stage 0 or route from authoritative on-disk state.
 disable-model-invocation: true
 ---
 
@@ -28,7 +28,7 @@ The command returns JSON containing `path`, `device`, and `inode`. Keep all thre
     python3 "<atlas-plugin-root>/tools/atlas_planning.py" ensure --run "<run-directory>"
     ```
 
-    This recovers an interrupted Product Closure → planning handoff when `planning-control.json` is absent and verifies complete existing planning state when present. On success, re-read `planning-control.json`; validated `planning-control.json.phase` is the actual current planning phase. Resume that owner and do not rerun Product Closure or hand off from the frozen downstream phase in `control.json`.
+    This recovers an interrupted Product Closure → planning handoff when `planning-control.json` is absent and verifies complete existing planning state when present. On success, re-read `planning-control.json`; validated `planning-control.json.phase` is the actual current planning phase. Apply the exact §3 dispatch and do not rerun Product Closure or hand off from the frozen downstream phase in `control.json`.
   - Reject any other incoherent state rather than guessing a handoff.
 - If `run.yaml` exists without `control.json`, treat it as interrupted initialization: show its exact accepted bytes and obtain confirmation, then rerun `resolve-run-path` for that same slug and root to prepare the current directory identity before running `initialize` against the unchanged file.
 - If the existing run describes a different goal, choose a different slug. Never merge two runs because their names collide.
@@ -36,6 +36,10 @@ The command returns JSON containing `path`, `device`, and `inode`. Keep all thre
 ## 1. Resolve and accept intake
 
 Inspect the current Git repository when present and ask for every other repository already known to be affected. Record each stable identity with its commit baseline; never admit one without the other.
+
+Read the existing confirmed machine binding for every proposed stable repository identity before accepting intake. If one is missing or an explicitly requested replacement is needed, invoke `atlas:setup-atlas` internally for that one identity/source pair. Do not ask the user to leave `start-run`, invoke setup manually, or restart intake. After setup returns, reload machine bindings and require the exact confirmed identity/source pair before resolving the full canonical commit object ID. A declined or failed binding confirmation stops the same intake without writing `run.yaml`.
+
+Resolve every admitted baseline to the repository's full canonical commit object ID before previewing `run.yaml`. Against the user-confirmed local Git source, run a non-mutating `git rev-parse --verify "<requested-baseline>^{commit}"` with optional locks, replacement objects, and lazy fetch disabled; require the returned lowercase hexadecimal object ID to be the repository's full 40- or 64-character canonical form. Record that returned object ID, not the input ref. New intake never stores a branch, tag, `HEAD`, or abbreviated object ID as `baseline`. If the exact commit is not locally readable, stop before writing intake; `start-run` never fetches or guesses a replacement.
 
 Stage 0 is recommend-only. Classify the eight risk dimensions in [`references/run-file.md`](references/run-file.md), then recommend the amount of decomposition independently from authority:
 
@@ -74,9 +78,15 @@ This idempotent command uses its own `.atlas-planning.lock`. It strictly initial
 
 ## 3. Hand off
 
-Read authoritative `control.json`. If its current phase is `discovery`, it owns the live cursor; offer `atlas:discovery`. If its phase is `system_design`, `program_design`, or `tickets`, complete the shared `ensure` handoff from §2 and re-read `planning-control.json`; validated `planning-control.json.phase` is the actual current planning phase. Hand off to that owner, not to the frozen downstream handoff phase in `control.json`. This controller fails closed at downstream producers and creates no synthetic discovery gate. Producers record completion/readiness only. `atlas:control-run` performs read-only checking, consumes configured authority, and records at most one transition.
+Read authoritative `control.json`. If its current phase is `discovery`, it owns the live cursor; offer `atlas:discovery`. If its phase is `system_design`, `program_design`, or `tickets`, complete the shared `ensure` handoff from §2 and re-read `planning-control.json`; validated `planning-control.json.phase` is the actual current planning phase. Hand off to that owner, not to the frozen downstream handoff phase in `control.json`.
 
-If the current phase has no first-party Atlas owner, stop and report that implementation gap; never substitute an incubator skill silently.
+This is a bounded continuation loop, not one-shot dispatch. After an invoked producer and its internal control handoff return, run `ensure` again and re-read validated `planning-control.json`; route only from that fresh phase. The only legal downstream continuation after `system_design` is `program_design` or `tickets`; after `program_design` it is `tickets`. Invoke at most two downstream producers during one `start-run` invocation. If the phase is unchanged, the invoked stage's gate remains `PENDING`, the transition is unexpected, or an invoked owner stops `BLOCKED` or `DESIGN_BLOCKED`, stop without retrying that producer. Never derive a producer dynamically from the stage list.
+
+- If validated planning phase is `system_design`, invoke `atlas:system-design` internally.
+- If validated planning phase is `program_design`, invoke `atlas:program-design` internally.
+- If validated planning phase is `tickets`, stop loudly: no first-party ticket producer exists. Never substitute an incubator skill or attempt ticket decomposition.
+
+Preserve the existing Product Closure and System Design paths. This dispatch adds only the implemented Program Design producer and keeps unsupported tickets fail-closed. Producers record completion/readiness only; `atlas:control-run` and `atlas:control-planning` consume their respective configured authority and each records at most one transition. If any other phase has no first-party Atlas owner, stop and report the implementation gap; never substitute an incubator skill silently.
 
 ## Intake correction
 

@@ -1,5 +1,7 @@
 import importlib.util
 import json
+import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -14,7 +16,7 @@ from tests.test_atlas_control import (
     initialize_cli,
     read_control,
     run_cli,
-    run_config,
+    run_config as control_run_config,
     sha256,
     write_discovery,
     write_markdown,
@@ -24,12 +26,68 @@ from tests.test_atlas_control import (
 ROOT = Path(__file__).resolve().parents[1]
 PLANNING_CLI = ROOT / "plugins" / "atlas" / "tools" / "atlas_planning.py"
 SYSTEM_RENDERER = ROOT / "plugins" / "atlas" / "tools" / "render_system_design.py"
+REAL_GIT = shutil.which("git")
+if REAL_GIT is None:  # pragma: no cover - the test environment requires Git
+    raise RuntimeError("git is required")
+assert REAL_GIT is not None
+_TEST_REPOSITORY_BASELINES = None
+_TEST_REPOSITORY_SOURCES: dict[str, Path] = {}
 if str(PLANNING_CLI.parent) not in sys.path:
     sys.path.insert(0, str(PLANNING_CLI.parent))
 PLANNING_SPEC = importlib.util.spec_from_file_location("atlas_planning", PLANNING_CLI)
 assert PLANNING_SPEC is not None and PLANNING_SPEC.loader is not None
 PLANNING = importlib.util.module_from_spec(PLANNING_SPEC)
 PLANNING_SPEC.loader.exec_module(PLANNING)
+
+
+def run_config():
+    config = control_run_config()
+    if _TEST_REPOSITORY_BASELINES is not None:
+        config["repos"] = [dict(item) for item in _TEST_REPOSITORY_BASELINES]
+    return config
+
+
+def git(repo: Path, *args: str) -> str:
+    env = os.environ.copy()
+    env.update({
+        "GIT_AUTHOR_NAME": "Atlas Planning Test",
+        "GIT_AUTHOR_EMAIL": "atlas-planning@example.invalid",
+        "GIT_COMMITTER_NAME": "Atlas Planning Test",
+        "GIT_COMMITTER_EMAIL": "atlas-planning@example.invalid",
+    })
+    result = subprocess.run(
+        [REAL_GIT, "-C", str(repo), *args],
+        env=env,
+        text=True,
+        capture_output=True,
+    )
+    if result.returncode != 0:
+        raise AssertionError(result.stderr)
+    return result.stdout.strip()
+
+
+def create_repository(path: Path, content: str) -> str:
+    path.mkdir()
+    result = subprocess.run(
+        [REAL_GIT, "init", "-q", str(path)], text=True, capture_output=True
+    )
+    if result.returncode != 0:
+        raise AssertionError(result.stderr)
+    (path / "source.txt").write_text(content, encoding="utf-8")
+    git(path, "add", "--", "source.txt")
+    git(path, "commit", "-q", "-m", "planning fixture baseline")
+    return git(path, "rev-parse", "HEAD")
+
+
+def write_repository_bindings(bindings: dict[str, Path]) -> Path:
+    path = Path(os.environ["XDG_CONFIG_HOME"]) / "atlas" / "config.yaml"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(yaml.safe_dump({
+        "repositories": {
+            "bindings": {identity: str(source) for identity, source in bindings.items()}
+        }
+    }, sort_keys=False), encoding="utf-8")
+    return path
 
 
 def planning_cli(*args, cwd=None):
@@ -92,6 +150,27 @@ SYSTEM_DESIGN_DIMENSIONS = (
     "compatibility_guarantees",
     "trust_security_operational_commitments",
 )
+PROGRAM_DESIGN_SECTIONS = (
+    "Repository grounding",
+    "Upstream commitment realization",
+    "File-tree diff",
+    "Types and boundary signatures",
+    "Call and data flow",
+    "State, locking, concurrency, and lifetime",
+    "Migration and local failure-path implementation",
+    "Test seams and validation plan",
+    "Least-confident decisions",
+    "Implementation constraints and sequencing",
+)
+PROGRAM_DESIGN_DIMENSIONS = (
+    "upstream_commitment_realization",
+    "repository_grounding_and_feasibility",
+    "files_packages_types_and_responsibilities",
+    "signatures_call_and_data_flow",
+    "state_locking_concurrency_and_lifetime",
+    "migration_and_local_failure_path_implementation",
+    "testability_and_compilation_readiness",
+)
 
 
 def write_system_design(run: Path, source_binding: dict, **overrides) -> None:
@@ -111,6 +190,112 @@ def write_system_design(run: Path, source_binding: dict, **overrides) -> None:
     )
     from tests.test_atlas_control import write_markdown
     write_markdown(run / "30-system-design.md", frontmatter, body)
+
+
+def write_program_design(run: Path, source_binding: dict, **overrides) -> None:
+    frontmatter = {
+        "run": "demo",
+        "version": 1,
+        "status": "draft",
+        "gate_ready": True,
+        "opened": "2026-08-20",
+        "source_binding": source_binding,
+    }
+    frontmatter.update(overrides)
+    body = "# Program design — Demo\n\n" + "\n".join(
+        f"## {heading}\n\nConcrete {heading.lower()} mechanics.\n"
+        for heading in PROGRAM_DESIGN_SECTIONS
+    )
+    write_markdown(run / "40-program-design.md", frontmatter, body)
+
+
+def initialize_program_after_system(run: Path) -> dict:
+    config = direct_config()
+    config["stages"].insert(1, "program_design")
+    config["gates"]["program_design"] = {"authority": "AGENT_REVIEW"}
+    write_stage0_run(run, config)
+    initialized = planning_cli("initialize", "--run", run)
+    if initialized.returncode != 0:
+        raise AssertionError(initialized.stderr)
+    planning = json.loads((run / "planning-control.json").read_text(encoding="utf-8"))
+    anchor = planning["stage0_anchor"]
+    write_system_design(run, {
+        "kind": "stage0",
+        "artifact": "run.yaml",
+        "sha256": anchor["base_run_sha256"],
+        "effective_config_hash": anchor["effective_config_hash"],
+        "effective_config_revision": anchor["effective_config_revision"],
+    })
+    accepted = planning_cli(
+        "advance", "--run", run, "--stage", "system_design",
+        "--approval", "human", "--date", "2026-08-21",
+    )
+    if accepted.returncode != 0:
+        raise AssertionError(accepted.stderr)
+    return json.loads((run / "planning-control.json").read_text(encoding="utf-8"))
+
+
+def initialize_direct_program(run: Path, *, authority="AGENT_REVIEW", repos=None) -> dict:
+    config = run_config()
+    config["version"] = 2
+    config["system_design_participation"] = None
+    config["stages"] = ["program_design", "tickets", "execute"]
+    config["gates"].pop("discovery")
+    config["gates"]["program_design"] = {"authority": authority}
+    config["gates"]["tickets"] = {"authority": "HUMAN"}
+    if repos is not None:
+        config["repos"] = repos
+    write_stage0_run(run, config)
+    initialized = planning_cli("initialize", "--run", run)
+    if initialized.returncode != 0:
+        raise AssertionError(initialized.stderr)
+    return json.loads((run / "planning-control.json").read_text(encoding="utf-8"))
+
+
+def initialize_product_program(run: Path, *, authority="AGENT_REVIEW") -> dict:
+    config = run_config()
+    config["version"] = 2
+    config["system_design_participation"] = None
+    config["stages"] = ["discovery", "program_design", "tickets", "execute"]
+    config["gates"]["program_design"] = {"authority": authority}
+    config["gates"]["tickets"] = {"authority": "HUMAN"}
+    write_stage0_run(run, config)
+    write_discovery(run)
+    accepted = advance_discovery(run)
+    initialized = planning_cli("ensure", "--run", run)
+    if initialized.returncode != 0:
+        raise AssertionError(initialized.stderr)
+    return accepted
+
+
+def initialize_product_system_program(run: Path, *, authority="AGENT_REVIEW") -> dict:
+    config = run_config()
+    config["version"] = 2
+    config["system_design_participation"] = "agent_led"
+    config["stages"] = ["discovery", "system_design", "program_design", "tickets", "execute"]
+    config["gates"]["system_design"] = {"authority": "HUMAN"}
+    config["gates"]["program_design"] = {"authority": authority}
+    config["gates"]["tickets"] = {"authority": "HUMAN"}
+    write_stage0_run(run, config)
+    write_discovery(run)
+    accepted_product = advance_discovery(run)
+    initialized = planning_cli("ensure", "--run", run)
+    if initialized.returncode != 0:
+        raise AssertionError(initialized.stderr)
+    planning = json.loads((run / "planning-control.json").read_text(encoding="utf-8"))
+    write_system_design(run, {
+        "kind": "product_closure",
+        "artifact": "20-prd.md",
+        "version": accepted_product["candidate_version"],
+        "sha256": accepted_product["candidate_sha256"],
+    })
+    accepted_system = planning_cli(
+        "advance", "--run", run, "--stage", "system_design",
+        "--approval", "human", "--date", "2026-08-21",
+    )
+    if accepted_system.returncode != 0:
+        raise AssertionError(accepted_system.stderr)
+    return json.loads((run / "planning-control.json").read_text(encoding="utf-8"))
 
 
 def initialize_product_planning(run: Path) -> dict:
@@ -223,7 +408,949 @@ def write_system_review(run: Path, *, policy: str, materiality, review=None) -> 
     return path
 
 
+def program_semantic_review(*, results=None, source_kind="stage0", verdict=None) -> dict:
+    results = results or {}
+    rows = [
+        {
+            "dimension": dimension,
+            "result": results.get(dimension, "PASS"),
+            "evidence": f"Independent Stage 4 evidence for {dimension}.",
+        }
+        for dimension in PROGRAM_DESIGN_DIMENSIONS
+    ]
+    gaps = []
+    for index, row in enumerate(rows, 1):
+        if row["result"] == "BLOCKED":
+            gaps.append({
+                "code": f"program-gap-{index}",
+                "dimension": row["dimension"],
+                "problem": f"Local implementation defect in {row['dimension']}.",
+                "resume_action": f"Repair {row['dimension']} in 40-program-design.md.",
+            })
+        elif row["result"] == "DESIGN_BLOCKED":
+            gaps.append({
+                "code": f"upstream-gap-{index}",
+                "dimension": row["dimension"],
+                "problem": "Accepted upstream truth cannot be realized.",
+                "upstream_source": source_kind,
+                "upstream_issue": "The accepted guarantee is conflicting or missing.",
+                "resume_boundary": source_kind,
+                "resume_action": f"Resolve the upstream issue at {source_kind}.",
+            })
+    derived = (
+        "DESIGN_BLOCKED"
+        if any(row["result"] == "DESIGN_BLOCKED" for row in rows)
+        else "BLOCKED"
+        if any(row["result"] == "BLOCKED" for row in rows)
+        else "PASS"
+    )
+    return {"verdict": verdict or derived, "dimensions": rows, "gaps": gaps}
+
+
+def write_program_review(run: Path, *, policy: str, review=None) -> Path:
+    config = yaml.safe_load((run / "run.yaml").read_text(encoding="utf-8"))
+    path = run / "reviews" / "program-design-v1.json"
+    path.parent.mkdir(exist_ok=True)
+    path.write_text(json.dumps({
+        "version": 1,
+        "run": config["run"],
+        "stage": "program_design",
+        "policy": policy,
+        "candidate_version": 1,
+        "candidate_sha256": sha256(run / "40-program-design.md"),
+        "repository_baselines": config["repos"],
+        "semantic_review": review if review is not None else program_semantic_review(),
+    }, indent=2) + "\n", encoding="utf-8")
+    return path
+
+
+def initialize_program_source(run: Path, source_kind: str, *, authority="AGENT_REVIEW") -> dict:
+    if source_kind == "stage0":
+        planning = initialize_direct_program(run, authority=authority)
+        anchor = planning["stage0_anchor"]
+        source = {
+            "kind": "stage0",
+            "artifact": "run.yaml",
+            "sha256": anchor["base_run_sha256"],
+            "effective_config_hash": anchor["effective_config_hash"],
+            "effective_config_revision": anchor["effective_config_revision"],
+        }
+    elif source_kind == "product_closure":
+        accepted = initialize_product_program(run, authority=authority)
+        source = {
+            "kind": "product_closure",
+            "artifact": "20-prd.md",
+            "version": accepted["candidate_version"],
+            "sha256": accepted["candidate_sha256"],
+        }
+    elif source_kind == "system_design":
+        planning = initialize_product_system_program(run, authority=authority)
+        accepted = planning["acceptances"]["system_design"]
+        source = {
+            "kind": "system_design",
+            "artifact": "30-system-design.md",
+            "version": accepted["candidate_version"],
+            "sha256": accepted["candidate_sha256"],
+        }
+    else:
+        raise AssertionError(f"unsupported test source kind: {source_kind}")
+    write_program_design(run, source)
+    return source
+
+
+def actual_source_path(run: Path, source_kind: str) -> Path:
+    return run / {
+        "stage0": "run.yaml",
+        "product_closure": "20-prd.md",
+        "system_design": "30-system-design.md",
+    }[source_kind]
+
+
 class AtlasPlanningTests(unittest.TestCase):
+    def setUp(self):
+        global _TEST_REPOSITORY_BASELINES, _TEST_REPOSITORY_SOURCES
+        self.machine_temp = tempfile.TemporaryDirectory()
+        self.machine_root = Path(self.machine_temp.name).resolve()
+        self.home = self.machine_root / "home"
+        self.xdg_config = self.machine_root / "xdg-config"
+        self.home.mkdir()
+        self.xdg_config.mkdir()
+        self.environment = mock.patch.dict(os.environ, {
+            "HOME": str(self.home),
+            "XDG_CONFIG_HOME": str(self.xdg_config),
+        })
+        self.environment.start()
+
+        fixture = self.machine_root / "fixture-repository"
+        fixture_two = self.machine_root / "fixture-two-repository"
+        baseline = create_repository(fixture, "fixture baseline\n")
+        baseline_two = create_repository(fixture_two, "fixture two baseline\n")
+        rebound = self.machine_root / "fixture-rebound.git"
+        cloned = subprocess.run(
+            [REAL_GIT, "clone", "-q", "--bare", str(fixture), str(rebound)],
+            text=True,
+            capture_output=True,
+        )
+        if cloned.returncode != 0:
+            raise AssertionError(cloned.stderr)
+        _TEST_REPOSITORY_BASELINES = [{"repository": "fixture", "baseline": baseline}]
+        _TEST_REPOSITORY_SOURCES = {
+            "fixture": fixture,
+            "fixture-two": fixture_two,
+            "fixture-rebound": rebound,
+        }
+        self.fixture_baseline = baseline
+        self.fixture_two_baseline = baseline_two
+        self.rebound_repository = rebound
+        write_repository_bindings({
+            "fixture": fixture,
+            "fixture-two": fixture_two,
+        })
+
+    def tearDown(self):
+        global _TEST_REPOSITORY_BASELINES, _TEST_REPOSITORY_SOURCES
+        _TEST_REPOSITORY_BASELINES = None
+        _TEST_REPOSITORY_SOURCES = {}
+        self.environment.stop()
+        self.machine_temp.cleanup()
+
+    def test_program_design_check_blocks_missing_binding_without_mutation(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            repositories = [
+                {"repository": "fixture", "baseline": self.fixture_baseline},
+                {"repository": "fixture-two", "baseline": self.fixture_two_baseline},
+            ]
+            planning = initialize_direct_program(run, repos=repositories)
+            anchor = planning["stage0_anchor"]
+            source = {
+                "kind": "stage0",
+                "artifact": "run.yaml",
+                "sha256": anchor["base_run_sha256"],
+                "effective_config_hash": anchor["effective_config_hash"],
+                "effective_config_revision": anchor["effective_config_revision"],
+            }
+            write_program_design(run, source)
+            before = (run / "planning-control.json").read_bytes()
+            artifacts_before = {
+                path.relative_to(run).as_posix(): path.read_bytes()
+                for path in run.rglob("*")
+                if path.is_file()
+            }
+            write_repository_bindings({})
+
+            result = planning_cli("check", "--run", run, "--stage", "program_design")
+
+            self.assertEqual(result.returncode, 1, result.stderr)
+            report = json.loads(result.stdout)
+            self.assertEqual(report["verdict"], "BLOCKED")
+            self.assertEqual(report["source_binding"], source)
+            self.assertEqual(report["repository_baselines"], repositories)
+            self.assertEqual(len(report["gaps"]), 2)
+            self.assertEqual(
+                {item["artifact"] for item in report["gaps"]},
+                {"repository:fixture", "repository:fixture-two"},
+            )
+            self.assertTrue(all("missing_binding" in item["problem"] for item in report["gaps"]))
+            self.assertEqual((run / "planning-control.json").read_bytes(), before)
+            self.assertEqual({
+                path.relative_to(run).as_posix(): path.read_bytes()
+                for path in run.rglob("*")
+                if path.is_file()
+            }, artifacts_before)
+
+    def test_program_design_acceptance_revalidates_repository_access_at_every_write_boundary(self):
+        boundaries = (
+            ("program_design_report", 1),
+            ("resolve_program_design_authority", 1),
+            ("program_design_report", 2),
+            ("resolve_program_design_authority", 2),
+            ("program_design_report", 3),
+            ("resolve_program_design_authority", 3),
+        )
+        invalid_bindings = {
+            "missing-binding": {"fixture-two": _TEST_REPOSITORY_SOURCES["fixture-two"]},
+            "invalid-source": {"fixture": self.machine_root / "missing-repository"},
+            "missing-commit": {"fixture": _TEST_REPOSITORY_SOURCES["fixture-two"]},
+        }
+        valid_bindings = {
+            "fixture": _TEST_REPOSITORY_SOURCES["fixture"],
+            "fixture-two": _TEST_REPOSITORY_SOURCES["fixture-two"],
+        }
+        for function_name, target_call in boundaries:
+            for defect, invalid in invalid_bindings.items():
+                with self.subTest(boundary=(function_name, target_call), defect=defect), tempfile.TemporaryDirectory() as td:
+                    write_repository_bindings(valid_bindings)
+                    run = Path(td)
+                    initialize_program_source(run, "stage0")
+                    write_program_review(run, policy="AGENT_REVIEW")
+                    before = (run / "planning-control.json").read_bytes()
+                    original = getattr(PLANNING, function_name)
+                    calls = 0
+
+                    def invalidate_only_during_boundary(*args, **kwargs):
+                        nonlocal calls
+                        calls += 1
+                        if calls != target_call:
+                            return original(*args, **kwargs)
+                        write_repository_bindings(invalid)
+                        try:
+                            return original(*args, **kwargs)
+                        finally:
+                            write_repository_bindings(valid_bindings)
+
+                    with mock.patch.object(
+                        PLANNING, function_name, side_effect=invalidate_only_during_boundary
+                    ):
+                        with PLANNING.planning_lock(run):
+                            with self.assertRaisesRegex(
+                                PLANNING.ControlError,
+                                "repository|binding|source|baseline|candidate|boundary",
+                            ):
+                                PLANNING.advance_boundary(
+                                    run,
+                                    "program_design",
+                                    None,
+                                    "reviews/program-design-v1.json",
+                                    "2026-08-21",
+                                )
+
+                    self.assertGreaterEqual(calls, target_call)
+                    self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+    def test_program_design_allows_rebound_source_with_same_exact_commit(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            initialize_program_source(run, "stage0")
+            review = write_program_review(run, policy="AGENT_REVIEW")
+            original = PLANNING.program_design_report
+            calls = 0
+
+            def rebound_after_initial_check(*args, **kwargs):
+                nonlocal calls
+                report = original(*args, **kwargs)
+                calls += 1
+                if calls == 1:
+                    write_repository_bindings({
+                        "fixture": self.rebound_repository,
+                        "fixture-two": _TEST_REPOSITORY_SOURCES["fixture-two"],
+                    })
+                return report
+
+            self.assertEqual(git(self.rebound_repository, "rev-parse", "HEAD"), self.fixture_baseline)
+            with mock.patch.object(
+                PLANNING, "program_design_report", side_effect=rebound_after_initial_check
+            ):
+                with PLANNING.planning_lock(run):
+                    PLANNING.advance_boundary(
+                        run,
+                        "program_design",
+                        None,
+                        "reviews/program-design-v1.json",
+                        "2026-08-21",
+                    )
+
+            record = PLANNING.load_planning_control(run)["acceptances"]["program_design"]
+            self.assertEqual(record["repository_baselines"], _TEST_REPOSITORY_BASELINES)
+            self.assertEqual(record["review_sha256"], sha256(review))
+            self.assertNotIn(str(self.rebound_repository), json.dumps(record))
+
+    def test_existing_program_design_acceptance_requires_exact_repository_baselines(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            initialize_program_source(run, "stage0")
+            write_program_review(run, policy="AGENT_REVIEW")
+            accepted = planning_cli(
+                "advance", "--run", run, "--stage", "program_design",
+                "--review", "reviews/program-design-v1.json", "--date", "2026-08-21",
+            )
+            self.assertEqual(accepted.returncode, 0, accepted.stderr)
+            planning_path = run / "planning-control.json"
+            state = json.loads(planning_path.read_text(encoding="utf-8"))
+            self.assertEqual(
+                state["acceptances"]["program_design"]["repository_baselines"],
+                _TEST_REPOSITORY_BASELINES,
+            )
+
+            state["acceptances"]["program_design"]["repository_baselines"] = []
+            planning_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
+            before = planning_path.read_bytes()
+
+            with self.assertRaisesRegex(PLANNING.ControlError, "Program Design acceptance.*malformed"):
+                PLANNING.load_planning_control(run)
+            self.assertEqual(planning_path.read_bytes(), before)
+
+    def test_program_design_without_selected_tickets_fails_loudly_before_transition(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            config = run_config()
+            config["version"] = 2
+            config["system_design_participation"] = None
+            config["stages"] = ["program_design"]
+            config["gates"] = {"program_design": {"authority": "AGENT_REVIEW"}}
+            config["recommendation"]["gates"] = config["gates"]
+            write_stage0_run(run, config)
+            initialized = planning_cli("initialize", "--run", run)
+            self.assertEqual(initialized.returncode, 0, initialized.stderr)
+            planning = json.loads((run / "planning-control.json").read_text(encoding="utf-8"))
+            anchor = planning["stage0_anchor"]
+            write_program_design(run, {
+                "kind": "stage0",
+                "artifact": "run.yaml",
+                "sha256": anchor["base_run_sha256"],
+                "effective_config_hash": anchor["effective_config_hash"],
+                "effective_config_revision": anchor["effective_config_revision"],
+            })
+            write_program_review(run, policy="AGENT_REVIEW")
+            before = (run / "planning-control.json").read_bytes()
+
+            result = planning_cli(
+                "advance", "--run", run, "--stage", "program_design",
+                "--review", "reviews/program-design-v1.json", "--date", "2026-08-21",
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("tickets", result.stderr)
+            self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+    def test_program_design_acceptance_advances_once_to_tickets_without_launching_tickets(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            planning = initialize_direct_program(run)
+            anchor = planning["stage0_anchor"]
+            write_program_design(run, {
+                "kind": "stage0",
+                "artifact": "run.yaml",
+                "sha256": anchor["base_run_sha256"],
+                "effective_config_hash": anchor["effective_config_hash"],
+                "effective_config_revision": anchor["effective_config_revision"],
+            })
+            write_program_review(run, policy="AGENT_REVIEW")
+            control_before = (run / "control.json").read_bytes()
+            files_before = {path.relative_to(run).as_posix() for path in run.rglob("*") if path.is_file()}
+
+            result = planning_cli(
+                "advance", "--run", run, "--stage", "program_design",
+                "--review", "reviews/program-design-v1.json", "--date", "2026-08-21",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("advanced program_design -> tickets", result.stdout)
+            updated = PLANNING.load_planning_control(run)
+            self.assertEqual((updated["phase"], updated["revision"]), ("tickets", 2))
+            self.assertEqual((run / "control.json").read_bytes(), control_before)
+            self.assertEqual(
+                {path.relative_to(run).as_posix() for path in run.rglob("*") if path.is_file()},
+                files_before,
+            )
+            for forbidden in ("50-tickets.json", "tickets", "ticket-graph.json"):
+                self.assertFalse((run / forbidden).exists())
+
+            before_repeat = (run / "planning-control.json").read_bytes()
+            repeated = planning_cli(
+                "advance", "--run", run, "--stage", "program_design",
+                "--review", "reviews/program-design-v1.json", "--date", "2026-08-21",
+            )
+            self.assertNotEqual(repeated.returncode, 0)
+            self.assertEqual((run / "planning-control.json").read_bytes(), before_repeat)
+
+    def test_accepted_program_design_revalidates_all_currency_across_source_paths(self):
+        for source_kind in ("stage0", "product_closure", "system_design"):
+            for mutation in (
+                "candidate", "source", "review", "repository-baselines", "repository-access",
+            ):
+                with self.subTest(source_kind=source_kind, mutation=mutation), tempfile.TemporaryDirectory() as td:
+                    write_repository_bindings({
+                        "fixture": _TEST_REPOSITORY_SOURCES["fixture"],
+                        "fixture-two": _TEST_REPOSITORY_SOURCES["fixture-two"],
+                    })
+                    run = Path(td)
+                    initialize_program_source(run, source_kind)
+                    review = write_program_review(run, policy="AGENT_REVIEW")
+                    accepted = planning_cli(
+                        "advance", "--run", run, "--stage", "program_design",
+                        "--review", "reviews/program-design-v1.json", "--date", "2026-08-21",
+                    )
+                    self.assertEqual(accepted.returncode, 0, accepted.stderr)
+                    PLANNING.load_planning_control(run)
+
+                    if mutation == "candidate":
+                        target = run / "40-program-design.md"
+                        target.write_bytes(target.read_bytes() + b"\nchanged accepted candidate\n")
+                        expected = "candidate"
+                    elif mutation == "source":
+                        target = actual_source_path(run, source_kind)
+                        marker = (
+                            b"\n# changed accepted source\n"
+                            if source_kind == "stage0"
+                            else b"\nchanged accepted source\n"
+                        )
+                        target.write_bytes(target.read_bytes() + marker)
+                        expected = "source|provenance|Stage 0|System Design|product"
+                    elif mutation == "review":
+                        review.write_bytes(review.read_bytes() + b" \n")
+                        expected = "review|evidence"
+                    elif mutation == "repository-baselines":
+                        envelope = json.loads(review.read_text(encoding="utf-8"))
+                        envelope["repository_baselines"] = [{
+                            "repository": "fixture", "baseline": "changed-baseline",
+                        }]
+                        review.write_text(json.dumps(envelope, indent=2) + "\n", encoding="utf-8")
+                        planning_path = run / "planning-control.json"
+                        state = json.loads(planning_path.read_text(encoding="utf-8"))
+                        state["acceptances"]["program_design"]["review_sha256"] = sha256(review)
+                        planning_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
+                        expected = "baselines"
+                    else:
+                        write_repository_bindings({
+                            "fixture-two": _TEST_REPOSITORY_SOURCES["fixture-two"]
+                        })
+                        expected = "repository|binding"
+                    planning_before_refusal = (run / "planning-control.json").read_bytes()
+
+                    with self.assertRaisesRegex(PLANNING.ControlError, expected):
+                        PLANNING.load_planning_control(run)
+                    self.assertEqual(
+                        (run / "planning-control.json").read_bytes(), planning_before_refusal
+                    )
+
+    def test_program_design_final_write_revalidates_all_currency_across_source_paths(self):
+        for source_kind in ("stage0", "product_closure", "system_design"):
+            for mutation in ("candidate", "source", "review", "effective-repositories"):
+                with self.subTest(source_kind=source_kind, mutation=mutation), tempfile.TemporaryDirectory() as td:
+                    run = Path(td)
+                    initialize_program_source(run, source_kind)
+                    review = write_program_review(run, policy="AGENT_REVIEW")
+                    before = (run / "planning-control.json").read_bytes()
+                    original_write = PLANNING.write_planning_control_atomic
+
+                    def mutate_at_write_boundary(*args, **kwargs):
+                        if mutation == "candidate":
+                            target = run / "40-program-design.md"
+                            target.write_bytes(target.read_bytes() + b"\nwrite-boundary candidate drift\n")
+                        elif mutation == "source":
+                            target = actual_source_path(run, source_kind)
+                            marker = (
+                                b"\n# write-boundary source drift\n"
+                                if source_kind == "stage0"
+                                else b"\nwrite-boundary source drift\n"
+                            )
+                            target.write_bytes(target.read_bytes() + marker)
+                        elif mutation == "review":
+                            review.write_bytes(review.read_bytes() + b" \n")
+                        else:
+                            config = yaml.safe_load((run / "run.yaml").read_text(encoding="utf-8"))
+                            config["repos"] = [{
+                                "repository": "fixture", "baseline": "write-boundary-baseline",
+                            }]
+                            (run / "run.yaml").write_text(
+                                yaml.safe_dump(config, sort_keys=False), encoding="utf-8"
+                            )
+                        return original_write(*args, **kwargs)
+
+                    with mock.patch.object(
+                        PLANNING,
+                        "write_planning_control_atomic",
+                        side_effect=mutate_at_write_boundary,
+                    ):
+                        with PLANNING.planning_lock(run):
+                            with self.assertRaisesRegex(
+                                PLANNING.ControlError,
+                                "candidate|source|review|policy|provenance|boundary|baseline|Stage 0|base run.yaml",
+                            ):
+                                PLANNING.advance_boundary(
+                                    run,
+                                    "program_design",
+                                    None,
+                                    "reviews/program-design-v1.json",
+                                    "2026-08-21",
+                                )
+
+                    self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+    def test_program_design_upstream_guarantee_objection_is_design_blocked_not_stage4_blocked(self):
+        local_dimension = "migration_and_local_failure_path_implementation"
+        semantic = program_semantic_review(
+            results={
+                "upstream_commitment_realization": "DESIGN_BLOCKED",
+                local_dimension: "BLOCKED",
+            },
+            source_kind="system_design",
+        )
+
+        PLANNING.validate_program_design_semantic_review(semantic, "system_design")
+        self.assertEqual(semantic["verdict"], "DESIGN_BLOCKED")
+        gaps = {gap["dimension"]: gap for gap in semantic["gaps"]}
+        self.assertEqual(set(gaps["upstream_commitment_realization"]), {
+            "code", "dimension", "problem", "upstream_source", "upstream_issue",
+            "resume_boundary", "resume_action",
+        })
+        self.assertEqual(set(gaps[local_dimension]), {
+            "code", "dimension", "problem", "resume_action",
+        })
+
+        misrouted = program_semantic_review(
+            results={local_dimension: "DESIGN_BLOCKED"},
+            source_kind="system_design",
+        )
+        with self.assertRaisesRegex(PLANNING.ControlError, "upstream_commitment_realization"):
+            PLANNING.validate_program_design_semantic_review(misrouted, "system_design")
+
+    def test_program_design_rejects_each_wrong_actual_source_boundary_field(self):
+        source_kinds = ("system_design", "product_closure", "stage0")
+        for source_kind in source_kinds:
+            for field in ("upstream_source", "resume_boundary"):
+                with self.subTest(source_kind=source_kind, field=field), tempfile.TemporaryDirectory() as td:
+                    run = Path(td)
+                    initialize_program_source(run, source_kind)
+                    semantic = program_semantic_review(
+                        results={"upstream_commitment_realization": "DESIGN_BLOCKED"},
+                        source_kind=source_kind,
+                    )
+                    wrong_boundary = next(kind for kind in source_kinds if kind != source_kind)
+                    semantic["gaps"][0][field] = wrong_boundary
+                    write_program_review(
+                        run, policy="AGENT_REVIEW", review=semantic
+                    )
+                    before = (run / "planning-control.json").read_bytes()
+
+                    result = planning_cli(
+                        "advance", "--run", run, "--stage", "program_design",
+                        "--review", "reviews/program-design-v1.json", "--date", "2026-08-21",
+                    )
+
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("actual source boundary", result.stderr)
+                    self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+    def test_program_design_verdict_must_be_derived_from_dimension_rows(self):
+        cases = (
+            (program_semantic_review(verdict="BLOCKED"), "stage0"),
+            (
+                program_semantic_review(
+                    results={"files_packages_types_and_responsibilities": "BLOCKED"},
+                    verdict="PASS",
+                ),
+                "stage0",
+            ),
+            (
+                program_semantic_review(
+                    results={
+                        "upstream_commitment_realization": "DESIGN_BLOCKED",
+                        "testability_and_compilation_readiness": "BLOCKED",
+                    },
+                    source_kind="stage0",
+                    verdict="BLOCKED",
+                ),
+                "stage0",
+            ),
+        )
+        for semantic, source_kind in cases:
+            with self.subTest(verdict=semantic["verdict"]):
+                with self.assertRaisesRegex(PLANNING.ControlError, "derived"):
+                    PLANNING.validate_program_design_semantic_review(semantic, source_kind)
+
+    def test_program_design_design_blocked_requires_exact_upstream_issue_and_resume_boundary(self):
+        semantic = program_semantic_review(
+            results={"upstream_commitment_realization": "DESIGN_BLOCKED"},
+            source_kind="stage0",
+        )
+        PLANNING.validate_program_design_semantic_review(semantic, "stage0")
+
+        for mutation in ("missing-issue", "empty-issue", "missing-resume", "extra-field"):
+            with self.subTest(mutation=mutation):
+                malformed = json.loads(json.dumps(semantic))
+                gap = malformed["gaps"][0]
+                if mutation == "missing-issue":
+                    gap.pop("upstream_issue")
+                elif mutation == "empty-issue":
+                    gap["upstream_issue"] = "  "
+                elif mutation == "missing-resume":
+                    gap.pop("resume_boundary")
+                else:
+                    gap["omitted_boundary"] = "system_design"
+
+                with self.assertRaises(PLANNING.ControlError):
+                    PLANNING.validate_program_design_semantic_review(malformed, "stage0")
+
+    def test_program_design_blocked_verdicts_never_advance_or_mutate_state(self):
+        cases = (
+            ("BLOCKED", "files_packages_types_and_responsibilities"),
+            ("DESIGN_BLOCKED", "upstream_commitment_realization"),
+        )
+        for authority, approval in (("AGENT_REVIEW", ()), ("HUMAN", ("--approval", "human"))):
+            for verdict, blocked_dimension in cases:
+                with self.subTest(authority=authority, verdict=verdict), tempfile.TemporaryDirectory() as td:
+                    run = Path(td)
+                    source = initialize_program_source(run, "stage0", authority=authority)
+                    write_program_review(
+                        run,
+                        policy=authority,
+                        review=program_semantic_review(
+                            results={blocked_dimension: verdict}, source_kind=source["kind"]
+                        ),
+                    )
+                    before = (run / "planning-control.json").read_bytes()
+
+                    result = planning_cli(
+                        "advance", "--run", run, "--stage", "program_design",
+                        "--review", "reviews/program-design-v1.json", *approval,
+                        "--date", "2026-08-21",
+                    )
+
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn(
+                        f"Program Design semantic review is {verdict}", result.stderr
+                    )
+                    self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+    def test_valid_program_design_review_ingestion_advances(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            initialize_program_source(run, "stage0")
+            review = write_program_review(run, policy="AGENT_REVIEW")
+
+            result = planning_cli(
+                "advance", "--run", run, "--stage", "program_design",
+                "--review", "reviews/program-design-v1.json", "--date", "2026-08-21",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            state = PLANNING.load_planning_control(run)
+            self.assertEqual((state["phase"], state["revision"]), ("tickets", 2))
+            self.assertEqual(
+                state["acceptances"]["program_design"]["review_sha256"], sha256(review)
+            )
+
+    def test_program_design_review_rejects_wrong_paths_symlink_encoding_and_duplicate_json(self):
+        for mutation, expected in (
+            ("wrong-reference", "must use exact reviews/program-design-v1.json"),
+            ("escaping-reference", "must use exact reviews/program-design-v1.json"),
+            ("symlink", "managed path uses a symlink"),
+            ("invalid-utf8", "not valid UTF-8"),
+            ("duplicate-json-key", "duplicate JSON key: version"),
+        ):
+            with (
+                self.subTest(mutation=mutation),
+                tempfile.TemporaryDirectory() as td,
+                tempfile.TemporaryDirectory() as outside_td,
+            ):
+                run = Path(td)
+                initialize_program_source(run, "stage0")
+                review = write_program_review(run, policy="AGENT_REVIEW")
+                review_reference = "reviews/program-design-v1.json"
+                if mutation == "wrong-reference":
+                    wrong = review.with_name("program-design-v2.json")
+                    review.replace(wrong)
+                    review_reference = "reviews/program-design-v2.json"
+                elif mutation == "escaping-reference":
+                    review_reference = "../program-design-v1.json"
+                elif mutation == "symlink":
+                    outside = Path(outside_td) / "program-review.json"
+                    outside.write_bytes(review.read_bytes())
+                    review.unlink()
+                    review.symlink_to(outside)
+                elif mutation == "invalid-utf8":
+                    review.write_bytes(b'{"version": 1, "invalid": "\xff"}')
+                elif mutation == "duplicate-json-key":
+                    review.write_text(
+                        review.read_text(encoding="utf-8").replace(
+                            '  "version": 1,', '  "version": 1,\n  "version": 1,', 1
+                        ),
+                        encoding="utf-8",
+                    )
+                before = (run / "planning-control.json").read_bytes()
+
+                result = planning_cli(
+                    "advance", "--run", run, "--stage", "program_design",
+                    "--review", review_reference, "--date", "2026-08-21",
+                )
+
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(expected, result.stderr)
+                self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+    def test_program_design_review_requires_exact_top_level_schema(self):
+        base_fields = (
+            "version", "run", "stage", "policy", "candidate_version", "candidate_sha256",
+            "repository_baselines", "semantic_review",
+        )
+        mutations = tuple((f"missing-{field}", field) for field in base_fields) + (
+            ("extra-field", None),
+            ("forbidden-materiality", None),
+        )
+        for mutation, missing in mutations:
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                initialize_program_source(run, "stage0")
+                review = write_program_review(run, policy="AGENT_REVIEW")
+                envelope = json.loads(review.read_text(encoding="utf-8"))
+                if missing is not None:
+                    envelope.pop(missing)
+                elif mutation == "forbidden-materiality":
+                    envelope["materiality"] = None
+                else:
+                    envelope["unexpected"] = "field"
+                review.write_text(json.dumps(envelope, indent=2) + "\n", encoding="utf-8")
+                before = (run / "planning-control.json").read_bytes()
+
+                result = planning_cli(
+                    "advance", "--run", run, "--stage", "program_design",
+                    "--review", "reviews/program-design-v1.json", "--date", "2026-08-21",
+                )
+
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(
+                    "Program Design review envelope does not match its exact schema",
+                    result.stderr,
+                )
+                self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+    def test_program_design_review_rejects_each_wrong_current_binding(self):
+        repos = [
+            {"repository": "fixture", "baseline": self.fixture_baseline},
+            {"repository": "fixture-two", "baseline": self.fixture_two_baseline},
+        ]
+        mutations = {
+            "run": lambda envelope: envelope.__setitem__("run", "other-run"),
+            "stage": lambda envelope: envelope.__setitem__("stage", "system_design"),
+            "policy": lambda envelope: envelope.__setitem__("policy", "HUMAN"),
+            "version": lambda envelope: envelope.__setitem__("version", 2),
+            "bool-version": lambda envelope: envelope.__setitem__("version", True),
+            "candidate-version": lambda envelope: envelope.__setitem__("candidate_version", 2),
+            "bool-candidate-version": lambda envelope: envelope.__setitem__("candidate_version", True),
+            "candidate-hash": lambda envelope: envelope.__setitem__("candidate_sha256", "0" * 64),
+            "repository-order": lambda envelope: envelope.__setitem__(
+                "repository_baselines", list(reversed(envelope["repository_baselines"]))
+            ),
+            "repository-contents": lambda envelope: envelope["repository_baselines"][0].__setitem__(
+                "baseline", "fffffff"
+            ),
+        }
+        for mutation, mutate in mutations.items():
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                planning = initialize_direct_program(run, repos=repos)
+                anchor = planning["stage0_anchor"]
+                write_program_design(run, {
+                    "kind": "stage0",
+                    "artifact": "run.yaml",
+                    "sha256": anchor["base_run_sha256"],
+                    "effective_config_hash": anchor["effective_config_hash"],
+                    "effective_config_revision": anchor["effective_config_revision"],
+                })
+                review = write_program_review(run, policy="AGENT_REVIEW")
+                envelope = json.loads(review.read_text(encoding="utf-8"))
+                mutate(envelope)
+                review.write_text(json.dumps(envelope, indent=2) + "\n", encoding="utf-8")
+                before = (run / "planning-control.json").read_bytes()
+
+                result = planning_cli(
+                    "advance", "--run", run, "--stage", "program_design",
+                    "--review", "reviews/program-design-v1.json", "--date", "2026-08-21",
+                )
+
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(
+                    "Program Design review evidence does not match current policy, candidate, or baselines",
+                    result.stderr,
+                )
+                self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+    def test_program_design_review_rejects_null_non_dict_and_malformed_semantic_review(self):
+        cases = {
+            "null": None,
+            "non-dict": [],
+            "unknown-field": {
+                **program_semantic_review(),
+                "reviewer_notes": "extra semantic-review fields are forbidden",
+            },
+            "malformed": {"verdict": "PASS", "dimensions": None, "gaps": []},
+        }
+        for mutation, semantic in cases.items():
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                initialize_program_source(run, "stage0")
+                review = write_program_review(run, policy="AGENT_REVIEW")
+                envelope = json.loads(review.read_text(encoding="utf-8"))
+                envelope["semantic_review"] = semantic
+                review.write_text(json.dumps(envelope, indent=2) + "\n", encoding="utf-8")
+                before = (run / "planning-control.json").read_bytes()
+
+                result = planning_cli(
+                    "advance", "--run", run, "--stage", "program_design",
+                    "--review", "reviews/program-design-v1.json", "--date", "2026-08-21",
+                )
+
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("Program Design semantic_review", result.stderr)
+                self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+    def test_program_design_review_uses_exact_seven_stage4_dimensions(self):
+        mutations = ("missing", "duplicate", "unknown", "extra-field", "bad-result", "empty-evidence")
+        for mutation in mutations:
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                planning = initialize_direct_program(run)
+                anchor = planning["stage0_anchor"]
+                write_program_design(run, {
+                    "kind": "stage0",
+                    "artifact": "run.yaml",
+                    "sha256": anchor["base_run_sha256"],
+                    "effective_config_hash": anchor["effective_config_hash"],
+                    "effective_config_revision": anchor["effective_config_revision"],
+                })
+                semantic = program_semantic_review()
+                rows = semantic["dimensions"]
+                if mutation == "missing":
+                    rows.pop()
+                elif mutation == "duplicate":
+                    rows[-1] = dict(rows[0])
+                elif mutation == "unknown":
+                    rows[-1]["dimension"] = "stage3_materiality"
+                elif mutation == "extra-field":
+                    rows[-1]["confidence"] = "high"
+                elif mutation == "bad-result":
+                    rows[-1]["result"] = "MATERIAL"
+                else:
+                    rows[-1]["evidence"] = ""
+                write_program_review(run, policy="AGENT_REVIEW", review=semantic)
+                before = (run / "planning-control.json").read_bytes()
+
+                result = planning_cli(
+                    "advance", "--run", run, "--stage", "program_design",
+                    "--review", "reviews/program-design-v1.json", "--date", "2026-08-21",
+                )
+
+                self.assertNotEqual(result.returncode, 0, mutation)
+                self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+        reordered = program_semantic_review()
+        reordered["dimensions"][0], reordered["dimensions"][1] = (
+            reordered["dimensions"][1], reordered["dimensions"][0]
+        )
+        PLANNING.validate_program_design_semantic_review(reordered, "stage0")
+
+    def test_human_program_design_requires_fresh_pass_review_plus_explicit_approval(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            planning = initialize_direct_program(run, authority="HUMAN")
+            anchor = planning["stage0_anchor"]
+            source = {
+                "kind": "stage0",
+                "artifact": "run.yaml",
+                "sha256": anchor["base_run_sha256"],
+                "effective_config_hash": anchor["effective_config_hash"],
+                "effective_config_revision": anchor["effective_config_revision"],
+            }
+            write_program_design(run, source)
+            before = (run / "planning-control.json").read_bytes()
+
+            bypass = planning_cli(
+                "advance", "--run", run, "--stage", "program_design",
+                "--approval", "human", "--date", "2026-08-21",
+            )
+            self.assertNotEqual(bypass.returncode, 0)
+            self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+            review = write_program_review(run, policy="HUMAN")
+            no_approval = planning_cli(
+                "advance", "--run", run, "--stage", "program_design",
+                "--review", "reviews/program-design-v1.json", "--date", "2026-08-21",
+            )
+            self.assertNotEqual(no_approval.returncode, 0)
+            self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+            accepted = planning_cli(
+                "advance", "--run", run, "--stage", "program_design",
+                "--review", "reviews/program-design-v1.json", "--approval", "human",
+                "--date", "2026-08-21",
+            )
+
+            self.assertEqual(accepted.returncode, 0, accepted.stderr)
+            updated = PLANNING.load_planning_control(run)
+            self.assertEqual(updated["gates"]["program_design"], "HUMAN_APPROVED")
+            record = updated["acceptances"]["program_design"]
+            self.assertEqual(record["authority"], "HUMAN")
+            self.assertEqual(record["review_reference"], "reviews/program-design-v1.json")
+            self.assertEqual(record["review_sha256"], sha256(review))
+
+    def test_program_design_acceptance_records_effective_repository_baselines(self):
+        with tempfile.TemporaryDirectory() as td, tempfile.TemporaryDirectory() as caller_td:
+            run = Path(td)
+            planning = initialize_direct_program(run)
+            anchor = planning["stage0_anchor"]
+            source = {
+                "kind": "stage0",
+                "artifact": "run.yaml",
+                "sha256": anchor["base_run_sha256"],
+                "effective_config_hash": anchor["effective_config_hash"],
+                "effective_config_revision": anchor["effective_config_revision"],
+            }
+            write_program_design(run, source)
+            review = write_program_review(run, policy="AGENT_REVIEW")
+
+            result = planning_cli(
+                "advance", "--run", run, "--stage", "program_design",
+                "--review", "reviews/program-design-v1.json", "--date", "2026-08-21",
+                cwd=caller_td,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            updated = PLANNING.load_planning_control(run)
+            self.assertEqual((updated["phase"], updated["revision"]), ("tickets", 2))
+            self.assertEqual(updated["gates"]["program_design"], "AGENT_APPROVED")
+            self.assertEqual(updated["acceptances"]["program_design"], {
+                "candidate_version": 1,
+                "candidate_sha256": sha256(run / "40-program-design.md"),
+                "authority": "AGENT_REVIEW",
+                "accepted": "2026-08-21",
+                "review_reference": "reviews/program-design-v1.json",
+                "review_sha256": sha256(review),
+                "source_bindings": [source],
+                "repository_baselines": _TEST_REPOSITORY_BASELINES,
+            })
+
     def test_direct_agent_review_pass_records_exact_evidence_acceptance(self):
         with tempfile.TemporaryDirectory() as td, tempfile.TemporaryDirectory() as caller_td:
             run = Path(td)
@@ -797,6 +1924,314 @@ class AtlasPlanningTests(unittest.TestCase):
                 "program_design": "PENDING",
                 "tickets": "PENDING",
             })
+
+    def test_program_design_after_system_design_requires_exact_accepted_system_binding(self):
+        mutations = (None, "kind", "artifact", "version", "sha256", "extra")
+        for mutation in mutations:
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                planning = initialize_program_after_system(run)
+                accepted = planning["acceptances"]["system_design"]
+                source = {
+                    "kind": "system_design",
+                    "artifact": "30-system-design.md",
+                    "version": accepted["candidate_version"],
+                    "sha256": accepted["candidate_sha256"],
+                }
+                if mutation == "kind":
+                    source["kind"] = "product_closure"
+                elif mutation == "artifact":
+                    source["artifact"] = "20-prd.md"
+                elif mutation == "version":
+                    source["version"] += 1
+                elif mutation == "sha256":
+                    source["sha256"] = "0" * 64
+                elif mutation == "extra":
+                    source["effective_config_hash"] = "0" * 64
+                write_program_design(run, source)
+
+                result = planning_cli("check", "--run", run, "--stage", "program_design")
+
+                self.assertEqual(result.returncode == 0, mutation is None, result.stderr or result.stdout)
+                report = json.loads(result.stdout)
+                self.assertEqual(report["verdict"], "PASS" if mutation is None else "BLOCKED")
+                if mutation is not None:
+                    self.assertTrue(any("System Design" in item["problem"] for item in report["gaps"]))
+
+    def test_program_design_prefers_accepted_system_when_discovery_and_system_are_selected(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            planning = initialize_product_system_program(run)
+            product = planning["stage0_anchor"]["product_closure"]
+            write_program_design(run, {
+                "kind": "product_closure",
+                "artifact": "20-prd.md",
+                "version": product["version"],
+                "sha256": product["sha256"],
+            })
+
+            rejected = planning_cli("check", "--run", run, "--stage", "program_design")
+
+            self.assertEqual(rejected.returncode, 1, rejected.stderr or rejected.stdout)
+            rejected_report = json.loads(rejected.stdout)
+            self.assertEqual(rejected_report["verdict"], "BLOCKED")
+            self.assertTrue(any("System Design" in gap["problem"] for gap in rejected_report["gaps"]))
+
+            accepted = planning["acceptances"]["system_design"]
+            write_program_design(run, {
+                "kind": "system_design",
+                "artifact": "30-system-design.md",
+                "version": accepted["candidate_version"],
+                "sha256": accepted["candidate_sha256"],
+            })
+
+            passed = planning_cli("check", "--run", run, "--stage", "program_design")
+
+            self.assertEqual(passed.returncode, 0, passed.stderr or passed.stdout)
+            passed_report = json.loads(passed.stdout)
+            self.assertEqual(passed_report["verdict"], "PASS")
+            self.assertEqual(passed_report["source_binding"]["kind"], "system_design")
+
+    def test_program_design_check_does_not_grade_semantic_quality(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            planning = initialize_direct_program(run)
+            anchor = planning["stage0_anchor"]
+            source = {
+                "kind": "stage0",
+                "artifact": "run.yaml",
+                "sha256": anchor["base_run_sha256"],
+                "effective_config_hash": anchor["effective_config_hash"],
+                "effective_config_revision": anchor["effective_config_revision"],
+            }
+            write_program_design(run, source)
+            candidate = run / "40-program-design.md"
+            frontmatter_text = candidate.read_text(encoding="utf-8").split("\n---\n", 1)[0]
+            body_parts = ["# Program design — intentionally poor"]
+            for heading in PROGRAM_DESIGN_SECTIONS:
+                body_parts.append(f"## {heading}\n\nTODO; vague and possibly contradictory.")
+                if heading == "File-tree diff":
+                    body_parts.append(
+                        "```text\n## Not a real section\nline-by-line pseudocode with no evidence\n```"
+                    )
+            candidate.write_text(
+                frontmatter_text + "\n---\n\n" + "\n\n".join(body_parts) + "\n",
+                encoding="utf-8",
+            )
+
+            result = planning_cli("check", "--run", run, "--stage", "program_design")
+
+            self.assertEqual(result.returncode, 0, result.stderr or result.stdout)
+            report = json.loads(result.stdout)
+            self.assertEqual(report["verdict"], "PASS")
+            self.assertEqual(report["gaps"], [])
+            self.assertEqual(report["source_binding"], source)
+
+    def test_program_design_rejects_symlink_extra_fields_duplicate_keys_and_wrong_sections(self):
+        mutations = (
+            "symlink", "frontmatter-extra", "source-extra", "duplicate-key",
+            "duplicate-source-key", "wrong-sections", "boolean-config-revision",
+        )
+        for mutation in mutations:
+            with (
+                self.subTest(mutation=mutation),
+                tempfile.TemporaryDirectory() as td,
+                tempfile.TemporaryDirectory() as outside_td,
+            ):
+                run = Path(td)
+                planning = initialize_direct_program(run)
+                anchor = planning["stage0_anchor"]
+                source = {
+                    "kind": "stage0",
+                    "artifact": "run.yaml",
+                    "sha256": anchor["base_run_sha256"],
+                    "effective_config_hash": anchor["effective_config_hash"],
+                    "effective_config_revision": anchor["effective_config_revision"],
+                }
+                if mutation == "source-extra":
+                    source["version"] = 1
+                elif mutation == "boolean-config-revision":
+                    self.assertEqual(anchor["effective_config_revision"], 0)
+                    source["effective_config_revision"] = False
+                write_program_design(
+                    run,
+                    source,
+                    **({"unexpected": "field"} if mutation == "frontmatter-extra" else {}),
+                )
+                candidate = run / "40-program-design.md"
+                if mutation == "symlink":
+                    outside = Path(outside_td) / "candidate.md"
+                    outside.write_bytes(candidate.read_bytes())
+                    candidate.unlink()
+                    candidate.symlink_to(outside)
+                elif mutation == "duplicate-key":
+                    candidate.write_text(
+                        candidate.read_text(encoding="utf-8").replace(
+                            "run: demo", "run: demo\nrun: demo", 1
+                        ),
+                        encoding="utf-8",
+                    )
+                elif mutation == "duplicate-source-key":
+                    candidate.write_text(
+                        candidate.read_text(encoding="utf-8").replace(
+                            "  kind: stage0", "  kind: stage0\n  kind: stage0", 1
+                        ),
+                        encoding="utf-8",
+                    )
+                elif mutation == "wrong-sections":
+                    candidate.write_text(
+                        candidate.read_text(encoding="utf-8").replace(
+                            "## Implementation constraints and sequencing",
+                            "## Vertical slices",
+                        ),
+                        encoding="utf-8",
+                    )
+
+                result = planning_cli("check", "--run", run, "--stage", "program_design")
+
+                self.assertEqual(result.returncode, 1, result.stderr or result.stdout)
+                report = json.loads(result.stdout)
+                self.assertEqual(report["verdict"], "BLOCKED")
+                problems = " ".join(item["problem"] for item in report["gaps"]).lower()
+                expected = {
+                    "symlink": "symlink",
+                    "frontmatter-extra": "schema",
+                    "source-extra": "stage 0",
+                    "duplicate-key": "duplicate yaml key",
+                    "duplicate-source-key": "duplicate yaml key",
+                    "wrong-sections": "section",
+                    "boolean-config-revision": "stage 0",
+                }[mutation]
+                self.assertIn(expected, problems)
+
+    def test_program_design_check_reports_all_mechanical_gaps_without_mutation(self):
+        with tempfile.TemporaryDirectory() as td, tempfile.TemporaryDirectory() as caller_td:
+            run = Path(td)
+            planning = initialize_direct_program(run)
+            anchor = planning["stage0_anchor"]
+            write_program_design(
+                run,
+                {
+                    "kind": "stage0",
+                    "artifact": "run.yaml",
+                    "sha256": "0" * 64,
+                    "effective_config_hash": anchor["effective_config_hash"],
+                    "effective_config_revision": anchor["effective_config_revision"],
+                },
+                version=False,
+                status="accepted",
+                gate_ready=False,
+                opened="21-08-2026",
+                participation="agent_led",
+            )
+            candidate = run / "40-program-design.md"
+            candidate.write_text(
+                candidate.read_text(encoding="utf-8")
+                .replace("run: demo", "run: other-run", 1)
+                .replace(
+                    "## Implementation constraints and sequencing",
+                    "## Vertical slices",
+                ),
+                encoding="utf-8",
+            )
+            before = {
+                path.relative_to(run).as_posix(): path.read_bytes()
+                for path in run.rglob("*")
+                if path.is_file()
+            }
+
+            result = planning_cli(
+                "check", "--run", run, "--stage", "program_design", cwd=caller_td
+            )
+
+            self.assertEqual(result.returncode, 1, result.stderr)
+            report = json.loads(result.stdout)
+            problems = [item["problem"].lower() for item in report["gaps"]]
+            for expected in (
+                "frontmatter", "run identity", "version", "status", "readiness",
+                "participation", "opened date", "section", "stage 0",
+            ):
+                self.assertTrue(any(expected in problem for problem in problems), expected)
+            self.assertTrue(all(item["resume_action"] for item in report["gaps"]))
+            self.assertIsNone(report["source_binding"])
+            self.assertEqual(
+                {
+                    path.relative_to(run).as_posix(): path.read_bytes()
+                    for path in run.rglob("*")
+                    if path.is_file()
+                },
+                before,
+            )
+
+    def test_direct_program_design_requires_exact_frozen_stage0_binding(self):
+        mutations = (
+            None, "kind", "artifact", "sha256", "config_hash", "config_revision", "version",
+        )
+        for mutation in mutations:
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                planning = initialize_direct_program(run)
+                anchor = planning["stage0_anchor"]
+                source = {
+                    "kind": "stage0",
+                    "artifact": "run.yaml",
+                    "sha256": anchor["base_run_sha256"],
+                    "effective_config_hash": anchor["effective_config_hash"],
+                    "effective_config_revision": anchor["effective_config_revision"],
+                }
+                if mutation == "kind":
+                    source["kind"] = "product_closure"
+                elif mutation == "artifact":
+                    source["artifact"] = "20-prd.md"
+                elif mutation == "sha256":
+                    source["sha256"] = "0" * 64
+                elif mutation == "config_hash":
+                    source["effective_config_hash"] = "0" * 64
+                elif mutation == "config_revision":
+                    source["effective_config_revision"] += 1
+                elif mutation == "version":
+                    source["version"] = 1
+                write_program_design(run, source)
+
+                result = planning_cli("check", "--run", run, "--stage", "program_design")
+
+                self.assertEqual(result.returncode == 0, mutation is None, result.stderr or result.stdout)
+                report = json.loads(result.stdout)
+                self.assertEqual(report["verdict"], "PASS" if mutation is None else "BLOCKED")
+                if mutation is not None:
+                    self.assertTrue(any("Stage 0" in item["problem"] for item in report["gaps"]))
+
+    def test_program_design_without_system_design_requires_exact_accepted_product_binding(self):
+        mutations = (None, "kind", "artifact", "version", "sha256", "extra")
+        for mutation in mutations:
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                accepted = initialize_product_program(run)
+                source = {
+                    "kind": "product_closure",
+                    "artifact": "20-prd.md",
+                    "version": accepted["candidate_version"],
+                    "sha256": accepted["candidate_sha256"],
+                }
+                if mutation == "kind":
+                    source["kind"] = "system_design"
+                elif mutation == "artifact":
+                    source["artifact"] = "30-system-design.md"
+                elif mutation == "version":
+                    source["version"] += 1
+                elif mutation == "sha256":
+                    source["sha256"] = "0" * 64
+                elif mutation == "extra":
+                    source["effective_config_revision"] = 0
+                write_program_design(run, source)
+
+                result = planning_cli("check", "--run", run, "--stage", "program_design")
+
+                self.assertEqual(result.returncode == 0, mutation is None, result.stderr or result.stdout)
+                report = json.loads(result.stdout)
+                self.assertEqual(report["verdict"], "PASS" if mutation is None else "BLOCKED")
+                if mutation is not None:
+                    self.assertTrue(any("product closure" in item["problem"] for item in report["gaps"]))
 
     def test_system_design_product_path_requires_exact_accepted_prd_binding(self):
         for mutation, expected_success in ((None, True), ("wrong-hash", False)):

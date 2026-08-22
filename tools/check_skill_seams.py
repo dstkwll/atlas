@@ -146,7 +146,11 @@ def check(skill_dir: Path) -> list[tuple[str, str]]:
 def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
     findings: list[tuple[str, str]] = []
     paths = {
+        "readme": skills.parent / "README.md",
+        "plugin-manifest": skills.parent / "plugin.json",
+        "codex-plugin-manifest": skills.parent / ".codex-plugin" / "plugin.json",
         "start": skills / "start-run" / "SKILL.md",
+        "start-agent": skills / "start-run" / "agents" / "openai.yaml",
         "run-file": skills / "start-run" / "references" / "run-file.md",
         "state": skills / "start-run" / "references" / "state-file.md",
         "amendment": skills / "start-run" / "references" / "run-amendment.md",
@@ -158,16 +162,24 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         "review": skills / "control-run" / "references" / "boundary-review.md",
         "intake-correction": skills.parent / "references" / "intake-correction.md",
         "setup": skills / "setup-atlas" / "SKILL.md",
+        "setup-agent": skills / "setup-atlas" / "agents" / "openai.yaml",
+        "installed-host-calibration": skills / "setup-atlas" / "references" / "installed-host-calibration.md",
         "spike": skills / "spike" / "SKILL.md",
         "spike-findings": skills / "spike" / "references" / "findings-file.md",
         "controller": skills.parent / "tools" / "atlas_control.py",
         "planning": skills.parent / "tools" / "atlas_planning.py",
+        "repository": skills.parent / "tools" / "atlas_repository.py",
         "system-design": skills / "system-design" / "SKILL.md",
         "system-design-template": skills / "system-design" / "references" / "system-design-file.md",
         "system-design-board": skills / "system-design" / "references" / "system-design-board.md",
         "system-design-agent": skills / "system-design" / "agents" / "openai.yaml",
+        "program-design": skills / "program-design" / "SKILL.md",
+        "program-design-template": skills / "program-design" / "references" / "program-design-file.md",
+        "program-design-agent": skills / "program-design" / "agents" / "openai.yaml",
         "control-planning": skills / "control-planning" / "SKILL.md",
         "system-design-authority": skills / "control-planning" / "references" / "system-design-authority.md",
+        "program-design-authority": skills / "control-planning" / "references" / "program-design-authority.md",
+        "program-design-blocked": skills.parent / "references" / "program-design-blocked.md",
         "control-planning-agent": skills / "control-planning" / "agents" / "openai.yaml",
         "renderer": skills.parent / "tools" / "render_prd.py",
         "system-renderer": skills.parent / "tools" / "render_system_design.py",
@@ -179,10 +191,44 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         else:
             texts[name] = path.read_text(encoding="utf-8")
 
+    required_plugin_description_clauses = ("Stage 0", "System", "Program Design", "Stage 4")
+    try:
+        plugin_manifest = json.loads(texts.get("plugin-manifest", ""))
+        codex_plugin_manifest = json.loads(texts.get("codex-plugin-manifest", ""))
+    except json.JSONDecodeError as exc:
+        findings.append(("cross", f"Atlas plugin manifests are unreadable: {exc}"))
+    else:
+        descriptions = (
+            plugin_manifest.get("description"),
+            codex_plugin_manifest.get("description"),
+        )
+        if (
+            not all(isinstance(item, str) for item in descriptions)
+            or descriptions[0] != descriptions[1]
+            or any(clause not in descriptions[0] for clause in required_plugin_description_clauses)
+        ):
+            findings.append(("cross", "Atlas plugin manifest descriptions do not expose the current Stage 0-4 surface"))
+
     required = {
+        "readme": [
+            "First-party Stage 0–4 skills",
+            "| `setup-atlas` | Configure the planning root and verify an installed host. |",
+            "| `start-run` | Accept immutable Stage 0 `run.yaml`, initialize control, or resume from authoritative state. |",
+            "| `program-design` | Produce the exact Stage 4 candidate, record readiness, and continue the internal control handoff. |",
+            "tickets remain intentionally unsupported",
+        ],
+        "setup-agent": [
+            'short_description: "Configure or verify Atlas on this machine"',
+            "allow_implicit_invocation: false",
+        ],
         "start": [
-            "run.yaml", "control.json", "initialize", "AGENT_REVIEW", "HUMAN", "AUTO",
+            "description: Create or resume an Atlas run", "run.yaml", "control.json",
+            "initialize", "AGENT_REVIEW", "HUMAN", "AUTO",
             "atlas_planning.py", "planning-control.json", ".atlas-planning.lock",
+        ],
+        "start-agent": [
+            'short_description: "Create or resume an Atlas run from authoritative state"',
+            "allow_implicit_invocation: false",
         ],
         "run-file": [
             "[a-z0-9]+(?:-[a-z0-9]+)*", "rejects path separators",
@@ -205,6 +251,12 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "def advance_boundary", 'SYSTEM_DESIGN_FILE = "30-system-design.md"',
             "verify_system_design_board", "30-system-design.html",
         ],
+        "repository": [
+            "def load_bindings", "def probe_source", "def bind_repository", "def verify_run",
+            "def list_tree", "def search_tree", "def read_tree_path",
+            'sub.add_parser(\n        "probe-source"', 'sub.add_parser("verify"', 'sub.add_parser("list"',
+            'sub.add_parser("search"', 'sub.add_parser("read"',
+        ],
         "system-design": [
             "disable-model-invocation: true", "third parent of this file", "agent_led",
             "co_design", "Slice 2", "references/system-design-file.md", "references/system-design-board.md",
@@ -217,6 +269,23 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "kind: stage0", "effective_config_hash", "effective_config_revision",
         ],
         "system-design-agent": ["allow_implicit_invocation: false"],
+        "program-design": [
+            "name: program-design", "disable-model-invocation: true",
+            "references/program-design-file.md", "cite every upstream commitment",
+        ],
+        "program-design-template": [
+            "run: <feature-slug>", "version: 1", "status: draft", "gate_ready: true",
+            "kind: system_design", "artifact: 30-system-design.md", "kind: product_closure",
+            "artifact: 20-prd.md", "kind: stage0", "artifact: run.yaml",
+            "effective_config_hash", "effective_config_revision",
+            "Implementation constraints and sequencing",
+        ],
+        "program-design-agent": [
+            'display_name: "Atlas Program Design"',
+            'short_description: "Produce Stage 4 and hand it to planning control"',
+            "Use $program-design to produce the exact Atlas Program Design candidate and continue its internal control handoff.",
+            "allow_implicit_invocation: false",
+        ],
         "system-design-board": [
             "30-system-design.md", "30-system-design.html", "Inapplicable:",
             "non-authoritative", "no independent acceptance hash",
@@ -228,12 +297,19 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "atlas_planning.py", "advance --run", "--approval human", "--date",
             "re-read `planning-control.json`", "AGENT_REVIEW", "HUMAN_IF_CHANGED", "Slice 2",
             "fresh read-only classifier", "distinct fresh semantic reviewer", "invoker assembles",
-            "reviews/system-design-v1.json",
+            "reviews/system-design-v1.json", "supports exactly the explicit stages `system_design` and `program_design`",
+            "never discovers, infers, or reroutes a stage", "references/program-design-authority.md",
+            "configured `AGENT_REVIEW` or `HUMAN` authority", "fresh exact PASS review",
+            "reviews/program-design-v1.json",
         ],
         "system-design-authority": [
             "reviews/system-design-v1.json", "candidate_version", "candidate_sha256",
             "repository_baselines", "materiality", "semantic_review", "unavailable_reason",
             "MATERIAL", "NOT_MATERIAL", "UNAVAILABLE", "PASS", "BLOCKED",
+        ],
+        "program-design-authority": [
+            "reviews/program-design-v1.json", "AGENT_REVIEW", "HUMAN", "PASS",
+            "BLOCKED", "DESIGN_BLOCKED", "upstream_issue", "resume_boundary",
         ],
         "control-planning-agent": ["allow_implicit_invocation: false"],
         "renderer": ["def write_canonical", "def render", "def verify", "RENDERER_VERSION"],
@@ -249,16 +325,291 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             if needle.lower() not in text.lower():
                 findings.append(("cross", f"{name}: missing seam contract `{needle}`"))
 
+    repository_surface = required["repository"]
+    if any(marker not in texts.get("repository", "") for marker in repository_surface):
+        findings.append(("cross", "repository adapter public surface is incomplete"))
+
+    setup = texts.get("setup", "")
+    setup_binding_contract = (
+        "Preserve every existing configuration key and value not explicitly changed",
+        "one stable repository identity to one canonical absolute path to an existing local Git repository or object source",
+        "Show the exact configuration diff, the exact configuration path, and the exact identity/source pair",
+        "Wait for explicit confirmation before creating or changing a binding",
+        "Normal runs reuse a confirmed binding without asking again",
+        "A remote URL may help propose a stable identity, and the current checkout may help propose its canonical source path",
+        "A proposal grants no authority and never silently creates or changes a binding",
+        "never sync, clone, fetch, authenticate, checkout, create a worktree, or mutate a repository",
+        'python3 "<atlas-plugin-root>/tools/atlas_repository.py" probe-source --source "<canonical-absolute-local-git-source>"',
+        "Before a run exists, stop after source probing and confirmed configuration; do not invoke run-specific `verify --run`",
+        'python3 "<atlas-plugin-root>/tools/atlas_repository.py" verify --run "<run-directory>"',
+        "Only after an initialized run exists, use `verify --run`",
+        "Report every gap and resume action from the complete verification report",
+        "only V1 artifact-location setting, not the only machine configuration",
+    )
+    if (
+        any(clause not in setup for clause in setup_binding_contract)
+        or "must never infer a binding from a remote or the current checkout" in setup
+    ):
+        findings.append(("cross", "setup: incomplete D-081 binding commissioning contract"))
+
+    calibration_five_clis = (
+        "Invoke exactly these five packaged CLIs with `--help` using that same recorded interpreter: "
+        "`tools/atlas_control.py`, `tools/atlas_planning.py`, `tools/atlas_repository.py`, "
+        "`tools/render_prd.py`, and `tools/render_system_design.py`."
+    )
+    if calibration_five_clis not in texts.get("installed-host-calibration", ""):
+        findings.append(("cross", "installed-host-calibration: missing five packaged CLIs with the recorded interpreter"))
+
+    readme_program_contract = (
+        "First-party Stage 0–4 skills",
+        "| `program-design` | Produce the exact Stage 4 candidate, record readiness, and continue the internal control handoff. |",
+        "tickets remain intentionally unsupported",
+    )
+    if any(clause not in texts.get("readme", "") for clause in readme_program_contract):
+        findings.append(("cross", "README Program Design inventory is incomplete"))
+
+    readme_repository_classification = (
+        "missing binding, source, exact commit/tree/blob, submodule content, or Git LFS content returns `BLOCKED`; "
+        "only an exact-code contradiction requiring accepted upstream truth to change returns `DESIGN_BLOCKED`"
+    )
+    if (
+        readme_repository_classification not in texts.get("readme", "")
+        or "unresolved repository access returns DESIGN_BLOCKED" in texts.get("readme", "")
+    ):
+        findings.append(("cross", "README repository BLOCKED classification contradicts D-081"))
+
+    full_oid_start_contract = (
+        "Resolve every admitted baseline to the repository's full canonical commit object ID before previewing `run.yaml`",
+        "New intake never stores a branch, tag, `HEAD`, or abbreviated object ID as `baseline`",
+        "If the exact commit is not locally readable, stop before writing intake",
+    )
+    full_oid_run_file_contract = (
+        "baseline: <full canonical commit object ID>",
+        "`baseline` is the full canonical lowercase hexadecimal object ID of a commit",
+        "never a branch, tag, `HEAD`, or abbreviated object ID",
+    )
+    if (
+        any(clause not in texts.get("start", "") for clause in full_oid_start_contract)
+        or any(clause not in texts.get("run-file", "") for clause in full_oid_run_file_contract)
+        or "baseline: <commit SHA>" in texts.get("run-file", "")
+    ):
+        findings.append(("cross", "start-run: missing full canonical repository baseline intake"))
+
+    start_binding_commissioning_contract = (
+        "Read the existing confirmed machine binding for every proposed stable repository identity before accepting intake",
+        "If one is missing or an explicitly requested replacement is needed, invoke `atlas:setup-atlas` internally for that one identity/source pair",
+        "Do not ask the user to leave `start-run`, invoke setup manually, or restart intake",
+        "After setup returns, reload machine bindings and require the exact confirmed identity/source pair before resolving the full canonical commit object ID",
+        "A declined or failed binding confirmation stops the same intake without writing `run.yaml`",
+    )
+    if any(clause not in texts.get("start", "") for clause in start_binding_commissioning_contract):
+        findings.append(("cross", "start-run: missing internal binding commissioning"))
+
+    program = texts.get("program-design", "")
+    grounding = "Before drafting anything, require a readable repository for every stable identity and prove the exact frozen baseline commit/tree is available"
+    drafting_heading = "## 3. Produce the Stage 4 candidate"
+    if grounding not in program or drafting_heading not in program or program.index(grounding) > program.index(drafting_heading):
+        findings.append(("cross", "program-design: missing repository grounding before drafting"))
+
+    baseline_access_contract = (
+        "current HEAD and working-tree state only as drift/context",
+        "neither may silently replace the frozen baseline as design truth",
+        "Treat current `HEAD`, index, and working-tree bytes only as drift",
+        "never substitute them for the exact baseline",
+        "../../references/program-design-blocked.md",
+    )
+    if any(clause not in program for clause in baseline_access_contract):
+        findings.append(("cross", "program-design: missing fail-closed exact frozen-baseline access preflight"))
+
+    portable_evidence_contract = {
+        "program-design": (
+            "Machine-local `config_path`, bound `source`, Git-directory, and absolute diagnostic paths are ephemeral operational evidence",
+            "Never copy them into `40-program-design.md`",
+            "Repository grounding in the candidate names only stable repository identity, full baseline OID, baseline-relative repository paths, and relevant code evidence",
+        ),
+        "program-design-template": (
+            "<stable repository identities, full baseline OIDs, baseline-relative repository paths, conventions, and feasibility evidence; never machine-local config/source paths>",
+        ),
+        "control-planning": (
+            "Adapter `config_path`, bound `source`, Git-directory, and absolute diagnostic paths are ephemeral operational evidence",
+            "Never copy them into `reviews/program-design-v1.json`",
+            "Reviewer evidence names only stable repository identity, full baseline OID, baseline-relative repository paths, and relevant code evidence",
+        ),
+    }
+    if any(
+        clause not in texts.get(name, "")
+        for name, clauses in portable_evidence_contract.items()
+        for clause in clauses
+    ):
+        findings.append(("cross", "Program Design machine-local path leakage boundary is incomplete"))
+
+    repository_verify = 'python3 "<atlas-plugin-root>/tools/atlas_repository.py" verify --run "<run-directory>"'
+    repository_list = 'python3 "<atlas-plugin-root>/tools/atlas_repository.py" list --run "<run-directory>" --repository "<stable-repository-id>"'
+    repository_search = 'python3 "<atlas-plugin-root>/tools/atlas_repository.py" search --run "<run-directory>" --repository "<stable-repository-id>" --needle "<literal>"'
+    repository_read = 'python3 "<atlas-plugin-root>/tools/atlas_repository.py" read --run "<run-directory>" --repository "<stable-repository-id>" --path "<baseline-path>"'
+    repository_commands = (repository_verify, repository_list, repository_search, repository_read)
+    if (
+        drafting_heading not in program
+        or any(command not in program for command in repository_commands)
+        or any(program.index(command) > program.index(drafting_heading) for command in repository_commands if command in program)
+        or (
+            repository_verify in program
+            and repository_list in program
+            and program.index(repository_verify) > program.index(repository_list)
+        )
+        or "Use only these adapter `list`, `search`, and `read` commands for baseline inspection" not in program
+    ):
+        findings.append(("cross", "program-design: missing exact adapter verification and inspection before drafting"))
+
+    program_blocked_contract = (
+        "Missing binding, source, full canonical object ID, commit/tree/blob object, required submodule content, or required Git LFS content is ordinary non-mutating `BLOCKED`",
+        "`DESIGN_BLOCKED` is reserved for an exact-code contradiction that requires accepted upstream truth to change",
+    )
+    blocked_runbook_contract = (
+        "ordinary repository dependency `BLOCKED`",
+        "true upstream `DESIGN_BLOCKED`",
+        "Resume a missing local dependency through `setup-atlas` or an offline repository repair, then rerun",
+        "requires no authority decision or reopen",
+        "If Discovery no longer owns the cursor, an abbreviated baseline requires a corrected new run",
+        "`PENDING` means no acceptance was written",
+    )
+    if (
+        any(clause not in program for clause in program_blocked_contract)
+        or any(clause not in texts.get("program-design-blocked", "") for clause in blocked_runbook_contract)
+    ):
+        findings.append(("cross", "Program Design D-081 BLOCKED classification is incomplete"))
+
+    resolved_only_contract = (
+        "settled Stage 4 decisions with bounded residual uncertainty",
+        "Stage 5 receives no design question it must answer",
+    )
+    if (
+        any(clause not in program for clause in resolved_only_contract)
+        or any(clause not in texts.get("program-design-template", "") for clause in resolved_only_contract[1:])
+        or "unresolved local code-shape choice is `BLOCKED`" not in texts.get("program-design-authority", "")
+    ):
+        findings.append(("cross", "Program Design least-confidence seam does not contain resolved-only Stage 4 decisions"))
+
+    frozen_program_contract = (
+        "Read immutable `run.yaml`, authoritative Stage 0 `control.json`, and `planning-control.json`",
+        "Require current phase `program_design`, gate `PENDING`, and exact configured authority `AGENT_REVIEW` or `HUMAN`",
+        "Program Design never asks a participation question",
+    )
+    if any(clause not in program for clause in frozen_program_contract):
+        findings.append(("cross", "program-design: missing exact frozen boundary without participation"))
+
+    source_contract = (
+        "Derive the applicable branch only from effective selected stages, never from candidate prose or artifact presence",
+        "Read exactly one applicable upstream source and do not read either omitted source",
+        "System Design selected: read exact accepted `30-system-design.md`",
+        "System Design omitted and Product Closure selected: read exact accepted `20-prd.md`",
+        "both upstream semantic boundaries omitted: read frozen effective Stage 0 `run.yaml` and its recorded effective configuration binding",
+    )
+    if any(clause not in program for clause in source_contract):
+        findings.append(("cross", "program-design: missing exact three-source selection or one-source-only rule"))
+
+    program_root = "it is the third parent of this file (`SKILL.md` → `program-design/` → `skills/` → plugin root)"
+    if program_root not in program or "never rely on the caller's working directory" not in program:
+        findings.append(("cross", "program-design: missing caller-CWD-independent Program Design skill root"))
+
+    ownership_contract = (
+        "On the normal path, write only canonical `40-program-design.md` candidate/readiness bytes",
+        "never create or modify `reviews/program-design-v1.json`",
+        "never write `planning-control.json`",
+        "never rewrite an upstream artifact",
+    )
+    if any(clause not in program for clause in ownership_contract):
+        findings.append(("cross", "program-design: missing normal-path candidate-only ownership"))
+
+    producer_blocked_contract = (
+        "Before writing candidate or readiness bytes, return structured read-only `DESIGN_BLOCKED` and stop",
+        "nonempty `upstream_issue`",
+        "both equal the actual selected source-binding kind",
+        "smallest upstream decision or change required",
+        "creates no review file",
+        "does not rewrite any upstream artifact",
+        "does not mutate planning state",
+        "Reviewer-discovered `DESIGN_BLOCKED` belongs only in a fresh `reviews/program-design-v1.json`",
+    )
+    if any(clause not in program for clause in producer_blocked_contract):
+        findings.append(("cross", "program-design: missing structured read-only pre-readiness DESIGN_BLOCKED stop"))
+
+    handoff = "After mechanical `PASS`, perform the exact named internal handoff to `atlas:control-planning`"
+    if (
+        program.count("atlas:control-planning") != 1
+        or handoff not in program
+        or "without asking the user to issue a second routing command" not in program
+        or "unchanged `<run-directory>` and explicit stage `program_design`" not in program
+    ):
+        findings.append(("cross", "program-design: missing exact internal control-planning handoff"))
+
+    control_planning = texts.get("control-planning", "")
+    stage_check_selector = (
+        "Run exactly one mechanical check selected by the explicit stage; never run both commands"
+    )
+    system_check = (
+        'python3 "<atlas-plugin-root>/tools/atlas_planning.py" check '
+        '--run "<run-directory>" --stage system_design'
+    )
+    program_check = (
+        'python3 "<atlas-plugin-root>/tools/atlas_planning.py" check '
+        '--run "<run-directory>" --stage program_design'
+    )
+    if (
+        stage_check_selector not in control_planning
+        or "For explicit stage `system_design`, run only:" not in control_planning
+        or "For explicit stage `program_design`, run only:" not in control_planning
+        or control_planning.count(system_check) != 1
+        or control_planning.count(program_check) != 1
+    ):
+        findings.append(("cross", "control-planning: missing explicit-stage-only check selection"))
+
+    reviewer_marker = "Invoke one distinct fresh read-only semantic reviewer"
+    control_repository_contract = (
+        "return its complete mechanical repository `BLOCKED` report before invoking a reviewer or writing evidence",
+        "The fresh reviewer reads the exact baseline only through the adapter commands above",
+        "Current `HEAD`, index, and working-tree bytes are never substitute review inputs",
+    )
+    if (
+        reviewer_marker not in control_planning
+        or any(command not in control_planning for command in repository_commands)
+        or any(
+            control_planning.index(command) > control_planning.index(reviewer_marker)
+            for command in repository_commands
+            if command in control_planning and reviewer_marker in control_planning
+        )
+        or (
+            repository_verify in control_planning
+            and repository_list in control_planning
+            and control_planning.index(repository_verify) > control_planning.index(repository_list)
+        )
+        or any(clause not in control_planning for clause in control_repository_contract)
+    ):
+        findings.append(("cross", "control-planning: missing repository preflight before Program Design review"))
+
     try:
         system_agent = yaml.safe_load(texts.get("system-design-agent", ""))
+        program_agent = yaml.safe_load(texts.get("program-design-agent", ""))
         control_agent = yaml.safe_load(texts.get("control-planning-agent", ""))
         system_prompt = system_agent["interface"]["default_prompt"]
+        program_interface = program_agent["interface"]
         control_text = " ".join(control_agent["interface"].values())
         system_implicit = system_agent["policy"]["allow_implicit_invocation"]
+        program_implicit = program_agent["policy"]["allow_implicit_invocation"]
         control_implicit = control_agent["policy"]["allow_implicit_invocation"]
     except (TypeError, KeyError, yaml.YAMLError) as exc:
-        findings.append(("cross", f"System Design model metadata is unreadable: {exc}"))
+        findings.append(("cross", f"System and Program Design model metadata is unreadable: {exc}"))
     else:
+        expected_program_interface = {
+            "display_name": "Atlas Program Design",
+            "short_description": "Produce Stage 4 and hand it to planning control",
+            "default_prompt": (
+                "Use $program-design to produce the exact Atlas Program Design candidate "
+                "and continue its internal control handoff."
+            ),
+        }
+        if program_interface != expected_program_interface:
+            findings.append(("cross", "Program Design model metadata must expose the exact producer interface"))
         if (
             "current agent-led" in system_prompt.lower()
             or "frozen agent_led or co_design participation" not in system_prompt
@@ -271,8 +622,8 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             or "configured HUMAN, AGENT_REVIEW, or HUMAN_IF_CHANGED System Design boundary once" not in control_text
         ):
             findings.append(("cross", "control-planning-agent: stale Slice 1 HUMAN-only priming remains in model metadata"))
-        if system_implicit is not False or control_implicit is not False:
-            findings.append(("cross", "System Design model metadata must keep implicit invocation false"))
+        if system_implicit is not False or program_implicit is not False or control_implicit is not False:
+            findings.append(("cross", "System and Program Design model metadata must keep implicit invocation false"))
 
     planning_command = 'python3 "<atlas-plugin-root>/tools/atlas_planning.py" ensure --run "<run-directory>"'
     for name in ("start", "control"):
@@ -290,11 +641,36 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         or "validated `planning-control.json.phase` is the actual current planning phase" not in start_handoff
     ):
         findings.append(("cross", "start: stale live downstream resume cursor; planning-control must own downstream position"))
+    start_route_contract = (
+        "If validated planning phase is `system_design`, invoke `atlas:system-design` internally",
+        "If validated planning phase is `program_design`, invoke `atlas:program-design` internally",
+        "If validated planning phase is `tickets`, stop loudly",
+        "no first-party ticket producer exists",
+        "Preserve the existing Product Closure and System Design paths",
+    )
+    if any(clause not in start_text for clause in start_route_contract):
+        findings.append(("cross", "start: missing implemented Program Design route and tickets stop"))
+
+    start_continuation_contract = (
+        "This is a bounded continuation loop, not one-shot dispatch",
+        "After an invoked producer and its internal control handoff return, run `ensure` again and re-read validated `planning-control.json`",
+        "The only legal downstream continuation after `system_design` is `program_design` or `tickets`; after `program_design` it is `tickets`",
+        "Invoke at most two downstream producers during one `start-run` invocation",
+        "If the phase is unchanged, the invoked stage's gate remains `PENDING`, the transition is unexpected, or an invoked owner stops `BLOCKED` or `DESIGN_BLOCKED`, stop without retrying that producer",
+        "Never derive a producer dynamically from the stage list",
+    )
+    if any(clause not in start_text for clause in start_continuation_contract):
+        findings.append(("cross", "start: missing bounded downstream continuation"))
+
     check_command = 'python3 "<atlas-plugin-root>/tools/atlas_planning.py" check --run "<run-directory>" --stage system_design'
+    program_check_command = 'python3 "<atlas-plugin-root>/tools/atlas_planning.py" check --run "<run-directory>" --stage program_design'
     advance_command = 'python3 "<atlas-plugin-root>/tools/atlas_planning.py" advance --run "<run-directory>" --stage system_design --approval human --date "<YYYY-MM-DD>"'
     for name in ("system-design", "control-planning"):
         if check_command not in texts.get(name, ""):
             findings.append(("cross", f"{name}: missing caller-CWD-independent System Design check command"))
+    for name in ("program-design", "control-planning"):
+        if program_check_command not in texts.get(name, ""):
+            findings.append(("cross", f"{name}: missing caller-CWD-independent Program Design check command"))
     if advance_command not in texts.get("control-planning", ""):
         findings.append(("cross", "control-planning: missing exact HUMAN System Design advance command"))
     for command in (
@@ -303,6 +679,12 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
     ):
         if command not in texts.get("control-planning", ""):
             findings.append(("cross", f"control-planning: missing System Design authority-matrix command `{command}`"))
+    for command in (
+        'advance --run "<run-directory>" --stage program_design --review reviews/program-design-v1.json --date "<YYYY-MM-DD>"',
+        'advance --run "<run-directory>" --stage program_design --review reviews/program-design-v1.json --approval human --date "<YYYY-MM-DD>"',
+    ):
+        if command not in texts.get("control-planning", ""):
+            findings.append(("cross", f"control-planning: missing Program Design authority-matrix command `{command}`"))
     renderer_commands = (
         'python3 "<atlas-plugin-root>/tools/render_system_design.py" write --run "<run-directory>" --draft .30-system-design.next.md',
         'python3 "<atlas-plugin-root>/tools/render_system_design.py" render --run "<run-directory>"',
@@ -371,6 +753,50 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
                 findings.append(("cross", f"system-design: template field `{field}` is ungoverned"))
 
     try:
+        program_fields = set(assigned_literal(texts.get("planning", ""), "PROGRAM_DESIGN_FIELDS"))
+        product_source_fields = set(assigned_literal(texts.get("planning", ""), "PRODUCT_SOURCE_FIELDS"))
+        stage0_source_fields = set(assigned_literal(texts.get("planning", ""), "STAGE0_SOURCE_FIELDS"))
+        program_sections = tuple(assigned_literal(texts.get("planning", ""), "PROGRAM_DESIGN_SECTIONS"))
+        program_maps = [
+            item for item in frontmatter_maps(texts.get("program-design-template", ""))
+            if {"run", "version", "status", "gate_ready"}.issubset(item)
+        ]
+        program_sources = [
+            item.get("source_binding") for item in program_maps
+            if isinstance(item.get("source_binding"), dict)
+        ]
+        program_sources += [
+            item.get("source_binding") for _, block in template_blocks(texts.get("program-design-template", ""))
+            if isinstance((item := yaml.safe_load(block)), dict)
+            and set(item) == {"source_binding"}
+            and isinstance(item.get("source_binding"), dict)
+        ]
+    except (SyntaxError, ValueError, yaml.YAMLError) as exc:
+        findings.append(("cross", f"Program Design candidate schema seam is unreadable: {exc}"))
+    else:
+        present = set(program_maps[0]) if program_maps else set()
+        if len(program_maps) != 1 or present != program_fields:
+            findings.append(("cross", "Program Design candidate schema does not match planning PROGRAM_DESIGN_FIELDS"))
+        expected_source_fields = {
+            "system_design": product_source_fields,
+            "product_closure": product_source_fields,
+            "stage0": stage0_source_fields,
+        }
+        actual_sources = {
+            source.get("kind"): set(source)
+            for source in program_sources
+            if isinstance(source, dict) and isinstance(source.get("kind"), str)
+        }
+        if len(program_sources) != 3 or actual_sources != expected_source_fields:
+            findings.append(("cross", "Program Design source_binding templates do not match the exact three planning schemas"))
+        headings = tuple(re.findall(r"(?m)^## ([^\n]+?)\s*$", texts.get("program-design-template", "")))
+        if headings != program_sections:
+            findings.append(("cross", "Program Design template sections do not match planning PROGRAM_DESIGN_SECTIONS"))
+        combined_program = texts.get("program-design", "") + texts.get("program-design-template", "")
+        if "participation:" in combined_program.lower() or "40-program-design.html" in combined_program.lower():
+            findings.append(("cross", "Program Design must have no participation field or HTML artifact"))
+
+    try:
         board_views = tuple(assigned_literal(texts.get("system-renderer", ""), "REQUIRED_VIEWS"))
         board_labels = tuple(item[0] for item in board_views)
         board_sections = {section for _, _, sections in board_views for section in sections}
@@ -427,6 +853,121 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         if len(gap_maps) != 1:
             findings.append(("cross", "System Design semantic gap reference does not match planning schema"))
 
+    try:
+        program_review_reference = assigned_literal(
+            texts.get("planning", ""), "PROGRAM_DESIGN_REVIEW_REFERENCE"
+        )
+        program_review_fields = set(
+            assigned_literal(texts.get("planning", ""), "PROGRAM_DESIGN_REVIEW_FIELDS")
+        )
+        program_dimensions = tuple(
+            assigned_literal(texts.get("planning", ""), "PROGRAM_DESIGN_DIMENSIONS")
+        )
+        semantic_fields = set(
+            assigned_literal(texts.get("planning", ""), "SEMANTIC_REVIEW_FIELDS")
+        )
+        dimension_fields = set(
+            assigned_literal(texts.get("planning", ""), "DIMENSION_REVIEW_FIELDS")
+        )
+        semantic_gap_fields = set(
+            assigned_literal(texts.get("planning", ""), "SEMANTIC_GAP_FIELDS")
+        )
+        design_blocked_gap_fields = set(
+            assigned_literal(texts.get("planning", ""), "DESIGN_BLOCKED_GAP_FIELDS")
+        )
+        program_authority_text = texts.get("program-design-authority", "")
+        filename_definition = re.match(
+            r"\A# Program Design authority evidence\n\n`([^`]+)` is the one exact run-relative envelope\.",
+            program_authority_text,
+        )
+        defined_program_review_reference = (
+            filename_definition.group(1) if filename_definition else None
+        )
+        program_authority_maps = json_maps(program_authority_text)
+    except (SyntaxError, ValueError, TypeError, json.JSONDecodeError) as exc:
+        findings.append(("cross", f"Program Design authority schema seam is unreadable: {exc}"))
+    else:
+        program_envelopes = [
+            item
+            for item in program_authority_maps
+            if {"candidate_version", "repository_baselines", "semantic_review"}.issubset(item)
+        ]
+        program_envelope = program_envelopes[0] if len(program_envelopes) == 1 else {}
+        program_semantic = (
+            program_envelope.get("semantic_review")
+            if isinstance(program_envelope, dict)
+            else None
+        )
+        program_rows = (
+            program_semantic.get("dimensions")
+            if isinstance(program_semantic, dict)
+            else None
+        )
+        program_baselines = (
+            program_envelope.get("repository_baselines")
+            if isinstance(program_envelope, dict)
+            else None
+        )
+        blocked_gap_maps = [
+            item for item in program_authority_maps if set(item) == semantic_gap_fields
+        ]
+        design_blocked_gap_maps = [
+            item for item in program_authority_maps if set(item) == design_blocked_gap_fields
+        ]
+        if (
+            program_review_reference != "reviews/program-design-v1.json"
+            or defined_program_review_reference != program_review_reference
+        ):
+            findings.append(
+                ("cross", "Program Design authority filename is not exact across controller and reference")
+            )
+        if set(program_envelope) != program_review_fields:
+            findings.append(("cross", "Program Design authority envelope does not match planning schema"))
+        if not isinstance(program_semantic, dict) or set(program_semantic) != semantic_fields:
+            findings.append(
+                ("cross", "Program Design semantic review reference does not match planning schema")
+            )
+        if (
+            not isinstance(program_rows, list)
+            or len(program_rows) != len(program_dimensions)
+            or any(
+                not isinstance(row, dict) or set(row) != dimension_fields
+                for row in program_rows
+            )
+            or {row.get("dimension") for row in program_rows} != set(program_dimensions)
+        ):
+            findings.append(
+                ("cross", "Program Design semantic review dimensions do not match the exact Stage 4 identifiers")
+            )
+        if len(blocked_gap_maps) != 1:
+            findings.append(
+                ("cross", "Program Design BLOCKED gap reference does not match planning schema")
+            )
+        if len(design_blocked_gap_maps) != 1:
+            findings.append(
+                ("cross", "Program Design DESIGN_BLOCKED gap reference does not match planning schema")
+            )
+        portable_authority_contract = (
+            "Baselines are exact portable effective repository/full-canonical-OID pairs",
+            "Acceptance records those exact portable pairs",
+            "never a machine-local source path",
+            "Missing local bindings, objects, submodule content, or Git LFS content are mechanical `BLOCKED`, not `DESIGN_BLOCKED`",
+        )
+        if (
+            not isinstance(program_baselines, list)
+            or not program_baselines
+            or any(
+                not isinstance(item, dict)
+                or set(item) != {"repository", "baseline"}
+                or not isinstance(item.get("repository"), str)
+                or not isinstance(item.get("baseline"), str)
+                or re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", item["baseline"]) is None
+                for item in program_baselines
+            )
+            or any(clause not in program_authority_text for clause in portable_authority_contract)
+        ):
+            findings.append(("cross", "Program Design portable repository baseline authority is incomplete"))
+
     for name in ("system-design", "control-planning"):
         count = len(texts.get(name, "").splitlines())
         if not 70 <= count <= 110:
@@ -460,7 +1001,27 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "do not rerun Product Closure", "After a successful Product Closure transition",
             "re-read `planning-control.json`", "discovery never starts execution",
         ],
-        "setup": ["atomic contract-plus-code commits", "third parent of this file", "<atlas-plugin-root>/requirements.txt"],
+        "setup": [
+            "atomic contract-plus-code commits", "third parent of this file",
+            "<atlas-plugin-root>/requirements.txt", "references/installed-host-calibration.md",
+        ],
+        "installed-host-calibration": [
+            "installation bytes", "deterministic runtime readiness", "host recognition",
+            "skill discovery", "procedure completion",
+            "cross-skill handoff", "dated calibration", "PASS/FAIL/UNVERIFIED",
+            "session.skills_loaded", "tools/atlas_planning.py",
+            "tools/atlas_repository.py",
+            "using that same launcher",
+            "Without this run plus oracle, procedure completion is `UNVERIFIED`",
+            "without changing a byte-equality PASS",
+        ],
+        "program-design-blocked": [
+            "producer pre-readiness", "reviewer evidence", "`planning-control.json` remains `PENDING`",
+            "no supported reopen or replacement-acceptance path",
+            "frozen repository baseline cannot be located and read",
+            "does not decide where a future repository binding lives",
+            "Do not prescribe a `run.yaml` field, Stage 0 amendment/effective-configuration field",
+        ],
         "spike": ["no executable spike runner", "agent-enforced procedure", "state confidence"],
         "spike-findings": ["**Confidence:**"],
     }
@@ -533,6 +1094,8 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         "recover_transaction": "transaction replay machinery is not part of Stage 0–2",
         "write_files_atomic": "multi-file transaction machinery is not part of Stage 0–2",
         "<planning-root>/<project>/runs": "feature layout is fixed beneath planning root",
+        "repository_baselines: []": "stale pre-D-081 repository contract",
+        "unratified repository-binding/baseline-reader mechanism": "stale pre-D-081 repository contract",
     }
     for phrase, reason in banned.items():
         if phrase.lower() in joined.lower():

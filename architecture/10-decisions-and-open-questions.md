@@ -270,6 +270,25 @@ contracts.
 
 ---
 
+### OQ-010 — How portable repository baselines become readable — **RESOLVED IN v0.9**
+
+D-081 adds one confirmed machine-local Git binding per stable repository identity. Portable
+artifacts retain only identity plus baseline; Program Design verifies that the baseline is the full
+canonical commit ID and reads that exact tree directly from the configured object source. No
+checkout, clone, fetch, authentication, or portable machine path is introduced.
+
+Machine bindings are excluded from the immutable run snapshot and effective configuration hash; the
+current confirmed binding is resolved per attempt against unchanged portable identity/full-baseline
+truth. New intake records a full object ID. An older abbreviation is `BLOCKED` and uses Discovery's
+existing correction only while Discovery owns the cursor; after handoff, V1 requires a corrected new
+run rather than adding downstream reopen machinery.
+
+Missing local bindings or objects are `BLOCKED` dependencies. `DESIGN_BLOCKED` remains reserved for
+an exact-inspection finding that accepted upstream truth must change. Multiple candidate sources,
+worktree materialization, and automatic submodule/LFS hydration remain deliberately deferred.
+
+---
+
 ## Suggested validation experiments before building a large orchestrator
 
 Run the process manually on 5–10 meaningful changes and record:

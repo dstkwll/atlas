@@ -288,12 +288,24 @@ The reviewer must not manufacture or fabricate approval for an omitted boundary,
 nonexistent artifact, or accept more than one branch. Any accepted System Design change makes the
 Program Design candidate and prior result stale.
 
+Before candidate readiness, resolve every effective repository identity through the one confirmed
+machine-local Git binding and verify that the recorded baseline is the source's full canonical commit
+object ID with a readable tree. Read committed tree/blob objects directly; do not substitute current
+`HEAD`, index, or working-tree bytes. Missing binding, repository, commit, tree/blob, or required
+submodule/LFS content is an ordinary non-mutating `BLOCKED` dependency result. Correct the local
+environment and retry; do not route that failure to an upstream design authority.
+
+New intake records the full canonical commit ID. A syntactically accepted abbreviation is still
+`BLOCKED` at this boundary and is never expanded silently. Discovery may use its existing accepted
+`repos` correction while it owns the cursor; after downstream handoff, V1 requires a corrected new
+run because no downstream reopen/rebind path exists.
+
 The Stage 4 judge evaluates files/packages/types, language signatures, internal state mutation and
 call graph, locking/concurrency/lifetime mechanics, migration implementation order, and test seams.
-If acceptance would require a caller, peer, or operator to adjust or would change an accepted
-guarantee, the finding belongs upstream: return `DESIGN_BLOCKED` rather than seek a human exception
-inside Stage 4. Stage 3 and Stage 4 always produce distinct outcomes; there is no joint bundle
-verdict.
+If exact baseline inspection shows that acceptance would require changing a caller, peer, or
+operator-facing contract or another accepted guarantee, the finding belongs upstream: return
+`DESIGN_BLOCKED` rather than seek a human exception inside Stage 4. Environment repair alone never
+qualifies. Stage 3 and Stage 4 always produce distinct outcomes; there is no joint bundle verdict.
 
 ---
 

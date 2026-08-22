@@ -1,6 +1,6 @@
 # atlas plugin
 
-First-party Stage 0–3 skills implementing the Atlas architecture through exact System Design participation and HUMAN/AGENT_REVIEW/HUMAN_IF_CHANGED authority paths. `architecture/` remains authoritative; report conflicts rather than silently reconciling them. The neighboring `incubator` plugin is not part of this workflow and intentionally retains its own independent example transition material.
+First-party Stage 0–4 skills implementing the Atlas architecture through exact System Design participation and frozen System/Program Design authority paths. `architecture/` remains authoritative; report conflicts rather than silently reconciling them. The neighboring `incubator` plugin is not part of this workflow and intentionally retains its own independent example transition material.
 
 ## Implemented flow
 
@@ -12,22 +12,27 @@ start-run freezes run.yaml and initializes control.json
   → system-design reads frozen agent_led/co_design participation and produces exact 30-system-design.md readiness
   → co_design writes through render_system_design.py and requires current non-authoritative 30-system-design.html
   → read-only System Design check
-  → workflow-internal control-planning applies HUMAN or assembles exact classifier/reviewer evidence
-  → atlas_planning.py records one exact acceptance and advances to the next selected boundary
-  → unsupported downstream stages remain fail-closed
+  → workflow-internal control-planning applies the exact System Design authority/evidence matrix
+  → atlas_planning.py records one exact System Design acceptance and advances when selected
+  → program-design requires readable exact frozen repository trees and one selected source; missing binding, source, exact commit/tree/blob, submodule content, or Git LFS content returns `BLOCKED`; only an exact-code contradiction requiring accepted upstream truth to change returns `DESIGN_BLOCKED`
+  → read-only Program Design mechanical check
+  → workflow-internal control-planning requires fresh Program Design review and applies AGENT_REVIEW or HUMAN authority
+  → atlas_planning.py records one exact Program Design acceptance and advances to tickets
+  → tickets remain intentionally unsupported and fail closed
 ```
 
 | Skill | Responsibility |
 |---|---|
-| `setup-atlas` | Configure the planning root. |
-| `start-run` | Accept immutable Stage 0 `run.yaml`; initialize control. |
+| `setup-atlas` | Configure the planning root and verify an installed host. |
+| `start-run` | Accept immutable Stage 0 `run.yaml`, initialize control, or resume from authoritative state. |
 | `discovery` | Maintain decisions, the living PRD, and closure preparation. |
 | `spike` | Produce bounded discovery evidence. |
 | `control-run` | Run the read-only product-closure check, consume authority, and invoke one deterministic transition. |
 | `system-design` | Produce the exact agent-led or co-design Stage 3 candidate/board, record readiness, and continue the internal control handoff. |
-| `control-planning` | Check System Design, consume the frozen authority matrix, assemble exact evidence when required, and invoke one deterministic planning transition. |
+| `program-design` | Produce the exact Stage 4 candidate, record readiness, and continue the internal control handoff. |
+| `control-planning` | Check explicit System or Program Design, consume its frozen authority matrix, assemble exact evidence when required, and invoke one deterministic planning transition. |
 
-Invoke explicitly as `atlas:<skill>`.
+Enter a normal workflow through `atlas:start-run`; implemented downstream owners route and hand off internally. A direct `atlas:<skill>` invocation is reserved for bounded entry, testing, or diagnosis.
 
 ## Planning authority
 
@@ -50,14 +55,21 @@ copilot plugin install atlas@dstkwll
 
 The deterministic controller/renderer require Python 3.9+ and the pinned packages in `requirements.txt` beside this README. Installation is explicit, never automatic. Resolve the installed plugin directory and quote it so the command works from any caller directory: `python3 -m pip install -r "<atlas-plugin-root>/requirements.txt"`.
 
+Operational references:
+
+- [`skills/setup-atlas/references/installed-host-calibration.md`](skills/setup-atlas/references/installed-host-calibration.md) separates installed bytes, deterministic runtime readiness, host recognition, discovery, procedure completion, and handoff evidence.
+- [`references/program-design-blocked.md`](references/program-design-blocked.md) preserves and classifies Program Design `BLOCKED`/`DESIGN_BLOCKED` stops without inventing a reopen path.
+
 ## Current boundary
 
-Slice 2B supports frozen `agent_led` or `co_design` participation independently of exact `HUMAN`, `AGENT_REVIEW`, or canonical `HUMAN_IF_CHANGED` policy. Direct HUMAN uses explicit approval and no envelope. Direct AGENT_REVIEW requires a fresh seven-dimension PASS envelope. HUMAN_IF_CHANGED uses the same exact D-073 dimensions: material/unavailable/explained classifier failure maps to HUMAN with review evidence plus explicit approval, while seven NOT_MATERIAL rows map to a distinct fresh semantic reviewer and AGENT_REVIEW. No configured path falls back. The producer still writes only candidate/board/readiness and hands internally to control.
+System Design retains frozen `agent_led` or `co_design` participation independently of exact `HUMAN`, `AGENT_REVIEW`, or canonical `HUMAN_IF_CHANGED` policy. Direct HUMAN uses explicit approval and no envelope. Direct AGENT_REVIEW requires a fresh seven-dimension PASS envelope. HUMAN_IF_CHANGED preserves the exact D-073 classifier/reviewer mapping. No configured path falls back, and the producer still writes only candidate/board/readiness.
 
-The user invokes `atlas:system-design` once; that producer contract requires the exact internal handoff to `atlas:control-planning`, which consumes the exact configured authority/evidence for the Markdown/hash/source and calls the deterministic transition without a second user command. This is a host-independent operating contract: human attention supplies judgment when policy requires it, never stage routing. A host adapter that cannot perform the named skill handoff must provide an equivalent internal procedure rather than expose another manual user command.
+When the live planning phase reaches System Design, Atlas enters that producer internally; it hands off to `atlas:control-planning` without a second user routing command. When the live planning phase reaches Program Design, Atlas enters the Program Design producer internally. A direct `atlas:program-design` invocation is a bounded entry point for testing or diagnosis, not a normal routing requirement. The producer reads exactly one D-079 source, writes only `40-program-design.md` readiness after exact baseline access is proven, runs the mechanical check, and performs the internal handoff with stage `program_design`. Program Design never asks a participation question and creates no HTML. Producer-discovered `DESIGN_BLOCKED` stops read-only before readiness; reviewer-discovered `DESIGN_BLOCKED` exists only in fresh `reviews/program-design-v1.json`. Neither mutates planning state.
 
-System Design rejection/reopen/staleness, Program Design, ticket compilation/acceptance, and execution remain intentionally unimplemented and fail closed for later slices. `atlas_planning.py initialize --run PATH` remains strict and refuses existing planning state. The shared handoff interface is `ensure --run PATH`: under the planning lock it initializes absent state through that strict path or validates complete existing state without mutation, and invalid/mismatched state is never overwritten. The tool also accepts `check --stage system_design` and `advance --stage system_design [--approval human] [--review reviews/system-design-v1.json] --date YYYY-MM-DD`; it does not route or own Stage 6+ behavior. The Stage 0–2 controller remains separate, never widens `control.json`, and no model router, controller, state file, renderer, manifest dependency, or revision snapshot was added.
+Program Design accepts only from a fresh exact PASS review under configured `AGENT_REVIEW` or reviewed `HUMAN`; `AUTO` and `HUMAN_IF_CHANGED` are unavailable. The existing `planning-control.json` remains the only mutable Stage 3–5 authority. `atlas_planning.py` accepts mechanical `check` and authority-matrix `advance` commands for explicit `system_design` or `program_design`; it never routes. After accepted Program Design, tickets remain intentionally unsupported: start/resume and control stop loudly because no first-party ticket producer exists.
+
+System/Program Design rejection, reopen, replacement acceptance, staleness propagation, ticket compilation/acceptance, and execution remain deferred. The shared `ensure --run PATH` handoff remains strict, idempotent, and non-overwriting. The Stage 0–2 controller remains separate; this slice adds no model router, controller, state file, renderer, manifest dependency, or revision snapshot.
 
 ## Licence
 
-MIT. See [`../incubator/LICENSE`](../incubator/LICENSE) for separately forked incubator material.
+MIT. Separately forked incubator material retains its own licence in the [repository source](https://github.com/dstkwll/atlas/blob/main/plugins/incubator/LICENSE).

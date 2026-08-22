@@ -1,0 +1,6 @@
+interface:
+  display_name: "Atlas Program Design"
+  short_description: "Produce Stage 4 and hand it to planning control"
+  default_prompt: "Use $program-design to produce the exact Atlas Program Design candidate and continue its internal control handoff."
+policy:
+  allow_implicit_invocation: false
