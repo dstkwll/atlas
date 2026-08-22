@@ -13,7 +13,7 @@ import secrets
 import stat
 import sys
 import tempfile
-from pathlib import Path, PurePosixPath
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any, Callable, Iterator, Optional
 
 import yaml
@@ -159,6 +159,16 @@ MATERIALITY_FIELDS = {"dimensions", "unavailable_reason"}
 
 def nonempty_string(value: Any) -> bool:
     return isinstance(value, str) and bool(value.strip())
+
+
+def contains_machine_local_path(value: Any) -> bool:
+    if isinstance(value, str):
+        return bool(re.search(r"(?:[A-Za-z]:[\\/]|/(?:Users|home|private|tmp|var|etc)/)", value))
+    if isinstance(value, list):
+        return any(contains_machine_local_path(item) for item in value)
+    if isinstance(value, dict):
+        return any(contains_machine_local_path(item) for item in value.values())
+    return False
 
 
 def program_design_headings(body: str) -> tuple[str, ...]:
@@ -394,6 +404,7 @@ def validate_upstream_block_review(
     planning_revision: int,
     system_acceptance: Any,
     effective: dict[str, Any],
+    repository_verification: atlas_repository.Verification,
 ) -> None:
     if not isinstance(envelope, dict) or set(envelope) != UPSTREAM_BLOCK_REVIEW_FIELDS:
         raise ControlError("Program Design upstream-block envelope does not match its exact schema")
@@ -411,6 +422,8 @@ def validate_upstream_block_review(
         or not nonempty_string(envelope.get("review_evidence"))
     ):
         raise ControlError("Program Design upstream-block evidence is not current")
+    if contains_machine_local_path(envelope):
+        raise ControlError("Program Design upstream-block evidence contains a machine-local path")
     binding = envelope.get("system_design_binding")
     if (
         not isinstance(binding, dict)
@@ -432,9 +445,10 @@ def validate_upstream_block_review(
     ):
         raise ControlError("Program Design upstream-block finding is not a System Design contradiction")
     code_evidence = finding.get("code_evidence")
-    valid_pairs = {
-        (item["repository"], item["baseline"])
-        for item in effective["repos"]
+    valid_pairs = {(item["repository"], item["baseline"]) for item in effective["repos"]}
+    repositories = {
+        repository.identity: repository
+        for repository in repository_verification.repositories
     }
     if not isinstance(code_evidence, list) or not code_evidence:
         raise ControlError("Program Design upstream-block finding requires code evidence")
@@ -447,13 +461,21 @@ def validate_upstream_block_review(
         path = PurePosixPath(relative)
         if (
             (item.get("repository"), item.get("baseline")) not in valid_pairs
+            or item.get("repository") not in repositories
             or path.is_absolute()
+            or PureWindowsPath(relative).is_absolute()
             or not path.parts
             or any(part in {"", ".", ".."} for part in path.parts)
             or "\\" in relative
             or not nonempty_string(item.get("evidence"))
         ):
             raise ControlError("Program Design upstream-block code evidence is not portable or current")
+        try:
+            atlas_repository.read_tree_path(repositories[item["repository"]], relative)
+        except atlas_repository.RepositoryBlocked as exc:
+            raise ControlError(
+                f"Program Design upstream-block code evidence is unavailable: {exc.code}: {exc.problem}"
+            ) from exc
 
 
 def load_upstream_block_review_input(
@@ -461,6 +483,7 @@ def load_upstream_block_review_input(
     review_input: Path,
     planning: dict[str, Any],
     effective: dict[str, Any],
+    repository_verification: atlas_repository.Verification,
 ) -> tuple[bytes, dict[str, Any], str]:
     path = managed_path(run_dir, str(review_input))
     if not path.is_file():
@@ -478,6 +501,7 @@ def load_upstream_block_review_input(
         planning_revision=planning["revision"],
         system_acceptance=planning["acceptances"]["system_design"],
         effective=effective,
+        repository_verification=repository_verification,
     )
     return review_bytes, envelope, hashlib.sha256(review_bytes).hexdigest()
 
@@ -705,7 +729,7 @@ def expected_program_design_source(
     }
 
 
-def require_program_design_repository_access(run_dir: Path) -> None:
+def require_program_design_repository_access(run_dir: Path) -> atlas_repository.Verification:
     verification = atlas_repository.verify_run(run_dir)
     if verification.gaps:
         details = "; ".join(
@@ -715,6 +739,7 @@ def require_program_design_repository_access(run_dir: Path) -> None:
             for item in verification.gaps
         )
         raise ControlError(f"Program Design repository verification is BLOCKED: {details}")
+    return verification
 
 
 def validate_program_design_acceptance(
@@ -906,12 +931,14 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
             raise ControlError("planning-control.json repair evidence is not valid duplicate-safe JSON") from exc
         if hashlib.sha256(review_bytes).hexdigest() != blocked_reason["review_sha256"]:
             raise ControlError("planning-control.json repair evidence hash is not current")
+        repository_verification = require_program_design_repository_access(run_dir)
         validate_upstream_block_review(
             envelope,
             run=planning["run"],
             planning_revision=blocked_reason["started_from_revision"],
             system_acceptance=blocked_reason["superseded_system_design"],
             effective=effective,
+            repository_verification=repository_verification,
         )
         if envelope["verdict"] != "CONFIRMED_UPSTREAM_CONTRADICTION":
             raise ControlError("planning-control.json repair evidence is not confirmed")
@@ -1110,9 +1137,9 @@ def return_to_system_design(run_dir: Path, review_input: Path) -> str:
     expected_source = expected_program_design_source(planning, effective)
     if expected_source.get("kind") != "system_design":
         raise ControlError("upstream repair supports only selected System Design")
-    require_program_design_repository_access(run_dir)
+    repository_verification = require_program_design_repository_access(run_dir)
     review_bytes, envelope, review_sha256 = load_upstream_block_review_input(
-        run_dir, review_input, planning, effective
+        run_dir, review_input, planning, effective, repository_verification
     )
     if envelope["verdict"] != "CONFIRMED_UPSTREAM_CONTRADICTION":
         raise ControlError(f"upstream contradiction review is {envelope['verdict']}")
@@ -1135,9 +1162,9 @@ def return_to_system_design(run_dir: Path, review_input: Path) -> str:
 
     def revalidate_immediately_before_replace() -> None:
         current, _, current_effective = verified_planning_state(run_dir)
-        require_program_design_repository_access(run_dir)
+        current_repository_verification = require_program_design_repository_access(run_dir)
         current_bytes, current_envelope, current_sha256 = load_upstream_block_review_input(
-            run_dir, review_input, current, current_effective
+            run_dir, review_input, current, current_effective, current_repository_verification
         )
         if (
             current != planning

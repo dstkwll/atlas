@@ -3035,6 +3035,15 @@ class AtlasPlanningTests(unittest.TestCase):
         def machine_path(envelope):
             envelope["finding"]["code_evidence"][0]["path"] = "/machine/private.py"
 
+        def windows_machine_path(envelope):
+            envelope["finding"]["code_evidence"][0]["path"] = "C:/Users/alice/private.py"
+
+        def nonexistent_path(envelope):
+            envelope["finding"]["code_evidence"][0]["path"] = "does-not-exist.py"
+
+        def prose_machine_path(envelope):
+            envelope["review_evidence"] = "Confirmed from /Users/alice/private.py"
+
         def unknown_verdict(envelope):
             envelope["verdict"] = "MAYBE"
 
@@ -3045,6 +3054,9 @@ class AtlasPlanningTests(unittest.TestCase):
             ("wrong-repositories", wrong_repositories),
             ("wrong-source", wrong_source),
             ("machine-path", machine_path),
+            ("windows-machine-path", windows_machine_path),
+            ("nonexistent-path", nonexistent_path),
+            ("prose-machine-path", prose_machine_path),
             ("unknown-verdict", unknown_verdict),
         ):
             with self.subTest(case=name), tempfile.TemporaryDirectory() as td:
