@@ -2969,6 +2969,9 @@ class AtlasPlanningTests(unittest.TestCase):
             control_before = (run / "control.json").read_bytes()
             run_before = (run / "run.yaml").read_bytes()
             system_before = (run / "30-system-design.md").read_bytes()
+            program_path = run / "40-program-design.md"
+            program_path.write_text("provisional Program Design bytes\n", encoding="utf-8")
+            program_before = program_path.read_bytes()
             acceptance_before = planning["acceptances"]["system_design"]
 
             result = planning_cli(
@@ -2997,6 +3000,7 @@ class AtlasPlanningTests(unittest.TestCase):
             self.assertEqual((run / "control.json").read_bytes(), control_before)
             self.assertEqual((run / "run.yaml").read_bytes(), run_before)
             self.assertEqual((run / "30-system-design.md").read_bytes(), system_before)
+            self.assertEqual(program_path.read_bytes(), program_before)
 
     def test_not_confirmed_and_unavailable_upstream_reviews_do_not_mutate_state(self):
         for verdict in ("NOT_CONFIRMED", "UNAVAILABLE"):
@@ -3019,6 +3023,9 @@ class AtlasPlanningTests(unittest.TestCase):
     def test_upstream_review_rejects_malformed_stale_and_wrong_source_evidence(self):
         def add_extra(envelope):
             envelope["extra"] = True
+
+        def add_candidate_binding(envelope):
+            envelope["candidate_sha256"] = "0" * 64
 
         def stale_revision(envelope):
             envelope["planning_revision"] -= 1
@@ -3049,6 +3056,7 @@ class AtlasPlanningTests(unittest.TestCase):
 
         for name, mutate in (
             ("extra", add_extra),
+            ("candidate-binding", add_candidate_binding),
             ("stale-revision", stale_revision),
             ("wrong-system", wrong_system),
             ("wrong-repositories", wrong_repositories),
@@ -3234,6 +3242,101 @@ class AtlasPlanningTests(unittest.TestCase):
                     "repair episode|does not bind current System Design",
                 ):
                     PLANNING.load_planning_control(run)
+
+    def test_upstream_review_input_rejects_duplicate_keys_escape_and_symlink(self):
+        for case in ("duplicate", "escape", "symlink"):
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as td:
+                root = Path(td)
+                run = root / "run"
+                run.mkdir()
+                planning = initialize_program_after_system(run)
+                review_input = write_upstream_block_review_input(run, planning)
+                if case == "duplicate":
+                    text = review_input.read_text(encoding="utf-8")
+                    review_input.write_text(
+                        text.replace('  "run": "demo",', '  "run": "demo",\n  "run": "demo",', 1),
+                        encoding="utf-8",
+                    )
+                    argument = review_input.relative_to(run)
+                else:
+                    outside = root / "outside.json"
+                    outside.write_bytes(review_input.read_bytes())
+                    if case == "escape":
+                        argument = Path("../outside.json")
+                    else:
+                        review_input.unlink()
+                        review_input.symlink_to(outside)
+                        argument = review_input.relative_to(run)
+                planning_before = (run / "planning-control.json").read_bytes()
+
+                result = planning_cli(
+                    "return-upstream", "--run", run, "--review-input", argument,
+                )
+
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
+                self.assertFalse((run / "reviews" / "program-design-upstream-block-v1.json").exists())
+
+    def test_return_rejects_unsupported_sources_and_accepted_program_design(self):
+        for source_kind in ("stage0", "product_closure", "accepted_program_design"):
+            with self.subTest(source_kind=source_kind), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                if source_kind == "stage0":
+                    planning = initialize_direct_program(run)
+                    review_input = run / "reviews" / ".upstream-input.json"
+                    review_input.parent.mkdir()
+                    review_input.write_text("{}\n", encoding="utf-8")
+                elif source_kind == "product_closure":
+                    initialize_product_program(run)
+                    planning = json.loads((run / "planning-control.json").read_text(encoding="utf-8"))
+                    review_input = run / "reviews" / ".upstream-input.json"
+                    review_input.parent.mkdir(exist_ok=True)
+                    review_input.write_text("{}\n", encoding="utf-8")
+                else:
+                    initialize_program_source(run, "system_design")
+                    planning = json.loads((run / "planning-control.json").read_text(encoding="utf-8"))
+                    write_program_review(run, policy="AGENT_REVIEW")
+                    accepted = planning_cli(
+                        "advance", "--run", run, "--stage", "program_design",
+                        "--review", "reviews/program-design-v1.json", "--date", "2026-08-22",
+                    )
+                    self.assertEqual(accepted.returncode, 0, accepted.stderr)
+                    planning = json.loads((run / "planning-control.json").read_text(encoding="utf-8"))
+                    review_input = write_upstream_block_review_input(run, planning)
+                planning_before = (run / "planning-control.json").read_bytes()
+
+                result = planning_cli(
+                    "return-upstream", "--run", run,
+                    "--review-input", review_input.relative_to(run),
+                )
+
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
+
+    def test_concurrent_return_requests_have_exactly_one_winner(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            planning = initialize_program_after_system(run)
+            review_input = write_upstream_block_review_input(run, planning)
+            command = [
+                sys.executable,
+                str(PLANNING_CLI),
+                "return-upstream",
+                "--run",
+                str(run),
+                "--review-input",
+                str(review_input.relative_to(run)),
+            ]
+            first = subprocess.Popen(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            second = subprocess.Popen(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            first_output = first.communicate(timeout=30)
+            second_output = second.communicate(timeout=30)
+
+            self.assertEqual(sorted((first.returncode, second.returncode)), [0, 1], (first_output, second_output))
+            updated = PLANNING.load_planning_control(run)
+            self.assertEqual((updated["status"], updated["phase"]), ("BLOCKED", "system_design"))
+            canonical = run / "reviews" / "program-design-upstream-block-v1.json"
+            self.assertEqual(canonical.read_bytes(), review_input.read_bytes())
 
 
 if __name__ == "__main__":
