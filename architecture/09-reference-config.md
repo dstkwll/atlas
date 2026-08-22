@@ -2,11 +2,15 @@
 
 Most of this document is intentionally illustrative rather than a frozen schema. It tests how **workflow, governance, execution, environment, and roster** remain separate dimensions, with optional presets for convenience.
 
-One interface is stable in V1 because the planning skills already consume it:
+Two interfaces are stable in V1 because planning skills now consume them:
 
 ```yaml
 artifacts:
   planning_root: .planning
+
+repositories:
+  bindings:
+    "stable-repository-id": /absolute/path/to/local-git-source
 ```
 
 `artifacts.planning_root` is a supported configuration key. Its value remains configurable per machine:
@@ -15,6 +19,17 @@ artifacts:
 - or an absolute path / already-usable local checkout of a planning repository.
 
 The default is `.planning`. Changing the key or its resolution semantics requires an explicit version or migration rather than an illustrative edit.
+
+`repositories.bindings` is the second supported machine-local interface. It maps each stable
+repository identity to exactly one absolute path naming an already-usable local Git repository or
+object source. The path never enters portable artifacts. A binding is established once with explicit
+confirmation and then reused; remote URLs may suggest a candidate but never silently create or
+change a binding. Resolution is read-only and does not clone, fetch, authenticate, checkout,
+materialize a worktree, initialize submodules, or hydrate Git LFS content.
+
+Bindings are environment routing, not resolved run policy. `run.yaml` and `effective_config_hash`
+exclude `repositories.bindings`; each repository-inspection/check/acceptance attempt reads the
+current confirmed machine binding and still requires the exact full portable baseline commit/tree.
 
 The layout beneath a run is fixed by `03-artifact-model.md`. In particular, evidence lives at `<run>/evidence/` and spikes at `<run>/spikes/`; they are not separate configuration knobs in V1. Other keys below remain illustrative until a real consumer earns and stabilizes them.
 

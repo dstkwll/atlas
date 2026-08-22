@@ -2,7 +2,7 @@
 
 **Version introduced:** v0.4
 
-**Snapshot date:** 2026-08-20
+**Snapshot date:** 2026-08-22
 
 **Purpose:** Preserve architectural integrity as the project evolves across long conversations, different agents/sessions, external reference reviews, and Git-backed implementation.
 
@@ -1078,6 +1078,13 @@ The planning effort also preserves the relevant baseline for **each** affected r
 
 `repos` and their planning baselines are **descriptive planning metadata**. They record what a body of work concerns. They grant no access, and they do not widen any agent's write scope.
 
+Before a stage may inspect repository bytes, D-081 resolves each stable identity through the
+machine-local `repositories.bindings` configuration. The binding is not copied into any run artifact.
+It names one already-usable local Git repository/object source, from which Atlas verifies and reads
+the exact full baseline commit tree directly. Current `HEAD`, index, and working-tree bytes are only
+drift context and never baseline authority. Missing local access is `BLOCKED`; a contradiction found
+after exact inspection is `DESIGN_BLOCKED` only when accepted upstream truth must change.
+
 ### Planning scope is not execution scope
 
 One planning effort may describe work spanning several repositories. Factory execution remains **repository-scoped**:
@@ -1123,6 +1130,11 @@ Contains:
 - planning baseline for each affected repository
 
 Do not rely on changing global config to reconstruct historical behavior.
+
+Machine-local `repositories.bindings` is the deliberate exception to resolved-config snapshotting:
+its paths are excluded from `run.yaml` and `effective_config_hash`, then resolved fresh on each
+repository-inspection/check/acceptance attempt. The portable identity plus full baseline commit is
+the stable truth; the current binding is only an environment route to those exact bytes.
 
 ---
 
@@ -2412,12 +2424,24 @@ The reviewer must not manufacture or fabricate approval for an omitted boundary,
 nonexistent artifact, or accept more than one branch. Any accepted System Design change makes the
 Program Design candidate and prior result stale.
 
+Before candidate readiness, resolve every effective repository identity through the one confirmed
+machine-local Git binding and verify that the recorded baseline is the source's full canonical commit
+object ID with a readable tree. Read committed tree/blob objects directly; do not substitute current
+`HEAD`, index, or working-tree bytes. Missing binding, repository, commit, tree/blob, or required
+submodule/LFS content is an ordinary non-mutating `BLOCKED` dependency result. Correct the local
+environment and retry; do not route that failure to an upstream design authority.
+
+New intake records the full canonical commit ID. A syntactically accepted abbreviation is still
+`BLOCKED` at this boundary and is never expanded silently. Discovery may use its existing accepted
+`repos` correction while it owns the cursor; after downstream handoff, V1 requires a corrected new
+run because no downstream reopen/rebind path exists.
+
 The Stage 4 judge evaluates files/packages/types, language signatures, internal state mutation and
 call graph, locking/concurrency/lifetime mechanics, migration implementation order, and test seams.
-If acceptance would require a caller, peer, or operator to adjust or would change an accepted
-guarantee, the finding belongs upstream: return `DESIGN_BLOCKED` rather than seek a human exception
-inside Stage 4. Stage 3 and Stage 4 always produce distinct outcomes; there is no joint bundle
-verdict.
+If exact baseline inspection shows that acceptance would require changing a caller, peer, or
+operator-facing contract or another accepted guarantee, the finding belongs upstream: return
+`DESIGN_BLOCKED` rather than seek a human exception inside Stage 4. Environment repair alone never
+qualifies. Stage 3 and Stage 4 always produce distinct outcomes; there is no joint bundle verdict.
 
 ---
 
@@ -2975,11 +2999,15 @@ The architecture should make these answers emergent from stored evidence rather 
 
 Most of this document is intentionally illustrative rather than a frozen schema. It tests how **workflow, governance, execution, environment, and roster** remain separate dimensions, with optional presets for convenience.
 
-One interface is stable in V1 because the planning skills already consume it:
+Two interfaces are stable in V1 because planning skills now consume them:
 
 ```yaml
 artifacts:
   planning_root: .planning
+
+repositories:
+  bindings:
+    "stable-repository-id": /absolute/path/to/local-git-source
 ```
 
 `artifacts.planning_root` is a supported configuration key. Its value remains configurable per machine:
@@ -2988,6 +3016,17 @@ artifacts:
 - or an absolute path / already-usable local checkout of a planning repository.
 
 The default is `.planning`. Changing the key or its resolution semantics requires an explicit version or migration rather than an illustrative edit.
+
+`repositories.bindings` is the second supported machine-local interface. It maps each stable
+repository identity to exactly one absolute path naming an already-usable local Git repository or
+object source. The path never enters portable artifacts. A binding is established once with explicit
+confirmation and then reused; remote URLs may suggest a candidate but never silently create or
+change a binding. Resolution is read-only and does not clone, fetch, authenticate, checkout,
+materialize a worktree, initialize submodules, or hydrate Git LFS content.
+
+Bindings are environment routing, not resolved run policy. `run.yaml` and `effective_config_hash`
+exclude `repositories.bindings`; each repository-inspection/check/acceptance attempt reads the
+current confirmed machine binding and still requires the exact full portable baseline commit/tree.
 
 The layout beneath a run is fixed by `03-artifact-model.md`. In particular, evidence lives at `<run>/evidence/` and spikes at `<run>/spikes/`; they are not separate configuration knobs in V1. Other keys below remain illustrative until a real consumer earns and stabilizes them.
 
@@ -3523,6 +3562,25 @@ Still intentionally open:
 
 Autonomy can increase without merging acceptance authority into execution or changing artifact
 contracts.
+
+---
+
+### OQ-010 — How portable repository baselines become readable — **RESOLVED IN v0.9**
+
+D-081 adds one confirmed machine-local Git binding per stable repository identity. Portable
+artifacts retain only identity plus baseline; Program Design verifies that the baseline is the full
+canonical commit ID and reads that exact tree directly from the configured object source. No
+checkout, clone, fetch, authentication, or portable machine path is introduced.
+
+Machine bindings are excluded from the immutable run snapshot and effective configuration hash; the
+current confirmed binding is resolved per attempt against unchanged portable identity/full-baseline
+truth. New intake records a full object ID. An older abbreviation is `BLOCKED` and uses Discovery's
+existing correction only while Discovery owns the cursor; after handoff, V1 requires a corrected new
+run rather than adding downstream reopen machinery.
+
+Missing local bindings or objects are `BLOCKED` dependencies. `DESIGN_BLOCKED` remains reserved for
+an exact-inspection finding that accepted upstream truth must change. Multiple candidate sources,
+worktree materialization, and automatic submodule/LFS hydration remain deliberately deferred.
 
 ---
 
@@ -5821,6 +5879,39 @@ internal mechanism rather than shift orchestration to the user.
 
 ---
 
+## L-021 — Repository identity is not repository access, and environment failure is not design failure
+
+### Contradiction found
+
+The first real Program Design implementation repeated the frozen repository identity and baseline in
+its evidence while inspecting a nearby checkout. Canonical architecture already said those fields
+were descriptive and granted no access. The implementation therefore had no lawful identity-to-byte
+resolution mechanism, and current `HEAD`/worktree could silently stand in for the frozen baseline.
+
+### Course correction
+
+The first stop correctly treated the missing resolver contract as an architecture contradiction, but
+then over-generalized: it described a future machine that lacked a configured source or commit as
+`DESIGN_BLOCKED`. External review separated the two propositions. Absence of a system-wide resolver
+contract is a design gap; absence of a local dependency after that contract exists is ordinary
+`BLOCKED`.
+
+### Standing result
+
+Portable runs record stable identity plus baseline. A confirmed machine-local binding resolves that
+identity to one already-usable Git object source, and Program Design reads the exact full commit tree
+without touching the current checkout. Missing mapping/object/content is `BLOCKED`; only a
+code-grounded need to change accepted upstream truth is `DESIGN_BLOCKED`. Never dress setup failure
+as an architectural finding, and never dress an architectural contradiction as setup work.
+
+The machine binding is intentionally absent from portable resolved configuration and its hash. It is
+re-read per attempt because two machines may reach the same immutable Git commit through different
+paths. Conversely, an abbreviated baseline is not an environment problem that a binding can repair;
+new intake records the full ID, and an already-downstream V1 run with bad intake starts again rather
+than gaining an invented reopen path.
+
+---
+
 # 17 — Agent Roles, Rosters, Model Policy, and Outcome Telemetry
 
 **Added in:** v0.3  
@@ -6769,13 +6860,19 @@ Runtime state under `.factory/` remains scoped to the repository a run executes 
 **Refined by:** D-062 and D-064, which add one fixed planning-control file and constrain how
 the already-prescribed amendment directory is used. They add no configurable path.
 
+**Refined by:** D-081, which adds `repositories.bindings` only after Program Design became a real
+consumer of exact historical repository bytes. D-061's original scope was correct for v0.5; it is no
+longer the complete list of stable V1 configuration keys.
+
 `artifacts.planning_root` is a supported V1 configuration key. The key and its resolution semantics are stable enough for planning skills to consume; changing either requires an explicit configuration version or migration rather than an edit to an illustrative example.
 
 Its **value remains configurable per machine**. A repository-relative value resolves from the repository root; an absolute value names an already-usable local directory or checkout. The default remains `.planning`.
 
-Only the root location is configurable. The artifact layout beneath a run remains fixed by `03-artifact-model.md`: evidence lives at `<run>/evidence/`, spikes at `<run>/spikes/`, and other run artifacts retain their prescribed names. `evidence_dir` and `spikes_dir` are therefore not V1 configuration interfaces.
+Within artifact-location settings, only the root location is configurable. The artifact layout beneath a run remains fixed by `03-artifact-model.md`: evidence lives at `<run>/evidence/`, spikes at `<run>/spikes/`, and other run artifacts retain their prescribed names. `evidence_dir` and `spikes_dir` are therefore not V1 configuration interfaces. D-081's repository binding is environment routing, not an artifact-location setting.
 
-The remainder of `09-reference-config.md` stays illustrative until a real consumer earns and stabilizes another key. This keeps the current interface small: freeze what has callers, not the whole design sketch.
+Except for D-081's `repositories.bindings`, the remainder of `09-reference-config.md` stays
+illustrative until a real consumer earns and stabilizes another key. This keeps the current interface
+small: freeze what has callers, not the whole design sketch.
 
 ---
 
@@ -7254,3 +7351,104 @@ earn reopening that baseline later.
 > **Keep all pre-execution contract acceptance and staleness under one bounded deterministic owner;
 > hand execution one exact accepted ticket graph; and never let execution create the authority it is
 > required to verify.**
+
+---
+
+# 24 — v0.9 Decisions
+
+v0.9 closes the repository-grounding seam exposed when Program Design first had to inspect exact
+historical code. Portable repository identity and baseline metadata identify the required bytes, but
+do not themselves make those bytes readable on a machine.
+
+---
+
+## D-081 — Machine-local Git bindings resolve portable repository baselines
+
+Atlas resolves each stable repository identity through one **machine-local Git binding**. The
+portable planning record remains the exact repository identity plus its baseline commit; no
+machine-local path enters `run.yaml`, either control file, a candidate, review evidence, or another
+portable artifact.
+
+The supported V1 machine configuration key is:
+
+```yaml
+repositories:
+  bindings:
+    "stable-repository-id": /absolute/path/to/local-git-source
+```
+
+Each identity has exactly one binding. Its value is an absolute path to an already-usable local Git
+repository or object source; it need not be a working tree and need not have the baseline checked
+out. The confirmed binding itself is the machine-local authority for identity-to-source resolution.
+A remote URL may help `setup-atlas` propose a binding, but remote-name inference never silently
+creates or changes one. Setup shows the exact identity/source pair and obtains confirmation once;
+normal runs then reuse it without asking again.
+
+Before Program Design readiness, the deterministic repository reader resolves every effective
+repository/baseline pair and requires all of the following:
+
+1. the stable identity has one exact configured binding;
+2. the configured path is absolute, exists without symlink substitution, and is a readable Git
+   repository/object source;
+3. the baseline names a commit object and is already the repository's full canonical object ID;
+4. that exact commit and its tree are locally readable; and
+5. baseline inspection reads committed tree/blob objects directly, never current `HEAD`, index, or
+   working-tree bytes.
+
+Existing Stage 0–2 `control.json` and downstream `planning-control.json` are unchanged. New intake
+**must** record the full object ID. The existing Stage 0 schema may still recognize a syntactically
+abbreviated baseline, but Stage 4 resolution does not canonicalize or silently expand it: an
+abbreviation cannot satisfy the full-object equality check and returns `BLOCKED`. While Discovery
+still owns the cursor, its existing accepted `repos` intake-correction path may replace the bad
+baseline. Once a downstream phase owns the cursor, V1 has no reopen/amendment path; create a corrected
+new run. D-081 does not invent downstream rebind mechanics to preserve an invalid old intake.
+
+`repositories.bindings` is deliberately excluded from `run.yaml`, both control files, candidate and
+review evidence, and `effective_config_hash`. It is resolved from current confirmed machine config on
+every repository-inspection/check/acceptance attempt. Changing the bound source changes no portable
+truth: the attempt proceeds only when that source contains the same exact full baseline commit/tree.
+
+Repository resolution and reading are non-mutating. Atlas does not clone, fetch, authenticate,
+checkout, switch branches, create worktrees, install Git LFS content, initialize submodules, or
+provision repositories. Git submodule entries and Git LFS pointer blobs are not the referenced
+content. The reader must identify them before their content is treated as grounding; if Program
+Design requires unavailable referenced content, the attempt is `BLOCKED` rather than silently
+grounded on a pointer.
+
+Failure classification is deliberately split:
+
+- **`BLOCKED` dependency/intake defect:** missing binding, missing/unreadable source, non-Git source,
+  identity or full-object mismatch, unavailable commit/tree/blob, required submodule/LFS content, or
+  an abbreviated baseline. Correct machine-local dependencies and retry; correct an invalid portable
+  baseline only through the already-legal intake path or a new run.
+- **`DESIGN_BLOCKED`:** after exact baseline inspection, realizing the accepted upstream design would
+  require changing an accepted commitment, guarantee, caller/peer/operator contract, or missing
+  upstream truth. Return to the applicable upstream authority; no local configuration repair can
+  resolve it.
+
+Neither result writes acceptance. The Stage 4 acceptance gate remains `PENDING`—which records absence
+of acceptance, not the failure classification—while the structured result reports `BLOCKED` or
+`DESIGN_BLOCKED`. Environment repair never masquerades as an architecture finding, and a true
+upstream contradiction never masquerades as setup work.
+
+### Rejected or deferred alternatives
+
+- **Machine paths in portable artifacts:** rejected because the same run must remain portable.
+- **Current checkout as baseline authority:** rejected because `HEAD` and working-tree bytes may have
+  drifted from the planned commit.
+- **Automatic binding from Git remotes:** rejected because a heuristic cannot silently acquire
+  machine-configuration authority.
+- **Multiple candidate sources per identity:** deferred; one binding is sufficient for the current
+  use case and avoids selection policy.
+- **Checkout/worktree materialization:** deferred until a concrete Program Design operation cannot use
+  direct Git object reads.
+- **Clone/fetch/authentication and submodule/LFS hydration:** outside V1; operators may satisfy those
+  dependencies independently.
+
+---
+
+## v0.9 north star
+
+> **Keep repository identity and baseline portable; bind them once per machine to an already-usable
+> Git object source; read the exact committed tree without disturbing the checkout; and distinguish a
+> missing local dependency from an upstream design contradiction.**

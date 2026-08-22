@@ -876,3 +876,36 @@ handoffs. Atlas may interrupt only when the required answer genuinely belongs to
 policy requires explicit human authority. The user supplies judgment; Atlas supplies orchestration.
 If a host cannot perform a named skill-to-skill handoff, the implementation must provide another
 internal mechanism rather than shift orchestration to the user.
+
+---
+
+## L-021 — Repository identity is not repository access, and environment failure is not design failure
+
+### Contradiction found
+
+The first real Program Design implementation repeated the frozen repository identity and baseline in
+its evidence while inspecting a nearby checkout. Canonical architecture already said those fields
+were descriptive and granted no access. The implementation therefore had no lawful identity-to-byte
+resolution mechanism, and current `HEAD`/worktree could silently stand in for the frozen baseline.
+
+### Course correction
+
+The first stop correctly treated the missing resolver contract as an architecture contradiction, but
+then over-generalized: it described a future machine that lacked a configured source or commit as
+`DESIGN_BLOCKED`. External review separated the two propositions. Absence of a system-wide resolver
+contract is a design gap; absence of a local dependency after that contract exists is ordinary
+`BLOCKED`.
+
+### Standing result
+
+Portable runs record stable identity plus baseline. A confirmed machine-local binding resolves that
+identity to one already-usable Git object source, and Program Design reads the exact full commit tree
+without touching the current checkout. Missing mapping/object/content is `BLOCKED`; only a
+code-grounded need to change accepted upstream truth is `DESIGN_BLOCKED`. Never dress setup failure
+as an architectural finding, and never dress an architectural contradiction as setup work.
+
+The machine binding is intentionally absent from portable resolved configuration and its hash. It is
+re-read per attempt because two machines may reach the same immutable Git commit through different
+paths. Conversely, an abbreviated baseline is not an environment problem that a binding can repair;
+new intake records the full ID, and an already-downstream V1 run with bad intake starts again rather
+than gaining an invented reopen path.

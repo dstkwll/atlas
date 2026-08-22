@@ -6,10 +6,10 @@ The numbered documents are authoritative. `rolling-monolith.md` is generated fro
 
 ## Current baseline
 
-**v0.8** gives System Design, Program Design, and compiled ticket-graph acceptance one bounded
-downstream planning controller. It makes Stage 5 the final pre-execution planning boundary and
-hands execution one exact accepted graph without adding a separate compiler controller or widening
-runtime authority. It builds on v0.7's paired System Design / Program Design architecture.
+**v0.9** gives portable repository identities one confirmed machine-local Git binding and makes
+Program Design read the exact full baseline commit tree without depending on current `HEAD` or the
+working tree. Missing local access is `BLOCKED`; a code-grounded upstream contradiction remains
+`DESIGN_BLOCKED`. It builds on v0.8's bounded downstream planning controller.
 
 ## Change discipline
 

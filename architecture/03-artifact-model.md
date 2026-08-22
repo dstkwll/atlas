@@ -57,6 +57,13 @@ The planning effort also preserves the relevant baseline for **each** affected r
 
 `repos` and their planning baselines are **descriptive planning metadata**. They record what a body of work concerns. They grant no access, and they do not widen any agent's write scope.
 
+Before a stage may inspect repository bytes, D-081 resolves each stable identity through the
+machine-local `repositories.bindings` configuration. The binding is not copied into any run artifact.
+It names one already-usable local Git repository/object source, from which Atlas verifies and reads
+the exact full baseline commit tree directly. Current `HEAD`, index, and working-tree bytes are only
+drift context and never baseline authority. Missing local access is `BLOCKED`; a contradiction found
+after exact inspection is `DESIGN_BLOCKED` only when accepted upstream truth must change.
+
 ### Planning scope is not execution scope
 
 One planning effort may describe work spanning several repositories. Factory execution remains **repository-scoped**:
@@ -102,6 +109,11 @@ Contains:
 - planning baseline for each affected repository
 
 Do not rely on changing global config to reconstruct historical behavior.
+
+Machine-local `repositories.bindings` is the deliberate exception to resolved-config snapshotting:
+its paths are excluded from `run.yaml` and `effective_config_hash`, then resolved fresh on each
+repository-inspection/check/acceptance attempt. The portable identity plus full baseline commit is
+the stable truth; the current binding is only an environment route to those exact bytes.
 
 ---
 
