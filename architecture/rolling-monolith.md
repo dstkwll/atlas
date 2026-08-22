@@ -828,6 +828,34 @@ Program Design always has semantic questions and therefore never uses raw `AUTO`
 standard authority is `AGENT_REVIEW`; `HUMAN` remains available under governance or high assurance.
 An independent fresh review remains mandatory.
 
+### Bounded selected-System-Design repair
+
+D-082 adds one exception to forward-only Stage 4 progression. While Program Design is `PENDING`, has
+null acceptance, and is bound to currently accepted System Design, exact frozen repository evidence
+may prove that the accepted commitment cannot be faithfully realized without changing it. Producer
+prose or `DESIGN_BLOCKED` alone cannot route the run. `control-planning` must obtain the independent
+`reviews/program-design-upstream-block-v1.json` judgment; only
+`CONFIRMED_UPSTREAM_CONTRADICTION` authorizes the existing downstream controller to mutate state.
+
+That mutation is one atomic invalidation-and-replacement transition, not rollback or reopen: status
+becomes `BLOCKED`, phase returns to `system_design`, the System Design gate becomes `STALE`, its old
+acceptance remains auditable but non-current, Program Design remains `PENDING` with null acceptance,
+the bounded episode is recorded in the existing `blocked_reason`, and revision increments once.
+
+The System Design producer may then create exactly version `N+1` with a different hash and the same
+still-current source binding. It receives fresh checks, fresh review/classification when configured,
+and the unchanged configured authority. Reacceptance advances to Program Design inside the same
+episode, but status
+remains `BLOCKED`; only fresh Program Design acceptance against N+1 clears the episode and restores
+`PLANNING`. Across replacement System Design and resumed Program Design, exactly four
+controller-authorized producer attempts are available. The controller reserves and persists each
+attempt before candidate bytes change, so a crash consumes it; reviews, controller actions, and
+approvals do not. Restarts cannot reset the budget, a second contradiction cannot nest or reset it,
+and exhaustion is loud and durable.
+
+This path does not apply to Product Closure, direct Stage 0, accepted Program Design, or Stage 5 and
+tickets. Their current fail-closed boundaries remain unchanged.
+
 A design review should explicitly challenge:
 
 - shallow wrappers
@@ -1156,9 +1184,9 @@ the next selected stage without creating mutable state for that stage.
 An accepted discovery/product-closure candidate remains in its prescribed artifact path.
 Acceptance records its current version and content hash in `control.json`; V1 does not create a
 second approved copy or retain a separate acceptance history. The Stage 0–2 controller provides no
-post-closure reopen. A version increment replaces a previously accepted candidate only through a
-future downstream reopen owner; until that owner exists, any live mismatch against an accepted
-binding fails closed (see 08 — State and Governance).
+post-closure reopen. D-082 does not alter that rule: its one replacement path is owned by the
+downstream planning controller and reaches only selected System Design from pending Program Design.
+Any live Stage 0–2 mismatch after acceptance still fails closed (see 08 — State and Governance).
 
 Stages 3–5 do not widen this file. One downstream planning controller is the logical mutable authority
 for their separate System Design, Program Design, and ticket-graph outcomes, exact
@@ -1167,6 +1195,13 @@ all directly dependent downstream acceptances stale in the same logical atomic t
 controller ends at Stage 5 and owns no repository-scoped execution state. Its exact file, storage
 representation, schema fields, lock, and module/CLI decomposition remain implementation choices;
 v0.8 adds no separate compilation controller or generalized router.
+
+D-082 constrains that existing downstream state without prescribing a new schema. During its one
+selected-System-Design repair episode, the existing `blocked_reason` slot carries the active bounded
+episode and attempt usage. The independently judged contradiction is stored at
+`reviews/program-design-upstream-block-v1.json`; it is not a Program Design candidate review and
+requires no ready candidate. No history array, event log, approved-copy store, or additional
+top-level control field is introduced.
 
 ---
 
@@ -1285,6 +1320,18 @@ The omitted-Product-Closure branch creates no PRD or approval. A change to the b
 accepted System Design stale and transitively stales any dependent Program Design in the same
 logical downstream transition.
 
+In the D-082 repair state only, the stale accepted candidate remains at this canonical path as
+non-current provenance until version `N+1` replaces it. N+1 must have a different content hash and
+the same still-current source binding, and must pass fresh mechanical checks, fresh semantic
+review/classification when configured, and the unchanged configured authority. Every repair
+replacement also has a hash-bound System Design evidence envelope whose `repair_context` carries the
+complete validated contradiction finding, immediate superseded acceptance, and original
+contradiction reference/hash.
+For direct `HUMAN`, its semantic/materiality fields are null; it grants no authority, and human
+approval remains the acceptance authority. This conditional repair evidence is not a normal-path
+review requirement and does not widen the acceptance schema. It records one immediate predecessor,
+not a recursive chain or history.
+
 ---
 
 ## `30-system-design.html`
@@ -1345,6 +1392,13 @@ they omit references to nonexistent PRD or System Design artifacts. Program Desi
 judge and outcome; there is no joint design-bundle verdict. An accepted System Design change makes it
 stale. A finding that requires changing a system commitment returns `DESIGN_BLOCKED` upstream rather
 than being approved inside Stage 4.
+
+For the one D-082 path, that return begins before candidate readiness: pending Program Design has
+null acceptance, and `reviews/program-design-upstream-block-v1.json` independently confirms whether
+the exact accepted System Design and exact frozen repository evidence prove that Program Design
+cannot faithfully realize the commitment without changing it. Producer text alone cannot invalidate
+the upstream acceptance. After System Design N+1 is accepted, this same Program Design candidate may
+remain version 1, but its bytes and fresh review must bind N+1 before acceptance.
 
 ---
 
@@ -1469,6 +1523,13 @@ Example:
 ```
 
 This allows deterministic routing without requiring code to parse prose sentiment.
+
+The D-082 upstream-block envelope is deliberately separate from those candidate-bound reviews. It
+has exactly three verdicts: `CONFIRMED_UPSTREAM_CONTRADICTION`, `NOT_CONFIRMED`, and `UNAVAILABLE`.
+Only `CONFIRMED_UPSTREAM_CONTRADICTION` may authorize a state change. Its bound evidence includes the
+current planning identity/revision, accepted System Design identity and source binding, ordered
+effective repository baselines, the code-cited contradiction, and the smallest required upstream
+change. The envelope is evidence for one active episode, not an acceptance or history ledger.
 
 For the discovery product-closure `AGENT_REVIEW` gate, the invoker persists the read-only judge's
 structured output as `reviews/product_closure-v<version>.json`. It binds `run`; a `stage` field
@@ -1811,7 +1872,23 @@ both upstream semantic boundaries are `NOT_REQUIRED`. The downstream judge reads
 selected stages, chooses exactly one branch, and never treats `NOT_REQUIRED` as approval. Program
 Design requires independent semantic review and never raw `AUTO`; the recommended standard
 authority is `AGENT_REVIEW`, with `HUMAN` available under governance/high assurance. A Stage 4
-finding that would change a Stage 3 commitment returns `DESIGN_BLOCKED` upstream.
+finding that would change a Stage 3 commitment returns `DESIGN_BLOCKED` upstream as evidence, not as
+state authority.
+
+D-082 permits this controller to act on that evidence only for pending Program Design bound to
+selected accepted System Design, and only after the separate read-only upstream-block judge returns
+`CONFIRMED_UPSTREAM_CONTRADICTION`. The controller atomically opens one `BLOCKED` repair episode,
+marks System Design `STALE`, preserves its acceptance as non-current provenance, returns the phase to
+`system_design`, and leaves Program Design `PENDING` with null acceptance. System Design N+1
+reacceptance advances to Program Design without ending the episode; fresh Program Design acceptance
+against N+1 ends it and restores `PLANNING`.
+
+The episode has exactly four producer attempts shared across replacement System Design and resumed
+Program Design. The controller reserves and persists an attempt before candidate bytes change; a
+crash consumes it. Reviews, controller actions, and approvals do not. Restart cannot reset the
+budget, a second contradiction cannot nest or reset the episode, and exhaustion remains loud and
+durable. These constraints use the existing `blocked_reason` slot and leave storage representation
+to Program Design; they add no generalized router, rollback/reopen facility, or history/event system.
 
 Stage 5 has its own boundary inside that same controller:
 
@@ -2434,14 +2511,45 @@ environment and retry; do not route that failure to an upstream design authority
 New intake records the full canonical commit ID. A syntactically accepted abbreviation is still
 `BLOCKED` at this boundary and is never expanded silently. Discovery may use its existing accepted
 `repos` correction while it owns the cursor; after downstream handoff, V1 requires a corrected new
-run because no downstream reopen/rebind path exists.
+run because no downstream Stage 0 reopen/rebind path exists. D-082's selected-System-Design repair
+does not change that new-run-only rule.
 
 The Stage 4 judge evaluates files/packages/types, language signatures, internal state mutation and
 call graph, locking/concurrency/lifetime mechanics, migration implementation order, and test seams.
 If exact baseline inspection shows that acceptance would require changing a caller, peer, or
 operator-facing contract or another accepted guarantee, the finding belongs upstream: return
-`DESIGN_BLOCKED` rather than seek a human exception inside Stage 4. Environment repair alone never
-qualifies. Stage 3 and Stage 4 always produce distinct outcomes; there is no joint bundle verdict.
+`DESIGN_BLOCKED` evidence rather than seek a human exception inside Stage 4. That producer result
+does not itself change state. Environment repair alone never qualifies. Stage 3 and Stage 4 always
+produce distinct outcomes; there is no joint bundle verdict.
+
+### Program Design upstream-block confirmation
+
+Before a ready Program Design candidate exists, `control-planning` may ask a fresh read-only judge
+for the independent envelope `reviews/program-design-upstream-block-v1.json`. This is not the normal
+candidate-bound Program Design review. It binds the exact current run and planning revision,
+accepted System Design version/hash/source binding, ordered effective repository baselines, one
+code-cited `upstream_commitment_realization` contradiction, and the smallest required System Design
+change.
+
+The judge returns exactly `CONFIRMED_UPSTREAM_CONTRADICTION`, `NOT_CONFIRMED`, or `UNAVAILABLE`.
+Only `CONFIRMED_UPSTREAM_CONTRADICTION` may authorize the controller to mutate state. Confirmation
+requires the exact accepted System Design and exact frozen repository evidence to prove together
+that Program Design cannot faithfully realize the accepted commitment without changing it. The
+envelope is actionable only while Program Design is selected and `PENDING` with null acceptance,
+its selected source is currently approved System Design, the planning revision and bindings still
+match, and repository access passes. Malformed, stale, replayed, raced, wrong-source, repeated,
+`NOT_CONFIRMED`, or `UNAVAILABLE` results change nothing.
+
+Replacement System Design N+1 receives the ordinary fresh System Design mechanical checks, fresh
+semantic review/classification when configured, and unchanged configured authority. Every repair
+replacement also has a hash-bound System Design evidence envelope. Its `repair_context` carries the
+complete validated contradiction finding, immediate superseded acceptance, and original
+contradiction reference/hash;
+it never chains beyond that immediate predecessor. For direct `HUMAN` System Design, the envelope's
+semantic/materiality fields are null. It grants no authority, and human approval remains the
+acceptance authority. This is conditional repair evidence, not a normal-path review requirement, nor
+does it widen the acceptance schema. Resumed Program Design must then receive a fresh candidate-bound
+review against N+1.
 
 ---
 
@@ -2851,9 +2959,9 @@ acceptance requires a version increment and a new gate decision. `control.json` 
 current acceptance binding for each stage (version, hash, authority, date, and review reference
 when applicable). In v0.6 that accepted product-contract candidate is `20-prd.md`, whose
 `derived_from` binding transitively names the exact decision-log version/hash it closed against.
-The current Stage 0–2 controller has no post-closure reopen command. A future downstream owner may
-mark that binding stale and require the next candidate version; until that owner exists, any live
-source mismatch after acceptance fails closed rather than silently reopening discovery.
+The current Stage 0–2 controller has no post-closure reopen command. D-082 reaches neither Product
+Closure nor direct Stage 0; any live Stage 0–2 source mismatch after acceptance fails closed rather
+than silently reopening discovery.
 
 System Design acceptance chooses exactly one admission/provenance binding from the selected path:
 the exact accepted `20-prd.md` version/hash when Product Closure is selected, or the exact
@@ -2865,9 +2973,48 @@ Design becomes stale transitively in the same logical downstream transition.
 
 ---
 
+## Bounded Program Design upstream-repair episode
+
+D-082 permits exactly one pending Program Design → selected accepted System Design repair/reaccept
+→ pending Program Design path under the D-080 controller. This is invalidation and replacement, not
+rollback or reopen. Product Closure, direct Stage 0, accepted Program Design, Stage 5/tickets, and
+execution-originated repair remain outside this path.
+
+Only a current `reviews/program-design-upstream-block-v1.json` verdict of
+`CONFIRMED_UPSTREAM_CONTRADICTION` can open the episode. The atomic return sets status `BLOCKED`,
+phase `system_design`, and the System Design gate `STALE`; retains the prior acceptance as
+non-current and non-consumable provenance; leaves Program Design `PENDING` with null acceptance;
+records the bounded episode in the existing `blocked_reason`; and increments revision once. Any
+invalid or non-confirming input changes nothing.
+
+Replacement requires version `N+1`, a different hash, the same still-current source binding, fresh
+mechanical checks and fresh semantic review/classification when configured, and the unchanged
+authority. Its atomic acceptance
+replaces the current System Design binding, restores that gate's derived approved state, sets phase
+to `program_design`, advances the existing `blocked_reason` episode, and increments revision once.
+The overall status remains `BLOCKED` through System Design N+1 acceptance and resumed Program Design.
+Only fresh Program Design acceptance against N+1 clears the episode and restores `PLANNING`.
+
+The active episode permits exactly four controller-authorized producer attempts in total across the
+two producers. Before candidate bytes change, the controller reserves and persists an attempt; an
+interrupted or crashed attempt is therefore consumed. Reviews, controller actions, and approvals do
+not consume attempts. A restart cannot reset the budget, a second contradiction cannot nest or
+reset the episode, and exhaustion is loud and durable with current evidence preserved. The active
+episode lives only in the existing `blocked_reason`. Every repair replacement has a hash-bound
+System Design evidence envelope whose `repair_context` carries the complete validated contradiction
+finding, immediate superseded acceptance, and original contradiction reference/hash. Direct
+`HUMAN` repair uses the same conditional evidence envelope with semantic/materiality fields null;
+it grants no authority, and human approval remains the acceptance authority. This is not a
+normal-path review requirement and does not widen the acceptance schema. It records one immediate
+predecessor only, not a recursive chain. No history array, event log, rollback ledger, or new
+top-level state field is implied.
+
+---
+
 ## Amendments
 
-When execution discovers an invalid upstream assumption:
+The following is the broader future execution-originated amendment flow; D-082 does not implement
+or authorize it. When execution discovers an invalid upstream assumption:
 
 1. ticket enters `DESIGN_BLOCKED`;
 2. evidence is recorded;
@@ -2962,6 +3109,10 @@ may choose one snapshot, a transactional store, or another minimal representatio
 expose an intermediate state in which an upstream acceptance changed while its dependent ticket
 graph still appears current. No acceptance-history ledger or event-sourced replay system is earned
 by this rule alone.
+
+For a D-082 episode, crash safety also requires each of the four controller-owned producer attempts
+to be reserved durably before producer-owned candidate bytes change. Recovery reads that persisted
+reservation as consumed; restarting a skill, process, or session never recreates the budget.
 
 On restart:
 
@@ -3988,8 +4139,10 @@ downstream invalidations as one logical atomic transition. Architecture does not
 storage representation, schema, or module/CLI decomposition.
 
 The downstream planning controller ends at Stage 5. It hands execution an exact accepted
-ticket-graph version/hash; it owns no worktree, active-ticket, attempt, retry, repair, validation,
-commit, branch, or event state. No separate compilation controller exists.
+ticket-graph version/hash; it owns no Stage 6+ execution worktree, active-ticket, execution-attempt,
+retry, execution-repair, validation, commit, branch, or event state. D-082's bounded Stage 3→4
+planning-repair episode and producer-attempt budget remain pre-execution planning control, not
+execution state. No separate compilation controller exists.
 
 ## Machine-canonical runtime state
 
@@ -5912,6 +6065,31 @@ than gaining an invented reopen path.
 
 ---
 
+## L-022 — A session-local repair cap is not a durable bound
+
+### Initial attraction
+
+The initially attractive session-local four-step cap was not durable. It looked bounded in
+conversation, but a restarted skill, process, or session could begin the count again. The same
+apparent safety limit therefore authorized unbounded producer work over time.
+
+### Course correction
+
+The exact four-attempt budget belongs to D-080's deterministic downstream planning controller, not
+to an agent session. The controller must reserve and persist each attempt before producer-owned
+candidate writes; a crash consumes the reservation. Review, controller transitions, and authority
+acts do not spend it, and restart cannot reset it.
+
+### Standing result
+
+Exact repair budgets must be controller-owned and persisted before writes. A second contradiction
+cannot nest or reset the active episode, and exhaustion must remain loud and durable. The same
+persistence discipline applies to the repair's why: every replacement evidence envelope carries the
+complete validated contradiction finding plus its one immediate superseded acceptance and original
+contradiction reference/hash, without turning that provenance into recursive history.
+
+---
+
 # 17 — Agent Roles, Rosters, Model Policy, and Outcome Telemetry
 
 **Added in:** v0.3  
@@ -7277,6 +7455,10 @@ human/design authority into the execution runtime.
 
 ## D-080 — One downstream planning controller owns Stages 3–5
 
+> **Refined by D-082:** the same controller owns one bounded pending-Program-Design → selected
+> System-Design replacement episode. This preserves D-080's scope and separate outcomes; it is not a
+> generalized router, rollback facility, or history mechanism.
+
 The downstream design controller ratified by D-076 becomes the **downstream planning controller**.
 It is one logical mutable authority for the selected pre-execution boundaries after the Stage 0–2
 handoff:
@@ -7363,6 +7545,10 @@ do not themselves make those bytes readable on a machine.
 ---
 
 ## D-081 — Machine-local Git bindings resolve portable repository baselines
+
+> **Refined by D-082:** exact frozen repository evidence may confirm one selected-System-Design
+> contradiction during pending Program Design. D-081's downstream rule for an invalid portable Stage
+> 0 baseline remains a corrected new run; D-082 does not reopen or rebind Stage 0.
 
 Atlas resolves each stable repository identity through one **machine-local Git binding**. The
 portable planning record remains the exact repository identity plus its baseline commit; no
@@ -7452,3 +7638,138 @@ upstream contradiction never masquerades as setup work.
 > **Keep repository identity and baseline portable; bind them once per machine to an already-usable
 > Git object source; read the exact committed tree without disturbing the checkout; and distinguish a
 > missing local dependency from an upstream design contradiction.**
+
+---
+
+# 25 — v0.10 Decisions
+
+v0.10 closes one exact upstream-repair gap inside the D-080 downstream planning controller. When
+pending Program Design proves that the selected accepted System Design contradicts the exact frozen
+repository, Atlas can invalidate and replace that System Design, then resume Program Design, without
+asking the user to route the workflow and without creating a general rollback mechanism.
+
+---
+
+## D-082 — One bounded Program Design → System Design repair episode
+
+D-082 authorizes exactly one path: pending Program Design whose D-079 selected source is accepted
+System Design may return to that System Design for one replacement and reacceptance, then resume
+pending Program Design. This is **invalidation and replacement, not rollback, reopen, or generalized
+upstream routing**. It refines D-080's existing ownership and staleness rules without adding another
+controller.
+
+### Independent contradiction confirmation
+
+A producer-authored `DESIGN_BLOCKED` claim is evidence only and cannot mutate planning state.
+`control-planning` obtains a fresh read-only judgment and persists the independent envelope at
+`reviews/program-design-upstream-block-v1.json`; no ready Program Design candidate is required. The
+envelope is bound to the exact run and planning revision, current accepted System Design
+version/hash/source binding, ordered effective repository baselines, one code-cited
+`upstream_commitment_realization` contradiction, and the smallest required System Design change.
+
+The judge has exactly three verdicts:
+
+- `CONFIRMED_UPSTREAM_CONTRADICTION`
+- `NOT_CONFIRMED`
+- `UNAVAILABLE`
+
+Only `CONFIRMED_UPSTREAM_CONTRADICTION` may mutate state. The confirmation bar is narrow: the exact
+accepted System Design and exact frozen repository evidence together must prove that Program Design
+cannot faithfully realize the accepted commitment without changing it. The envelope is actionable
+only while phase/gate are `program_design`/`PENDING`, Program Design has null acceptance, System
+Design is the selected source and currently approved, and repository access passes. Malformed,
+stale, replayed, raced, wrong-source, unavailable, not-confirmed, or repeated requests are
+non-mutating.
+
+### One atomic return into an active repair episode
+
+On valid confirmation, the existing downstream planning controller performs one atomic transition:
+
+- status becomes `BLOCKED` and phase becomes `system_design`;
+- the System Design gate becomes `STALE`;
+- its prior acceptance is retained as auditable, non-current, non-consumable provenance;
+- Program Design remains `PENDING` with null acceptance;
+- the existing `blocked_reason` slot carries the bounded active episode, including the contradiction
+  envelope reference/hash, stale System Design version/hash, attempt usage, and current authorized
+  attempt state; and
+- the planning revision increments once.
+
+Stage 0 and tickets are unchanged. This transition invalidates the current System Design acceptance;
+it does not erase, roll back to, or reopen an earlier state.
+
+### Replacement and forward reacceptance
+
+The repair producer may run only in this exact stale state. It writes canonical
+`30-system-design.md` at version `N+1` with a different content hash, the same still-current source
+binding (including unchanged run/opened/participation and applicable upstream binding), fresh
+mechanical checks, fresh semantic review/classification when configured, and the unchanged configured
+authority. It may not edit accepted version N in place.
+
+Every repair replacement has a hash-bound System Design evidence envelope carrying `repair_context`:
+the complete validated contradiction finding, the immediate superseded acceptance, and the original
+contradiction envelope reference/hash. This is one immediate predecessor only, never a recursive
+chain or history. For direct `HUMAN` System Design, the envelope's semantic/materiality fields are
+null; it grants no authority, and human approval remains the acceptance authority. This is
+conditional repair evidence, not a normal-path review requirement, and it does not widen the
+acceptance schema. It prevents later evidence replacement from preserving only a reference to bytes
+that may no longer be available while losing why version N ceased to be current.
+
+Reacceptance is one atomic forward transition inside the same episode. The controller replaces the
+System Design acceptance with System Design N+1, restores the derived approved System Design gate,
+sets phase to `program_design`, marks the active `blocked_reason` episode as resumed Program Design,
+and increments revision once. Overall status remains `BLOCKED`. The unaccepted Program Design
+candidate may remain version 1, but it must be rewritten to bind N+1 and receive fresh review.
+Only fresh Program Design acceptance against N+1 clears the episode and restores status to
+`PLANNING`.
+
+The replacement System Design's current hash-bound review evidence carries only the immediate
+superseded acceptance and contradiction provenance. The controller does not accumulate historical
+acceptances, episodes, or events.
+
+### Controller-owned attempt budget
+
+After confirmation, the episode permits exactly four controller-authorized producer attempts total
+across replacement System Design and resumed Program Design. The controller reserves an attempt and
+persists that reservation before any producer-owned candidate write changes bytes. A crash or
+interruption after reservation consumes the attempt. Reviews, controller actions, and approvals do
+not consume attempts. Restarting a skill, process, or session cannot reset the persisted budget. A
+second contradiction cannot nest another episode or reset the current one. Exhaustion stops loudly
+and durably with current evidence preserved and requires a new explicit user decision.
+
+### Scope boundary
+
+D-082 does not authorize Product Closure repair, direct Stage 0 repair, replacement of an accepted
+Program Design, Stage 5 or ticket invalidation, D-077 work, generalized staleness or routing,
+rollback/reopen machinery, acceptance history, or event sourcing. Product Closure and direct Stage 0
+requests return explicit unsupported-upstream-repair results without mutation. D-081 remains
+new-run-only downstream for correcting an invalid portable Stage 0 repository baseline. The active
+repair episode uses only D-080's controller, the existing `blocked_reason` slot, and bound review
+evidence; its storage representation remains for Program Design.
+
+### Rejected alternatives
+
+- **Producer-authoritative `DESIGN_BLOCKED`:** rejected because a producer cannot amend accepted
+  upstream truth.
+- **Reuse the candidate-bound Program Design review:** rejected because the contradiction can be
+  discovered before a ready Program Design candidate exists.
+- **Clear System Design to `PENDING`:** rejected because it erases why the accepted binding became
+  unusable; `STALE` plus retained non-current provenance preserves the fact.
+- **Edit accepted System Design in place or reuse version N:** rejected because replacement must be
+  a new, freshly reviewed, differently hashed contract.
+- **Session-local four-step cap:** rejected because restarts can reset it; the exact budget is
+  controller-owned and persisted before candidate writes.
+- **Human routing for every return:** rejected because the user supplies judgment and configured
+  authority, not stage orchestration.
+- **Rollback, reopen, arbitrary targets, nested repair, history/event ledgers, or a generalized
+  router:** rejected because one demonstrated Stage 4 → Stage 3 edge has not earned those seams.
+- **Product Closure, direct Stage 0, accepted Program Design, Stage 5/tickets, D-077, or execution
+  repair in this change:** rejected as scope expansion. Their existing boundaries remain unchanged.
+
+---
+
+## v0.10 north star
+
+> **When exact accepted System Design and exact frozen code cannot both be honored, let independent
+> evidence trigger one durable, controller-bounded invalidation-and-replacement episode; preserve the
+> superseded contract as non-current provenance, spend attempts before writes, and move forward
+> through fresh System Design and Program Design acceptance without inventing rollback or a router.**

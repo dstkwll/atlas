@@ -125,9 +125,9 @@ acceptance requires a version increment and a new gate decision. `control.json` 
 current acceptance binding for each stage (version, hash, authority, date, and review reference
 when applicable). In v0.6 that accepted product-contract candidate is `20-prd.md`, whose
 `derived_from` binding transitively names the exact decision-log version/hash it closed against.
-The current Stage 0–2 controller has no post-closure reopen command. A future downstream owner may
-mark that binding stale and require the next candidate version; until that owner exists, any live
-source mismatch after acceptance fails closed rather than silently reopening discovery.
+The current Stage 0–2 controller has no post-closure reopen command. D-082 reaches neither Product
+Closure nor direct Stage 0; any live Stage 0–2 source mismatch after acceptance fails closed rather
+than silently reopening discovery.
 
 System Design acceptance chooses exactly one admission/provenance binding from the selected path:
 the exact accepted `20-prd.md` version/hash when Product Closure is selected, or the exact
@@ -139,9 +139,48 @@ Design becomes stale transitively in the same logical downstream transition.
 
 ---
 
+## Bounded Program Design upstream-repair episode
+
+D-082 permits exactly one pending Program Design → selected accepted System Design repair/reaccept
+→ pending Program Design path under the D-080 controller. This is invalidation and replacement, not
+rollback or reopen. Product Closure, direct Stage 0, accepted Program Design, Stage 5/tickets, and
+execution-originated repair remain outside this path.
+
+Only a current `reviews/program-design-upstream-block-v1.json` verdict of
+`CONFIRMED_UPSTREAM_CONTRADICTION` can open the episode. The atomic return sets status `BLOCKED`,
+phase `system_design`, and the System Design gate `STALE`; retains the prior acceptance as
+non-current and non-consumable provenance; leaves Program Design `PENDING` with null acceptance;
+records the bounded episode in the existing `blocked_reason`; and increments revision once. Any
+invalid or non-confirming input changes nothing.
+
+Replacement requires version `N+1`, a different hash, the same still-current source binding, fresh
+mechanical checks and fresh semantic review/classification when configured, and the unchanged
+authority. Its atomic acceptance
+replaces the current System Design binding, restores that gate's derived approved state, sets phase
+to `program_design`, advances the existing `blocked_reason` episode, and increments revision once.
+The overall status remains `BLOCKED` through System Design N+1 acceptance and resumed Program Design.
+Only fresh Program Design acceptance against N+1 clears the episode and restores `PLANNING`.
+
+The active episode permits exactly four controller-authorized producer attempts in total across the
+two producers. Before candidate bytes change, the controller reserves and persists an attempt; an
+interrupted or crashed attempt is therefore consumed. Reviews, controller actions, and approvals do
+not consume attempts. A restart cannot reset the budget, a second contradiction cannot nest or
+reset the episode, and exhaustion is loud and durable with current evidence preserved. The active
+episode lives only in the existing `blocked_reason`. Every repair replacement has a hash-bound
+System Design evidence envelope whose `repair_context` carries the complete validated contradiction
+finding, immediate superseded acceptance, and original contradiction reference/hash. Direct
+`HUMAN` repair uses the same conditional evidence envelope with semantic/materiality fields null;
+it grants no authority, and human approval remains the acceptance authority. This is not a
+normal-path review requirement and does not widen the acceptance schema. It records one immediate
+predecessor only, not a recursive chain. No history array, event log, rollback ledger, or new
+top-level state field is implied.
+
+---
+
 ## Amendments
 
-When execution discovers an invalid upstream assumption:
+The following is the broader future execution-originated amendment flow; D-082 does not implement
+or authorize it. When execution discovers an invalid upstream assumption:
 
 1. ticket enters `DESIGN_BLOCKED`;
 2. evidence is recorded;
@@ -236,6 +275,10 @@ may choose one snapshot, a transactional store, or another minimal representatio
 expose an intermediate state in which an upstream acceptance changed while its dependent ticket
 graph still appears current. No acceptance-history ledger or event-sourced replay system is earned
 by this rule alone.
+
+For a D-082 episode, crash safety also requires each of the four controller-owned producer attempts
+to be reserved durably before producer-owned candidate bytes change. Recovery reads that persisted
+reservation as consumed; restarting a skill, process, or session never recreates the budget.
 
 On restart:
 
