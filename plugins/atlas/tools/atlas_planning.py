@@ -16,6 +16,7 @@ from typing import Any, Callable, Iterator, Optional
 import yaml
 from markdown_it import MarkdownIt
 
+import atlas_repository
 from atlas_control import (
     ControlError,
     canonical_date,
@@ -492,12 +493,25 @@ def expected_program_design_source(
     }
 
 
+def require_program_design_repository_access(run_dir: Path) -> None:
+    verification = atlas_repository.verify_run(run_dir)
+    if verification.gaps:
+        details = "; ".join(
+            f"{item.code}"
+            + (f" for {item.repository}" if item.repository is not None else "")
+            + f": {item.problem}"
+            for item in verification.gaps
+        )
+        raise ControlError(f"Program Design repository verification is BLOCKED: {details}")
+
+
 def validate_program_design_acceptance(
     run_dir: Path,
     planning: dict[str, Any],
     effective: dict[str, Any],
     record: Any,
 ) -> None:
+    require_program_design_repository_access(run_dir)
     if not isinstance(record, dict) or set(record) != PLANNING_ACCEPTANCE_FIELDS:
         raise ControlError("planning-control.json Program Design acceptance is malformed")
     try:
@@ -516,7 +530,7 @@ def validate_program_design_acceptance(
         or record.get("authority") != expected_authority
         or record.get("review_reference") != PROGRAM_DESIGN_REVIEW_REFERENCE
         or record.get("source_bindings") != [expected_source]
-        or record.get("repository_baselines") != []
+        or record.get("repository_baselines") != effective["repos"]
     ):
         raise ControlError("planning-control.json Program Design acceptance is malformed")
     _, review_sha256 = load_program_design_review(
@@ -1017,8 +1031,22 @@ def program_design_report(
         "verdict": "BLOCKED",
         "stage": "program_design",
         "boundary": "program_design",
+        "repository_baselines": effective["repos"],
         "gaps": gaps,
     }
+    repository_verification = atlas_repository.verify_run(run_dir)
+    for item in repository_verification.gaps:
+        artifact = (
+            f"repository:{item.repository}"
+            if item.repository is not None
+            else "repositories.bindings"
+        )
+        gaps.append(gap(
+            artifact,
+            f"{item.code}: {item.problem}",
+            "program_design",
+            item.resume_action,
+        ))
     if planning["phase"] != "program_design" or planning["gates"]["program_design"] != "PENDING":
         gaps.append(gap(
             PLANNING_FILE,
@@ -1251,6 +1279,7 @@ def resolve_program_design_authority(
     approval: Optional[str],
     review_reference: Optional[str],
 ) -> tuple[str, str]:
+    require_program_design_repository_access(run_dir)
     policy = effective.get("gates", {}).get("program_design", {})
     configured = policy.get("authority") if isinstance(policy, dict) else None
     _, review_sha256 = load_program_design_review(
@@ -1355,7 +1384,7 @@ def advance_program_design_boundary(
         "review_reference": review_reference,
         "review_sha256": review_sha256,
         "source_bindings": [source_binding],
-        "repository_baselines": [],
+        "repository_baselines": final_effective["repos"],
     }
     final_planning["gates"]["program_design"] = (
         "HUMAN_APPROVED" if authority == "HUMAN" else "AGENT_APPROVED"

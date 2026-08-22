@@ -1,5 +1,7 @@
 import importlib.util
 import json
+import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -14,7 +16,7 @@ from tests.test_atlas_control import (
     initialize_cli,
     read_control,
     run_cli,
-    run_config,
+    run_config as control_run_config,
     sha256,
     write_discovery,
     write_markdown,
@@ -24,12 +26,68 @@ from tests.test_atlas_control import (
 ROOT = Path(__file__).resolve().parents[1]
 PLANNING_CLI = ROOT / "plugins" / "atlas" / "tools" / "atlas_planning.py"
 SYSTEM_RENDERER = ROOT / "plugins" / "atlas" / "tools" / "render_system_design.py"
+REAL_GIT = shutil.which("git")
+if REAL_GIT is None:  # pragma: no cover - the test environment requires Git
+    raise RuntimeError("git is required")
+assert REAL_GIT is not None
+_TEST_REPOSITORY_BASELINES = None
+_TEST_REPOSITORY_SOURCES: dict[str, Path] = {}
 if str(PLANNING_CLI.parent) not in sys.path:
     sys.path.insert(0, str(PLANNING_CLI.parent))
 PLANNING_SPEC = importlib.util.spec_from_file_location("atlas_planning", PLANNING_CLI)
 assert PLANNING_SPEC is not None and PLANNING_SPEC.loader is not None
 PLANNING = importlib.util.module_from_spec(PLANNING_SPEC)
 PLANNING_SPEC.loader.exec_module(PLANNING)
+
+
+def run_config():
+    config = control_run_config()
+    if _TEST_REPOSITORY_BASELINES is not None:
+        config["repos"] = [dict(item) for item in _TEST_REPOSITORY_BASELINES]
+    return config
+
+
+def git(repo: Path, *args: str) -> str:
+    env = os.environ.copy()
+    env.update({
+        "GIT_AUTHOR_NAME": "Atlas Planning Test",
+        "GIT_AUTHOR_EMAIL": "atlas-planning@example.invalid",
+        "GIT_COMMITTER_NAME": "Atlas Planning Test",
+        "GIT_COMMITTER_EMAIL": "atlas-planning@example.invalid",
+    })
+    result = subprocess.run(
+        [REAL_GIT, "-C", str(repo), *args],
+        env=env,
+        text=True,
+        capture_output=True,
+    )
+    if result.returncode != 0:
+        raise AssertionError(result.stderr)
+    return result.stdout.strip()
+
+
+def create_repository(path: Path, content: str) -> str:
+    path.mkdir()
+    result = subprocess.run(
+        [REAL_GIT, "init", "-q", str(path)], text=True, capture_output=True
+    )
+    if result.returncode != 0:
+        raise AssertionError(result.stderr)
+    (path / "source.txt").write_text(content, encoding="utf-8")
+    git(path, "add", "--", "source.txt")
+    git(path, "commit", "-q", "-m", "planning fixture baseline")
+    return git(path, "rev-parse", "HEAD")
+
+
+def write_repository_bindings(bindings: dict[str, Path]) -> Path:
+    path = Path(os.environ["XDG_CONFIG_HOME"]) / "atlas" / "config.yaml"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(yaml.safe_dump({
+        "repositories": {
+            "bindings": {identity: str(source) for identity, source in bindings.items()}
+        }
+    }, sort_keys=False), encoding="utf-8")
+    return path
 
 
 def planning_cli(*args, cwd=None):
@@ -449,6 +507,219 @@ def actual_source_path(run: Path, source_kind: str) -> Path:
 
 
 class AtlasPlanningTests(unittest.TestCase):
+    def setUp(self):
+        global _TEST_REPOSITORY_BASELINES, _TEST_REPOSITORY_SOURCES
+        self.machine_temp = tempfile.TemporaryDirectory()
+        self.machine_root = Path(self.machine_temp.name).resolve()
+        self.home = self.machine_root / "home"
+        self.xdg_config = self.machine_root / "xdg-config"
+        self.home.mkdir()
+        self.xdg_config.mkdir()
+        self.environment = mock.patch.dict(os.environ, {
+            "HOME": str(self.home),
+            "XDG_CONFIG_HOME": str(self.xdg_config),
+        })
+        self.environment.start()
+
+        fixture = self.machine_root / "fixture-repository"
+        fixture_two = self.machine_root / "fixture-two-repository"
+        baseline = create_repository(fixture, "fixture baseline\n")
+        baseline_two = create_repository(fixture_two, "fixture two baseline\n")
+        rebound = self.machine_root / "fixture-rebound.git"
+        cloned = subprocess.run(
+            [REAL_GIT, "clone", "-q", "--bare", str(fixture), str(rebound)],
+            text=True,
+            capture_output=True,
+        )
+        if cloned.returncode != 0:
+            raise AssertionError(cloned.stderr)
+        _TEST_REPOSITORY_BASELINES = [{"repository": "fixture", "baseline": baseline}]
+        _TEST_REPOSITORY_SOURCES = {
+            "fixture": fixture,
+            "fixture-two": fixture_two,
+            "fixture-rebound": rebound,
+        }
+        self.fixture_baseline = baseline
+        self.fixture_two_baseline = baseline_two
+        self.rebound_repository = rebound
+        write_repository_bindings({
+            "fixture": fixture,
+            "fixture-two": fixture_two,
+        })
+
+    def tearDown(self):
+        global _TEST_REPOSITORY_BASELINES, _TEST_REPOSITORY_SOURCES
+        _TEST_REPOSITORY_BASELINES = None
+        _TEST_REPOSITORY_SOURCES = {}
+        self.environment.stop()
+        self.machine_temp.cleanup()
+
+    def test_program_design_check_blocks_missing_binding_without_mutation(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            repositories = [
+                {"repository": "fixture", "baseline": self.fixture_baseline},
+                {"repository": "fixture-two", "baseline": self.fixture_two_baseline},
+            ]
+            planning = initialize_direct_program(run, repos=repositories)
+            anchor = planning["stage0_anchor"]
+            source = {
+                "kind": "stage0",
+                "artifact": "run.yaml",
+                "sha256": anchor["base_run_sha256"],
+                "effective_config_hash": anchor["effective_config_hash"],
+                "effective_config_revision": anchor["effective_config_revision"],
+            }
+            write_program_design(run, source)
+            before = (run / "planning-control.json").read_bytes()
+            artifacts_before = {
+                path.relative_to(run).as_posix(): path.read_bytes()
+                for path in run.rglob("*")
+                if path.is_file()
+            }
+            write_repository_bindings({})
+
+            result = planning_cli("check", "--run", run, "--stage", "program_design")
+
+            self.assertEqual(result.returncode, 1, result.stderr)
+            report = json.loads(result.stdout)
+            self.assertEqual(report["verdict"], "BLOCKED")
+            self.assertEqual(report["source_binding"], source)
+            self.assertEqual(report["repository_baselines"], repositories)
+            self.assertEqual(len(report["gaps"]), 2)
+            self.assertEqual(
+                {item["artifact"] for item in report["gaps"]},
+                {"repository:fixture", "repository:fixture-two"},
+            )
+            self.assertTrue(all("missing_binding" in item["problem"] for item in report["gaps"]))
+            self.assertEqual((run / "planning-control.json").read_bytes(), before)
+            self.assertEqual({
+                path.relative_to(run).as_posix(): path.read_bytes()
+                for path in run.rglob("*")
+                if path.is_file()
+            }, artifacts_before)
+
+    def test_program_design_acceptance_revalidates_repository_access_at_every_write_boundary(self):
+        boundaries = (
+            ("program_design_report", 1),
+            ("resolve_program_design_authority", 1),
+            ("program_design_report", 2),
+            ("resolve_program_design_authority", 2),
+            ("program_design_report", 3),
+            ("resolve_program_design_authority", 3),
+        )
+        invalid_bindings = {
+            "missing-binding": {"fixture-two": _TEST_REPOSITORY_SOURCES["fixture-two"]},
+            "invalid-source": {"fixture": self.machine_root / "missing-repository"},
+            "missing-commit": {"fixture": _TEST_REPOSITORY_SOURCES["fixture-two"]},
+        }
+        valid_bindings = {
+            "fixture": _TEST_REPOSITORY_SOURCES["fixture"],
+            "fixture-two": _TEST_REPOSITORY_SOURCES["fixture-two"],
+        }
+        for function_name, target_call in boundaries:
+            for defect, invalid in invalid_bindings.items():
+                with self.subTest(boundary=(function_name, target_call), defect=defect), tempfile.TemporaryDirectory() as td:
+                    write_repository_bindings(valid_bindings)
+                    run = Path(td)
+                    initialize_program_source(run, "stage0")
+                    write_program_review(run, policy="AGENT_REVIEW")
+                    before = (run / "planning-control.json").read_bytes()
+                    original = getattr(PLANNING, function_name)
+                    calls = 0
+
+                    def invalidate_only_during_boundary(*args, **kwargs):
+                        nonlocal calls
+                        calls += 1
+                        if calls != target_call:
+                            return original(*args, **kwargs)
+                        write_repository_bindings(invalid)
+                        try:
+                            return original(*args, **kwargs)
+                        finally:
+                            write_repository_bindings(valid_bindings)
+
+                    with mock.patch.object(
+                        PLANNING, function_name, side_effect=invalidate_only_during_boundary
+                    ):
+                        with PLANNING.planning_lock(run):
+                            with self.assertRaisesRegex(
+                                PLANNING.ControlError,
+                                "repository|binding|source|baseline|candidate|boundary",
+                            ):
+                                PLANNING.advance_boundary(
+                                    run,
+                                    "program_design",
+                                    None,
+                                    "reviews/program-design-v1.json",
+                                    "2026-08-21",
+                                )
+
+                    self.assertGreaterEqual(calls, target_call)
+                    self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+    def test_program_design_allows_rebound_source_with_same_exact_commit(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            initialize_program_source(run, "stage0")
+            review = write_program_review(run, policy="AGENT_REVIEW")
+            original = PLANNING.program_design_report
+            calls = 0
+
+            def rebound_after_initial_check(*args, **kwargs):
+                nonlocal calls
+                report = original(*args, **kwargs)
+                calls += 1
+                if calls == 1:
+                    write_repository_bindings({
+                        "fixture": self.rebound_repository,
+                        "fixture-two": _TEST_REPOSITORY_SOURCES["fixture-two"],
+                    })
+                return report
+
+            self.assertEqual(git(self.rebound_repository, "rev-parse", "HEAD"), self.fixture_baseline)
+            with mock.patch.object(
+                PLANNING, "program_design_report", side_effect=rebound_after_initial_check
+            ):
+                with PLANNING.planning_lock(run):
+                    PLANNING.advance_boundary(
+                        run,
+                        "program_design",
+                        None,
+                        "reviews/program-design-v1.json",
+                        "2026-08-21",
+                    )
+
+            record = PLANNING.load_planning_control(run)["acceptances"]["program_design"]
+            self.assertEqual(record["repository_baselines"], _TEST_REPOSITORY_BASELINES)
+            self.assertEqual(record["review_sha256"], sha256(review))
+            self.assertNotIn(str(self.rebound_repository), json.dumps(record))
+
+    def test_existing_program_design_acceptance_requires_exact_repository_baselines(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            initialize_program_source(run, "stage0")
+            write_program_review(run, policy="AGENT_REVIEW")
+            accepted = planning_cli(
+                "advance", "--run", run, "--stage", "program_design",
+                "--review", "reviews/program-design-v1.json", "--date", "2026-08-21",
+            )
+            self.assertEqual(accepted.returncode, 0, accepted.stderr)
+            planning_path = run / "planning-control.json"
+            state = json.loads(planning_path.read_text(encoding="utf-8"))
+            self.assertEqual(
+                state["acceptances"]["program_design"]["repository_baselines"],
+                _TEST_REPOSITORY_BASELINES,
+            )
+
+            state["acceptances"]["program_design"]["repository_baselines"] = []
+            planning_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
+            before = planning_path.read_bytes()
+
+            with self.assertRaisesRegex(PLANNING.ControlError, "Program Design acceptance.*malformed"):
+                PLANNING.load_planning_control(run)
+            self.assertEqual(planning_path.read_bytes(), before)
+
     def test_program_design_without_selected_tickets_fails_loudly_before_transition(self):
         with tempfile.TemporaryDirectory() as td:
             run = Path(td)
@@ -525,8 +796,14 @@ class AtlasPlanningTests(unittest.TestCase):
 
     def test_accepted_program_design_revalidates_all_currency_across_source_paths(self):
         for source_kind in ("stage0", "product_closure", "system_design"):
-            for mutation in ("candidate", "source", "review", "repository-baselines"):
+            for mutation in (
+                "candidate", "source", "review", "repository-baselines", "repository-access",
+            ):
                 with self.subTest(source_kind=source_kind, mutation=mutation), tempfile.TemporaryDirectory() as td:
+                    write_repository_bindings({
+                        "fixture": _TEST_REPOSITORY_SOURCES["fixture"],
+                        "fixture-two": _TEST_REPOSITORY_SOURCES["fixture-two"],
+                    })
                     run = Path(td)
                     initialize_program_source(run, source_kind)
                     review = write_program_review(run, policy="AGENT_REVIEW")
@@ -553,7 +830,7 @@ class AtlasPlanningTests(unittest.TestCase):
                     elif mutation == "review":
                         review.write_bytes(review.read_bytes() + b" \n")
                         expected = "review|evidence"
-                    else:
+                    elif mutation == "repository-baselines":
                         envelope = json.loads(review.read_text(encoding="utf-8"))
                         envelope["repository_baselines"] = [{
                             "repository": "fixture", "baseline": "changed-baseline",
@@ -564,6 +841,11 @@ class AtlasPlanningTests(unittest.TestCase):
                         state["acceptances"]["program_design"]["review_sha256"] = sha256(review)
                         planning_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
                         expected = "baselines"
+                    else:
+                        write_repository_bindings({
+                            "fixture-two": _TEST_REPOSITORY_SOURCES["fixture-two"]
+                        })
+                        expected = "repository|binding"
                     planning_before_refusal = (run / "planning-control.json").read_bytes()
 
                     with self.assertRaisesRegex(PLANNING.ControlError, expected):
@@ -866,8 +1148,8 @@ class AtlasPlanningTests(unittest.TestCase):
 
     def test_program_design_review_rejects_each_wrong_current_binding(self):
         repos = [
-            {"repository": "fixture", "baseline": "abc1234"},
-            {"repository": "fixture-two", "baseline": "def5678"},
+            {"repository": "fixture", "baseline": self.fixture_baseline},
+            {"repository": "fixture-two", "baseline": self.fixture_two_baseline},
         ]
         mutations = {
             "run": lambda envelope: envelope.__setitem__("run", "other-run"),
@@ -1033,7 +1315,7 @@ class AtlasPlanningTests(unittest.TestCase):
             self.assertEqual(record["review_reference"], "reviews/program-design-v1.json")
             self.assertEqual(record["review_sha256"], sha256(review))
 
-    def test_agent_review_program_design_acceptance_records_exact_candidate_source_and_review(self):
+    def test_program_design_acceptance_records_effective_repository_baselines(self):
         with tempfile.TemporaryDirectory() as td, tempfile.TemporaryDirectory() as caller_td:
             run = Path(td)
             planning = initialize_direct_program(run)
@@ -1066,7 +1348,7 @@ class AtlasPlanningTests(unittest.TestCase):
                 "review_reference": "reviews/program-design-v1.json",
                 "review_sha256": sha256(review),
                 "source_bindings": [source],
-                "repository_baselines": [],
+                "repository_baselines": _TEST_REPOSITORY_BASELINES,
             })
 
     def test_direct_agent_review_pass_records_exact_evidence_acceptance(self):
