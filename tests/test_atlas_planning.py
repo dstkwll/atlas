@@ -3043,13 +3043,13 @@ class AtlasPlanningTests(unittest.TestCase):
             envelope["finding"]["code_evidence"][0]["path"] = "/machine/private.py"
 
         def windows_machine_path(envelope):
-            envelope["finding"]["code_evidence"][0]["path"] = "C:/Users/alice/private.py"
+            envelope["finding"]["code_evidence"][0]["path"] = "C:/machine/private.py"
 
         def nonexistent_path(envelope):
             envelope["finding"]["code_evidence"][0]["path"] = "does-not-exist.py"
 
         def prose_machine_path(envelope):
-            envelope["review_evidence"] = "Confirmed from /Users/alice/private.py"
+            envelope["review_evidence"] = "Confirmed from /home/example/private.py"
 
         def unknown_verdict(envelope):
             envelope["verdict"] = "MAYBE"
