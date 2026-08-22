@@ -3063,6 +3063,15 @@ class AtlasPlanningTests(unittest.TestCase):
         def windows_drive_relative_path(envelope):
             envelope["review_evidence"] = "Confirmed from C:private.py"
 
+        def forward_slash_unc_path(envelope):
+            envelope["review_evidence"] = "Confirmed from //server/share/private.py"
+
+        def labelled_posix_path(envelope):
+            envelope["review_evidence"] = "Confirmed from path:/opt/company/private.py"
+
+        def bare_windows_drive(envelope):
+            envelope["review_evidence"] = "Confirmed from C:"
+
 
         def unknown_verdict(envelope):
             envelope["verdict"] = "MAYBE"
@@ -3082,7 +3091,9 @@ class AtlasPlanningTests(unittest.TestCase):
             ("workspace-path", workspace_path),
             ("unc-path", unc_path),
             ("windows-drive-relative-path", windows_drive_relative_path),
-
+            ("forward-slash-unc-path", forward_slash_unc_path),
+            ("labelled-posix-path", labelled_posix_path),
+            ("bare-windows-drive", bare_windows_drive),
             ("unknown-verdict", unknown_verdict),
         ):
             with self.subTest(case=name), tempfile.TemporaryDirectory() as td:
