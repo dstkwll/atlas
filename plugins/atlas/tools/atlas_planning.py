@@ -523,7 +523,11 @@ def load_upstream_block_review_input(
     return review_bytes, envelope, hashlib.sha256(review_bytes).hexdigest()
 
 
-def install_upstream_block_evidence(run_dir: Path, review_bytes: bytes) -> Path:
+@contextlib.contextmanager
+def retained_upstream_block_evidence(
+    run_dir: Path,
+    review_bytes: bytes,
+) -> Iterator[tuple[Path, Path, int, tuple[int, int]]]:
     canonical = managed_path(run_dir, UPSTREAM_BLOCK_REVIEW_REFERENCE)
     parent = canonical.parent
     parent.mkdir(mode=0o700, exist_ok=True)
@@ -538,14 +542,15 @@ def install_upstream_block_evidence(run_dir: Path, review_bytes: bytes) -> Path:
     except OSError as exc:
         raise ControlError("upstream-block evidence parent changed during validation") from exc
     leaf = Path(UPSTREAM_BLOCK_REVIEW_REFERENCE).name
+    identity = (before.st_dev, before.st_ino)
     try:
         opened = os.fstat(parent_fd)
         after = os.stat(parent, follow_symlinks=False)
         if (
             not stat.S_ISDIR(opened.st_mode)
             or not stat.S_ISDIR(after.st_mode)
-            or (opened.st_dev, opened.st_ino) != (before.st_dev, before.st_ino)
-            or (after.st_dev, after.st_ino) != (before.st_dev, before.st_ino)
+            or (opened.st_dev, opened.st_ino) != identity
+            or (after.st_dev, after.st_ino) != identity
         ):
             raise ControlError("upstream-block evidence parent changed during validation")
         read_flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
@@ -558,48 +563,83 @@ def install_upstream_block_evidence(run_dir: Path, review_bytes: bytes) -> Path:
                 existing = handle.read()
             if existing != review_bytes:
                 raise ControlError("canonical Program Design upstream-block evidence already exists with different bytes")
-            return canonical
-        write_flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
-        temp_leaf = None
-        fd = None
-        for _ in range(16):
-            candidate = f".{leaf}.{os.getpid()}.{secrets.token_hex(8)}.tmp"
+        else:
+            write_flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
+            temp_leaf = None
+            fd = None
+            for _ in range(16):
+                candidate = f".{leaf}.{os.getpid()}.{secrets.token_hex(8)}.tmp"
+                try:
+                    fd = os.open(candidate, write_flags, 0o600, dir_fd=parent_fd)
+                except FileExistsError:
+                    continue
+                temp_leaf = candidate
+                break
+            if fd is None or temp_leaf is None:
+                raise ControlError("could not reserve temporary upstream-block evidence")
             try:
-                fd = os.open(candidate, write_flags, 0o600, dir_fd=parent_fd)
-            except FileExistsError:
-                continue
-            temp_leaf = candidate
-            break
-        if fd is None or temp_leaf is None:
-            raise ControlError("could not reserve temporary upstream-block evidence")
-        try:
-            with os.fdopen(fd, "wb") as handle:
-                handle.write(review_bytes)
-                handle.flush()
-                os.fsync(handle.fileno())
-            try:
-                os.link(
-                    temp_leaf,
-                    leaf,
-                    src_dir_fd=parent_fd,
-                    dst_dir_fd=parent_fd,
-                    follow_symlinks=False,
-                )
-            except FileExistsError:
-                existing_fd = os.open(leaf, read_flags, dir_fd=parent_fd)
-                with os.fdopen(existing_fd, "rb") as handle:
-                    existing = handle.read()
-                if existing != review_bytes:
-                    raise ControlError("canonical Program Design upstream-block evidence was created concurrently")
-            os.fsync(parent_fd)
-        finally:
-            try:
-                os.unlink(temp_leaf, dir_fd=parent_fd)
-            except FileNotFoundError:
-                pass
+                with os.fdopen(fd, "wb") as handle:
+                    handle.write(review_bytes)
+                    handle.flush()
+                    os.fsync(handle.fileno())
+                try:
+                    os.link(
+                        temp_leaf,
+                        leaf,
+                        src_dir_fd=parent_fd,
+                        dst_dir_fd=parent_fd,
+                        follow_symlinks=False,
+                    )
+                except FileExistsError:
+                    existing_fd = os.open(leaf, read_flags, dir_fd=parent_fd)
+                    with os.fdopen(existing_fd, "rb") as handle:
+                        existing = handle.read()
+                    if existing != review_bytes:
+                        raise ControlError("canonical Program Design upstream-block evidence was created concurrently")
+                os.fsync(parent_fd)
+            finally:
+                try:
+                    os.unlink(temp_leaf, dir_fd=parent_fd)
+                except FileNotFoundError:
+                    pass
+        yield canonical, parent, parent_fd, identity
     finally:
         os.close(parent_fd)
-    return canonical
+
+
+def verify_retained_upstream_block_evidence(
+    parent: Path,
+    parent_fd: int,
+    identity: tuple[int, int],
+    review_bytes: bytes,
+) -> None:
+    try:
+        opened = os.fstat(parent_fd)
+        current = os.stat(parent, follow_symlinks=False)
+    except OSError as exc:
+        raise ControlError("upstream-block evidence parent changed at the write boundary") from exc
+    if (
+        not stat.S_ISDIR(opened.st_mode)
+        or not stat.S_ISDIR(current.st_mode)
+        or (opened.st_dev, opened.st_ino) != identity
+        or (current.st_dev, current.st_ino) != identity
+    ):
+        raise ControlError("upstream-block evidence parent changed at the write boundary")
+    leaf = Path(UPSTREAM_BLOCK_REVIEW_REFERENCE).name
+    read_flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        evidence_fd = os.open(leaf, read_flags, dir_fd=parent_fd)
+        with os.fdopen(evidence_fd, "rb") as handle:
+            current_bytes = handle.read()
+    except OSError as exc:
+        raise ControlError("upstream-block evidence changed at the write boundary") from exc
+    if current_bytes != review_bytes:
+        raise ControlError("upstream-block evidence changed at the write boundary")
+
+
+def install_upstream_block_evidence(run_dir: Path, review_bytes: bytes) -> Path:
+    with retained_upstream_block_evidence(run_dir, review_bytes) as installation:
+        return installation[0]
 
 
 @contextlib.contextmanager
@@ -632,6 +672,10 @@ def planning_lock(run_dir: Path) -> Iterator[None]:
         os.close(fd)
 
 
+def planning_control_bytes(planning: dict[str, Any]) -> bytes:
+    return (json.dumps(planning, indent=2, sort_keys=True) + "\n").encode("utf-8")
+
+
 def write_planning_control_bytes_atomic(
     run_dir: Path,
     content: bytes,
@@ -641,14 +685,17 @@ def write_planning_control_bytes_atomic(
     path = managed_path(run_dir, PLANNING_FILE)
     fd, name = tempfile.mkstemp(prefix=".planning-control.json.", dir=run_dir)
     temp = Path(name)
+    published = False
     try:
         with os.fdopen(fd, "wb") as handle:
             handle.write(content)
         if precondition is not None:
             precondition()
         os.replace(temp, path)
+        published = True
     finally:
-        temp.unlink(missing_ok=True)
+        if not published:
+            temp.unlink(missing_ok=True)
 
 
 def write_planning_control_atomic(
@@ -657,7 +704,7 @@ def write_planning_control_atomic(
     *,
     precondition: Optional[Callable[[], None]] = None,
 ) -> None:
-    content = (json.dumps(planning, indent=2, sort_keys=True) + "\n").encode("utf-8")
+    content = planning_control_bytes(planning)
     write_planning_control_bytes_atomic(run_dir, content, precondition=precondition)
 
 
@@ -1187,55 +1234,79 @@ def return_to_system_design(run_dir: Path, review_input: Path) -> str:
     )
     if envelope["verdict"] != "CONFIRMED_UPSTREAM_CONTRADICTION":
         raise ControlError(f"upstream contradiction review is {envelope['verdict']}")
-    canonical = install_upstream_block_evidence(run_dir, review_bytes)
-    final_planning = copy.deepcopy(planning)
-    final_planning["status"] = "BLOCKED"
-    final_planning["phase"] = "system_design"
-    final_planning["gates"]["system_design"] = "STALE"
-    final_planning["revision"] += 1
-    final_planning["blocked_reason"] = {
-        "kind": "SYSTEM_DESIGN_REPAIR",
-        "state": "SYSTEM_DESIGN_STALE",
-        "started_from_revision": planning["revision"],
-        "review_reference": UPSTREAM_BLOCK_REVIEW_REFERENCE,
-        "review_sha256": review_sha256,
-        "superseded_system_design": copy.deepcopy(planning["acceptances"]["system_design"]),
-        "attempts_used": 0,
-        "current_attempt": None,
-    }
+    with retained_upstream_block_evidence(run_dir, review_bytes) as installation:
+        _, evidence_parent, evidence_parent_fd, evidence_identity = installation
+        final_planning = copy.deepcopy(planning)
+        final_planning["status"] = "BLOCKED"
+        final_planning["phase"] = "system_design"
+        final_planning["gates"]["system_design"] = "STALE"
+        final_planning["revision"] += 1
+        final_planning["blocked_reason"] = {
+            "kind": "SYSTEM_DESIGN_REPAIR",
+            "state": "SYSTEM_DESIGN_STALE",
+            "started_from_revision": planning["revision"],
+            "review_reference": UPSTREAM_BLOCK_REVIEW_REFERENCE,
+            "review_sha256": review_sha256,
+            "superseded_system_design": copy.deepcopy(planning["acceptances"]["system_design"]),
+            "attempts_used": 0,
+            "current_attempt": None,
+        }
+        final_bytes = planning_control_bytes(final_planning)
 
-    def revalidate_immediately_before_replace() -> None:
-        current, _, current_effective = verified_planning_state(run_dir)
-        current_repository_verification = require_program_design_repository_access(run_dir)
-        current_bytes, current_envelope, current_sha256 = load_upstream_block_review_input(
-            run_dir, review_input, current, current_effective, current_repository_verification
-        )
-        if (
-            current != planning
-            or planning_path.read_bytes() != planning_bytes
-            or current_bytes != review_bytes
-            or current_envelope != envelope
-            or current_sha256 != review_sha256
-            or canonical.read_bytes() != review_bytes
-        ):
-            raise ControlError("planning state or upstream-block evidence changed at the write boundary")
+        def revalidate_immediately_before_replace() -> None:
+            current, _, current_effective = verified_planning_state(run_dir)
+            current_repository_verification = require_program_design_repository_access(run_dir)
+            current_bytes, current_envelope, current_sha256 = load_upstream_block_review_input(
+                run_dir, review_input, current, current_effective, current_repository_verification
+            )
+            verify_retained_upstream_block_evidence(
+                evidence_parent,
+                evidence_parent_fd,
+                evidence_identity,
+                review_bytes,
+            )
+            if (
+                current != planning
+                or planning_path.read_bytes() != planning_bytes
+                or current_bytes != review_bytes
+                or current_envelope != envelope
+                or current_sha256 != review_sha256
+            ):
+                raise ControlError("planning state or upstream-block evidence changed at the write boundary")
 
-    write_planning_control_atomic(
-        run_dir,
-        final_planning,
-        precondition=revalidate_immediately_before_replace,
-    )
-    try:
-        require_program_design_repository_access(run_dir)
-        committed = load_planning_control(run_dir)
-        if committed != final_planning:
-            raise ControlError("committed upstream-repair state does not match the requested transition")
-    except (ControlError, OSError, UnicodeError, ValueError, yaml.YAMLError) as exc:
         try:
-            write_planning_control_bytes_atomic(run_dir, planning_bytes)
-        except (ControlError, OSError, UnicodeError, ValueError, yaml.YAMLError) as rollback_exc:
-            raise ControlError("upstream-repair transition failed and prior state could not be restored") from rollback_exc
-        raise ControlError(f"upstream-repair transition failed final validation and was rolled back: {exc}") from exc
+            write_planning_control_atomic(
+                run_dir,
+                final_planning,
+                precondition=revalidate_immediately_before_replace,
+            )
+            require_program_design_repository_access(run_dir)
+            verify_retained_upstream_block_evidence(
+                evidence_parent,
+                evidence_parent_fd,
+                evidence_identity,
+                review_bytes,
+            )
+            committed = load_planning_control(run_dir)
+            if committed != final_planning:
+                raise ControlError("committed upstream-repair state does not match the requested transition")
+        except (ControlError, OSError, UnicodeError, ValueError, yaml.YAMLError) as exc:
+            try:
+                current_planning_bytes = planning_path.read_bytes()
+                if current_planning_bytes == final_bytes:
+                    write_planning_control_bytes_atomic(run_dir, planning_bytes)
+                    if planning_path.read_bytes() != planning_bytes:
+                        raise ControlError("prior planning bytes did not survive rollback")
+                    raise ControlError(
+                        f"upstream-repair transition failed final validation and was rolled back: {exc}"
+                    ) from exc
+                if current_planning_bytes != planning_bytes:
+                    raise ControlError(
+                        "upstream-repair transition failed after planning state changed independently"
+                    ) from exc
+            except (OSError, UnicodeError, ValueError, yaml.YAMLError) as rollback_exc:
+                raise ControlError("upstream-repair transition failed and prior state could not be restored") from rollback_exc
+            raise
     return f"returned program_design -> system_design; planning-control revision {final_planning['revision']}"
 
 

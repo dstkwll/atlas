@@ -3072,7 +3072,6 @@ class AtlasPlanningTests(unittest.TestCase):
         def bare_windows_drive(envelope):
             envelope["review_evidence"] = "Confirmed from C:"
 
-
         def unknown_verdict(envelope):
             envelope["verdict"] = "MAYBE"
 
@@ -3411,6 +3410,63 @@ class AtlasPlanningTests(unittest.TestCase):
 
                 self.assertTrue(mutated)
                 self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
+
+    def test_return_rolls_back_if_state_replace_raises_after_publication(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            planning = initialize_program_after_system(run)
+            review_input = write_upstream_block_review_input(run, planning)
+            planning_before = (run / "planning-control.json").read_bytes()
+            real_replace = PLANNING.os.replace
+            injected = False
+
+            def publish_then_fail(source, destination):
+                nonlocal injected
+                result = real_replace(source, destination)
+                if Path(destination).name == "planning-control.json" and not injected:
+                    injected = True
+                    raise PermissionError("simulated post-publication failure")
+                return result
+
+            with mock.patch.object(PLANNING.os, "replace", side_effect=publish_then_fail):
+                with self.assertRaisesRegex(PLANNING.ControlError, "rolled back"):
+                    with PLANNING.planning_lock(run):
+                        PLANNING.return_to_system_design(run, review_input.relative_to(run))
+
+            self.assertTrue(injected)
+            self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
+
+    def test_return_rejects_same_byte_reviews_directory_identity_swap(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            run = root / "run"
+            run.mkdir()
+            planning = initialize_program_after_system(run)
+            review_input = write_upstream_block_review_input(run, planning)
+            planning_before = (run / "planning-control.json").read_bytes()
+            real_replace = PLANNING.os.replace
+            swapped = False
+
+            def swap_reviews_then_replace(source, destination):
+                nonlocal swapped
+                if Path(destination).name == "planning-control.json" and not swapped:
+                    swapped = True
+                    reviews = run / "reviews"
+                    moved = run / "reviews-before-swap"
+                    reviews.rename(moved)
+                    reviews.mkdir()
+                    (reviews / "program-design-upstream-block-v1.json").write_bytes(
+                        (moved / "program-design-upstream-block-v1.json").read_bytes()
+                    )
+                return real_replace(source, destination)
+
+            with mock.patch.object(PLANNING.os, "replace", side_effect=swap_reviews_then_replace):
+                with self.assertRaisesRegex(PLANNING.ControlError, "evidence|rolled back"):
+                    with PLANNING.planning_lock(run):
+                        PLANNING.return_to_system_design(run, review_input.relative_to(run))
+
+            self.assertTrue(swapped)
+            self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
 
 
 if __name__ == "__main__":
