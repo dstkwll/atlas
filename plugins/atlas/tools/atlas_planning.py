@@ -410,7 +410,7 @@ def validate_upstream_block_review(
     planning_revision: int,
     system_acceptance: Any,
     effective: dict[str, Any],
-    repository_verification: atlas_repository.Verification,
+    repository_verification: Optional[atlas_repository.Verification],
 ) -> None:
     if not isinstance(envelope, dict) or set(envelope) != UPSTREAM_BLOCK_REVIEW_FIELDS:
         raise ControlError("Program Design upstream-block envelope does not match its exact schema")
@@ -452,10 +452,14 @@ def validate_upstream_block_review(
         raise ControlError("Program Design upstream-block finding is not a System Design contradiction")
     code_evidence = finding.get("code_evidence")
     valid_pairs = {(item["repository"], item["baseline"]) for item in effective["repos"]}
-    repositories = {
-        repository.identity: repository
-        for repository in repository_verification.repositories
-    }
+    repositories = (
+        {
+            repository.identity: repository
+            for repository in repository_verification.repositories
+        }
+        if repository_verification is not None
+        else {}
+    )
     if not isinstance(code_evidence, list) or not code_evidence:
         raise ControlError("Program Design upstream-block finding requires code evidence")
     for item in code_evidence:
@@ -467,7 +471,7 @@ def validate_upstream_block_review(
         path = PurePosixPath(relative)
         if (
             (item.get("repository"), item.get("baseline")) not in valid_pairs
-            or item.get("repository") not in repositories
+            or repository_verification is not None and item.get("repository") not in repositories
             or path.is_absolute()
             or PureWindowsPath(relative).is_absolute()
             or not path.parts
@@ -476,12 +480,13 @@ def validate_upstream_block_review(
             or not nonempty_string(item.get("evidence"))
         ):
             raise ControlError("Program Design upstream-block code evidence is not portable or current")
-        try:
-            atlas_repository.read_tree_path(repositories[item["repository"]], relative)
-        except atlas_repository.RepositoryBlocked as exc:
-            raise ControlError(
-                f"Program Design upstream-block code evidence is unavailable: {exc.code}: {exc.problem}"
-            ) from exc
+        if repository_verification is not None:
+            try:
+                atlas_repository.read_tree_path(repositories[item["repository"]], relative)
+            except atlas_repository.RepositoryBlocked as exc:
+                raise ControlError(
+                    f"Program Design upstream-block code evidence is unavailable: {exc.code}: {exc.problem}"
+                ) from exc
 
 
 def load_upstream_block_review_input(
@@ -947,14 +952,13 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
             raise ControlError("planning-control.json repair evidence is not valid duplicate-safe JSON") from exc
         if hashlib.sha256(review_bytes).hexdigest() != blocked_reason["review_sha256"]:
             raise ControlError("planning-control.json repair evidence hash is not current")
-        repository_verification = require_program_design_repository_access(run_dir)
         validate_upstream_block_review(
             envelope,
             run=planning["run"],
             planning_revision=blocked_reason["started_from_revision"],
             system_acceptance=blocked_reason["superseded_system_design"],
             effective=effective,
-            repository_verification=repository_verification,
+            repository_verification=None,
         )
         if envelope["verdict"] != "CONFIRMED_UPSTREAM_CONTRADICTION":
             raise ControlError("planning-control.json repair evidence is not confirmed")
@@ -1197,7 +1201,17 @@ def return_to_system_design(run_dir: Path, review_input: Path) -> str:
         final_planning,
         precondition=revalidate_immediately_before_replace,
     )
-    load_planning_control(run_dir)
+    try:
+        require_program_design_repository_access(run_dir)
+        committed = load_planning_control(run_dir)
+        if committed != final_planning:
+            raise ControlError("committed upstream-repair state does not match the requested transition")
+    except (ControlError, OSError, UnicodeError, ValueError, yaml.YAMLError) as exc:
+        try:
+            write_planning_control_atomic(run_dir, planning)
+        except (ControlError, OSError, UnicodeError, ValueError, yaml.YAMLError) as rollback_exc:
+            raise ControlError("upstream-repair transition failed and prior state could not be restored") from rollback_exc
+        raise ControlError(f"upstream-repair transition failed final validation and was rolled back: {exc}") from exc
     return f"returned program_design -> system_design; planning-control revision {final_planning['revision']}"
 
 

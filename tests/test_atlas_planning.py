@@ -3338,6 +3338,45 @@ class AtlasPlanningTests(unittest.TestCase):
             canonical = run / "reviews" / "program-design-upstream-block-v1.json"
             self.assertEqual(canonical.read_bytes(), review_input.read_bytes())
 
+    def test_return_rolls_back_when_commit_boundary_dependencies_change(self):
+        for case in ("repository-binding", "reviews-parent"):
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as td:
+                root = Path(td)
+                run = root / "run"
+                run.mkdir()
+                write_repository_bindings({"fixture": _TEST_REPOSITORY_SOURCES["fixture"]})
+                planning = initialize_program_after_system(run)
+                review_input = write_upstream_block_review_input(run, planning)
+                planning_before = (run / "planning-control.json").read_bytes()
+                real_replace = PLANNING.os.replace
+                mutated = False
+
+                def mutate_at_state_replace(source, destination):
+                    nonlocal mutated
+                    if Path(destination).name == "planning-control.json" and not mutated:
+                        mutated = True
+                        if case == "repository-binding":
+                            write_repository_bindings({})
+                        else:
+                            reviews = run / "reviews"
+                            moved = run / "reviews-before-swap"
+                            reviews.rename(moved)
+                            outside = root / "outside-reviews"
+                            outside.mkdir()
+                            (outside / "program-design-upstream-block-v1.json").write_bytes(
+                                (moved / "program-design-upstream-block-v1.json").read_bytes()
+                            )
+                            reviews.symlink_to(outside, target_is_directory=True)
+                    return real_replace(source, destination)
+
+                with mock.patch.object(PLANNING.os, "replace", side_effect=mutate_at_state_replace):
+                    with self.assertRaisesRegex(PLANNING.ControlError, "repository|binding|symlink|evidence"):
+                        with PLANNING.planning_lock(run):
+                            PLANNING.return_to_system_design(run, review_input.relative_to(run))
+
+                self.assertTrue(mutated)
+                self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
+
 
 if __name__ == "__main__":
     unittest.main()
