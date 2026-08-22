@@ -9,6 +9,7 @@ import hashlib
 import json
 import os
 import re
+import stat
 import sys
 import tempfile
 from pathlib import Path, PurePosixPath
@@ -477,28 +478,59 @@ def load_upstream_block_review_input(
 
 def install_upstream_block_evidence(run_dir: Path, review_bytes: bytes) -> Path:
     canonical = managed_path(run_dir, UPSTREAM_BLOCK_REVIEW_REFERENCE)
-    canonical.parent.mkdir(mode=0o700, exist_ok=True)
-    if canonical.is_file():
-        if canonical.read_bytes() != review_bytes:
-            raise ControlError("canonical Program Design upstream-block evidence already exists with different bytes")
-        return canonical
-    if canonical.exists():
-        raise ControlError("canonical Program Design upstream-block evidence is not a real file")
-    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
-    if hasattr(os, "O_NOFOLLOW"):
-        flags |= os.O_NOFOLLOW
+    parent = canonical.parent
+    parent.mkdir(mode=0o700, exist_ok=True)
+    if os.open not in os.supports_dir_fd or os.unlink not in os.supports_dir_fd:
+        raise ControlError("platform cannot securely install upstream-block evidence")
+    before = os.stat(parent, follow_symlinks=False)
+    if not stat.S_ISDIR(before.st_mode):
+        raise ControlError("upstream-block evidence parent is not a real directory")
+    parent_flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
     try:
-        fd = os.open(canonical, flags, 0o600)
-    except FileExistsError as exc:
-        raise ControlError("canonical Program Design upstream-block evidence was created concurrently") from exc
+        parent_fd = os.open(parent, parent_flags)
+    except OSError as exc:
+        raise ControlError("upstream-block evidence parent changed during validation") from exc
+    leaf = Path(UPSTREAM_BLOCK_REVIEW_REFERENCE).name
     try:
-        with os.fdopen(fd, "wb") as handle:
-            handle.write(review_bytes)
-            handle.flush()
-            os.fsync(handle.fileno())
-    except BaseException:
-        canonical.unlink(missing_ok=True)
-        raise
+        opened = os.fstat(parent_fd)
+        after = os.stat(parent, follow_symlinks=False)
+        if (
+            not stat.S_ISDIR(opened.st_mode)
+            or not stat.S_ISDIR(after.st_mode)
+            or (opened.st_dev, opened.st_ino) != (before.st_dev, before.st_ino)
+            or (after.st_dev, after.st_ino) != (before.st_dev, before.st_ino)
+        ):
+            raise ControlError("upstream-block evidence parent changed during validation")
+        read_flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+        try:
+            existing_fd = os.open(leaf, read_flags, dir_fd=parent_fd)
+        except FileNotFoundError:
+            existing_fd = None
+        if existing_fd is not None:
+            with os.fdopen(existing_fd, "rb") as handle:
+                existing = handle.read()
+            if existing != review_bytes:
+                raise ControlError("canonical Program Design upstream-block evidence already exists with different bytes")
+            return canonical
+        write_flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
+        try:
+            fd = os.open(leaf, write_flags, 0o600, dir_fd=parent_fd)
+        except FileExistsError as exc:
+            raise ControlError("canonical Program Design upstream-block evidence was created concurrently") from exc
+        try:
+            with os.fdopen(fd, "wb") as handle:
+                handle.write(review_bytes)
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.fsync(parent_fd)
+        except BaseException:
+            try:
+                os.unlink(leaf, dir_fd=parent_fd)
+            except FileNotFoundError:
+                pass
+            raise
+    finally:
+        os.close(parent_fd)
     return canonical
 
 

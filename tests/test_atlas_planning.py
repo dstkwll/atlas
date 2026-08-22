@@ -3129,6 +3129,31 @@ class AtlasPlanningTests(unittest.TestCase):
 
             self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
 
+    def test_upstream_evidence_install_rejects_parent_symlink_swap(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            run = root / "run"
+            outside = root / "outside"
+            (run / "reviews").mkdir(parents=True)
+            outside.mkdir()
+            real_managed_path = PLANNING.managed_path
+            swapped = False
+
+            def swap_parent_after_validation(run_dir, relative):
+                nonlocal swapped
+                path = real_managed_path(run_dir, relative)
+                if relative == PLANNING.UPSTREAM_BLOCK_REVIEW_REFERENCE and not swapped:
+                    (run / "reviews").rmdir()
+                    (run / "reviews").symlink_to(outside, target_is_directory=True)
+                    swapped = True
+                return path
+
+            with mock.patch.object(PLANNING, "managed_path", side_effect=swap_parent_after_validation):
+                with self.assertRaises((PLANNING.ControlError, OSError)):
+                    PLANNING.install_upstream_block_evidence(run, b"trusted review bytes\n")
+
+            self.assertFalse((outside / "program-design-upstream-block-v1.json").exists())
+
 
 if __name__ == "__main__":
     unittest.main()
