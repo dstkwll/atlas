@@ -3250,6 +3250,7 @@ class AtlasPlanningTests(unittest.TestCase):
             "stale-tickets",
             "forged-revisions",
             "first-attempt-missing-prior-hash",
+            "integer-attempt-hash",
         ):
             with self.subTest(case=case), tempfile.TemporaryDirectory() as td:
                 run = Path(td)
@@ -3281,7 +3282,7 @@ class AtlasPlanningTests(unittest.TestCase):
                     envelope["planning_revision"] = 100
                     review.write_text(json.dumps(envelope, indent=2) + "\n", encoding="utf-8")
                     state["blocked_reason"]["review_sha256"] = sha256(review)
-                else:
+                elif case == "first-attempt-missing-prior-hash":
                     state["blocked_reason"]["attempts_used"] = 1
                     state["blocked_reason"]["current_attempt"] = {
                         "number": 1,
@@ -3289,6 +3290,14 @@ class AtlasPlanningTests(unittest.TestCase):
                         "candidate_sha256_before": None,
                     }
                     state["revision"] += 1
+                else:
+                    state["blocked_reason"]["attempts_used"] = 2
+                    state["blocked_reason"]["current_attempt"] = {
+                        "number": 2,
+                        "stage": "system_design",
+                        "candidate_sha256_before": int("1" * 64),
+                    }
+                    state["revision"] += 2
                 planning_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
 
                 with self.assertRaisesRegex(
@@ -3693,6 +3702,67 @@ class AtlasPlanningTests(unittest.TestCase):
 
             self.assertTrue(mutated)
             self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
+
+    def test_repair_attempt_detects_candidate_change_inside_state_replace_and_consumes_attempt(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            planning = initialize_program_after_system(run)
+            review_input = write_upstream_block_review_input(run, planning)
+            returned = planning_cli(
+                "return-upstream", "--run", run,
+                "--review-input", review_input.relative_to(run),
+            )
+            self.assertEqual(returned.returncode, 0, returned.stderr)
+            candidate = run / "30-system-design.md"
+            candidate_before = PLANNING.file_sha256(candidate)
+            real_replace = PLANNING.os.replace
+            injected = False
+
+            def mutate_inside_replace(source, destination):
+                nonlocal injected
+                if Path(destination).name == "planning-control.json" and not injected:
+                    injected = True
+                    candidate.write_text("raced producer bytes\n", encoding="utf-8")
+                return real_replace(source, destination)
+
+            with mock.patch.object(PLANNING.os, "replace", side_effect=mutate_inside_replace):
+                with self.assertRaisesRegex(PLANNING.ControlError, "consumed|candidate changed"):
+                    with PLANNING.planning_lock(run):
+                        PLANNING.reserve_repair_attempt(run, "system_design")
+
+            self.assertTrue(injected)
+            updated = PLANNING.load_planning_control(run)
+            self.assertEqual(updated["blocked_reason"]["attempts_used"], 1)
+            self.assertEqual(
+                updated["blocked_reason"]["current_attempt"]["candidate_sha256_before"],
+                candidate_before,
+            )
+            self.assertNotEqual(PLANNING.file_sha256(candidate), candidate_before)
+
+    def test_repair_attempt_fsyncs_file_and_directory_before_success(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            planning = initialize_program_after_system(run)
+            review_input = write_upstream_block_review_input(run, planning)
+            returned = planning_cli(
+                "return-upstream", "--run", run,
+                "--review-input", review_input.relative_to(run),
+            )
+            self.assertEqual(returned.returncode, 0, returned.stderr)
+            real_fsync = PLANNING.os.fsync
+            fsynced_modes = []
+
+            def record_fsync(fd):
+                fsynced_modes.append(PLANNING.os.fstat(fd).st_mode)
+                return real_fsync(fd)
+
+            with mock.patch.object(PLANNING.os, "fsync", side_effect=record_fsync):
+                with PLANNING.planning_lock(run):
+                    result = PLANNING.reserve_repair_attempt(run, "system_design")
+
+            self.assertEqual(result["attempt"], 1)
+            self.assertTrue(any(PLANNING.stat.S_ISREG(mode) for mode in fsynced_modes))
+            self.assertTrue(any(PLANNING.stat.S_ISDIR(mode) for mode in fsynced_modes))
 
 
 if __name__ == "__main__":

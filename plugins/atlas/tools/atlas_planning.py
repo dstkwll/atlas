@@ -177,7 +177,10 @@ def valid_repair_attempt(value: Any, attempts_used: int, stage: str) -> bool:
         and value.get("stage") == stage
         and (
             value.get("candidate_sha256_before") is None
-            or re.fullmatch(r"[0-9a-f]{64}", str(value["candidate_sha256_before"])) is not None
+            or (
+                type(value.get("candidate_sha256_before")) is str
+                and re.fullmatch(r"[0-9a-f]{64}", value["candidate_sha256_before"]) is not None
+            )
         )
     )
 
@@ -719,10 +722,19 @@ def write_planning_control_bytes_atomic(
     try:
         with os.fdopen(fd, "wb") as handle:
             handle.write(content)
+            handle.flush()
+            os.fsync(handle.fileno())
         if precondition is not None:
             precondition()
         os.replace(temp, path)
         published = True
+        directory_flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+        directory_fd = os.open(run_dir, directory_flags)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            with contextlib.suppress(OSError):
+                os.close(directory_fd)
     finally:
         if not published:
             temp.unlink(missing_ok=True)
@@ -1461,6 +1473,10 @@ def reserve_repair_attempt(run_dir: Path, stage: str) -> dict[str, Any]:
     committed = load_planning_control(run_dir)
     if committed != updated:
         raise ControlError("committed repair attempt reservation is not current")
+    if repair_candidate_sha256_before(run_dir, stage) != candidate_before:
+        raise ControlError(
+            f"repair candidate changed during reservation; attempt {attempt_number} remains consumed"
+        )
     return {
         "attempt": attempt_number,
         "stage": stage,
