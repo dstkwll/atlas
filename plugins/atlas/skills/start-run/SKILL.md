@@ -37,6 +37,8 @@ The command returns JSON containing `path`, `device`, and `inode`. Keep all thre
 
 Inspect the current Git repository when present and ask for every other repository already known to be affected. Record each stable identity with its commit baseline; never admit one without the other.
 
+Resolve every admitted baseline to the repository's full canonical commit object ID before previewing `run.yaml`. Against the user-confirmed local Git source, run a non-mutating `git rev-parse --verify "<requested-baseline>^{commit}"` with optional locks, replacement objects, and lazy fetch disabled; require the returned lowercase hexadecimal object ID to be the repository's full 40- or 64-character canonical form. Record that returned object ID, not the input ref. New intake never stores a branch, tag, `HEAD`, or abbreviated object ID as `baseline`. If the exact commit is not locally readable, stop before writing intake; `start-run` never fetches or guesses a replacement.
+
 Stage 0 is recommend-only. Classify the eight risk dimensions in [`references/run-file.md`](references/run-file.md), then recommend the amount of decomposition independently from authority:
 
 - `trivial` — direct ticket/execution with no discovery or design producer;

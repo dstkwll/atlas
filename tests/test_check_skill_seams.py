@@ -70,6 +70,41 @@ class SkillSeamHardeningTests(unittest.TestCase):
         shutil.copytree(ROOT / "plugins" / "atlas", plugin)
         return plugin / "skills"
 
+    def test_d081_new_intake_records_full_canonical_commit_oid(self):
+        plugin = ROOT / "plugins" / "atlas"
+        start_path = plugin / "skills" / "start-run" / "SKILL.md"
+        run_file_path = plugin / "skills" / "start-run" / "references" / "run-file.md"
+        start = start_path.read_text(encoding="utf-8")
+        run_file = run_file_path.read_text(encoding="utf-8")
+        clauses = {
+            start_path: (
+                "Resolve every admitted baseline to the repository's full canonical commit object ID before previewing `run.yaml`",
+                "New intake never stores a branch, tag, `HEAD`, or abbreviated object ID as `baseline`",
+                "If the exact commit is not locally readable, stop before writing intake",
+            ),
+            run_file_path: (
+                "baseline: <full canonical commit object ID>",
+                "`baseline` is the full canonical lowercase hexadecimal object ID of a commit",
+                "never a branch, tag, `HEAD`, or abbreviated object ID",
+            ),
+        }
+        for source_path, required in clauses.items():
+            text = start if source_path == start_path else run_file
+            for clause in required:
+                self.assertIn(clause, text)
+                with self.subTest(path=source_path.name, mutation=clause), tempfile.TemporaryDirectory() as td:
+                    skills = self.copy_plugin(Path(td))
+                    target = skills / source_path.relative_to(plugin / "skills")
+                    mutated = target.read_text(encoding="utf-8")
+                    self.assertIn(clause, mutated)
+                    target.write_text(mutated.replace(clause, "[removed full-OID intake contract]", 1), encoding="utf-8")
+                    findings = SEAMS.cross_skill_contracts(skills)
+                    self.assertTrue(
+                        any("full canonical repository baseline intake" in message for _, message in findings),
+                        findings,
+                    )
+        self.assertNotIn("baseline: <commit SHA>", run_file)
+
     def test_d081_repository_adapter_is_inventoried_with_public_functions_and_cli(self):
         plugin = ROOT / "plugins" / "atlas"
         adapter_path = plugin / "tools" / "atlas_repository.py"

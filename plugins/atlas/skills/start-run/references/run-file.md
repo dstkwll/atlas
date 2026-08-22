@@ -68,7 +68,7 @@ risk:
   testability: high
 repos:
   - repository: <stable repository identity>
-    baseline: <commit SHA>
+    baseline: <full canonical commit object ID>
 overrides:
   - path: <selected field path>
     from: <recommended value>
@@ -116,7 +116,7 @@ gates:
 `when` is data for deterministic policy evaluation, not an instruction to an artifact-producing skill. `then` and `otherwise` each use the same gate-authority vocabulary.
 - `execution_policy`, `environment_policy`, and `roster` record the accepted resolved choices.
 - `risk` records all eight classified dimensions used to justify the recommendation.
-- `repos` records one `repository` plus `baseline` pair for every repository known to be affected at intake.
+- `repos` records one `repository` plus `baseline` pair for every repository known to be affected at intake. `baseline` is the full canonical lowercase hexadecimal object ID of a commit, resolved and proved locally before acceptance; it is never a branch, tag, `HEAD`, or abbreviated object ID.
 - `overrides` records each accepted value that differs from the recommendation as `path`, `from`, `to`, and `reason`. It is `[]` when the recommendation was accepted unchanged.
 
 Internal artifact links are root-relative or run-relative. `run.yaml` never copies an external absolute planning-root path into the artifact.

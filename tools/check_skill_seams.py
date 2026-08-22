@@ -361,6 +361,23 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
     if any(clause not in texts.get("readme", "") for clause in readme_program_contract):
         findings.append(("cross", "README Program Design inventory is incomplete"))
 
+    full_oid_start_contract = (
+        "Resolve every admitted baseline to the repository's full canonical commit object ID before previewing `run.yaml`",
+        "New intake never stores a branch, tag, `HEAD`, or abbreviated object ID as `baseline`",
+        "If the exact commit is not locally readable, stop before writing intake",
+    )
+    full_oid_run_file_contract = (
+        "baseline: <full canonical commit object ID>",
+        "`baseline` is the full canonical lowercase hexadecimal object ID of a commit",
+        "never a branch, tag, `HEAD`, or abbreviated object ID",
+    )
+    if (
+        any(clause not in texts.get("start", "") for clause in full_oid_start_contract)
+        or any(clause not in texts.get("run-file", "") for clause in full_oid_run_file_contract)
+        or "baseline: <commit SHA>" in texts.get("run-file", "")
+    ):
+        findings.append(("cross", "start-run: missing full canonical repository baseline intake"))
+
     program = texts.get("program-design", "")
     grounding = "Before drafting anything, require a readable repository for every stable identity and prove the exact frozen baseline commit/tree is available"
     drafting_heading = "## 3. Produce the Stage 4 candidate"
