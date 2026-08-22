@@ -9,6 +9,7 @@ import hashlib
 import json
 import os
 import re
+import secrets
 import stat
 import sys
 import tempfile
@@ -42,6 +43,11 @@ try:
     import msvcrt
 except ImportError:  # pragma: no cover - POSIX
     msvcrt = None
+
+
+SECURE_DIR_FD_EVIDENCE_INSTALL = all(
+    function in os.supports_dir_fd for function in (os.open, os.unlink, os.link)
+)
 
 
 PLANNING_FILE = "planning-control.json"
@@ -480,7 +486,7 @@ def install_upstream_block_evidence(run_dir: Path, review_bytes: bytes) -> Path:
     canonical = managed_path(run_dir, UPSTREAM_BLOCK_REVIEW_REFERENCE)
     parent = canonical.parent
     parent.mkdir(mode=0o700, exist_ok=True)
-    if os.open not in os.supports_dir_fd or os.unlink not in os.supports_dir_fd:
+    if not SECURE_DIR_FD_EVIDENCE_INSTALL:
         raise ControlError("platform cannot securely install upstream-block evidence")
     before = os.stat(parent, follow_symlinks=False)
     if not stat.S_ISDIR(before.st_mode):
@@ -513,22 +519,43 @@ def install_upstream_block_evidence(run_dir: Path, review_bytes: bytes) -> Path:
                 raise ControlError("canonical Program Design upstream-block evidence already exists with different bytes")
             return canonical
         write_flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
-        try:
-            fd = os.open(leaf, write_flags, 0o600, dir_fd=parent_fd)
-        except FileExistsError as exc:
-            raise ControlError("canonical Program Design upstream-block evidence was created concurrently") from exc
+        temp_leaf = None
+        fd = None
+        for _ in range(16):
+            candidate = f".{leaf}.{os.getpid()}.{secrets.token_hex(8)}.tmp"
+            try:
+                fd = os.open(candidate, write_flags, 0o600, dir_fd=parent_fd)
+            except FileExistsError:
+                continue
+            temp_leaf = candidate
+            break
+        if fd is None or temp_leaf is None:
+            raise ControlError("could not reserve temporary upstream-block evidence")
         try:
             with os.fdopen(fd, "wb") as handle:
                 handle.write(review_bytes)
                 handle.flush()
                 os.fsync(handle.fileno())
-            os.fsync(parent_fd)
-        except BaseException:
             try:
-                os.unlink(leaf, dir_fd=parent_fd)
+                os.link(
+                    temp_leaf,
+                    leaf,
+                    src_dir_fd=parent_fd,
+                    dst_dir_fd=parent_fd,
+                    follow_symlinks=False,
+                )
+            except FileExistsError:
+                existing_fd = os.open(leaf, read_flags, dir_fd=parent_fd)
+                with os.fdopen(existing_fd, "rb") as handle:
+                    existing = handle.read()
+                if existing != review_bytes:
+                    raise ControlError("canonical Program Design upstream-block evidence was created concurrently")
+            os.fsync(parent_fd)
+        finally:
+            try:
+                os.unlink(temp_leaf, dir_fd=parent_fd)
             except FileNotFoundError:
                 pass
-            raise
     finally:
         os.close(parent_fd)
     return canonical

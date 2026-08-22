@@ -3154,6 +3154,35 @@ class AtlasPlanningTests(unittest.TestCase):
 
             self.assertFalse((outside / "program-design-upstream-block-v1.json").exists())
 
+    def test_upstream_evidence_install_publishes_only_complete_bytes(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            (run / "reviews").mkdir()
+            review_bytes = b"complete trusted review bytes\n"
+            real_link = os.link
+            observed = []
+
+            def fail_before_publish(source, destination, **kwargs):
+                source_fd = os.open(source, os.O_RDONLY, dir_fd=kwargs["src_dir_fd"])
+                try:
+                    with os.fdopen(source_fd, "rb") as handle:
+                        observed.append(handle.read())
+                finally:
+                    pass
+                raise OSError("simulated death before canonical publication")
+
+            with mock.patch.object(PLANNING.os, "link", side_effect=fail_before_publish):
+                with self.assertRaisesRegex(OSError, "simulated death"):
+                    PLANNING.install_upstream_block_evidence(run, review_bytes)
+
+            canonical = run / "reviews" / "program-design-upstream-block-v1.json"
+            self.assertEqual(observed, [review_bytes])
+            self.assertFalse(canonical.exists())
+
+            with mock.patch.object(PLANNING.os, "link", wraps=real_link):
+                PLANNING.install_upstream_block_evidence(run, review_bytes)
+            self.assertEqual(canonical.read_bytes(), review_bytes)
+
 
 if __name__ == "__main__":
     unittest.main()
