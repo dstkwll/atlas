@@ -129,6 +129,7 @@ REPAIR_EPISODE_FIELDS = {
     "kind", "state", "started_from_revision", "review_reference", "review_sha256",
     "superseded_system_design", "attempts_used", "current_attempt",
 }
+REPAIR_ATTEMPT_FIELDS = {"number", "stage", "candidate_sha256_before"}
 SYSTEM_DESIGN_DIMENSIONS = (
     "responsibilities_and_system_seams",
     "authoritative_data_ownership",
@@ -164,6 +165,20 @@ def nonempty_string(value: Any) -> bool:
 def json_equal_exact(left: Any, right: Any) -> bool:
     return json.dumps(left, sort_keys=True, separators=(",", ":")) == json.dumps(
         right, sort_keys=True, separators=(",", ":")
+    )
+
+
+def valid_repair_attempt(value: Any, attempts_used: int, stage: str) -> bool:
+    return (
+        isinstance(value, dict)
+        and set(value) == REPAIR_ATTEMPT_FIELDS
+        and type(value.get("number")) is int
+        and value["number"] == attempts_used
+        and value.get("stage") == stage
+        and (
+            value.get("candidate_sha256_before") is None
+            or re.fullmatch(r"[0-9a-f]{64}", str(value["candidate_sha256_before"])) is not None
+        )
     )
 
 
@@ -923,6 +938,20 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
     if any((stage in selected) != (gates[stage] != "NOT_REQUIRED") for stage in DOWNSTREAM_STAGES):
         raise ControlError("planning-control.json gates do not match selected downstream stages")
 
+    blocked_reason = planning.get("blocked_reason")
+    repair_episode = blocked_reason if isinstance(blocked_reason, dict) else {}
+    repair_attempts = repair_episode.get("attempts_used")
+    system_candidate_may_diverge = (
+        gates["system_design"] == "STALE"
+        and type(repair_attempts) is int
+        and repair_attempts > 0
+        and valid_repair_attempt(
+            repair_episode.get("current_attempt"),
+            repair_attempts,
+            "system_design",
+        )
+    )
+
     approved_stages: list[str] = []
     for stage in DOWNSTREAM_STAGES:
         record = acceptances[stage]
@@ -948,7 +977,13 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
     record = acceptances["system_design"]
     if record is not None:
         candidate_path = managed_path(run_dir, SYSTEM_DESIGN_FILE)
-        if not candidate_path.is_file() or file_sha256(candidate_path) != record["candidate_sha256"]:
+        if (
+            not system_candidate_may_diverge
+            and (
+                not candidate_path.is_file()
+                or file_sha256(candidate_path) != record["candidate_sha256"]
+            )
+        ):
             raise ControlError("accepted System Design candidate bytes no longer match recorded provenance")
         if product_closure is not None:
             product_path = managed_path(run_dir, "20-prd.md")
@@ -1005,8 +1040,24 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
                 acceptances["system_design"],
             )
             or type(blocked_reason.get("attempts_used")) is not int
-            or blocked_reason["attempts_used"] != 0
-            or blocked_reason.get("current_attempt") is not None
+            or not 0 <= blocked_reason["attempts_used"] <= 4
+            or (
+                blocked_reason["attempts_used"] == 0
+                and blocked_reason.get("current_attempt") is not None
+            )
+            or (
+                blocked_reason["attempts_used"] > 0
+                and not valid_repair_attempt(
+                    blocked_reason.get("current_attempt"),
+                    blocked_reason["attempts_used"],
+                    "system_design",
+                )
+            )
+            or (
+                blocked_reason["attempts_used"] == 1
+                and blocked_reason["current_attempt"]["candidate_sha256_before"]
+                != acceptances["system_design"]["candidate_sha256"]
+            )
             or planning.get("status") != "BLOCKED"
             or planning.get("phase") != "system_design"
             or gates["system_design"] != "STALE"
@@ -1014,7 +1065,11 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
             or gates["tickets"] != expected_ticket_gate
             or acceptances["program_design"] is not None
             or acceptances["tickets"] is not None
-            or planning["revision"] != blocked_reason["started_from_revision"] + 1
+            or planning["revision"] != (
+                blocked_reason["started_from_revision"]
+                + 1
+                + blocked_reason["attempts_used"]
+            )
         ):
             raise ControlError("planning-control.json repair episode is malformed")
         review_path = managed_path(run_dir, UPSTREAM_BLOCK_REVIEW_REFERENCE)
@@ -1332,6 +1387,86 @@ def return_to_system_design(run_dir: Path, review_input: Path) -> str:
                 ) from exc
             raise
     return f"returned program_design -> system_design; planning-control revision {final_planning['revision']}"
+
+
+def repair_candidate_sha256_before(run_dir: Path, stage: str) -> Optional[str]:
+    relative = {
+        "system_design": SYSTEM_DESIGN_FILE,
+        "program_design": PROGRAM_DESIGN_FILE,
+    }.get(stage)
+    if relative is None:
+        raise ControlError("repair attempts support only System Design or Program Design")
+    candidate = managed_path(run_dir, relative)
+    if not candidate.exists():
+        return None
+    if not candidate.is_file():
+        raise ControlError(f"repair candidate {relative} is not a real file")
+    return file_sha256(candidate)
+
+
+def reserve_repair_attempt(run_dir: Path, stage: str) -> dict[str, Any]:
+    planning, _, _ = verified_planning_state(run_dir)
+    episode = planning.get("blocked_reason")
+    episode_data = episode if isinstance(episode, dict) else {}
+    episode_state = episode_data.get("state")
+    expected_stage = (
+        {
+            "SYSTEM_DESIGN_STALE": "system_design",
+            "PROGRAM_DESIGN_RESUMED": "program_design",
+        }.get(episode_state)
+        if isinstance(episode_state, str)
+        else None
+    )
+    if (
+        planning.get("status") != "BLOCKED"
+        or expected_stage is None
+        or planning.get("phase") != expected_stage
+        or stage != expected_stage
+    ):
+        raise ControlError("repair attempt reservation requires the matching active repair phase")
+    attempts_used = episode_data.get("attempts_used")
+    if type(attempts_used) is not int or not 0 <= attempts_used <= 4:
+        raise ControlError("repair attempt budget is malformed")
+    if attempts_used == 4:
+        raise ControlError("repair producer attempt budget is exhausted")
+
+    planning_path = managed_path(run_dir, PLANNING_FILE)
+    planning_bytes = planning_path.read_bytes()
+    candidate_before = repair_candidate_sha256_before(run_dir, stage)
+    attempt_number = attempts_used + 1
+    updated = copy.deepcopy(planning)
+    updated["revision"] += 1
+    updated_episode = updated["blocked_reason"]
+    updated_episode["attempts_used"] = attempt_number
+    updated_episode["current_attempt"] = {
+        "number": attempt_number,
+        "stage": stage,
+        "candidate_sha256_before": candidate_before,
+    }
+
+    def revalidate_before_reservation() -> None:
+        current = load_planning_control(run_dir)
+        if (
+            current != planning
+            or planning_path.read_bytes() != planning_bytes
+            or repair_candidate_sha256_before(run_dir, stage) != candidate_before
+        ):
+            raise ControlError("repair state or candidate changed at the reservation boundary")
+
+    write_planning_control_atomic(
+        run_dir,
+        updated,
+        precondition=revalidate_before_reservation,
+    )
+    committed = load_planning_control(run_dir)
+    if committed != updated:
+        raise ControlError("committed repair attempt reservation is not current")
+    return {
+        "attempt": attempt_number,
+        "stage": stage,
+        "candidate_sha256_before": candidate_before,
+        "planning_revision": updated["revision"],
+    }
 
 
 def ensure_planning(run_dir: Path) -> str:
@@ -2024,6 +2159,13 @@ def build_parser() -> argparse.ArgumentParser:
     return_upstream = sub.add_parser("return-upstream")
     return_upstream.add_argument("--run", required=True, type=Path)
     return_upstream.add_argument("--review-input", required=True, type=Path)
+    reserve_attempt = sub.add_parser("reserve-repair-attempt")
+    reserve_attempt.add_argument("--run", required=True, type=Path)
+    reserve_attempt.add_argument(
+        "--stage",
+        required=True,
+        choices=("system_design", "program_design"),
+    )
     return parser
 
 
@@ -2044,6 +2186,8 @@ def main(argv: Optional[list[str]] = None) -> int:
                 print(advance_boundary(run_dir, args.stage, args.approval, args.review, args.date))
             elif args.command == "return-upstream":
                 print(return_to_system_design(run_dir, args.review_input))
+            elif args.command == "reserve-repair-attempt":
+                print(json.dumps(reserve_repair_attempt(run_dir, args.stage), sort_keys=True))
             else:  # pragma: no cover
                 return 2
         return 0

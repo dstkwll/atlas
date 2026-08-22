@@ -3244,7 +3244,13 @@ class AtlasPlanningTests(unittest.TestCase):
             self.assertEqual(canonical.read_bytes(), review_bytes)
 
     def test_repair_state_rejects_bool_and_impossible_tuples(self):
-        for case in ("boolean-attempts", "boolean-system-version", "stale-tickets", "forged-revisions"):
+        for case in (
+            "boolean-attempts",
+            "boolean-system-version",
+            "stale-tickets",
+            "forged-revisions",
+            "first-attempt-missing-prior-hash",
+        ):
             with self.subTest(case=case), tempfile.TemporaryDirectory() as td:
                 run = Path(td)
                 planning = initialize_program_after_system(run)
@@ -3267,7 +3273,7 @@ class AtlasPlanningTests(unittest.TestCase):
                     state["blocked_reason"]["review_sha256"] = sha256(review)
                 elif case == "stale-tickets":
                     state["gates"]["tickets"] = "STALE"
-                else:
+                elif case == "forged-revisions":
                     state["blocked_reason"]["started_from_revision"] = 100
                     state["revision"] = 101
                     review = run / "reviews" / "program-design-upstream-block-v1.json"
@@ -3275,6 +3281,14 @@ class AtlasPlanningTests(unittest.TestCase):
                     envelope["planning_revision"] = 100
                     review.write_text(json.dumps(envelope, indent=2) + "\n", encoding="utf-8")
                     state["blocked_reason"]["review_sha256"] = sha256(review)
+                else:
+                    state["blocked_reason"]["attempts_used"] = 1
+                    state["blocked_reason"]["current_attempt"] = {
+                        "number": 1,
+                        "stage": "system_design",
+                        "candidate_sha256_before": None,
+                    }
+                    state["revision"] += 1
                 planning_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
 
                 with self.assertRaisesRegex(
@@ -3538,6 +3552,147 @@ class AtlasPlanningTests(unittest.TestCase):
             self.assertIn("returned program_design -> system_design", result)
             updated = PLANNING.load_planning_control(run)
             self.assertEqual((updated["status"], updated["phase"]), ("BLOCKED", "system_design"))
+
+    def test_repair_attempt_is_reserved_before_system_candidate_changes(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            planning = initialize_program_after_system(run)
+            review_input = write_upstream_block_review_input(run, planning)
+            returned = planning_cli(
+                "return-upstream", "--run", run,
+                "--review-input", review_input.relative_to(run),
+            )
+            self.assertEqual(returned.returncode, 0, returned.stderr)
+            before = PLANNING.file_sha256(run / "30-system-design.md")
+            stale = PLANNING.load_planning_control(run)
+
+            reserved = planning_cli(
+                "reserve-repair-attempt", "--run", run, "--stage", "system_design",
+            )
+
+            self.assertEqual(reserved.returncode, 0, reserved.stderr)
+            updated = PLANNING.load_planning_control(run)
+            self.assertEqual(updated["revision"], stale["revision"] + 1)
+            self.assertEqual(updated["blocked_reason"]["attempts_used"], 1)
+            self.assertEqual(updated["blocked_reason"]["current_attempt"], {
+                "number": 1,
+                "stage": "system_design",
+                "candidate_sha256_before": before,
+            })
+
+            (run / "30-system-design.md").write_text("replacement bytes\n", encoding="utf-8")
+            reloaded = PLANNING.load_planning_control(run)
+            self.assertEqual(reloaded["blocked_reason"]["current_attempt"]["candidate_sha256_before"], before)
+            self.assertNotEqual(PLANNING.file_sha256(run / "30-system-design.md"), before)
+
+    def test_interrupted_repair_attempt_still_consumes_budget(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            planning = initialize_program_after_system(run)
+            review_input = write_upstream_block_review_input(run, planning)
+            returned = planning_cli(
+                "return-upstream", "--run", run,
+                "--review-input", review_input.relative_to(run),
+            )
+            self.assertEqual(returned.returncode, 0, returned.stderr)
+            first = planning_cli(
+                "reserve-repair-attempt", "--run", run, "--stage", "system_design",
+            )
+            self.assertEqual(first.returncode, 0, first.stderr)
+
+            (run / "30-system-design.md").write_text("interrupted producer bytes\n", encoding="utf-8")
+            interrupted_hash = PLANNING.file_sha256(run / "30-system-design.md")
+            second = planning_cli(
+                "reserve-repair-attempt", "--run", run, "--stage", "system_design",
+            )
+
+            self.assertEqual(second.returncode, 0, second.stderr)
+            reloaded = PLANNING.load_planning_control(run)
+            self.assertEqual(reloaded["blocked_reason"]["attempts_used"], 2)
+            self.assertEqual(reloaded["blocked_reason"]["current_attempt"], {
+                "number": 2,
+                "stage": "system_design",
+                "candidate_sha256_before": interrupted_hash,
+            })
+
+    def test_four_repair_attempts_persist_across_reload_and_fifth_fails_unchanged(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            planning = initialize_program_after_system(run)
+            review_input = write_upstream_block_review_input(run, planning)
+            returned = planning_cli(
+                "return-upstream", "--run", run,
+                "--review-input", review_input.relative_to(run),
+            )
+            self.assertEqual(returned.returncode, 0, returned.stderr)
+
+            for expected in range(1, 5):
+                reserved = planning_cli(
+                    "reserve-repair-attempt", "--run", run, "--stage", "system_design",
+                )
+                self.assertEqual(reserved.returncode, 0, reserved.stderr)
+                result = json.loads(reserved.stdout)
+                self.assertEqual((result["attempt"], result["stage"]), (expected, "system_design"))
+                reloaded = PLANNING.load_planning_control(run)
+                self.assertEqual(reloaded["blocked_reason"]["attempts_used"], expected)
+                self.assertEqual(reloaded["blocked_reason"]["current_attempt"]["number"], expected)
+
+            planning_before = (run / "planning-control.json").read_bytes()
+            fifth = planning_cli(
+                "reserve-repair-attempt", "--run", run, "--stage", "system_design",
+            )
+
+            self.assertNotEqual(fifth.returncode, 0)
+            self.assertIn("exhausted", fifth.stderr)
+            self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
+
+    def test_normal_path_cannot_reserve_repair_attempt(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            initialize_program_after_system(run)
+            planning_before = (run / "planning-control.json").read_bytes()
+            candidate_before = (run / "30-system-design.md").read_bytes()
+
+            result = planning_cli(
+                "reserve-repair-attempt", "--run", run, "--stage", "program_design",
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("active repair phase", result.stderr)
+            self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
+            self.assertEqual((run / "30-system-design.md").read_bytes(), candidate_before)
+
+    def test_repair_attempt_revalidates_candidate_at_write_boundary(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            planning = initialize_program_after_system(run)
+            review_input = write_upstream_block_review_input(run, planning)
+            returned = planning_cli(
+                "return-upstream", "--run", run,
+                "--review-input", review_input.relative_to(run),
+            )
+            self.assertEqual(returned.returncode, 0, returned.stderr)
+            planning_before = (run / "planning-control.json").read_bytes()
+            original_write = PLANNING.write_planning_control_atomic
+            mutated = False
+
+            def mutate_before_precondition(run_dir, updated, *, precondition=None):
+                nonlocal mutated
+                (run / "30-system-design.md").write_text("raced producer bytes\n", encoding="utf-8")
+                mutated = True
+                return original_write(run_dir, updated, precondition=precondition)
+
+            with mock.patch.object(
+                PLANNING,
+                "write_planning_control_atomic",
+                side_effect=mutate_before_precondition,
+            ):
+                with self.assertRaisesRegex(PLANNING.ControlError, "candidate bytes|candidate changed"):
+                    with PLANNING.planning_lock(run):
+                        PLANNING.reserve_repair_attempt(run, "system_design")
+
+            self.assertTrue(mutated)
+            self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
 
 
 if __name__ == "__main__":
