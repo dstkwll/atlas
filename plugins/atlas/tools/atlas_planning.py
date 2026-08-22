@@ -176,7 +176,11 @@ def contains_machine_local_path(value: Any) -> bool:
             flags=re.IGNORECASE,
         )
         return bool(
-            re.search(r"(?<!:)//[^/\s\"'`<>]+/[^\s\"'`<>]+", without_https_urls)
+            re.search(
+                r"(?<![A-Za-z0-9+.-])[A-Za-z][A-Za-z0-9+.-]*:(?=[^\s\"'`<>])",
+                without_https_urls,
+            )
+            or re.search(r"(?<!:)//[^/\s\"'`<>]+/[^\s\"'`<>]+", without_https_urls)
             or re.search(r"(?<![A-Za-z0-9_])/(?!/)[^\s\"'`<>]+", without_https_urls)
             or re.search(r"(?<!\\)\\\\[^\\\s]+\\[^\\\s]+", without_https_urls)
             or re.search(r"(?<![A-Za-z0-9])[A-Za-z]:", without_https_urls)

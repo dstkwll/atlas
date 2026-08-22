@@ -3078,6 +3078,9 @@ class AtlasPlanningTests(unittest.TestCase):
         def file_uri_windows(envelope):
             envelope["review_evidence"] = "Confirmed from file:///C:/machine/private.py"
 
+        def file_uri_relative(envelope):
+            envelope["review_evidence"] = "Confirmed from file:relative/path"
+
         def unknown_verdict(envelope):
             envelope["verdict"] = "MAYBE"
 
@@ -3101,6 +3104,7 @@ class AtlasPlanningTests(unittest.TestCase):
             ("bare-windows-drive", bare_windows_drive),
             ("file-uri-posix", file_uri_posix),
             ("file-uri-windows", file_uri_windows),
+            ("file-uri-relative", file_uri_relative),
             ("unknown-verdict", unknown_verdict),
         ):
             with self.subTest(case=name), tempfile.TemporaryDirectory() as td:
