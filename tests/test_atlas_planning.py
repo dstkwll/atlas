@@ -500,7 +500,7 @@ def write_upstream_block_review_input(run: Path, planning: dict, *, verdict="CON
                 "evidence": "The baseline exposes no synchronous operation.",
             }],
         },
-        "review_evidence": "Exact accepted design and baseline code cannot both be honored.",
+        "review_evidence": "Exact accepted design and baseline code cannot both be honored; see https://example.invalid/spec.",
     }, indent=2) + "\n", encoding="utf-8")
     return path
 
@@ -3051,6 +3051,18 @@ class AtlasPlanningTests(unittest.TestCase):
         def prose_machine_path(envelope):
             envelope["review_evidence"] = "Confirmed from /home/example/private.py"
 
+        def generic_posix_path(envelope):
+            envelope["review_evidence"] = "Confirmed from /opt/company/private.py"
+
+        def workspace_path(envelope):
+            envelope["review_evidence"] = "Confirmed from /workspace/private.py"
+
+        def unc_path(envelope):
+            envelope["review_evidence"] = r"Confirmed from \\server\share\private.py"
+
+        def windows_drive_relative_path(envelope):
+            envelope["review_evidence"] = "Confirmed from C:private.py"
+
         def unknown_verdict(envelope):
             envelope["verdict"] = "MAYBE"
 
@@ -3065,6 +3077,10 @@ class AtlasPlanningTests(unittest.TestCase):
             ("windows-machine-path", windows_machine_path),
             ("nonexistent-path", nonexistent_path),
             ("prose-machine-path", prose_machine_path),
+            ("generic-posix-path", generic_posix_path),
+            ("workspace-path", workspace_path),
+            ("unc-path", unc_path),
+            ("windows-drive-relative-path", windows_drive_relative_path),
             ("unknown-verdict", unknown_verdict),
         ):
             with self.subTest(case=name), tempfile.TemporaryDirectory() as td:

@@ -169,7 +169,11 @@ def json_equal_exact(left: Any, right: Any) -> bool:
 
 def contains_machine_local_path(value: Any) -> bool:
     if isinstance(value, str):
-        return bool(re.search(r"(?:[A-Za-z]:[\\/]|/(?:Users|home|private|tmp|var|etc)/)", value))
+        return bool(
+            re.search(r"(?<![A-Za-z0-9_:/])/(?!/)[^\s\"'`<>]+", value)
+            or re.search(r"(?<!\\)\\\\[^\\\s]+\\[^\\\s]+", value)
+            or re.search(r"(?<![A-Za-z0-9])[A-Za-z]:(?!\s|$)", value)
+        )
     if isinstance(value, list):
         return any(contains_machine_local_path(item) for item in value)
     if isinstance(value, dict):
