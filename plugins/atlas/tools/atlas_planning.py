@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import contextlib
 import hashlib
 import json
@@ -10,7 +11,7 @@ import os
 import re
 import sys
 import tempfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Callable, Iterator, Optional
 
 import yaml
@@ -98,6 +99,7 @@ PROGRAM_DESIGN_SECTIONS = (
 )
 SYSTEM_DESIGN_REVIEW_REFERENCE = "reviews/system-design-v1.json"
 PROGRAM_DESIGN_REVIEW_REFERENCE = "reviews/program-design-v1.json"
+UPSTREAM_BLOCK_REVIEW_REFERENCE = "reviews/program-design-upstream-block-v1.json"
 SYSTEM_DESIGN_REVIEW_FIELDS = {
     "version", "run", "stage", "policy", "candidate_version", "candidate_sha256",
     "repository_baselines", "materiality", "semantic_review",
@@ -105,6 +107,20 @@ SYSTEM_DESIGN_REVIEW_FIELDS = {
 PROGRAM_DESIGN_REVIEW_FIELDS = {
     "version", "run", "stage", "policy", "candidate_version", "candidate_sha256",
     "repository_baselines", "semantic_review",
+}
+UPSTREAM_BLOCK_REVIEW_FIELDS = {
+    "version", "run", "stage", "planning_revision", "verdict",
+    "system_design_binding", "repository_baselines", "finding", "review_evidence",
+}
+UPSTREAM_BLOCK_SYSTEM_FIELDS = {"artifact", "version", "sha256", "source_binding"}
+UPSTREAM_BLOCK_FINDING_FIELDS = {
+    "code", "dimension", "problem", "upstream_source", "upstream_issue",
+    "resume_boundary", "resume_action", "code_evidence",
+}
+CODE_EVIDENCE_FIELDS = {"repository", "baseline", "path", "evidence"}
+REPAIR_EPISODE_FIELDS = {
+    "kind", "state", "started_from_revision", "review_reference", "review_sha256",
+    "superseded_system_design", "attempts_used", "current_attempt",
 }
 SYSTEM_DESIGN_DIMENSIONS = (
     "responsibilities_and_system_seams",
@@ -349,6 +365,143 @@ def load_program_design_review(
     return envelope, review_sha256
 
 
+def expected_system_design_binding(acceptance: Any) -> dict[str, Any]:
+    if (
+        not isinstance(acceptance, dict)
+        or not isinstance(acceptance.get("source_bindings"), list)
+        or len(acceptance["source_bindings"]) != 1
+    ):
+        raise ControlError("current System Design acceptance is unavailable")
+    return {
+        "artifact": SYSTEM_DESIGN_FILE,
+        "version": acceptance.get("candidate_version"),
+        "sha256": acceptance.get("candidate_sha256"),
+        "source_binding": acceptance["source_bindings"][0],
+    }
+
+
+def validate_upstream_block_review(
+    envelope: Any,
+    *,
+    run: str,
+    planning_revision: int,
+    system_acceptance: Any,
+    effective: dict[str, Any],
+) -> None:
+    if not isinstance(envelope, dict) or set(envelope) != UPSTREAM_BLOCK_REVIEW_FIELDS:
+        raise ControlError("Program Design upstream-block envelope does not match its exact schema")
+    if (
+        type(envelope.get("version")) is not int
+        or envelope.get("version") != 1
+        or envelope.get("run") != run
+        or envelope.get("stage") != "program_design"
+        or type(envelope.get("planning_revision")) is not int
+        or envelope.get("planning_revision") != planning_revision
+        or envelope.get("verdict") not in {
+            "CONFIRMED_UPSTREAM_CONTRADICTION", "NOT_CONFIRMED", "UNAVAILABLE",
+        }
+        or envelope.get("repository_baselines") != effective["repos"]
+        or not nonempty_string(envelope.get("review_evidence"))
+    ):
+        raise ControlError("Program Design upstream-block evidence is not current")
+    binding = envelope.get("system_design_binding")
+    if (
+        not isinstance(binding, dict)
+        or set(binding) != UPSTREAM_BLOCK_SYSTEM_FIELDS
+        or binding != expected_system_design_binding(system_acceptance)
+    ):
+        raise ControlError("Program Design upstream-block evidence does not bind current System Design")
+    finding = envelope.get("finding")
+    if not isinstance(finding, dict) or set(finding) != UPSTREAM_BLOCK_FINDING_FIELDS:
+        raise ControlError("Program Design upstream-block finding does not match its exact schema")
+    if (
+        finding.get("dimension") != "upstream_commitment_realization"
+        or finding.get("upstream_source") != "system_design"
+        or finding.get("resume_boundary") != "system_design"
+        or any(
+            not nonempty_string(finding.get(field))
+            for field in UPSTREAM_BLOCK_FINDING_FIELDS - {"dimension", "code_evidence"}
+        )
+    ):
+        raise ControlError("Program Design upstream-block finding is not a System Design contradiction")
+    code_evidence = finding.get("code_evidence")
+    valid_pairs = {
+        (item["repository"], item["baseline"])
+        for item in effective["repos"]
+    }
+    if not isinstance(code_evidence, list) or not code_evidence:
+        raise ControlError("Program Design upstream-block finding requires code evidence")
+    for item in code_evidence:
+        if not isinstance(item, dict) or set(item) != CODE_EVIDENCE_FIELDS:
+            raise ControlError("Program Design upstream-block code evidence is malformed")
+        relative = item.get("path")
+        if not isinstance(relative, str):
+            raise ControlError("Program Design upstream-block code evidence is not portable or current")
+        path = PurePosixPath(relative)
+        if (
+            (item.get("repository"), item.get("baseline")) not in valid_pairs
+            or path.is_absolute()
+            or not path.parts
+            or any(part in {"", ".", ".."} for part in path.parts)
+            or "\\" in relative
+            or not nonempty_string(item.get("evidence"))
+        ):
+            raise ControlError("Program Design upstream-block code evidence is not portable or current")
+
+
+def load_upstream_block_review_input(
+    run_dir: Path,
+    review_input: Path,
+    planning: dict[str, Any],
+    effective: dict[str, Any],
+) -> tuple[bytes, dict[str, Any], str]:
+    path = managed_path(run_dir, str(review_input))
+    if not path.is_file():
+        raise ControlError("Program Design upstream-block input is missing or not a real file")
+    try:
+        review_bytes = path.read_bytes()
+        envelope = load_json(review_bytes.decode("utf-8"))
+    except UnicodeDecodeError as exc:
+        raise ControlError("Program Design upstream-block input is not valid UTF-8") from exc
+    except json.JSONDecodeError as exc:
+        raise ControlError("Program Design upstream-block input is not valid duplicate-safe JSON") from exc
+    validate_upstream_block_review(
+        envelope,
+        run=planning["run"],
+        planning_revision=planning["revision"],
+        system_acceptance=planning["acceptances"]["system_design"],
+        effective=effective,
+    )
+    return review_bytes, envelope, hashlib.sha256(review_bytes).hexdigest()
+
+
+def install_upstream_block_evidence(run_dir: Path, review_bytes: bytes) -> Path:
+    canonical = managed_path(run_dir, UPSTREAM_BLOCK_REVIEW_REFERENCE)
+    canonical.parent.mkdir(mode=0o700, exist_ok=True)
+    if canonical.is_file():
+        if canonical.read_bytes() != review_bytes:
+            raise ControlError("canonical Program Design upstream-block evidence already exists with different bytes")
+        return canonical
+    if canonical.exists():
+        raise ControlError("canonical Program Design upstream-block evidence is not a real file")
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    try:
+        fd = os.open(canonical, flags, 0o600)
+    except FileExistsError as exc:
+        raise ControlError("canonical Program Design upstream-block evidence was created concurrently") from exc
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(review_bytes)
+            handle.flush()
+            os.fsync(handle.fileno())
+    except BaseException:
+        canonical.unlink(missing_ok=True)
+        raise
+    return canonical
+
+
 @contextlib.contextmanager
 def planning_lock(run_dir: Path) -> Iterator[None]:
     path = managed_path(run_dir, PLANNING_LOCK_FILE)
@@ -577,7 +730,7 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
     if (
         not isinstance(gates, dict)
         or set(gates) != set(DOWNSTREAM_STAGES)
-        or any(value not in {"PENDING", "NOT_REQUIRED", "HUMAN_APPROVED", "AGENT_APPROVED"} for value in gates.values())
+        or any(value not in {"PENDING", "NOT_REQUIRED", "HUMAN_APPROVED", "AGENT_APPROVED", "STALE"} for value in gates.values())
         or not isinstance(acceptances, dict)
         or set(acceptances) != set(DOWNSTREAM_STAGES)
     ):
@@ -602,7 +755,8 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
     for stage in DOWNSTREAM_STAGES:
         record = acceptances[stage]
         approved = gates[stage] in {"HUMAN_APPROVED", "AGENT_APPROVED"}
-        if approved != (record is not None):
+        stale = stage == "system_design" and gates[stage] == "STALE"
+        if (approved or stale) != (record is not None):
             raise ControlError("planning-control.json gate/acceptance coherence is invalid")
         if record is not None:
             if stage == "system_design":
@@ -614,9 +768,10 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
             expected_gate = (
                 "HUMAN_APPROVED" if record["authority"] == "HUMAN" else "AGENT_APPROVED"
             )
-            if gates[stage] != expected_gate:
+            if approved and gates[stage] != expected_gate:
                 raise ControlError("planning-control.json gate label does not match acceptance authority")
-            approved_stages.append(stage)
+            if approved:
+                approved_stages.append(stage)
 
     record = acceptances["system_design"]
     if record is not None:
@@ -648,19 +803,67 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
             if not system_path.is_file() or file_sha256(system_path) != source["sha256"]:
                 raise ControlError("accepted Program Design System Design source no longer matches recorded provenance")
 
-    pending = [stage for stage in DOWNSTREAM_STAGES if gates[stage] == "PENDING"]
     if (
         type(planning.get("version")) is not int
         or planning.get("version") != 1
         or not isinstance(planning.get("run"), str)
         or not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", planning["run"])
         or planning["run"] != effective["run"]
-        or planning.get("status") != "PLANNING"
+        or type(planning.get("revision")) is not int
+    ):
+        raise ControlError("planning-control.json values are not a coherent current planning state")
+
+    blocked_reason = planning.get("blocked_reason")
+    if blocked_reason is not None:
+        if (
+            not isinstance(blocked_reason, dict)
+            or set(blocked_reason) != REPAIR_EPISODE_FIELDS
+            or blocked_reason.get("kind") != "SYSTEM_DESIGN_REPAIR"
+            or blocked_reason.get("state") != "SYSTEM_DESIGN_STALE"
+            or type(blocked_reason.get("started_from_revision")) is not int
+            or blocked_reason["started_from_revision"] < 1
+            or blocked_reason.get("review_reference") != UPSTREAM_BLOCK_REVIEW_REFERENCE
+            or not re.fullmatch(r"[0-9a-f]{64}", str(blocked_reason.get("review_sha256", "")))
+            or blocked_reason.get("superseded_system_design") != acceptances["system_design"]
+            or blocked_reason.get("attempts_used") != 0
+            or blocked_reason.get("current_attempt") is not None
+            or planning.get("status") != "BLOCKED"
+            or planning.get("phase") != "system_design"
+            or gates["system_design"] != "STALE"
+            or gates["program_design"] != "PENDING"
+            or acceptances["program_design"] is not None
+            or planning["revision"] != blocked_reason["started_from_revision"] + 1
+        ):
+            raise ControlError("planning-control.json repair episode is malformed")
+        review_path = managed_path(run_dir, UPSTREAM_BLOCK_REVIEW_REFERENCE)
+        if not review_path.is_file():
+            raise ControlError("planning-control.json repair evidence is missing")
+        try:
+            review_bytes = review_path.read_bytes()
+            envelope = load_json(review_bytes.decode("utf-8"))
+        except UnicodeDecodeError as exc:
+            raise ControlError("planning-control.json repair evidence is not valid UTF-8") from exc
+        except json.JSONDecodeError as exc:
+            raise ControlError("planning-control.json repair evidence is not valid duplicate-safe JSON") from exc
+        if hashlib.sha256(review_bytes).hexdigest() != blocked_reason["review_sha256"]:
+            raise ControlError("planning-control.json repair evidence hash is not current")
+        validate_upstream_block_review(
+            envelope,
+            run=planning["run"],
+            planning_revision=blocked_reason["started_from_revision"],
+            system_acceptance=blocked_reason["superseded_system_design"],
+            effective=effective,
+        )
+        if envelope["verdict"] != "CONFIRMED_UPSTREAM_CONTRADICTION":
+            raise ControlError("planning-control.json repair evidence is not confirmed")
+        return planning
+
+    pending = [stage for stage in DOWNSTREAM_STAGES if gates[stage] == "PENDING"]
+    if (
+        planning.get("status") != "PLANNING"
         or not pending
         or planning.get("phase") != pending[0]
-        or type(planning.get("revision")) is not int
         or planning["revision"] != 1 + len(approved_stages)
-        or planning.get("blocked_reason") is not None
     ):
         raise ControlError("planning-control.json values are not a coherent current planning state")
     return planning
@@ -832,6 +1035,66 @@ def verified_planning_state(run_dir: Path) -> tuple[dict[str, Any], dict[str, An
     if planning["stage0_anchor"] != current_stage0_anchor(run_dir, control, effective):
         raise ControlError("planning-control.json Stage 0 anchor no longer matches the frozen handoff")
     return planning, control, effective
+
+
+def return_to_system_design(run_dir: Path, review_input: Path) -> str:
+    planning, _, effective = verified_planning_state(run_dir)
+    if (
+        planning["status"] != "PLANNING"
+        or planning["phase"] != "program_design"
+        or planning["gates"]["program_design"] != "PENDING"
+        or planning["acceptances"]["program_design"] is not None
+        or planning["gates"]["system_design"] not in {"HUMAN_APPROVED", "AGENT_APPROVED"}
+        or "system_design" not in effective["stages"]
+    ):
+        raise ControlError("upstream repair requires pending Program Design sourced from accepted System Design")
+    expected_source = expected_program_design_source(planning, effective)
+    if expected_source.get("kind") != "system_design":
+        raise ControlError("upstream repair supports only selected System Design")
+    require_program_design_repository_access(run_dir)
+    review_bytes, envelope, review_sha256 = load_upstream_block_review_input(
+        run_dir, review_input, planning, effective
+    )
+    if envelope["verdict"] != "CONFIRMED_UPSTREAM_CONTRADICTION":
+        raise ControlError(f"upstream contradiction review is {envelope['verdict']}")
+    canonical = install_upstream_block_evidence(run_dir, review_bytes)
+    final_planning = copy.deepcopy(planning)
+    final_planning["status"] = "BLOCKED"
+    final_planning["phase"] = "system_design"
+    final_planning["gates"]["system_design"] = "STALE"
+    final_planning["revision"] += 1
+    final_planning["blocked_reason"] = {
+        "kind": "SYSTEM_DESIGN_REPAIR",
+        "state": "SYSTEM_DESIGN_STALE",
+        "started_from_revision": planning["revision"],
+        "review_reference": UPSTREAM_BLOCK_REVIEW_REFERENCE,
+        "review_sha256": review_sha256,
+        "superseded_system_design": copy.deepcopy(planning["acceptances"]["system_design"]),
+        "attempts_used": 0,
+        "current_attempt": None,
+    }
+
+    def revalidate_immediately_before_replace() -> None:
+        current, _, current_effective = verified_planning_state(run_dir)
+        current_bytes, current_envelope, current_sha256 = load_upstream_block_review_input(
+            run_dir, review_input, current, current_effective
+        )
+        if (
+            current != planning
+            or current_bytes != review_bytes
+            or current_envelope != envelope
+            or current_sha256 != review_sha256
+            or canonical.read_bytes() != review_bytes
+        ):
+            raise ControlError("planning state or upstream-block evidence changed at the write boundary")
+
+    write_planning_control_atomic(
+        run_dir,
+        final_planning,
+        precondition=revalidate_immediately_before_replace,
+    )
+    load_planning_control(run_dir)
+    return f"returned program_design -> system_design; planning-control revision {final_planning['revision']}"
 
 
 def ensure_planning(run_dir: Path) -> str:
@@ -1521,6 +1784,9 @@ def build_parser() -> argparse.ArgumentParser:
     advance.add_argument("--approval", choices=("human",))
     advance.add_argument("--review")
     advance.add_argument("--date", required=True)
+    return_upstream = sub.add_parser("return-upstream")
+    return_upstream.add_argument("--run", required=True, type=Path)
+    return_upstream.add_argument("--review-input", required=True, type=Path)
     return parser
 
 
@@ -1539,6 +1805,8 @@ def main(argv: Optional[list[str]] = None) -> int:
                 print(ensure_planning(run_dir))
             elif args.command == "advance":
                 print(advance_boundary(run_dir, args.stage, args.approval, args.review, args.date))
+            elif args.command == "return-upstream":
+                print(return_to_system_design(run_dir, args.review_input))
             else:  # pragma: no cover
                 return 2
         return 0

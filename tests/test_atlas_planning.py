@@ -1,4 +1,5 @@
 import importlib.util
+import hashlib
 import json
 import os
 import shutil
@@ -460,6 +461,46 @@ def write_program_review(run: Path, *, policy: str, review=None) -> Path:
         "candidate_sha256": sha256(run / "40-program-design.md"),
         "repository_baselines": config["repos"],
         "semantic_review": review if review is not None else program_semantic_review(),
+    }, indent=2) + "\n", encoding="utf-8")
+    return path
+
+
+def write_upstream_block_review_input(run: Path, planning: dict, *, verdict="CONFIRMED_UPSTREAM_CONTRADICTION") -> Path:
+    acceptance = planning["acceptances"]["system_design"]
+    assert isinstance(acceptance, dict)
+    assert isinstance(_TEST_REPOSITORY_BASELINES, list)
+    source_binding = acceptance["source_bindings"][0]
+    path = run / "reviews" / ".program-design-upstream-block.input.json"
+    path.parent.mkdir(exist_ok=True)
+    path.write_text(json.dumps({
+        "version": 1,
+        "run": planning["run"],
+        "stage": "program_design",
+        "planning_revision": planning["revision"],
+        "verdict": verdict,
+        "system_design_binding": {
+            "artifact": "30-system-design.md",
+            "version": acceptance["candidate_version"],
+            "sha256": acceptance["candidate_sha256"],
+            "source_binding": source_binding,
+        },
+        "repository_baselines": _TEST_REPOSITORY_BASELINES,
+        "finding": {
+            "code": "EXACT_CODE_CONTRADICTION",
+            "dimension": "upstream_commitment_realization",
+            "problem": "The accepted synchronous guarantee cannot be realized by the baseline API.",
+            "upstream_source": "system_design",
+            "upstream_issue": "The accepted guarantee requires a capability the baseline does not expose.",
+            "resume_boundary": "system_design",
+            "resume_action": "Replace the guarantee with the smallest realizable contract.",
+            "code_evidence": [{
+                "repository": _TEST_REPOSITORY_BASELINES[0]["repository"],
+                "baseline": _TEST_REPOSITORY_BASELINES[0]["baseline"],
+                "path": "source.txt",
+                "evidence": "The baseline exposes no synchronous operation.",
+            }],
+        },
+        "review_evidence": "Exact accepted design and baseline code cannot both be honored.",
     }, indent=2) + "\n", encoding="utf-8")
     return path
 
@@ -2918,6 +2959,153 @@ class AtlasPlanningTests(unittest.TestCase):
             planning_path.write_text(json.dumps(extra), encoding="utf-8")
             with self.assertRaisesRegex(PLANNING.ControlError, "fields"):
                 PLANNING.load_planning_control(run)
+
+    def test_confirmed_upstream_contradiction_atomically_stales_system_design(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            planning = initialize_program_after_system(run)
+            review_input = write_upstream_block_review_input(run, planning)
+            review_bytes = review_input.read_bytes()
+            control_before = (run / "control.json").read_bytes()
+            run_before = (run / "run.yaml").read_bytes()
+            system_before = (run / "30-system-design.md").read_bytes()
+            acceptance_before = planning["acceptances"]["system_design"]
+
+            result = planning_cli(
+                "return-upstream", "--run", run,
+                "--review-input", review_input.relative_to(run),
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            canonical_review = run / "reviews" / "program-design-upstream-block-v1.json"
+            self.assertEqual(canonical_review.read_bytes(), review_bytes)
+            updated = PLANNING.load_planning_control(run)
+            self.assertEqual(updated["status"], "BLOCKED")
+            self.assertEqual(updated["phase"], "system_design")
+            self.assertEqual(updated["revision"], planning["revision"] + 1)
+            self.assertEqual(updated["gates"]["system_design"], "STALE")
+            self.assertEqual(updated["gates"]["program_design"], "PENDING")
+            self.assertEqual(updated["acceptances"]["system_design"], acceptance_before)
+            self.assertIsNone(updated["acceptances"]["program_design"])
+            self.assertEqual(updated["blocked_reason"]["kind"], "SYSTEM_DESIGN_REPAIR")
+            self.assertEqual(updated["blocked_reason"]["state"], "SYSTEM_DESIGN_STALE")
+            self.assertEqual(updated["blocked_reason"]["review_reference"], "reviews/program-design-upstream-block-v1.json")
+            self.assertEqual(updated["blocked_reason"]["review_sha256"], hashlib.sha256(review_bytes).hexdigest())
+            self.assertEqual(updated["blocked_reason"]["superseded_system_design"], acceptance_before)
+            self.assertEqual(updated["blocked_reason"]["attempts_used"], 0)
+            self.assertIsNone(updated["blocked_reason"]["current_attempt"])
+            self.assertEqual((run / "control.json").read_bytes(), control_before)
+            self.assertEqual((run / "run.yaml").read_bytes(), run_before)
+            self.assertEqual((run / "30-system-design.md").read_bytes(), system_before)
+
+    def test_not_confirmed_and_unavailable_upstream_reviews_do_not_mutate_state(self):
+        for verdict in ("NOT_CONFIRMED", "UNAVAILABLE"):
+            with self.subTest(verdict=verdict), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                planning = initialize_program_after_system(run)
+                review_input = write_upstream_block_review_input(run, planning, verdict=verdict)
+                planning_before = (run / "planning-control.json").read_bytes()
+
+                result = planning_cli(
+                    "return-upstream", "--run", run,
+                    "--review-input", review_input.relative_to(run),
+                )
+
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(verdict, result.stderr)
+                self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
+                self.assertFalse((run / "reviews" / "program-design-upstream-block-v1.json").exists())
+
+    def test_upstream_review_rejects_malformed_stale_and_wrong_source_evidence(self):
+        def add_extra(envelope):
+            envelope["extra"] = True
+
+        def stale_revision(envelope):
+            envelope["planning_revision"] -= 1
+
+        def wrong_system(envelope):
+            envelope["system_design_binding"]["sha256"] = "0" * 64
+
+        def wrong_repositories(envelope):
+            envelope["repository_baselines"] = []
+
+        def wrong_source(envelope):
+            envelope["finding"]["upstream_source"] = "product_closure"
+
+        def machine_path(envelope):
+            envelope["finding"]["code_evidence"][0]["path"] = "/machine/private.py"
+
+        def unknown_verdict(envelope):
+            envelope["verdict"] = "MAYBE"
+
+        for name, mutate in (
+            ("extra", add_extra),
+            ("stale-revision", stale_revision),
+            ("wrong-system", wrong_system),
+            ("wrong-repositories", wrong_repositories),
+            ("wrong-source", wrong_source),
+            ("machine-path", machine_path),
+            ("unknown-verdict", unknown_verdict),
+        ):
+            with self.subTest(case=name), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                planning = initialize_program_after_system(run)
+                review_input = write_upstream_block_review_input(run, planning)
+                envelope = json.loads(review_input.read_text(encoding="utf-8"))
+                mutate(envelope)
+                review_input.write_text(json.dumps(envelope, indent=2) + "\n", encoding="utf-8")
+                planning_before = (run / "planning-control.json").read_bytes()
+
+                result = planning_cli(
+                    "return-upstream", "--run", run,
+                    "--review-input", review_input.relative_to(run),
+                )
+
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
+                self.assertFalse((run / "reviews" / "program-design-upstream-block-v1.json").exists())
+
+    def test_upstream_review_install_is_no_clobber_and_recovers_only_identical_bytes(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            planning = initialize_program_after_system(run)
+            review_input = write_upstream_block_review_input(run, planning)
+            review_bytes = review_input.read_bytes()
+            planning_before = (run / "planning-control.json").read_bytes()
+
+            with mock.patch.object(
+                PLANNING,
+                "write_planning_control_atomic",
+                side_effect=OSError("simulated crash after evidence install"),
+            ):
+                with self.assertRaisesRegex(OSError, "simulated crash"), PLANNING.planning_lock(run):
+                    PLANNING.return_to_system_design(run, review_input.relative_to(run))
+
+            canonical = run / "reviews" / "program-design-upstream-block-v1.json"
+            self.assertEqual(canonical.read_bytes(), review_bytes)
+            self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
+
+            with PLANNING.planning_lock(run):
+                PLANNING.return_to_system_design(run, review_input.relative_to(run))
+            self.assertEqual(canonical.read_bytes(), review_bytes)
+
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            planning = initialize_program_after_system(run)
+            review_input = write_upstream_block_review_input(run, planning)
+            canonical = run / "reviews" / "program-design-upstream-block-v1.json"
+            canonical.write_text("different bytes\n", encoding="utf-8")
+            planning_before = (run / "planning-control.json").read_bytes()
+
+            result = planning_cli(
+                "return-upstream", "--run", run,
+                "--review-input", review_input.relative_to(run),
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("different bytes", result.stderr)
+            self.assertEqual(canonical.read_text(encoding="utf-8"), "different bytes\n")
+            self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
 
 
 if __name__ == "__main__":
