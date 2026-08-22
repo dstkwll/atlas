@@ -10,6 +10,16 @@ Resolve `<atlas-plugin-root>` from this installed skill before invoking the pack
 
 If the packaged tool or a required dependency is unavailable, or a command returns anything except its documented outcome, report the exact error and stop. A valid structured `BLOCKED` report from `check` is an expected check outcome even though the command exits 1; handle its gaps rather than treating it as tool failure. Never emulate transition logic in prose or mutate authority state as a fallback.
 
+## 0. Recover or continue from authoritative phase
+
+Read authoritative `control.json` before running Product Closure. When its phase already names `system_design`, `program_design`, or `tickets`, run the shared downstream handoff command exactly:
+
+```shell
+python3 "<atlas-plugin-root>/tools/atlas_planning.py" ensure --run "<run-directory>"
+```
+
+On success, re-read `planning-control.json`, hand off to its current owner, and do not rerun Product Closure. This is interrupted-handoff recovery, not another Stage 0–2 transition. If the phase is `discovery`, continue below and do not run `ensure`; discovery never starts execution.
+
 ## 1. Mechanical check
 
 Run:
@@ -53,7 +63,7 @@ A BLOCKED AGENT_REVIEW envelope is evidence for repair, not an authority transit
 python3 "<atlas-plugin-root>/tools/atlas_control.py" reject --run "<run-directory>" --reason "<reason>"
 ```
 
-On success, report the exact output and re-read `control.json` before claiming the resulting state. For the expected nonzero structured `BLOCKED` check outcome, report and follow every gap. On any other nonzero exit, report the exact error and never claim progression from an intended command.
+On success, report the exact output and re-read `control.json` before claiming the resulting state. After a successful Product Closure transition, if that re-read phase is `system_design`, `program_design`, or `tickets`, run the exact shared `ensure` command from §0, re-read `planning-control.json`, and hand off to its current owner before claiming the handoff. For the expected nonzero structured `BLOCKED` check outcome, report and follow every gap. On any other nonzero exit, report the exact error and never claim progression from an intended command.
 
 The controller validates run identity, candidate version/hash binding, authority, and transition legality. Acceptance replaces the current discovery binding in `control.json`; it does not mutate the candidate or create `approved/` copies or receipt files.
 

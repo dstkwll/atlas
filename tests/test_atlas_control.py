@@ -348,6 +348,54 @@ def write_review(path, record, verdict="PASS", *, candidate_sha256=None):
 
 
 class AtlasControlTests(unittest.TestCase):
+    def test_run_rejects_non_integer_schema_versions(self):
+        for version in (1.0, 2.0, "2", True):
+            with self.subTest(version=version), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                config = run_config()
+                config["version"] = version
+                if version == 2.0:
+                    config["system_design_participation"] = None
+                (run / "run.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+
+                result = initialize_cli(run)
+
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("version", result.stderr.lower())
+
+    def test_run_v2_requires_participation_when_system_design_selected(self):
+        for participation, expected_success in (
+            ("agent_led", True),
+            ("co_design", True),
+            (None, False),
+            ("classifier_choice", False),
+        ):
+            with self.subTest(participation=participation), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                config = run_config()
+                config["version"] = 2
+                config["system_design_participation"] = participation
+                config["stages"] = ["discovery", "system_design", "program_design"]
+                config["gates"]["system_design"] = {"authority": "HUMAN"}
+                (run / "run.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+
+                result = initialize_cli(run)
+
+                self.assertEqual(result.returncode == 0, expected_success, result.stderr)
+
+    def test_run_v2_requires_null_participation_when_system_design_omitted(self):
+        for participation, expected_success in ((None, True), ("agent_led", False)):
+            with self.subTest(participation=participation), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                config = run_config()
+                config["version"] = 2
+                config["system_design_participation"] = participation
+                (run / "run.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+
+                result = initialize_cli(run)
+
+                self.assertEqual(result.returncode == 0, expected_success, result.stderr)
+
     def test_initialize_creates_machine_authority_and_projection(self):
         with tempfile.TemporaryDirectory() as td:
             run = Path(td)

@@ -73,6 +73,11 @@ RUN_FIELDS = {
     "workflow", "stages", "governance", "gates", "execution_policy", "environment_policy",
     "roster", "risk", "repos", "overrides",
 }
+RUN_V2_FIELDS = {
+    "version", "run", "opened", "goal", "planning_root", "run_path", "recommendation",
+    "workflow", "stages", "system_design_participation", "governance", "gates",
+    "execution_policy", "environment_policy", "roster", "risk", "repos", "overrides",
+}
 PRD_SECTIONS = (
     "Problem", "Goals and outcomes", "Non-goals", "Actors", "Scenarios",
     "Requirements", "Invariants", "Contracts and interfaces",
@@ -314,11 +319,25 @@ def resolve_existing_run_directory(
     return resolved
 
 
+def system_design_participation(config: dict[str, Any]) -> Optional[str]:
+    participation = config.get("system_design_participation")
+    selected = "system_design" in config.get("stages", [])
+    if selected:
+        if participation not in {"agent_led", "co_design"}:
+            raise ControlError("selected system_design requires explicit agent_led or co_design participation")
+        return participation
+    if participation is not None:
+        raise ControlError("omitted system_design requires null participation")
+    return None
+
+
 def validate_run(config: dict[str, Any]) -> None:
-    if set(config) != RUN_FIELDS:
-        raise ControlError("run.yaml fields do not match version-1 schema")
-    if config.get("version") != 1 or isinstance(config.get("version"), bool):
-        raise ControlError("run.yaml version must be 1")
+    version = config.get("version")
+    if type(version) is not int or version not in {1, 2}:
+        raise ControlError("run.yaml version must be integer 1 or 2")
+    expected_fields = RUN_FIELDS if version == 1 else RUN_V2_FIELDS
+    if set(config) != expected_fields:
+        raise ControlError(f"run.yaml fields do not match version-{version} schema")
     run = validate_run_slug(config.get("run"))
     if config.get("run_path") != run:
         raise ControlError("run.yaml run_path must equal run")
@@ -341,6 +360,8 @@ def validate_run(config: dict[str, Any]) -> None:
     ):
         raise ControlError("run.yaml gates must be a map and may not contain legacy spec")
     discovery_selected = "discovery" in stages
+    if version == 2:
+        system_design_participation(config)
     if discovery_selected and stages[0] != "discovery":
         raise ControlError("selected discovery must be the first stage")
     if discovery_selected != ("discovery" in gates):

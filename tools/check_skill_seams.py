@@ -161,7 +161,16 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         "spike": skills / "spike" / "SKILL.md",
         "spike-findings": skills / "spike" / "references" / "findings-file.md",
         "controller": skills.parent / "tools" / "atlas_control.py",
+        "planning": skills.parent / "tools" / "atlas_planning.py",
+        "system-design": skills / "system-design" / "SKILL.md",
+        "system-design-template": skills / "system-design" / "references" / "system-design-file.md",
+        "system-design-board": skills / "system-design" / "references" / "system-design-board.md",
+        "system-design-agent": skills / "system-design" / "agents" / "openai.yaml",
+        "control-planning": skills / "control-planning" / "SKILL.md",
+        "system-design-authority": skills / "control-planning" / "references" / "system-design-authority.md",
+        "control-planning-agent": skills / "control-planning" / "agents" / "openai.yaml",
         "renderer": skills.parent / "tools" / "render_prd.py",
+        "system-renderer": skills.parent / "tools" / "render_system_design.py",
     }
     texts: dict[str, str] = {}
     for name, path in paths.items():
@@ -171,8 +180,14 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             texts[name] = path.read_text(encoding="utf-8")
 
     required = {
-        "start": ["run.yaml", "control.json", "initialize", "AGENT_REVIEW", "HUMAN", "AUTO"],
-        "run-file": ["[a-z0-9]+(?:-[a-z0-9]+)*", "rejects path separators"],
+        "start": [
+            "run.yaml", "control.json", "initialize", "AGENT_REVIEW", "HUMAN", "AUTO",
+            "atlas_planning.py", "planning-control.json", ".atlas-planning.lock",
+        ],
+        "run-file": [
+            "[a-z0-9]+(?:-[a-z0-9]+)*", "rejects path separators",
+            "version: 2", "system_design_participation: agent_led",
+        ],
         "state": ["control.json", "base_run_sha256", "accepted_amendment_count", "acceptances"],
         "amendment": ["amendments/NNN-", "accepted amendment count", "No `previous`"],
         "discovery": ["producer", "read-only", "gate_ready", "status: draft", "control.json", "20-prd.md", "render_prd.py"],
@@ -183,13 +198,241 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         "intake-correction": [".20-prd.next.md", "mark-stale", "apply-amendment", "run.yaml remains byte-for-byte unchanged"],
         "spike": ["authoritative `control.json`", "accepted_amendment_count", "ignore `00-state.md`"],
         "controller": ["def initialize", "def check", "def advance", "def reject", "def mark_stale", "def apply_amendment"],
+        "planning": [
+            'PLANNING_FILE = "planning-control.json"',
+            'PLANNING_LOCK_FILE = ".atlas-planning.lock"',
+            "def load_planning_control", "def initialize_planning", "def ensure_planning", "def check_boundary",
+            "def advance_boundary", 'SYSTEM_DESIGN_FILE = "30-system-design.md"',
+            "verify_system_design_board", "30-system-design.html",
+        ],
+        "system-design": [
+            "disable-model-invocation: true", "third parent of this file", "agent_led",
+            "co_design", "Slice 2", "references/system-design-file.md", "references/system-design-board.md",
+            "gate_ready: true", "render_system_design.py", ".30-system-design.next.md",
+            "atlas:control-planning", "without asking the user to issue a second command",
+        ],
+        "system-design-template": [
+            "run: <feature-slug>", "version: 1", "status: draft", "gate_ready: false",
+            "participation: agent_led", "source_binding:", "kind: product_closure",
+            "kind: stage0", "effective_config_hash", "effective_config_revision",
+        ],
+        "system-design-agent": ["allow_implicit_invocation: false"],
+        "system-design-board": [
+            "30-system-design.md", "30-system-design.html", "Inapplicable:",
+            "non-authoritative", "no independent acceptance hash",
+        ],
+        "control-planning": [
+            "disable-model-invocation: true", "third parent of this file", "never routes",
+            "never synthesizes", "never edits", "never grades prose", "explicit human approval",
+            "agent_led", "co_design", "30-system-design.html", "non-authoritative",
+            "atlas_planning.py", "advance --run", "--approval human", "--date",
+            "re-read `planning-control.json`", "AGENT_REVIEW", "HUMAN_IF_CHANGED", "Slice 2",
+            "fresh read-only classifier", "distinct fresh semantic reviewer", "invoker assembles",
+            "reviews/system-design-v1.json",
+        ],
+        "system-design-authority": [
+            "reviews/system-design-v1.json", "candidate_version", "candidate_sha256",
+            "repository_baselines", "materiality", "semantic_review", "unavailable_reason",
+            "MATERIAL", "NOT_MATERIAL", "UNAVAILABLE", "PASS", "BLOCKED",
+        ],
+        "control-planning-agent": ["allow_implicit_invocation: false"],
         "renderer": ["def write_canonical", "def render", "def verify", "RENDERER_VERSION"],
+        "system-renderer": [
+            "def write_canonical", "def render", "def verify", "RENDERER_VERSION",
+            'SOURCE_FILE = "30-system-design.md"', 'OUTPUT_FILE = "30-system-design.html"',
+            "REQUIRED_VIEWS", "atlas-source", "atlas-source-sha256", "atlas-renderer-version",
+        ],
     }
     for name, needles in required.items():
         text = texts.get(name, "")
         for needle in needles:
             if needle.lower() not in text.lower():
                 findings.append(("cross", f"{name}: missing seam contract `{needle}`"))
+
+    try:
+        system_agent = yaml.safe_load(texts.get("system-design-agent", ""))
+        control_agent = yaml.safe_load(texts.get("control-planning-agent", ""))
+        system_prompt = system_agent["interface"]["default_prompt"]
+        control_text = " ".join(control_agent["interface"].values())
+        system_implicit = system_agent["policy"]["allow_implicit_invocation"]
+        control_implicit = control_agent["policy"]["allow_implicit_invocation"]
+    except (TypeError, KeyError, yaml.YAMLError) as exc:
+        findings.append(("cross", f"System Design model metadata is unreadable: {exc}"))
+    else:
+        if (
+            "current agent-led" in system_prompt.lower()
+            or "frozen agent_led or co_design participation" not in system_prompt
+            or "candidate" not in system_prompt
+            or "internal control handoff" not in system_prompt
+        ):
+            findings.append(("cross", "system-design-agent: stale Slice 1 agent-led priming remains in model metadata"))
+        if (
+            "HUMAN handoff" in control_text
+            or "configured HUMAN, AGENT_REVIEW, or HUMAN_IF_CHANGED System Design boundary once" not in control_text
+        ):
+            findings.append(("cross", "control-planning-agent: stale Slice 1 HUMAN-only priming remains in model metadata"))
+        if system_implicit is not False or control_implicit is not False:
+            findings.append(("cross", "System Design model metadata must keep implicit invocation false"))
+
+    planning_command = 'python3 "<atlas-plugin-root>/tools/atlas_planning.py" ensure --run "<run-directory>"'
+    for name in ("start", "control"):
+        if planning_command not in texts.get(name, ""):
+            findings.append(("cross", f"{name}: missing shared planning ensure command with installed-root/CWD contract"))
+    start_text = texts.get("start", "")
+    start_collision = start_text.split("## 1. Resolve and accept intake", 1)[0]
+    start_handoff = start_text.split("## 3. Hand off", 1)[1] if "## 3. Hand off" in start_text else ""
+    if planning_command not in start_collision:
+        findings.append(("cross", "start: missing interrupted downstream resume recovery through shared ensure"))
+    if (
+        "A `PLANNING` run resumes at current `control.json.phase`" in start_text
+        or "If authoritative `control.json.phase` is `discovery`" not in start_collision
+        or "validated `planning-control.json.phase` is the actual current planning phase" not in start_collision
+        or "validated `planning-control.json.phase` is the actual current planning phase" not in start_handoff
+    ):
+        findings.append(("cross", "start: stale live downstream resume cursor; planning-control must own downstream position"))
+    check_command = 'python3 "<atlas-plugin-root>/tools/atlas_planning.py" check --run "<run-directory>" --stage system_design'
+    advance_command = 'python3 "<atlas-plugin-root>/tools/atlas_planning.py" advance --run "<run-directory>" --stage system_design --approval human --date "<YYYY-MM-DD>"'
+    for name in ("system-design", "control-planning"):
+        if check_command not in texts.get(name, ""):
+            findings.append(("cross", f"{name}: missing caller-CWD-independent System Design check command"))
+    if advance_command not in texts.get("control-planning", ""):
+        findings.append(("cross", "control-planning: missing exact HUMAN System Design advance command"))
+    for command in (
+        'advance --run "<run-directory>" --stage system_design --review reviews/system-design-v1.json --date "<YYYY-MM-DD>"',
+        'advance --run "<run-directory>" --stage system_design --review reviews/system-design-v1.json --approval human --date "<YYYY-MM-DD>"',
+    ):
+        if command not in texts.get("control-planning", ""):
+            findings.append(("cross", f"control-planning: missing System Design authority-matrix command `{command}`"))
+    renderer_commands = (
+        'python3 "<atlas-plugin-root>/tools/render_system_design.py" write --run "<run-directory>" --draft .30-system-design.next.md',
+        'python3 "<atlas-plugin-root>/tools/render_system_design.py" render --run "<run-directory>"',
+        'python3 "<atlas-plugin-root>/tools/render_system_design.py" verify --run "<run-directory>"',
+    )
+    for command in renderer_commands:
+        if command not in texts.get("system-design", ""):
+            findings.append(("cross", f"system-design: missing caller-CWD-independent renderer command `{command}`"))
+    producer = texts.get("system-design", "")
+    if producer.count("atlas:control-planning") != 1 or "without asking the user to issue a second command" not in producer:
+        findings.append(("cross", "system-design: missing exact internal control-planning handoff without a second user command"))
+    try:
+        run_v2_fields = set(assigned_literal(texts.get("controller", ""), "RUN_V2_FIELDS"))
+        system_design_dimensions = tuple(assigned_literal(texts.get("planning", ""), "SYSTEM_DESIGN_DIMENSIONS"))
+        run_maps = [
+            value for _, block in template_blocks(texts.get("run-file", ""))
+            if isinstance((value := yaml.safe_load(block)), dict) and value.get("version") == 2
+        ]
+    except (SyntaxError, ValueError, yaml.YAMLError) as exc:
+        findings.append(("cross", f"run.yaml v2 schema seam is unreadable: {exc}"))
+    else:
+        present = set(run_maps[0]) if run_maps else set()
+        if len(run_maps) != 1 or present != run_v2_fields:
+            findings.append(("cross", f"run.yaml v2 template does not match controller RUN_V2_FIELDS; missing={sorted(run_v2_fields - present)}"))
+        run_dimensions = (
+            run_maps[0].get("gates", {}).get("system_design", {}).get("material_dimensions")
+            if len(run_maps) == 1 else None
+        )
+        if not isinstance(run_dimensions, list) or tuple(run_dimensions) != system_design_dimensions:
+            findings.append(("cross", "canonical run-file HUMAN_IF_CHANGED dimensions do not match planning SYSTEM_DESIGN_DIMENSIONS"))
+
+    try:
+        system_fields = set(assigned_literal(texts.get("planning", ""), "SYSTEM_DESIGN_FIELDS"))
+        product_source_fields = set(assigned_literal(texts.get("planning", ""), "PRODUCT_SOURCE_FIELDS"))
+        stage0_source_fields = set(assigned_literal(texts.get("planning", ""), "STAGE0_SOURCE_FIELDS"))
+        system_sections = tuple(assigned_literal(texts.get("planning", ""), "SYSTEM_DESIGN_SECTIONS"))
+        candidate_maps = [
+            item for item in frontmatter_maps(texts.get("system-design-template", ""))
+            if {"run", "version", "status", "gate_ready"}.issubset(item)
+        ]
+        source_maps = [
+            item.get("source_binding") for item in candidate_maps
+            if isinstance(item.get("source_binding"), dict)
+        ]
+        source_maps += [
+            item.get("source_binding") for _, block in template_blocks(texts.get("system-design-template", ""))
+            if isinstance((item := yaml.safe_load(block)), dict)
+            and isinstance(item.get("source_binding"), dict)
+        ]
+    except (SyntaxError, ValueError, yaml.YAMLError) as exc:
+        findings.append(("cross", f"System Design candidate schema seam is unreadable: {exc}"))
+    else:
+        present = set(candidate_maps[0]) if candidate_maps else set()
+        if len(candidate_maps) != 1 or present != system_fields:
+            findings.append(("cross", f"System Design candidate schema does not match planning SYSTEM_DESIGN_FIELDS; missing={sorted(system_fields - present)}"))
+        source_shapes = {frozenset(item) for item in source_maps if isinstance(item, dict)}
+        expected_shapes = {frozenset(product_source_fields), frozenset(stage0_source_fields)}
+        if source_shapes != expected_shapes:
+            findings.append(("cross", "System Design source_binding templates do not match both discriminated planning schemas"))
+        headings = tuple(re.findall(r"(?m)^## ([^\n]+?)\s*$", texts.get("system-design-template", "")))
+        if headings != system_sections:
+            findings.append(("cross", "System Design template sections do not match planning SYSTEM_DESIGN_SECTIONS"))
+        governed = texts.get("system-design", "")
+        for field in sorted(system_fields | product_source_fields | stage0_source_fields):
+            if not sentences_naming(governed, field):
+                findings.append(("cross", f"system-design: template field `{field}` is ungoverned"))
+
+    try:
+        board_views = tuple(assigned_literal(texts.get("system-renderer", ""), "REQUIRED_VIEWS"))
+        board_labels = tuple(item[0] for item in board_views)
+        board_sections = {section for _, _, sections in board_views for section in sections}
+        system_sections = set(assigned_literal(texts.get("planning", ""), "SYSTEM_DESIGN_SECTIONS"))
+    except (SyntaxError, ValueError, TypeError, IndexError) as exc:
+        findings.append(("cross", f"System Design board views are unreadable: {exc}"))
+    else:
+        board_text = texts.get("system-design-board", "")
+        skill_text = texts.get("system-design", "")
+        if (
+            len(board_labels) != len(set(board_labels))
+            or any(label not in board_text for label in board_labels)
+            or any(label not in skill_text and "stable label" not in skill_text for label in board_labels)
+        ):
+            findings.append(("cross", "System Design board views do not match renderer, reference, and skill contracts"))
+        if not board_sections.issubset(system_sections):
+            findings.append(("cross", "System Design board source sections are outside planning SYSTEM_DESIGN_SECTIONS"))
+
+    try:
+        review_reference = assigned_literal(texts.get("planning", ""), "SYSTEM_DESIGN_REVIEW_REFERENCE")
+        review_fields = set(assigned_literal(texts.get("planning", ""), "SYSTEM_DESIGN_REVIEW_FIELDS"))
+        dimensions = tuple(assigned_literal(texts.get("planning", ""), "SYSTEM_DESIGN_DIMENSIONS"))
+        materiality_fields = set(assigned_literal(texts.get("planning", ""), "MATERIALITY_FIELDS"))
+        semantic_fields = set(assigned_literal(texts.get("planning", ""), "SEMANTIC_REVIEW_FIELDS"))
+        dimension_fields = set(assigned_literal(texts.get("planning", ""), "DIMENSION_REVIEW_FIELDS"))
+        semantic_gap_fields = set(assigned_literal(texts.get("planning", ""), "SEMANTIC_GAP_FIELDS"))
+        authority_maps = json_maps(texts.get("system-design-authority", ""))
+    except (SyntaxError, ValueError, json.JSONDecodeError) as exc:
+        findings.append(("cross", f"System Design authority schema seam is unreadable: {exc}"))
+    else:
+        envelopes = [item for item in authority_maps if {"candidate_version", "materiality", "semantic_review"}.issubset(item)]
+        envelope = envelopes[0] if len(envelopes) == 1 else {}
+        materiality = envelope.get("materiality") if isinstance(envelope, dict) else None
+        semantic = envelope.get("semantic_review") if isinstance(envelope, dict) else None
+        material_rows = materiality.get("dimensions") if isinstance(materiality, dict) else None
+        semantic_rows = semantic.get("dimensions") if isinstance(semantic, dict) else None
+        gap_maps = [item for item in authority_maps if set(item) == semantic_gap_fields]
+        if review_reference != "reviews/system-design-v1.json" or review_reference not in texts.get("system-design-authority", ""):
+            findings.append(("cross", "System Design authority filename is not exact across controller and reference"))
+        if set(envelope) != review_fields:
+            findings.append(("cross", "System Design authority envelope does not match planning schema"))
+        if not isinstance(materiality, dict) or set(materiality) != materiality_fields:
+            findings.append(("cross", "System Design materiality reference does not match planning schema"))
+        for label, rows in (("materiality", material_rows), ("semantic review", semantic_rows)):
+            if (
+                not isinstance(rows, list)
+                or len(rows) != len(dimensions)
+                or any(not isinstance(row, dict) or set(row) != dimension_fields for row in rows)
+                or {row.get("dimension") for row in rows} != set(dimensions)
+            ):
+                findings.append(("cross", f"System Design {label} dimensions do not match the exact D-073 identifiers"))
+        if not isinstance(semantic, dict) or set(semantic) != semantic_fields:
+            findings.append(("cross", "System Design semantic review reference does not match planning schema"))
+        if len(gap_maps) != 1:
+            findings.append(("cross", "System Design semantic gap reference does not match planning schema"))
+
+    for name in ("system-design", "control-planning"):
+        count = len(texts.get(name, "").splitlines())
+        if not 70 <= count <= 110:
+            findings.append(("cross", f"{name}: SKILL.md line count {count} is outside 70-110"))
+    if re.search(r"\b(?:must|never|required)\b", texts.get("system-design-template", ""), re.I):
+        findings.append(("cross", "System Design reference is not shape-only"))
 
     operating_required = {
         "discovery": [
@@ -203,7 +446,7 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "Never overwrite an existing `run.yaml`", "Stage 0 is recommend-only",
             "every other repository already known to be affected", "short, descriptive, stable",
             "does not imply an exact stage sequence or gate map", "ask rather than invent policy",
-            "current `control.json.phase`", "`STALE`", "`REJECTED`",
+            "validated `planning-control.json.phase` is the actual current planning phase", "`STALE`", "`REJECTED`",
             "no first-party Atlas owner", "never substitute an incubator skill",
             "third parent of this file", "resolve-run-path", "before writing `run.yaml`",
             "pass the unchanged device/inode values", "--prepared-device", "--prepared-inode",
@@ -213,6 +456,9 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "structured `BLOCKED`", "expected check outcome",
             "run.yaml.gates.discovery.authority",
             "reject --run", "--reason", "third parent of this file",
+            "already names `system_design`, `program_design`, or `tickets`",
+            "do not rerun Product Closure", "After a successful Product Closure transition",
+            "re-read `planning-control.json`", "discovery never starts execution",
         ],
         "setup": ["atomic contract-plus-code commits", "third parent of this file", "<atlas-plugin-root>/requirements.txt"],
         "spike": ["no executable spike runner", "agent-enforced procedure", "state confidence"],

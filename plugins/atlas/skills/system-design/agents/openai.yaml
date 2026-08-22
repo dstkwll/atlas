@@ -1,0 +1,6 @@
+interface:
+  display_name: "Atlas System Design"
+  short_description: "Produce Stage 3 with frozen participation and hand it to planning control"
+  default_prompt: "Use $system-design to produce the Atlas System Design candidate using frozen agent_led or co_design participation and continue its internal control handoff."
+policy:
+  allow_implicit_invocation: false
