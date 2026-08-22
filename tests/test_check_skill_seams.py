@@ -240,7 +240,6 @@ class SkillSeamHardeningTests(unittest.TestCase):
         self.assertIn("non-authoritative", readme)
         self.assertIn("AGENT_REVIEW", readme)
         self.assertIn("HUMAN_IF_CHANGED", readme)
-        self.assertIn("installed-host", readme)
         self.assertNotIn("boundary-review", system + control + board)
         for label in SYSTEM_DESIGN_VIEWS:
             self.assertIn(label, renderer)

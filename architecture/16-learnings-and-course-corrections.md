@@ -2,7 +2,7 @@
 
 **Purpose:** Preserve not only what the design currently says, but **how and why it changed**. This is intended to protect the project from recency bias, repeated rediscovery, and future agents mistaking superseded ideas for current commitments.
 
-**Snapshot date:** 2026-08-20
+**Snapshot date:** 2026-08-21
 
 ---
 
@@ -839,3 +839,40 @@ substitute PRD or design artifact. Execution checks graph currency at ticket pre
 before deterministic commit, closing the in-flight staleness interval. The controller owns no Stage
 6+ execution state, and architecture deliberately leaves its exact file/schema to Program Design
 rather than hard-coding storage prematurely.
+
+---
+
+## L-020 — Host calibration is evidence; user routing is a design defect
+
+### Evidence scope
+
+A bounded installed-host calibration on Copilot CLI 1.0.80 exercised the current System Design path
+from one explicit user invocation. The producer handed off internally to `control-planning`, fresh
+reviewer subprocesses returned two substantive `BLOCKED` results before a third seven-dimension
+`PASS`, and the deterministic controller recorded `AGENT_APPROVED` at `program_design`. Installed
+plugin bytes matched merged source before the run.
+
+This demonstrates feasibility for that host, version, and path. It is not a continuing compatibility
+guarantee. Codex chaining and D-077 roster resolution/provenance were not proved; the host selected
+the observed reviewer workers without a shipped Atlas role × task-shape resolution record.
+
+### Course correction
+
+The first write-back put the dated Copilot result into executable skill prose and added a regression
+test protecting the sentence that chaining was “proven.” That confused an observation with a product
+contract: the test could stay green after a future host release broke the behavior.
+
+### Accepted consequence
+
+Preserve host calibrations here as dated evidence. Keep executable contracts host-independent and
+test the required behavior where an executable compatibility harness exists, not the wording of a
+past experiment.
+
+### Standing result
+
+Human attention is reserved for judgment and authority, not workflow routing. Internal stages,
+skills, controllers, and host adapters must preserve one user-level invocation across internal
+handoffs. Atlas may interrupt only when the required answer genuinely belongs to the user or when
+policy requires explicit human authority. The user supplies judgment; Atlas supplies orchestration.
+If a host cannot perform a named skill-to-skill handoff, the implementation must provide another
+internal mechanism rather than shift orchestration to the user.
