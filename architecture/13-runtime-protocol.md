@@ -62,8 +62,10 @@ downstream invalidations as one logical atomic transition. Architecture does not
 storage representation, schema, or module/CLI decomposition.
 
 The downstream planning controller ends at Stage 5. It hands execution an exact accepted
-ticket-graph version/hash; it owns no worktree, active-ticket, attempt, retry, repair, validation,
-commit, branch, or event state. No separate compilation controller exists.
+ticket-graph version/hash; it owns no Stage 6+ execution worktree, active-ticket, execution-attempt,
+retry, execution-repair, validation, commit, branch, or event state. D-082's bounded Stage 3→4
+planning-repair episode and producer-attempt budget remain pre-execution planning control, not
+execution state. No separate compilation controller exists.
 
 ## Machine-canonical runtime state
 

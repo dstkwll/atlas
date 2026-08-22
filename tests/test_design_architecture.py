@@ -134,17 +134,95 @@ def known_stage_five_contract_regressions(text):
 
 
 class PairedDesignArchitectureTests(unittest.TestCase):
-    def test_v09_is_the_declared_baseline_and_preserves_v08_history(self):
+    def test_v010_d082_is_current_and_bounds_program_design_upstream_repair(self):
         root_readme = (ROOT / "README.md").read_text(encoding="utf-8")
         architecture_readme = read("README.md")
         v08_decisions = read("23-v0.8-decisions.md")
-        v09_decisions = read("24-v0.9-decisions.md") if (ARCH / "24-v0.9-decisions.md").exists() else ""
+        v09_decisions = normalized("24-v0.9-decisions.md")
+        v10_path = ARCH / "25-v0.10-decisions.md"
 
-        self.assertIn("architecture/24-v0.9-decisions.md", root_readme)
-        self.assertIn("**v0.9**", root_readme)
-        self.assertIn("**v0.9**", architecture_readme)
+        self.assertTrue(v10_path.exists(), "v0.10/D-082 decision record is absent")
+        v10_decisions = normalized("25-v0.10-decisions.md")
+        workflow = normalized("02-workflow.md")
+        artifacts = normalized("03-artifact-model.md")
+        control = normalized("04-control-plane.md")
+        review = normalized("06-review-and-validation.md")
+        state = normalized("08-state-and-governance.md")
+        runtime = normalized("13-runtime-protocol.md")
+        learnings = normalized("16-learnings-and-course-corrections.md")
+        combined = " ".join((v10_decisions, workflow, artifacts, control, review, state, runtime))
+
+        self.assertIn("architecture/25-v0.10-decisions.md", root_readme)
+        self.assertIn("**v0.10**", root_readme)
+        self.assertIn("**v0.10**", architecture_readme)
         self.assertIn("D-080", v08_decisions)
+        self.assertIn("Refined by D-082", v08_decisions)
         self.assertIn("D-081", v09_decisions)
+        self.assertIn("Refined by D-082", v09_decisions)
+        self.assertIn("D-082", v10_decisions)
+        self.assertIn("v0.10 north star", v10_decisions.lower())
+        self.assertRegex(combined, r"(?i)every repair replacement.{0,180}hash-bound system design evidence envelope")
+        self.assertIn("`repair_context`", combined)
+        self.assertRegex(combined, r"direct `HUMAN`.{0,180}(?:evidence )?envelope")
+        self.assertRegex(combined, r"semantic/materiality fields.{0,80}null")
+        self.assertRegex(combined, r"grants no authority.{0,160}human approval remains the acceptance authority")
+        self.assertRegex(
+            combined,
+            r"conditional repair evidence.{0,160}not a normal-path review requirement.{0,180}(?:does not|nor does it) widen.{0,80}acceptance schema",
+        )
+
+        self.assertIn("reviews/program-design-upstream-block-v1.json", combined)
+        for verdict in (
+            "CONFIRMED_UPSTREAM_CONTRADICTION",
+            "NOT_CONFIRMED",
+            "UNAVAILABLE",
+        ):
+            self.assertIn(verdict, combined)
+        self.assertRegex(
+            combined,
+            r"exact accepted System Design.{0,260}exact frozen repository evidence.{0,260}cannot faithfully realize",
+        )
+        self.assertRegex(combined, r"only `CONFIRMED_UPSTREAM_CONTRADICTION`.{0,120}(?:mutate|changes)")
+        self.assertRegex(
+            combined,
+            r"status.{0,40}`BLOCKED`.{0,140}phase.{0,40}`system_design`.{0,180}gate.{0,80}`STALE`",
+        )
+        self.assertRegex(combined, r"prior acceptance.{0,120}non-current")
+        self.assertRegex(combined, r"Program Design.{0,100}`PENDING`.{0,100}null acceptance")
+        self.assertRegex(combined, r"existing `blocked_reason`.{0,180}revision")
+        self.assertRegex(
+            combined,
+            r"System Design N\+1.{0,260}Program Design.{0,160}status remains `BLOCKED`.{0,220}`PLANNING`",
+        )
+        self.assertRegex(combined, r"version `N\+1`.{0,120}different (?:content )?hash")
+        self.assertRegex(combined, r"same still-current source binding")
+        self.assertRegex(combined, r"fresh review.{0,160}unchanged configured authority")
+        self.assertRegex(combined, r"immediate superseded acceptance.{0,160}contradiction provenance")
+        self.assertIn("complete validated contradiction finding", combined)
+        self.assertRegex(combined, r"contradiction (?:envelope )?reference/hash")
+
+        self.assertRegex(combined, r"exactly four.{0,120}producer attempts")
+        self.assertRegex(combined, r"reserves.{0,100}before.{0,100}candidate (?:bytes|write)")
+        self.assertRegex(combined, r"crash.{0,80}consumes")
+        self.assertRegex(combined, r"reviews.{0,180}controller actions.{0,180}approvals.{0,120}do not")
+        self.assertRegex(combined, r"restart.{0,100}(?:cannot|does not).{0,80}reset")
+        self.assertRegex(combined, r"second contradiction.{0,100}(?:cannot|must not).{0,120}(?:nest|reset)")
+        self.assertRegex(combined, r"exhaustion.{0,120}(?:loud|durable)")
+
+        self.assertRegex(combined, r"invalidation and replacement.{0,120}not rollback")
+        for excluded in (
+            "Product Closure",
+            "direct Stage 0",
+            "accepted Program Design",
+            "Stage 5",
+            "D-077",
+        ):
+            self.assertIn(excluded, v10_decisions)
+        self.assertRegex(v09_decisions, r"Refined by D-082.{0,260}new run")
+        self.assertRegex(learnings, r"session-local.{0,120}four.{0,160}not durable")
+        self.assertRegex(learnings, r"controller-owned.{0,120}persisted before.{0,80}writes")
+        self.assertRegex(runtime, r"no Stage 6\+ execution.{0,200}execution-repair")
+        self.assertRegex(runtime, r"D-082.{0,160}planning-repair episode.{0,160}pre-execution planning control")
 
     def test_codesign_is_user_selected_participation_not_gate_authority(self):
         control = normalized("04-control-plane.md")

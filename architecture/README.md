@@ -6,10 +6,11 @@ The numbered documents are authoritative. `rolling-monolith.md` is generated fro
 
 ## Current baseline
 
-**v0.9** gives portable repository identities one confirmed machine-local Git binding and makes
-Program Design read the exact full baseline commit tree without depending on current `HEAD` or the
-working tree. Missing local access is `BLOCKED`; a code-grounded upstream contradiction remains
-`DESIGN_BLOCKED`. It builds on v0.8's bounded downstream planning controller.
+**v0.10** gives D-080's downstream planning controller one bounded repair path when pending Program
+Design proves an exact-code contradiction with its selected accepted System Design. Independent
+confirmation starts a durable four-attempt invalidation-and-replacement episode; System Design N+1
+and resumed Program Design receive fresh acceptance without rollback, user routing, or a generalized
+staleness mechanism. It builds on v0.9's exact portable repository grounding.
 
 ## Change discipline
 
