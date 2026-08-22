@@ -3063,6 +3063,7 @@ class AtlasPlanningTests(unittest.TestCase):
         def windows_drive_relative_path(envelope):
             envelope["review_evidence"] = "Confirmed from C:private.py"
 
+
         def unknown_verdict(envelope):
             envelope["verdict"] = "MAYBE"
 
@@ -3081,6 +3082,7 @@ class AtlasPlanningTests(unittest.TestCase):
             ("workspace-path", workspace_path),
             ("unc-path", unc_path),
             ("windows-drive-relative-path", windows_drive_relative_path),
+
             ("unknown-verdict", unknown_verdict),
         ):
             with self.subTest(case=name), tempfile.TemporaryDirectory() as td:
@@ -3363,7 +3365,13 @@ class AtlasPlanningTests(unittest.TestCase):
                 write_repository_bindings({"fixture": _TEST_REPOSITORY_SOURCES["fixture"]})
                 planning = initialize_program_after_system(run)
                 review_input = write_upstream_block_review_input(run, planning)
-                planning_before = (run / "planning-control.json").read_bytes()
+                planning_path = run / "planning-control.json"
+                state = json.loads(planning_path.read_text(encoding="utf-8"))
+                planning_path.write_text(
+                    json.dumps(state, separators=(",", ":")) + "\n",
+                    encoding="utf-8",
+                )
+                planning_before = planning_path.read_bytes()
                 real_replace = PLANNING.os.replace
                 mutated = False
 

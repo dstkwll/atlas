@@ -630,24 +630,33 @@ def planning_lock(run_dir: Path) -> Iterator[None]:
         os.close(fd)
 
 
-def write_planning_control_atomic(
+def write_planning_control_bytes_atomic(
     run_dir: Path,
-    planning: dict[str, Any],
+    content: bytes,
     *,
     precondition: Optional[Callable[[], None]] = None,
 ) -> None:
     path = managed_path(run_dir, PLANNING_FILE)
-    content = json.dumps(planning, indent=2, sort_keys=True) + "\n"
     fd, name = tempfile.mkstemp(prefix=".planning-control.json.", dir=run_dir)
     temp = Path(name)
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+        with os.fdopen(fd, "wb") as handle:
             handle.write(content)
         if precondition is not None:
             precondition()
         os.replace(temp, path)
     finally:
         temp.unlink(missing_ok=True)
+
+
+def write_planning_control_atomic(
+    run_dir: Path,
+    planning: dict[str, Any],
+    *,
+    precondition: Optional[Callable[[], None]] = None,
+) -> None:
+    content = (json.dumps(planning, indent=2, sort_keys=True) + "\n").encode("utf-8")
+    write_planning_control_bytes_atomic(run_dir, content, precondition=precondition)
 
 
 def validate_system_design_acceptance(
@@ -1150,6 +1159,14 @@ def verified_planning_state(run_dir: Path) -> tuple[dict[str, Any], dict[str, An
 
 def return_to_system_design(run_dir: Path, review_input: Path) -> str:
     planning, _, effective = verified_planning_state(run_dir)
+    planning_path = managed_path(run_dir, PLANNING_FILE)
+    planning_bytes = planning_path.read_bytes()
+    try:
+        byte_snapshot = load_json(planning_bytes.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ControlError("planning-control.json changed while its bytes were captured") from exc
+    if not json_equal_exact(byte_snapshot, planning):
+        raise ControlError("planning-control.json changed while its bytes were captured")
     if (
         planning["status"] != "PLANNING"
         or planning["phase"] != "program_design"
@@ -1193,6 +1210,7 @@ def return_to_system_design(run_dir: Path, review_input: Path) -> str:
         )
         if (
             current != planning
+            or planning_path.read_bytes() != planning_bytes
             or current_bytes != review_bytes
             or current_envelope != envelope
             or current_sha256 != review_sha256
@@ -1212,7 +1230,7 @@ def return_to_system_design(run_dir: Path, review_input: Path) -> str:
             raise ControlError("committed upstream-repair state does not match the requested transition")
     except (ControlError, OSError, UnicodeError, ValueError, yaml.YAMLError) as exc:
         try:
-            write_planning_control_atomic(run_dir, planning)
+            write_planning_control_bytes_atomic(run_dir, planning_bytes)
         except (ControlError, OSError, UnicodeError, ValueError, yaml.YAMLError) as rollback_exc:
             raise ControlError("upstream-repair transition failed and prior state could not be restored") from rollback_exc
         raise ControlError(f"upstream-repair transition failed final validation and was rolled back: {exc}") from exc
