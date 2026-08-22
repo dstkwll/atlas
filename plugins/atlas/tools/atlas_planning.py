@@ -111,6 +111,12 @@ SYSTEM_DESIGN_REVIEW_FIELDS = {
     "version", "run", "stage", "policy", "candidate_version", "candidate_sha256",
     "repository_baselines", "materiality", "semantic_review",
 }
+SYSTEM_DESIGN_REPAIR_REVIEW_FIELDS = SYSTEM_DESIGN_REVIEW_FIELDS | {"repair_context"}
+SYSTEM_REPAIR_CONTEXT_FIELDS = {
+    "episode_started_from_revision", "superseded_system_design",
+    "contradiction_review_reference", "contradiction_review_sha256",
+    "contradiction_finding", "attempts_used", "acceptance_revision",
+}
 PROGRAM_DESIGN_REVIEW_FIELDS = {
     "version", "run", "stage", "policy", "candidate_version", "candidate_sha256",
     "repository_baselines", "semantic_review",
@@ -168,9 +174,10 @@ def json_equal_exact(left: Any, right: Any) -> bool:
     )
 
 
-def valid_repair_attempt(value: Any, attempts_used: int, stage: str) -> bool:
+def valid_repair_attempt(value: Any, attempts_used: Any, stage: str) -> bool:
     return (
-        isinstance(value, dict)
+        type(attempts_used) is int
+        and isinstance(value, dict)
         and set(value) == REPAIR_ATTEMPT_FIELDS
         and type(value.get("number")) is int
         and value["number"] == attempts_used
@@ -279,12 +286,63 @@ def validate_complete_materiality(materiality: Any) -> str:
     )
 
 
+def expected_system_repair_context(
+    run_dir: Path,
+    planning: dict[str, Any],
+    acceptance_revision: int,
+) -> dict[str, Any]:
+    episode = planning.get("blocked_reason")
+    state = episode.get("state") if isinstance(episode, dict) else None
+    expected_acceptance_revision = (
+        planning["revision"] + 1
+        if state == "SYSTEM_DESIGN_STALE"
+        else planning["revision"]
+        if state == "PROGRAM_DESIGN_RESUMED"
+        else None
+    )
+    if (
+        not isinstance(episode, dict)
+        or set(episode) != REPAIR_EPISODE_FIELDS
+        or episode.get("kind") != "SYSTEM_DESIGN_REPAIR"
+        or type(episode.get("started_from_revision")) is not int
+        or episode.get("review_reference") != UPSTREAM_BLOCK_REVIEW_REFERENCE
+        or not re.fullmatch(r"[0-9a-f]{64}", str(episode.get("review_sha256", "")))
+        or not isinstance(episode.get("superseded_system_design"), dict)
+        or type(episode.get("attempts_used")) is not int
+        or type(acceptance_revision) is not int
+        or acceptance_revision != expected_acceptance_revision
+    ):
+        raise ControlError("System Design repair context requires the active stale episode")
+    contradiction_path = managed_path(run_dir, episode["review_reference"])
+    try:
+        contradiction_bytes = contradiction_path.read_bytes()
+        contradiction = load_json(contradiction_bytes.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ControlError("System Design repair contradiction evidence is unavailable") from exc
+    if (
+        hashlib.sha256(contradiction_bytes).hexdigest() != episode["review_sha256"]
+        or not isinstance(contradiction, dict)
+        or not isinstance(contradiction.get("finding"), dict)
+    ):
+        raise ControlError("System Design repair contradiction evidence is not current")
+    return {
+        "episode_started_from_revision": episode["started_from_revision"],
+        "superseded_system_design": copy.deepcopy(episode["superseded_system_design"]),
+        "contradiction_review_reference": episode["review_reference"],
+        "contradiction_review_sha256": episode["review_sha256"],
+        "contradiction_finding": copy.deepcopy(contradiction["finding"]),
+        "attempts_used": episode["attempts_used"],
+        "acceptance_revision": acceptance_revision,
+    }
+
+
 def load_system_design_review(
     run_dir: Path,
     effective: dict[str, Any],
     candidate_version: int,
     candidate_sha256: str,
     review_reference: Any,
+    repair_context: Optional[dict[str, Any]] = None,
 ) -> tuple[dict[str, Any], str, str]:
     if review_reference != SYSTEM_DESIGN_REVIEW_REFERENCE:
         raise ControlError(f"System Design review must use exact {SYSTEM_DESIGN_REVIEW_REFERENCE}")
@@ -299,7 +357,12 @@ def load_system_design_review(
     except json.JSONDecodeError as exc:
         raise ControlError("System Design review evidence is not valid duplicate-safe JSON") from exc
     review_sha256 = hashlib.sha256(review_bytes).hexdigest()
-    if not isinstance(envelope, dict) or set(envelope) != SYSTEM_DESIGN_REVIEW_FIELDS:
+    expected_fields = (
+        SYSTEM_DESIGN_REPAIR_REVIEW_FIELDS
+        if repair_context is not None
+        else SYSTEM_DESIGN_REVIEW_FIELDS
+    )
+    if not isinstance(envelope, dict) or set(envelope) != expected_fields:
         raise ControlError("System Design review envelope does not match its exact schema")
     policy = effective.get("gates", {}).get("system_design", {})
     configured = policy.get("authority") if isinstance(policy, dict) else None
@@ -309,14 +372,24 @@ def load_system_design_review(
         or envelope.get("run") != effective["run"]
         or envelope.get("stage") != "system_design"
         or envelope.get("policy") != configured
-        or configured not in {"AGENT_REVIEW", "HUMAN_IF_CHANGED"}
+        or configured not in ({"HUMAN", "AGENT_REVIEW", "HUMAN_IF_CHANGED"} if repair_context is not None else {"AGENT_REVIEW", "HUMAN_IF_CHANGED"})
         or type(envelope.get("candidate_version")) is not int
         or envelope.get("candidate_version") != candidate_version
         or envelope.get("candidate_sha256") != candidate_sha256
         or envelope.get("repository_baselines") != effective["repos"]
     ):
         raise ControlError("System Design review evidence does not match current policy, candidate, or baselines")
-    if configured == "AGENT_REVIEW":
+    if repair_context is not None and (
+        not isinstance(envelope.get("repair_context"), dict)
+        or set(envelope["repair_context"]) != SYSTEM_REPAIR_CONTEXT_FIELDS
+        or not json_equal_exact(envelope["repair_context"], repair_context)
+    ):
+        raise ControlError("System Design review repair_context does not match the active episode")
+    if configured == "HUMAN":
+        if envelope.get("materiality") is not None or envelope.get("semantic_review") is not None:
+            raise ControlError("direct HUMAN repair evidence requires null review judgments")
+        mapped = "HUMAN"
+    elif configured == "AGENT_REVIEW":
         if envelope.get("materiality") is not None:
             raise ControlError("direct AGENT_REVIEW requires null materiality")
         mapped = "AGENT_REVIEW"
@@ -755,6 +828,8 @@ def validate_system_design_acceptance(
     anchor: dict[str, Any],
     effective: dict[str, Any],
     record: Any,
+    repair_context: Optional[dict[str, Any]] = None,
+    historical: bool = False,
 ) -> None:
     if not isinstance(record, dict) or set(record) != PLANNING_ACCEPTANCE_FIELDS:
         raise ControlError("planning-control.json System Design acceptance is malformed")
@@ -779,9 +854,14 @@ def validate_system_design_acceptance(
             "effective_config_revision": anchor["effective_config_revision"],
         }
     )
+    expected_version = (
+        repair_context["superseded_system_design"]["candidate_version"] + 1
+        if repair_context is not None
+        else 1
+    )
     if (
         type(record.get("candidate_version")) is not int
-        or record["candidate_version"] != 1
+        or record["candidate_version"] != expected_version
         or not re.fullmatch(r"[0-9a-f]{64}", str(record.get("candidate_sha256", "")))
         or record.get("authority") not in {"HUMAN", "AGENT_REVIEW"}
         or record.get("source_bindings") != [expected_source]
@@ -790,13 +870,41 @@ def validate_system_design_acceptance(
         raise ControlError("planning-control.json System Design acceptance is malformed")
     policy = effective.get("gates", {}).get("system_design", {})
     configured = policy.get("authority") if isinstance(policy, dict) else None
-    if configured == "HUMAN":
+    if historical:
         if (
-            record["authority"] != "HUMAN"
-            or record.get("review_reference") is not None
-            or record.get("review_sha256") is not None
+            configured == "HUMAN"
+            and (
+                record["authority"] != "HUMAN"
+                or record.get("review_reference") is not None
+                or record.get("review_sha256") is not None
+            )
         ):
+            raise ControlError("historical System Design acceptance is malformed")
+        if configured in {"AGENT_REVIEW", "HUMAN_IF_CHANGED"} and (
+            record["authority"] not in {"HUMAN", "AGENT_REVIEW"}
+            or record.get("review_reference") != SYSTEM_DESIGN_REVIEW_REFERENCE
+            or type(record.get("review_sha256")) is not str
+            or re.fullmatch(r"[0-9a-f]{64}", record["review_sha256"]) is None
+        ):
+            raise ControlError("historical System Design acceptance is malformed")
+        return
+    if configured == "HUMAN":
+        if record["authority"] != "HUMAN":
             raise ControlError("planning-control.json System Design acceptance is malformed")
+        if repair_context is None:
+            if record.get("review_reference") is not None or record.get("review_sha256") is not None:
+                raise ControlError("planning-control.json System Design acceptance is malformed")
+        else:
+            _, review_sha256, mapped = load_system_design_review(
+                run_dir,
+                effective,
+                record["candidate_version"],
+                record["candidate_sha256"],
+                record.get("review_reference"),
+                repair_context,
+            )
+            if mapped != "HUMAN" or record.get("review_sha256") != review_sha256:
+                raise ControlError("planning-control.json System Design repair evidence is not current")
     elif configured in {"AGENT_REVIEW", "HUMAN_IF_CHANGED"}:
         _, review_sha256, mapped = load_system_design_review(
             run_dir,
@@ -804,6 +912,7 @@ def validate_system_design_acceptance(
             record["candidate_version"],
             record["candidate_sha256"],
             record.get("review_reference"),
+            repair_context,
         )
         if record["authority"] != mapped or record.get("review_sha256") != review_sha256:
             raise ControlError("planning-control.json System Design acceptance evidence is not current")
@@ -953,6 +1062,11 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
     blocked_reason = planning.get("blocked_reason")
     repair_episode = blocked_reason if isinstance(blocked_reason, dict) else {}
     repair_attempts = repair_episode.get("attempts_used")
+    system_acceptance_repair_context = (
+        expected_system_repair_context(run_dir, planning, planning["revision"])
+        if repair_episode.get("state") == "PROGRAM_DESIGN_RESUMED"
+        else None
+    )
     system_candidate_may_diverge = (
         gates["system_design"] == "STALE"
         and type(repair_attempts) is int
@@ -973,7 +1087,14 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
             raise ControlError("planning-control.json gate/acceptance coherence is invalid")
         if record is not None:
             if stage == "system_design":
-                validate_system_design_acceptance(run_dir, anchor, effective, record)
+                validate_system_design_acceptance(
+                    run_dir,
+                    anchor,
+                    effective,
+                    record,
+                    system_acceptance_repair_context,
+                    gates["system_design"] == "STALE",
+                )
             elif stage == "program_design":
                 validate_program_design_acceptance(run_dir, planning, effective, record)
             else:
@@ -1042,48 +1163,73 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
             not isinstance(blocked_reason, dict)
             or set(blocked_reason) != REPAIR_EPISODE_FIELDS
             or blocked_reason.get("kind") != "SYSTEM_DESIGN_REPAIR"
-            or blocked_reason.get("state") != "SYSTEM_DESIGN_STALE"
+            or blocked_reason.get("state") not in {"SYSTEM_DESIGN_STALE", "PROGRAM_DESIGN_RESUMED"}
             or type(blocked_reason.get("started_from_revision")) is not int
             or blocked_reason["started_from_revision"] != expected_started_revision
             or blocked_reason.get("review_reference") != UPSTREAM_BLOCK_REVIEW_REFERENCE
             or not re.fullmatch(r"[0-9a-f]{64}", str(blocked_reason.get("review_sha256", "")))
-            or not json_equal_exact(
-                blocked_reason.get("superseded_system_design"),
-                acceptances["system_design"],
-            )
+            or not isinstance(blocked_reason.get("superseded_system_design"), dict)
+            or set(blocked_reason["superseded_system_design"]) != PLANNING_ACCEPTANCE_FIELDS
             or type(blocked_reason.get("attempts_used")) is not int
             or not 0 <= blocked_reason["attempts_used"] <= 4
-            or (
-                blocked_reason["attempts_used"] == 0
-                and blocked_reason.get("current_attempt") is not None
-            )
-            or (
-                blocked_reason["attempts_used"] > 0
-                and not valid_repair_attempt(
-                    blocked_reason.get("current_attempt"),
-                    blocked_reason["attempts_used"],
-                    "system_design",
-                )
-            )
-            or (
-                blocked_reason["attempts_used"] == 1
-                and blocked_reason["current_attempt"]["candidate_sha256_before"]
-                != acceptances["system_design"]["candidate_sha256"]
-            )
             or planning.get("status") != "BLOCKED"
-            or planning.get("phase") != "system_design"
-            or gates["system_design"] != "STALE"
             or gates["program_design"] != "PENDING"
             or gates["tickets"] != expected_ticket_gate
             or acceptances["program_design"] is not None
             or acceptances["tickets"] is not None
-            or planning["revision"] != (
-                blocked_reason["started_from_revision"]
-                + 1
-                + blocked_reason["attempts_used"]
-            )
         ):
             raise ControlError("planning-control.json repair episode is malformed")
+        if blocked_reason["state"] == "SYSTEM_DESIGN_STALE":
+            if (
+                not json_equal_exact(
+                    blocked_reason["superseded_system_design"],
+                    acceptances["system_design"],
+                )
+                or (
+                    blocked_reason["attempts_used"] == 0
+                    and blocked_reason.get("current_attempt") is not None
+                )
+                or (
+                    blocked_reason["attempts_used"] > 0
+                    and not valid_repair_attempt(
+                        blocked_reason.get("current_attempt"),
+                        blocked_reason["attempts_used"],
+                        "system_design",
+                    )
+                )
+                or (
+                    blocked_reason["attempts_used"] == 1
+                    and blocked_reason["current_attempt"]["candidate_sha256_before"]
+                    != acceptances["system_design"]["candidate_sha256"]
+                )
+                or planning.get("phase") != "system_design"
+                or gates["system_design"] != "STALE"
+                or planning["revision"] != (
+                    blocked_reason["started_from_revision"]
+                    + 1
+                    + blocked_reason["attempts_used"]
+                )
+            ):
+                raise ControlError("planning-control.json stale System Design repair episode is malformed")
+        else:
+            current_system = acceptances["system_design"]
+            superseded = blocked_reason["superseded_system_design"]
+            if (
+                not isinstance(current_system, dict)
+                or current_system["candidate_version"] != superseded["candidate_version"] + 1
+                or current_system["candidate_sha256"] == superseded["candidate_sha256"]
+                or current_system["source_bindings"] != superseded["source_bindings"]
+                or blocked_reason["attempts_used"] < 1
+                or blocked_reason.get("current_attempt") is not None
+                or planning.get("phase") != "program_design"
+                or gates["system_design"] not in {"HUMAN_APPROVED", "AGENT_APPROVED"}
+                or planning["revision"] != (
+                    blocked_reason["started_from_revision"]
+                    + 2
+                    + blocked_reason["attempts_used"]
+                )
+            ):
+                raise ControlError("planning-control.json resumed Program Design repair episode is malformed")
         review_path = managed_path(run_dir, UPSTREAM_BLOCK_REVIEW_REFERENCE)
         if not review_path.is_file():
             raise ControlError("planning-control.json repair evidence is missing")
@@ -1509,7 +1655,25 @@ def system_design_report(
         "boundary": "system_design",
         "gaps": gaps,
     }
-    if planning["phase"] != "system_design" or planning["gates"]["system_design"] != "PENDING":
+    repair_episode = planning.get("blocked_reason")
+    repair_data = repair_episode if isinstance(repair_episode, dict) else {}
+    system_repair = (
+        planning.get("status") == "BLOCKED"
+        and planning.get("phase") == "system_design"
+        and planning["gates"]["system_design"] == "STALE"
+        and repair_data.get("state") == "SYSTEM_DESIGN_STALE"
+        and valid_repair_attempt(
+            repair_data.get("current_attempt"),
+            repair_data.get("attempts_used"),
+            "system_design",
+        )
+    )
+    normal_system = (
+        planning.get("status") == "PLANNING"
+        and planning.get("phase") == "system_design"
+        and planning["gates"]["system_design"] == "PENDING"
+    )
+    if not normal_system and not system_repair:
         gaps.append(gap(
             PLANNING_FILE,
             "system_design is not the current pending planning boundary",
@@ -1562,12 +1726,17 @@ def system_design_report(
             "system_design",
             "bind the candidate to this run",
         ))
-    if type(frontmatter.get("version")) is not int or frontmatter.get("version") != 1:
+    expected_version = (
+        repair_data["superseded_system_design"]["candidate_version"] + 1
+        if system_repair
+        else 1
+    )
+    if type(frontmatter.get("version")) is not int or frontmatter.get("version") != expected_version:
         gaps.append(gap(
             SYSTEM_DESIGN_FILE,
-            "candidate version must equal integer 1",
+            f"candidate version must equal integer {expected_version}",
             "system_design",
-            "write candidate version 1",
+            f"write candidate version {expected_version}",
         ))
     if frontmatter.get("status") != "draft":
         gaps.append(gap(
@@ -1628,10 +1797,33 @@ def system_design_report(
             "restore each required System Design section exactly once and in order",
         ))
 
+    candidate_sha256 = report["candidate_sha256"]
+    if system_repair and (
+        candidate_sha256 == repair_data["superseded_system_design"]["candidate_sha256"]
+        or candidate_sha256 == repair_data["current_attempt"]["candidate_sha256_before"]
+    ):
+        gaps.append(gap(
+            SYSTEM_DESIGN_FILE,
+            "repair candidate bytes must differ from the superseded design and reserved pre-write candidate",
+            "system_design",
+            "write a changed N+1 System Design candidate",
+        ))
+
     source = frontmatter.get("source_binding")
     source_valid = False
     product = planning["stage0_anchor"]["product_closure"]
-    if product is not None:
+    if system_repair:
+        expected = repair_data["superseded_system_design"]["source_bindings"][0]
+        if not isinstance(source, dict) or set(source) != set(expected) or source != expected:
+            gaps.append(gap(
+                SYSTEM_DESIGN_FILE,
+                "source_binding does not match the superseded System Design source",
+                "system_design",
+                "preserve the superseded System Design source binding unchanged",
+            ))
+        else:
+            source_valid = True
+    elif product is not None:
         expected = {
             "kind": "product_closure",
             "artifact": "20-prd.md",
@@ -1899,18 +2091,36 @@ def resolve_system_design_authority(
     candidate_sha256: str,
     approval: Optional[str],
     review_reference: Optional[str],
+    repair_context: Optional[dict[str, Any]] = None,
 ) -> tuple[str, Optional[str]]:
     policy = effective.get("gates", {}).get("system_design", {})
     configured = policy.get("authority") if isinstance(policy, dict) else None
     if configured == "HUMAN":
-        if review_reference is not None:
+        if repair_context is None and review_reference is not None:
             raise ControlError("configured HUMAN System Design gate does not accept --review")
         if approval != "human":
             raise ControlError("HUMAN System Design gate requires explicit --approval human")
-        return "HUMAN", None
+        if repair_context is None:
+            return "HUMAN", None
+        _, review_sha256, mapped = load_system_design_review(
+            run_dir,
+            effective,
+            candidate_version,
+            candidate_sha256,
+            review_reference,
+            repair_context,
+        )
+        if mapped != "HUMAN":
+            raise ControlError("direct HUMAN repair evidence cannot grant a different authority")
+        return "HUMAN", review_sha256
     if configured in {"AGENT_REVIEW", "HUMAN_IF_CHANGED"}:
         _, review_sha256, mapped = load_system_design_review(
-            run_dir, effective, candidate_version, candidate_sha256, review_reference
+            run_dir,
+            effective,
+            candidate_version,
+            candidate_sha256,
+            review_reference,
+            repair_context,
         )
         if mapped == "AGENT_REVIEW":
             if approval is not None:
@@ -2073,6 +2283,13 @@ def advance_boundary(
     candidate_version: int = report["candidate_version"]
     candidate_sha256: str = report["candidate_sha256"]
     source_binding = report["source_binding"]
+    repair_episode = planning.get("blocked_reason")
+    repair_context = (
+        expected_system_repair_context(run_dir, planning, planning["revision"] + 1)
+        if isinstance(repair_episode, dict)
+        and repair_episode.get("state") == "SYSTEM_DESIGN_STALE"
+        else None
+    )
     authority, review_sha256 = resolve_system_design_authority(
         run_dir,
         effective,
@@ -2080,6 +2297,7 @@ def advance_boundary(
         candidate_sha256,
         approval,
         review_reference,
+        repair_context,
     )
 
     final_report = system_design_report(run_dir, planning, effective)
@@ -2099,6 +2317,7 @@ def advance_boundary(
             candidate_sha256,
             approval,
             review_reference,
+            repair_context,
         )
     except ControlError as exc:
         raise ControlError("candidate, source binding, policy, or review changed before System Design acceptance") from exc
@@ -2121,6 +2340,7 @@ def advance_boundary(
             candidate_sha256,
             approval,
             review_reference,
+            repair_context,
         )
         if (
             current_planning != planning
@@ -2147,6 +2367,10 @@ def advance_boundary(
     )
     final_planning["phase"] = next_stage
     final_planning["revision"] += 1
+    if repair_context is not None:
+        final_planning["status"] = "BLOCKED"
+        final_planning["blocked_reason"]["state"] = "PROGRAM_DESIGN_RESUMED"
+        final_planning["blocked_reason"]["current_attempt"] = None
     write_planning_control_atomic(
         run_dir,
         final_planning,

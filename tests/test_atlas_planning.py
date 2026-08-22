@@ -1,4 +1,5 @@
 import importlib.util
+import copy
 import hashlib
 import json
 import os
@@ -210,8 +211,9 @@ def write_program_design(run: Path, source_binding: dict, **overrides) -> None:
     write_markdown(run / "40-program-design.md", frontmatter, body)
 
 
-def initialize_program_after_system(run: Path) -> dict:
+def initialize_program_after_system(run: Path, *, system_authority="HUMAN") -> dict:
     config = direct_config()
+    config["gates"]["system_design"] = {"authority": system_authority}
     config["stages"].insert(1, "program_design")
     config["gates"]["program_design"] = {"authority": "AGENT_REVIEW"}
     write_stage0_run(run, config)
@@ -227,10 +229,22 @@ def initialize_program_after_system(run: Path) -> dict:
         "effective_config_hash": anchor["effective_config_hash"],
         "effective_config_revision": anchor["effective_config_revision"],
     })
-    accepted = planning_cli(
-        "advance", "--run", run, "--stage", "system_design",
-        "--approval", "human", "--date", "2026-08-21",
-    )
+    if system_authority == "HUMAN":
+        accepted = planning_cli(
+            "advance", "--run", run, "--stage", "system_design",
+            "--approval", "human", "--date", "2026-08-21",
+        )
+    else:
+        review = write_system_review(
+            run,
+            policy=system_authority,
+            materiality=None,
+            review=semantic_review(),
+        )
+        accepted = planning_cli(
+            "advance", "--run", run, "--stage", "system_design",
+            "--review", review.relative_to(run), "--date", "2026-08-21",
+        )
     if accepted.returncode != 0:
         raise AssertionError(accepted.stderr)
     return json.loads((run / "planning-control.json").read_text(encoding="utf-8"))
@@ -406,6 +420,40 @@ def write_system_review(run: Path, *, policy: str, materiality, review=None) -> 
         "materiality": materiality,
         "semantic_review": review,
     }, indent=2) + "\n", encoding="utf-8")
+    return path
+
+
+def write_system_repair_review(run: Path, **overrides) -> Path:
+    config = yaml.safe_load((run / "run.yaml").read_text(encoding="utf-8"))
+    planning = PLANNING.load_planning_control(run)
+    episode = planning["blocked_reason"]
+    contradiction_path = run / episode["review_reference"]
+    contradiction = json.loads(contradiction_path.read_text(encoding="utf-8"))
+    candidate_frontmatter, _ = PLANNING.read_frontmatter(run / "30-system-design.md")
+    authority = config["gates"]["system_design"]["authority"]
+    envelope = {
+        "version": 1,
+        "run": config["run"],
+        "stage": "system_design",
+        "policy": authority,
+        "candidate_version": candidate_frontmatter["version"],
+        "candidate_sha256": sha256(run / "30-system-design.md"),
+        "repository_baselines": config["repos"],
+        "materiality": None,
+        "semantic_review": semantic_review() if authority == "AGENT_REVIEW" else None,
+        "repair_context": {
+            "episode_started_from_revision": episode["started_from_revision"],
+            "superseded_system_design": episode["superseded_system_design"],
+            "contradiction_review_reference": episode["review_reference"],
+            "contradiction_review_sha256": episode["review_sha256"],
+            "contradiction_finding": contradiction["finding"],
+            "attempts_used": episode["attempts_used"],
+            "acceptance_revision": planning["revision"] + 1,
+        },
+    }
+    envelope.update(overrides)
+    path = run / "reviews" / "system-design-v1.json"
+    path.write_text(json.dumps(envelope, indent=2) + "\n", encoding="utf-8")
     return path
 
 
@@ -3763,6 +3811,261 @@ class AtlasPlanningTests(unittest.TestCase):
             self.assertEqual(result["attempt"], 1)
             self.assertTrue(any(PLANNING.stat.S_ISREG(mode) for mode in fsynced_modes))
             self.assertTrue(any(PLANNING.stat.S_ISDIR(mode) for mode in fsynced_modes))
+
+    def test_stale_system_requires_exact_next_version_different_hash_and_same_source(self):
+        for case in ("valid", "same-version", "same-hash", "changed-source"):
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                planning = initialize_program_after_system(run)
+                review_input = write_upstream_block_review_input(run, planning)
+                returned = planning_cli(
+                    "return-upstream", "--run", run,
+                    "--review-input", review_input.relative_to(run),
+                )
+                self.assertEqual(returned.returncode, 0, returned.stderr)
+                reserved = planning_cli(
+                    "reserve-repair-attempt", "--run", run, "--stage", "system_design",
+                )
+                self.assertEqual(reserved.returncode, 0, reserved.stderr)
+                repair = PLANNING.load_planning_control(run)["blocked_reason"]
+                superseded = repair["superseded_system_design"]
+                source = copy.deepcopy(superseded["source_bindings"][0])
+                if case == "changed-source":
+                    source["sha256"] = "0" * 64
+                write_system_design(
+                    run,
+                    source,
+                    version=1 if case == "same-version" else 2,
+                )
+
+                if case == "same-hash":
+                    current, _, effective = PLANNING.verified_planning_state(run)
+                    real_hash = PLANNING.file_sha256
+
+                    def collide_with_superseded(path):
+                        if Path(path).name == "30-system-design.md":
+                            return superseded["candidate_sha256"]
+                        return real_hash(path)
+
+                    with mock.patch.object(PLANNING, "file_sha256", side_effect=collide_with_superseded):
+                        report = PLANNING.system_design_report(run, current, effective)
+                    self.assertEqual(report["verdict"], "BLOCKED")
+                    self.assertTrue(any("must differ" in item["problem"] for item in report["gaps"]))
+                    continue
+
+                checked = planning_cli("check", "--run", run, "--stage", "system_design")
+
+                if case == "valid":
+                    self.assertEqual(checked.returncode, 0, checked.stderr)
+                    report = json.loads(checked.stdout)
+                    self.assertEqual(report["candidate_version"], 2)
+                    self.assertNotEqual(report["candidate_sha256"], superseded["candidate_sha256"])
+                    self.assertEqual(report["source_binding"], superseded["source_bindings"][0])
+                else:
+                    self.assertNotEqual(checked.returncode, 0)
+                    self.assertEqual(PLANNING.load_planning_control(run)["phase"], "system_design")
+
+    def test_replacement_uses_fresh_review_and_original_authority_policy(self):
+        for case in ("valid", "stale-review"):
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                planning = initialize_program_after_system(run, system_authority="AGENT_REVIEW")
+                review_input = write_upstream_block_review_input(run, planning)
+                returned = planning_cli(
+                    "return-upstream", "--run", run,
+                    "--review-input", review_input.relative_to(run),
+                )
+                self.assertEqual(returned.returncode, 0, returned.stderr)
+                reserved = planning_cli(
+                    "reserve-repair-attempt", "--run", run, "--stage", "system_design",
+                )
+                self.assertEqual(reserved.returncode, 0, reserved.stderr)
+                episode = PLANNING.load_planning_control(run)["blocked_reason"]
+                write_system_design(
+                    run,
+                    copy.deepcopy(episode["superseded_system_design"]["source_bindings"][0]),
+                    version=2,
+                )
+                review = write_system_repair_review(run)
+                if case == "stale-review":
+                    path = run / "30-system-design.md"
+                    path.write_text(path.read_text(encoding="utf-8") + "\nChanged after review.\n", encoding="utf-8")
+                planning_before = (run / "planning-control.json").read_bytes()
+
+                advanced = planning_cli(
+                    "advance", "--run", run, "--stage", "system_design",
+                    "--review", review.relative_to(run),
+                    "--date", "2026-08-22",
+                )
+
+                if case == "valid":
+                    self.assertEqual(advanced.returncode, 0, advanced.stderr)
+                    accepted = PLANNING.load_planning_control(run)["acceptances"]["system_design"]
+                    self.assertEqual(accepted["authority"], "AGENT_REVIEW")
+                    self.assertEqual(accepted["review_reference"], "reviews/system-design-v1.json")
+                    self.assertEqual(accepted["review_sha256"], sha256(review))
+                else:
+                    self.assertNotEqual(advanced.returncode, 0)
+                    self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
+
+    def test_system_reacceptance_resumes_program_design_but_keeps_episode_blocked(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            planning = initialize_program_after_system(run)
+            review_input = write_upstream_block_review_input(run, planning)
+            returned = planning_cli(
+                "return-upstream", "--run", run,
+                "--review-input", review_input.relative_to(run),
+            )
+            self.assertEqual(returned.returncode, 0, returned.stderr)
+            reserved = planning_cli(
+                "reserve-repair-attempt", "--run", run, "--stage", "system_design",
+            )
+            self.assertEqual(reserved.returncode, 0, reserved.stderr)
+            stale = PLANNING.load_planning_control(run)
+            superseded = copy.deepcopy(stale["blocked_reason"]["superseded_system_design"])
+            write_system_design(
+                run,
+                copy.deepcopy(superseded["source_bindings"][0]),
+                version=superseded["candidate_version"] + 1,
+            )
+            review = write_system_repair_review(run)
+
+            advanced = planning_cli(
+                "advance", "--run", run, "--stage", "system_design",
+                "--approval", "human", "--review", review.relative_to(run),
+                "--date", "2026-08-22",
+            )
+
+            self.assertEqual(advanced.returncode, 0, advanced.stderr)
+            resumed = PLANNING.load_planning_control(run)
+            self.assertEqual((resumed["status"], resumed["phase"]), ("BLOCKED", "program_design"))
+            self.assertEqual(resumed["gates"]["system_design"], "HUMAN_APPROVED")
+            self.assertEqual(resumed["gates"]["program_design"], "PENDING")
+            self.assertEqual(resumed["revision"], stale["revision"] + 1)
+            self.assertEqual(resumed["blocked_reason"]["state"], "PROGRAM_DESIGN_RESUMED")
+            self.assertEqual(resumed["blocked_reason"]["attempts_used"], 1)
+            self.assertIsNone(resumed["blocked_reason"]["current_attempt"])
+            self.assertEqual(resumed["blocked_reason"]["superseded_system_design"], superseded)
+            self.assertEqual(resumed["acceptances"]["system_design"]["candidate_version"], 2)
+            self.assertNotEqual(
+                resumed["acceptances"]["system_design"]["candidate_sha256"],
+                superseded["candidate_sha256"],
+            )
+
+    def test_replacement_review_binds_immediate_superseded_acceptance_and_contradiction(self):
+        mutations = {
+            "superseded": lambda context: context["superseded_system_design"].__setitem__(
+                "candidate_sha256", "0" * 64
+            ),
+            "finding": lambda context: context["contradiction_finding"].__setitem__(
+                "problem", "Different contradiction."
+            ),
+            "reference": lambda context: context.__setitem__(
+                "contradiction_review_reference", "reviews/other.json"
+            ),
+            "hash": lambda context: context.__setitem__("contradiction_review_sha256", "0" * 64),
+            "attempts": lambda context: context.__setitem__("attempts_used", 2),
+            "revision": lambda context: context.__setitem__("acceptance_revision", 999),
+        }
+        for case, mutate in mutations.items():
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                planning = initialize_program_after_system(run)
+                review_input = write_upstream_block_review_input(run, planning)
+                returned = planning_cli(
+                    "return-upstream", "--run", run,
+                    "--review-input", review_input.relative_to(run),
+                )
+                self.assertEqual(returned.returncode, 0, returned.stderr)
+                reserved = planning_cli(
+                    "reserve-repair-attempt", "--run", run, "--stage", "system_design",
+                )
+                self.assertEqual(reserved.returncode, 0, reserved.stderr)
+                episode = PLANNING.load_planning_control(run)["blocked_reason"]
+                write_system_design(
+                    run,
+                    copy.deepcopy(episode["superseded_system_design"]["source_bindings"][0]),
+                    version=2,
+                )
+                review = write_system_repair_review(run)
+                envelope = json.loads(review.read_text(encoding="utf-8"))
+                mutate(envelope["repair_context"])
+                review.write_text(json.dumps(envelope, indent=2) + "\n", encoding="utf-8")
+                planning_before = (run / "planning-control.json").read_bytes()
+
+                advanced = planning_cli(
+                    "advance", "--run", run, "--stage", "system_design",
+                    "--approval", "human", "--review", review.relative_to(run),
+                    "--date", "2026-08-22",
+                )
+
+                self.assertNotEqual(advanced.returncode, 0)
+                self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
+
+    def test_direct_human_repair_requires_provenance_while_normal_human_rejects_review(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            config = direct_config()
+            config["stages"].insert(1, "program_design")
+            config["gates"]["program_design"] = {"authority": "AGENT_REVIEW"}
+            write_stage0_run(run, config)
+            initialized = planning_cli("initialize", "--run", run)
+            self.assertEqual(initialized.returncode, 0, initialized.stderr)
+            planning = PLANNING.load_planning_control(run)
+            anchor = planning["stage0_anchor"]
+            write_system_design(run, {
+                "kind": "stage0",
+                "artifact": "run.yaml",
+                "sha256": anchor["base_run_sha256"],
+                "effective_config_hash": anchor["effective_config_hash"],
+                "effective_config_revision": anchor["effective_config_revision"],
+            })
+            review = write_system_review(run, policy="HUMAN", materiality=None, review=None)
+            planning_before = (run / "planning-control.json").read_bytes()
+
+            normal = planning_cli(
+                "advance", "--run", run, "--stage", "system_design",
+                "--approval", "human", "--review", review.relative_to(run),
+                "--date", "2026-08-22",
+            )
+
+            self.assertNotEqual(normal.returncode, 0)
+            self.assertIn("does not accept --review", normal.stderr)
+            self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
+
+        for case in ("missing-provenance", "missing-human-approval"):
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                planning = initialize_program_after_system(run)
+                review_input = write_upstream_block_review_input(run, planning)
+                returned = planning_cli(
+                    "return-upstream", "--run", run,
+                    "--review-input", review_input.relative_to(run),
+                )
+                self.assertEqual(returned.returncode, 0, returned.stderr)
+                reserved = planning_cli(
+                    "reserve-repair-attempt", "--run", run, "--stage", "system_design",
+                )
+                self.assertEqual(reserved.returncode, 0, reserved.stderr)
+                episode = PLANNING.load_planning_control(run)["blocked_reason"]
+                write_system_design(
+                    run,
+                    copy.deepcopy(episode["superseded_system_design"]["source_bindings"][0]),
+                    version=2,
+                )
+                review = write_system_repair_review(run)
+                planning_before = (run / "planning-control.json").read_bytes()
+                args = ["advance", "--run", run, "--stage", "system_design", "--date", "2026-08-22"]
+                if case == "missing-provenance":
+                    args.extend(("--approval", "human"))
+                else:
+                    args.extend(("--review", review.relative_to(run)))
+
+                result = planning_cli(*args)
+
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
 
 
 if __name__ == "__main__":
