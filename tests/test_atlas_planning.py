@@ -3420,29 +3420,30 @@ class AtlasPlanningTests(unittest.TestCase):
                 self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
 
     def test_return_rolls_back_if_state_replace_raises_after_publication(self):
-        with tempfile.TemporaryDirectory() as td:
-            run = Path(td)
-            planning = initialize_program_after_system(run)
-            review_input = write_upstream_block_review_input(run, planning)
-            planning_before = (run / "planning-control.json").read_bytes()
-            real_replace = PLANNING.os.replace
-            injected = False
+        for failure in (PermissionError, RuntimeError):
+            with self.subTest(failure=failure.__name__), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                planning = initialize_program_after_system(run)
+                review_input = write_upstream_block_review_input(run, planning)
+                planning_before = (run / "planning-control.json").read_bytes()
+                real_replace = PLANNING.os.replace
+                injected = False
 
-            def publish_then_fail(source, destination):
-                nonlocal injected
-                result = real_replace(source, destination)
-                if Path(destination).name == "planning-control.json" and not injected:
-                    injected = True
-                    raise PermissionError("simulated post-publication failure")
-                return result
+                def publish_then_fail(source, destination):
+                    nonlocal injected
+                    result = real_replace(source, destination)
+                    if Path(destination).name == "planning-control.json" and not injected:
+                        injected = True
+                        raise failure("simulated post-publication failure")
+                    return result
 
-            with mock.patch.object(PLANNING.os, "replace", side_effect=publish_then_fail):
-                with self.assertRaisesRegex(PLANNING.ControlError, "rolled back"):
-                    with PLANNING.planning_lock(run):
-                        PLANNING.return_to_system_design(run, review_input.relative_to(run))
+                with mock.patch.object(PLANNING.os, "replace", side_effect=publish_then_fail):
+                    with self.assertRaisesRegex(PLANNING.ControlError, "rolled back"):
+                        with PLANNING.planning_lock(run):
+                            PLANNING.return_to_system_design(run, review_input.relative_to(run))
 
-            self.assertTrue(injected)
-            self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
+                self.assertTrue(injected)
+                self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
 
     def test_return_rejects_same_byte_reviews_directory_identity_swap(self):
         with tempfile.TemporaryDirectory() as td:
@@ -3475,6 +3476,64 @@ class AtlasPlanningTests(unittest.TestCase):
 
             self.assertTrue(swapped)
             self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
+
+    def test_return_rechecks_reviews_identity_after_retained_leaf_read(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            run = root / "run"
+            run.mkdir()
+            planning = initialize_program_after_system(run)
+            review_input = write_upstream_block_review_input(run, planning)
+            planning_before = (run / "planning-control.json").read_bytes()
+            real_open = PLANNING.os.open
+            leaf_opens = 0
+            swapped = False
+
+            def swap_during_post_commit_leaf_open(path, flags, *args, **kwargs):
+                nonlocal leaf_opens, swapped
+                if path == "program-design-upstream-block-v1.json":
+                    leaf_opens += 1
+                    if leaf_opens == 3:
+                        reviews = run / "reviews"
+                        moved = run / "reviews-before-post-check-swap"
+                        reviews.rename(moved)
+                        reviews.mkdir()
+                        (reviews / path).write_bytes((moved / path).read_bytes())
+                        swapped = True
+                return real_open(path, flags, *args, **kwargs)
+
+            with mock.patch.object(PLANNING.os, "open", side_effect=swap_during_post_commit_leaf_open):
+                with self.assertRaisesRegex(PLANNING.ControlError, "evidence|rolled back"):
+                    with PLANNING.planning_lock(run):
+                        PLANNING.return_to_system_design(run, review_input.relative_to(run))
+
+            self.assertTrue(swapped)
+            self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
+
+    def test_return_does_not_report_failure_for_post_commit_directory_close_error(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            planning = initialize_program_after_system(run)
+            review_input = write_upstream_block_review_input(run, planning)
+            real_close = PLANNING.os.close
+            injected = False
+
+            def close_then_fail_for_directory(fd):
+                nonlocal injected
+                is_directory = PLANNING.stat.S_ISDIR(PLANNING.os.fstat(fd).st_mode)
+                real_close(fd)
+                if is_directory and not injected:
+                    injected = True
+                    raise OSError("simulated retained-directory close failure")
+
+            with mock.patch.object(PLANNING.os, "close", side_effect=close_then_fail_for_directory):
+                with PLANNING.planning_lock(run):
+                    result = PLANNING.return_to_system_design(run, review_input.relative_to(run))
+
+            self.assertTrue(injected)
+            self.assertIn("returned program_design -> system_design", result)
+            updated = PLANNING.load_planning_control(run)
+            self.assertEqual((updated["status"], updated["phase"]), ("BLOCKED", "system_design"))
 
 
 if __name__ == "__main__":

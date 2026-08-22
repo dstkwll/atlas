@@ -609,7 +609,8 @@ def retained_upstream_block_evidence(
                     pass
         yield canonical, parent, parent_fd, identity
     finally:
-        os.close(parent_fd)
+        with contextlib.suppress(OSError):
+            os.close(parent_fd)
 
 
 def verify_retained_upstream_block_evidence(
@@ -636,9 +637,14 @@ def verify_retained_upstream_block_evidence(
         evidence_fd = os.open(leaf, read_flags, dir_fd=parent_fd)
         with os.fdopen(evidence_fd, "rb") as handle:
             current_bytes = handle.read()
+        after_read = os.stat(parent, follow_symlinks=False)
     except OSError as exc:
         raise ControlError("upstream-block evidence changed at the write boundary") from exc
-    if current_bytes != review_bytes:
+    if (
+        current_bytes != review_bytes
+        or not stat.S_ISDIR(after_read.st_mode)
+        or (after_read.st_dev, after_read.st_ino) != identity
+    ):
         raise ControlError("upstream-block evidence changed at the write boundary")
 
 
@@ -1295,22 +1301,31 @@ def return_to_system_design(run_dir: Path, review_input: Path) -> str:
             committed = load_planning_control(run_dir)
             if committed != final_planning:
                 raise ControlError("committed upstream-repair state does not match the requested transition")
-        except (ControlError, OSError, UnicodeError, ValueError, yaml.YAMLError) as exc:
+        except BaseException as exc:
             try:
                 current_planning_bytes = planning_path.read_bytes()
-                if current_planning_bytes == final_bytes:
+            except BaseException as inspection_exc:
+                raise ControlError(
+                    "upstream-repair transition failed and resulting planning state could not be inspected"
+                ) from inspection_exc
+            if current_planning_bytes == final_bytes:
+                try:
                     write_planning_control_bytes_atomic(run_dir, planning_bytes)
                     if planning_path.read_bytes() != planning_bytes:
                         raise ControlError("prior planning bytes did not survive rollback")
+                except BaseException as rollback_exc:
+                    raise ControlError(
+                        "upstream-repair transition failed and prior state could not be restored"
+                    ) from rollback_exc
+                if isinstance(exc, Exception):
                     raise ControlError(
                         f"upstream-repair transition failed final validation and was rolled back: {exc}"
                     ) from exc
-                if current_planning_bytes != planning_bytes:
-                    raise ControlError(
-                        "upstream-repair transition failed after planning state changed independently"
-                    ) from exc
-            except (OSError, UnicodeError, ValueError, yaml.YAMLError) as rollback_exc:
-                raise ControlError("upstream-repair transition failed and prior state could not be restored") from rollback_exc
+                raise
+            if current_planning_bytes != planning_bytes:
+                raise ControlError(
+                    "upstream-repair transition failed after planning state changed independently"
+                ) from exc
             raise
     return f"returned program_design -> system_design; planning-control revision {final_planning['revision']}"
 
