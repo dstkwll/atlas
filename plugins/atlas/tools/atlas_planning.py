@@ -169,12 +169,17 @@ def json_equal_exact(left: Any, right: Any) -> bool:
 
 def contains_machine_local_path(value: Any) -> bool:
     if isinstance(value, str):
-        without_urls = re.sub(r"\b[a-zA-Z][a-zA-Z0-9+.-]*://[^\s\"'`<>]+", "", value)
+        without_https_urls = re.sub(
+            r"\bhttps://[^\s\"'`<>]+",
+            "",
+            value,
+            flags=re.IGNORECASE,
+        )
         return bool(
-            re.search(r"(?<!:)//[^/\s\"'`<>]+/[^\s\"'`<>]+", without_urls)
-            or re.search(r"(?<![A-Za-z0-9_])/(?!/)[^\s\"'`<>]+", without_urls)
-            or re.search(r"(?<!\\)\\\\[^\\\s]+\\[^\\\s]+", without_urls)
-            or re.search(r"(?<![A-Za-z0-9])[A-Za-z]:", without_urls)
+            re.search(r"(?<!:)//[^/\s\"'`<>]+/[^\s\"'`<>]+", without_https_urls)
+            or re.search(r"(?<![A-Za-z0-9_])/(?!/)[^\s\"'`<>]+", without_https_urls)
+            or re.search(r"(?<!\\)\\\\[^\\\s]+\\[^\\\s]+", without_https_urls)
+            or re.search(r"(?<![A-Za-z0-9])[A-Za-z]:", without_https_urls)
         )
     if isinstance(value, list):
         return any(contains_machine_local_path(item) for item in value)
