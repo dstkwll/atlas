@@ -864,7 +864,7 @@ def validate_system_design_acceptance(
         or record["candidate_version"] != expected_version
         or not re.fullmatch(r"[0-9a-f]{64}", str(record.get("candidate_sha256", "")))
         or record.get("authority") not in {"HUMAN", "AGENT_REVIEW"}
-        or record.get("source_bindings") != [expected_source]
+        or not json_equal_exact(record.get("source_bindings"), [expected_source])
         or record.get("repository_baselines") != []
     ):
         raise ControlError("planning-control.json System Design acceptance is malformed")
@@ -990,7 +990,7 @@ def validate_program_design_acceptance(
         or configured not in {"AGENT_REVIEW", "HUMAN"}
         or record.get("authority") != expected_authority
         or record.get("review_reference") != PROGRAM_DESIGN_REVIEW_REFERENCE
-        or record.get("source_bindings") != [expected_source]
+        or not json_equal_exact(record.get("source_bindings"), [expected_source])
         or record.get("repository_baselines") != effective["repos"]
     ):
         raise ControlError("planning-control.json Program Design acceptance is malformed")
@@ -1218,7 +1218,10 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
                 not isinstance(current_system, dict)
                 or current_system["candidate_version"] != superseded["candidate_version"] + 1
                 or current_system["candidate_sha256"] == superseded["candidate_sha256"]
-                or current_system["source_bindings"] != superseded["source_bindings"]
+                or not json_equal_exact(
+                    current_system["source_bindings"],
+                    superseded["source_bindings"],
+                )
                 or blocked_reason["attempts_used"] < 1
                 or blocked_reason.get("current_attempt") is not None
                 or planning.get("phase") != "program_design"
@@ -1814,7 +1817,11 @@ def system_design_report(
     product = planning["stage0_anchor"]["product_closure"]
     if system_repair:
         expected = repair_data["superseded_system_design"]["source_bindings"][0]
-        if not isinstance(source, dict) or set(source) != set(expected) or source != expected:
+        if (
+            not isinstance(source, dict)
+            or set(source) != set(expected)
+            or not json_equal_exact(source, expected)
+        ):
             gaps.append(gap(
                 SYSTEM_DESIGN_FILE,
                 "source_binding does not match the superseded System Design source",
@@ -2273,6 +2280,8 @@ def advance_boundary(
     if stage != "system_design":
         raise ControlError("advance supports only system_design or program_design acceptance")
     planning, _, effective = verified_planning_state(run_dir)
+    planning_path = managed_path(run_dir, PLANNING_FILE)
+    planning_bytes = planning_path.read_bytes()
     participation = effective.get("system_design_participation")
     if participation not in {"agent_led", "co_design"}:
         raise ControlError(f"unsupported frozen System Design participation: {participation}")
@@ -2371,12 +2380,48 @@ def advance_boundary(
         final_planning["status"] = "BLOCKED"
         final_planning["blocked_reason"]["state"] = "PROGRAM_DESIGN_RESUMED"
         final_planning["blocked_reason"]["current_attempt"] = None
-    write_planning_control_atomic(
-        run_dir,
-        final_planning,
-        precondition=revalidate_immediately_before_replace,
-    )
-    load_planning_control(run_dir)
+    if repair_context is None:
+        write_planning_control_atomic(
+            run_dir,
+            final_planning,
+            precondition=revalidate_immediately_before_replace,
+        )
+        load_planning_control(run_dir)
+    else:
+        final_bytes = planning_control_bytes(final_planning)
+        try:
+            write_planning_control_atomic(
+                run_dir,
+                final_planning,
+                precondition=revalidate_immediately_before_replace,
+            )
+            load_planning_control(run_dir)
+        except BaseException as exc:
+            try:
+                current_bytes = planning_path.read_bytes()
+            except BaseException as inspection_exc:
+                raise ControlError(
+                    "System Design repair acceptance failed and resulting planning state could not be inspected"
+                ) from inspection_exc
+            if current_bytes == final_bytes:
+                try:
+                    write_planning_control_bytes_atomic(run_dir, planning_bytes)
+                    if planning_path.read_bytes() != planning_bytes:
+                        raise ControlError("prior planning bytes did not survive rollback")
+                except BaseException as rollback_exc:
+                    raise ControlError(
+                        "System Design repair acceptance failed and prior state could not be restored"
+                    ) from rollback_exc
+                if isinstance(exc, Exception):
+                    raise ControlError(
+                        f"System Design repair acceptance failed final validation and was rolled back: {exc}"
+                    ) from exc
+                raise
+            if current_bytes != planning_bytes:
+                raise ControlError(
+                    "System Design repair acceptance failed after planning state changed independently"
+                ) from exc
+            raise
     return f"advanced system_design -> {next_stage}; planning-control revision {final_planning['revision']}"
 
 

@@ -3813,7 +3813,7 @@ class AtlasPlanningTests(unittest.TestCase):
             self.assertTrue(any(PLANNING.stat.S_ISDIR(mode) for mode in fsynced_modes))
 
     def test_stale_system_requires_exact_next_version_different_hash_and_same_source(self):
-        for case in ("valid", "same-version", "same-hash", "changed-source"):
+        for case in ("valid", "same-version", "same-hash", "changed-source", "boolean-source-revision"):
             with self.subTest(case=case), tempfile.TemporaryDirectory() as td:
                 run = Path(td)
                 planning = initialize_program_after_system(run)
@@ -3832,6 +3832,8 @@ class AtlasPlanningTests(unittest.TestCase):
                 source = copy.deepcopy(superseded["source_bindings"][0])
                 if case == "changed-source":
                     source["sha256"] = "0" * 64
+                elif case == "boolean-source-revision":
+                    source["effective_config_revision"] = False
                 write_system_design(
                     run,
                     source,
@@ -4065,6 +4067,63 @@ class AtlasPlanningTests(unittest.TestCase):
                 result = planning_cli(*args)
 
                 self.assertNotEqual(result.returncode, 0)
+                self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
+
+    def test_system_reacceptance_rolls_back_final_boundary_candidate_and_review_races(self):
+        for case in ("candidate", "review"):
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                planning = initialize_program_after_system(run)
+                review_input = write_upstream_block_review_input(run, planning)
+                returned = planning_cli(
+                    "return-upstream", "--run", run,
+                    "--review-input", review_input.relative_to(run),
+                )
+                self.assertEqual(returned.returncode, 0, returned.stderr)
+                reserved = planning_cli(
+                    "reserve-repair-attempt", "--run", run, "--stage", "system_design",
+                )
+                self.assertEqual(reserved.returncode, 0, reserved.stderr)
+                episode = PLANNING.load_planning_control(run)["blocked_reason"]
+                candidate = run / "30-system-design.md"
+                write_system_design(
+                    run,
+                    copy.deepcopy(episode["superseded_system_design"]["source_bindings"][0]),
+                    version=2,
+                )
+                review = write_system_repair_review(run)
+                planning_before = (run / "planning-control.json").read_bytes()
+                real_replace = PLANNING.os.replace
+                injected = False
+
+                def mutate_inside_replace(source, destination):
+                    nonlocal injected
+                    if Path(destination).name == "planning-control.json" and not injected:
+                        injected = True
+                        if case == "candidate":
+                            candidate.write_text(
+                                candidate.read_text(encoding="utf-8") + "\nRaced candidate.\n",
+                                encoding="utf-8",
+                            )
+                        else:
+                            review.write_text(
+                                review.read_text(encoding="utf-8") + " ",
+                                encoding="utf-8",
+                            )
+                    return real_replace(source, destination)
+
+                with mock.patch.object(PLANNING.os, "replace", side_effect=mutate_inside_replace):
+                    with self.assertRaises(PLANNING.ControlError):
+                        with PLANNING.planning_lock(run):
+                            PLANNING.advance_boundary(
+                                run,
+                                "system_design",
+                                "human",
+                                str(review.relative_to(run)),
+                                "2026-08-22",
+                            )
+
+                self.assertTrue(injected)
                 self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
 
 
