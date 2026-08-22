@@ -161,6 +161,11 @@ Build one workflow graph and configure authority/gates.
 
 Human approval should be injected by policy at meaningful boundaries.
 
+Human attention is reserved for judgment and authority, not orchestration. Internal stages, skills,
+and controllers must route and hand off work without asking the user to drive the workflow. Atlas may
+interrupt only when the required answer genuinely belongs to the user or when policy requires explicit
+human authority. The user supplies judgment; Atlas supplies orchestration.
+
 ## 9. A draft PR is an appropriate factory output; merge initially is not
 
 The factory should ideally produce:

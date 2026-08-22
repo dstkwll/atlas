@@ -72,4 +72,4 @@ Report the command's exact result and verified phase. Do not invoke Program Desi
 - Policy labels, filename, schemas, and seven dimension identifiers are literal.
 - No copy, receipt, history, event, journal, rejection, reopen, staleness, or model-router operation exists.
 - `planning-control.json` remains the only mutable Stage 3–5 authority; this slice changes only its System Design outcome.
-- Static contracts do not prove installed-host skill chaining; Slice 5 owns that proof.
+- Human attention is an authority surface, not an orchestration mechanism. The user supplies judgment when policy requires it; Atlas supplies the internal handoff and must not require a second manual command.
