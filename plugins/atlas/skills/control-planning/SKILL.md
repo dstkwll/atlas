@@ -53,6 +53,8 @@ python3 "<atlas-plugin-root>/tools/atlas_repository.py" read --run "<run-directo
 
 Run `verify` first. On failure, return its complete mechanical repository `BLOCKED` report before invoking a reviewer or writing evidence; do not run `list`, `search`, or `read`. On PASS, proceed to exact baseline inspection. The fresh reviewer reads the exact baseline only through the adapter commands above, repeating `list`, `search`, and `read` as needed. Current `HEAD`, index, and working-tree bytes are never substitute review inputs.
 
+Adapter `config_path`, bound `source`, Git-directory, and absolute diagnostic paths are ephemeral operational evidence. Never copy them into `reviews/program-design-v1.json`. Reviewer evidence names only stable repository identity, full baseline OID, baseline-relative repository paths, and relevant code evidence.
+
 ## 3. Resolve the frozen authority
 
 Follow the exact schema, dimensions, fail-closed mapping, reviewer output, and authority matrix in [`references/system-design-authority.md`](references/system-design-authority.md). Evidence lives only at `reviews/system-design-v1.json`; the invoker assembles its exact duplicate-safe JSON bytes. The envelope carries the exact ordered current effective repository/baseline pairs after accepted Stage 0 amendments and the current candidate identity/hash. It is evidence, not authority.

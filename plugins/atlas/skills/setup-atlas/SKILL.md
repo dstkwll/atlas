@@ -56,7 +56,15 @@ Skip the question only when an existing configuration already settles the planni
 
 ### 3. Confirm before writing
 
-For each repository needed by the run, commission or change exactly one stable repository identity to one canonical absolute path to an existing local Git repository or object source. Validate that the path is absolute, already exists, resolves without symlink substitution, and is a readable Git source. Atlas may ask the user for the identity/source pair, but must never infer a binding from a remote or the current checkout.
+For each repository needed by the run, commission or change exactly one stable repository identity to one canonical absolute path to an existing local Git repository or object source. A remote URL may help propose a stable identity, and the current checkout may help propose its canonical source path. A proposal grants no authority and never silently creates or changes a binding.
+
+Validate each proposed source without requiring a run or claiming baseline readiness:
+
+```shell
+python3 "<atlas-plugin-root>/tools/atlas_repository.py" probe-source --source "<canonical-absolute-local-git-source>"
+```
+
+The probe validates only that the path is absolute, already exists without symlink substitution, and is a readable local Git source. It never chooses an identity, baseline, commit, or tree.
 
 Show the exact configuration diff, the exact configuration path, and the exact identity/source pair. Wait for explicit confirmation before creating or changing a binding. Normal runs reuse a confirmed binding without asking again. Setup may inspect and write machine configuration, but must never sync, clone, fetch, authenticate, checkout, create a worktree, or mutate a repository.
 
@@ -92,9 +100,9 @@ On Windows, use `py -3 -c "import sys, yaml, markdown_it; assert sys.version_inf
 
 Report whether the deterministic dependencies are ready. Never pretend a missing dependency is optional.
 
-### 6. Verify repository readiness for the run
+### 6. Verify repository readiness only when a run exists
 
-After preserving or confirming bindings, run the deterministic non-mutating preflight:
+Before a run exists, stop after source probing and confirmed configuration; do not invoke run-specific `verify --run`. Only after an initialized run exists, use `verify --run` to prove every effective identity/full-baseline pair against current confirmed machine bindings:
 
 ```shell
 python3 "<atlas-plugin-root>/tools/atlas_repository.py" verify --run "<run-directory>"

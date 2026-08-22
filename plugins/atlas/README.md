@@ -14,7 +14,7 @@ start-run freezes run.yaml and initializes control.json
   → read-only System Design check
   → workflow-internal control-planning applies the exact System Design authority/evidence matrix
   → atlas_planning.py records one exact System Design acceptance and advances when selected
-  → program-design requires readable exact frozen repository trees and one selected source; unresolved repository access returns DESIGN_BLOCKED before readiness
+  → program-design requires readable exact frozen repository trees and one selected source; missing binding, source, exact commit/tree/blob, submodule content, or Git LFS content returns `BLOCKED`; only an exact-code contradiction requiring accepted upstream truth to change returns `DESIGN_BLOCKED`
   → read-only Program Design mechanical check
   → workflow-internal control-planning requires fresh Program Design review and applies AGENT_REVIEW or HUMAN authority
   → atlas_planning.py records one exact Program Design acceptance and advances to tickets

@@ -37,6 +37,8 @@ The command returns JSON containing `path`, `device`, and `inode`. Keep all thre
 
 Inspect the current Git repository when present and ask for every other repository already known to be affected. Record each stable identity with its commit baseline; never admit one without the other.
 
+Read the existing confirmed machine binding for every proposed stable repository identity before accepting intake. If one is missing or an explicitly requested replacement is needed, invoke `atlas:setup-atlas` internally for that one identity/source pair. Do not ask the user to leave `start-run`, invoke setup manually, or restart intake. After setup returns, reload machine bindings and require the exact confirmed identity/source pair before resolving the full canonical commit object ID. A declined or failed binding confirmation stops the same intake without writing `run.yaml`.
+
 Resolve every admitted baseline to the repository's full canonical commit object ID before previewing `run.yaml`. Against the user-confirmed local Git source, run a non-mutating `git rev-parse --verify "<requested-baseline>^{commit}"` with optional locks, replacement objects, and lazy fetch disabled; require the returned lowercase hexadecimal object ID to be the repository's full 40- or 64-character canonical form. Record that returned object ID, not the input ref. New intake never stores a branch, tag, `HEAD`, or abbreviated object ID as `baseline`. If the exact commit is not locally readable, stop before writing intake; `start-run` never fetches or guesses a replacement.
 
 Stage 0 is recommend-only. Classify the eight risk dimensions in [`references/run-file.md`](references/run-file.md), then recommend the amount of decomposition independently from authority:
@@ -77,6 +79,8 @@ This idempotent command uses its own `.atlas-planning.lock`. It strictly initial
 ## 3. Hand off
 
 Read authoritative `control.json`. If its current phase is `discovery`, it owns the live cursor; offer `atlas:discovery`. If its phase is `system_design`, `program_design`, or `tickets`, complete the shared `ensure` handoff from §2 and re-read `planning-control.json`; validated `planning-control.json.phase` is the actual current planning phase. Hand off to that owner, not to the frozen downstream handoff phase in `control.json`.
+
+This is a bounded continuation loop, not one-shot dispatch. After an invoked producer and its internal control handoff return, run `ensure` again and re-read validated `planning-control.json`; route only from that fresh phase. The only legal downstream continuation after `system_design` is `program_design` or `tickets`; after `program_design` it is `tickets`. Invoke at most two downstream producers during one `start-run` invocation. If the phase is unchanged, the invoked stage's gate remains `PENDING`, the transition is unexpected, or an invoked owner stops `BLOCKED` or `DESIGN_BLOCKED`, stop without retrying that producer. Never derive a producer dynamically from the stage list.
 
 - If validated planning phase is `system_design`, invoke `atlas:system-design` internally.
 - If validated planning phase is `program_design`, invoke `atlas:program-design` internally.

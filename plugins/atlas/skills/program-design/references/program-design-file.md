@@ -18,7 +18,7 @@ source_binding:
 
 ## Repository grounding
 
-<inspected repositories, baselines, paths, conventions, and feasibility evidence>
+<stable repository identities, full baseline OIDs, baseline-relative repository paths, conventions, and feasibility evidence; never machine-local config/source paths>
 
 ## Upstream commitment realization
 

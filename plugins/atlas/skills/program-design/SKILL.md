@@ -34,6 +34,8 @@ python3 "<atlas-plugin-root>/tools/atlas_repository.py" read --run "<run-directo
 
 Treat current `HEAD`, index, and working-tree bytes only as drift; never substitute them for the exact baseline. Inspect current HEAD and working-tree state only as drift/context; neither may silently replace the frozen baseline as design truth. Repository identity and baseline metadata are portable claims, while the confirmed machine binding and adapter provide local read access.
 
+Machine-local `config_path`, bound `source`, Git-directory, and absolute diagnostic paths are ephemeral operational evidence. Never copy them into `40-program-design.md`. Repository grounding in the candidate names only stable repository identity, full baseline OID, baseline-relative repository paths, and relevant code evidence.
+
 Derive the applicable branch only from effective selected stages, never from candidate prose or artifact presence. Read exactly one applicable upstream source and do not read either omitted source:
 
 - System Design selected: read exact accepted `30-system-design.md` and bind its integer version and SHA-256 as `kind: system_design`.

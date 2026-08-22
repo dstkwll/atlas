@@ -252,9 +252,9 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "verify_system_design_board", "30-system-design.html",
         ],
         "repository": [
-            "def load_bindings", "def bind_repository", "def verify_run",
+            "def load_bindings", "def probe_source", "def bind_repository", "def verify_run",
             "def list_tree", "def search_tree", "def read_tree_path",
-            'sub.add_parser("verify"', 'sub.add_parser("list"',
+            'sub.add_parser(\n        "probe-source"', 'sub.add_parser("verify"', 'sub.add_parser("list"',
             'sub.add_parser("search"', 'sub.add_parser("read"',
         ],
         "system-design": [
@@ -336,13 +336,20 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         "Show the exact configuration diff, the exact configuration path, and the exact identity/source pair",
         "Wait for explicit confirmation before creating or changing a binding",
         "Normal runs reuse a confirmed binding without asking again",
-        "never infer a binding from a remote or the current checkout",
+        "A remote URL may help propose a stable identity, and the current checkout may help propose its canonical source path",
+        "A proposal grants no authority and never silently creates or changes a binding",
         "never sync, clone, fetch, authenticate, checkout, create a worktree, or mutate a repository",
+        'python3 "<atlas-plugin-root>/tools/atlas_repository.py" probe-source --source "<canonical-absolute-local-git-source>"',
+        "Before a run exists, stop after source probing and confirmed configuration; do not invoke run-specific `verify --run`",
         'python3 "<atlas-plugin-root>/tools/atlas_repository.py" verify --run "<run-directory>"',
+        "Only after an initialized run exists, use `verify --run`",
         "Report every gap and resume action from the complete verification report",
         "only V1 artifact-location setting, not the only machine configuration",
     )
-    if any(clause not in setup for clause in setup_binding_contract):
+    if (
+        any(clause not in setup for clause in setup_binding_contract)
+        or "must never infer a binding from a remote or the current checkout" in setup
+    ):
         findings.append(("cross", "setup: incomplete D-081 binding commissioning contract"))
 
     calibration_five_clis = (
@@ -361,6 +368,16 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
     if any(clause not in texts.get("readme", "") for clause in readme_program_contract):
         findings.append(("cross", "README Program Design inventory is incomplete"))
 
+    readme_repository_classification = (
+        "missing binding, source, exact commit/tree/blob, submodule content, or Git LFS content returns `BLOCKED`; "
+        "only an exact-code contradiction requiring accepted upstream truth to change returns `DESIGN_BLOCKED`"
+    )
+    if (
+        readme_repository_classification not in texts.get("readme", "")
+        or "unresolved repository access returns DESIGN_BLOCKED" in texts.get("readme", "")
+    ):
+        findings.append(("cross", "README repository BLOCKED classification contradicts D-081"))
+
     full_oid_start_contract = (
         "Resolve every admitted baseline to the repository's full canonical commit object ID before previewing `run.yaml`",
         "New intake never stores a branch, tag, `HEAD`, or abbreviated object ID as `baseline`",
@@ -378,6 +395,16 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
     ):
         findings.append(("cross", "start-run: missing full canonical repository baseline intake"))
 
+    start_binding_commissioning_contract = (
+        "Read the existing confirmed machine binding for every proposed stable repository identity before accepting intake",
+        "If one is missing or an explicitly requested replacement is needed, invoke `atlas:setup-atlas` internally for that one identity/source pair",
+        "Do not ask the user to leave `start-run`, invoke setup manually, or restart intake",
+        "After setup returns, reload machine bindings and require the exact confirmed identity/source pair before resolving the full canonical commit object ID",
+        "A declined or failed binding confirmation stops the same intake without writing `run.yaml`",
+    )
+    if any(clause not in texts.get("start", "") for clause in start_binding_commissioning_contract):
+        findings.append(("cross", "start-run: missing internal binding commissioning"))
+
     program = texts.get("program-design", "")
     grounding = "Before drafting anything, require a readable repository for every stable identity and prove the exact frozen baseline commit/tree is available"
     drafting_heading = "## 3. Produce the Stage 4 candidate"
@@ -393,6 +420,28 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
     )
     if any(clause not in program for clause in baseline_access_contract):
         findings.append(("cross", "program-design: missing fail-closed exact frozen-baseline access preflight"))
+
+    portable_evidence_contract = {
+        "program-design": (
+            "Machine-local `config_path`, bound `source`, Git-directory, and absolute diagnostic paths are ephemeral operational evidence",
+            "Never copy them into `40-program-design.md`",
+            "Repository grounding in the candidate names only stable repository identity, full baseline OID, baseline-relative repository paths, and relevant code evidence",
+        ),
+        "program-design-template": (
+            "<stable repository identities, full baseline OIDs, baseline-relative repository paths, conventions, and feasibility evidence; never machine-local config/source paths>",
+        ),
+        "control-planning": (
+            "Adapter `config_path`, bound `source`, Git-directory, and absolute diagnostic paths are ephemeral operational evidence",
+            "Never copy them into `reviews/program-design-v1.json`",
+            "Reviewer evidence names only stable repository identity, full baseline OID, baseline-relative repository paths, and relevant code evidence",
+        ),
+    }
+    if any(
+        clause not in texts.get(name, "")
+        for name, clauses in portable_evidence_contract.items()
+        for clause in clauses
+    ):
+        findings.append(("cross", "Program Design machine-local path leakage boundary is incomplete"))
 
     repository_verify = 'python3 "<atlas-plugin-root>/tools/atlas_repository.py" verify --run "<run-directory>"'
     repository_list = 'python3 "<atlas-plugin-root>/tools/atlas_repository.py" list --run "<run-directory>" --repository "<stable-repository-id>"'
@@ -601,6 +650,17 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
     )
     if any(clause not in start_text for clause in start_route_contract):
         findings.append(("cross", "start: missing implemented Program Design route and tickets stop"))
+
+    start_continuation_contract = (
+        "This is a bounded continuation loop, not one-shot dispatch",
+        "After an invoked producer and its internal control handoff return, run `ensure` again and re-read validated `planning-control.json`",
+        "The only legal downstream continuation after `system_design` is `program_design` or `tickets`; after `program_design` it is `tickets`",
+        "Invoke at most two downstream producers during one `start-run` invocation",
+        "If the phase is unchanged, the invoked stage's gate remains `PENDING`, the transition is unexpected, or an invoked owner stops `BLOCKED` or `DESIGN_BLOCKED`, stop without retrying that producer",
+        "Never derive a producer dynamically from the stage list",
+    )
+    if any(clause not in start_text for clause in start_continuation_contract):
+        findings.append(("cross", "start: missing bounded downstream continuation"))
 
     check_command = 'python3 "<atlas-plugin-root>/tools/atlas_planning.py" check --run "<run-directory>" --stage system_design'
     program_check_command = 'python3 "<atlas-plugin-root>/tools/atlas_planning.py" check --run "<run-directory>" --stage program_design'

@@ -309,6 +309,36 @@ def _discover_git_dir(source: Path, identity: str) -> Path:
     return resolved
 
 
+def probe_source(raw_source: str) -> None:
+    """Prove only that an absolute canonical path is a readable local Git source."""
+
+    source = _canonical_source(raw_source, "proposed source")
+    git_dir = _discover_git_dir(source, "proposed source")
+    if source == git_dir:
+        return
+    top_level_raw = _git_text(
+        ("rev-parse", "--show-toplevel"),
+        source=source,
+        code="source_not_repository_root",
+        problem="proposed source is not a repository worktree root or Git object source",
+        resume_action="propose the canonical worktree root or Git directory directly",
+    )
+    try:
+        top_level = Path(top_level_raw).resolve(strict=True)
+    except (OSError, RuntimeError) as exc:
+        raise RepositoryBlocked(
+            "source_not_repository_root",
+            f"proposed repository root is unavailable: {exc}",
+            "propose the canonical worktree root or Git directory directly",
+        ) from exc
+    if source != top_level:
+        raise RepositoryBlocked(
+            "source_not_repository_root",
+            "proposed source is nested inside a repository rather than naming its canonical root",
+            "propose the canonical worktree root or Git directory directly",
+        )
+
+
 def bind_repository(identity: str, baseline: str, raw_source: str) -> BoundRepository:
     source = _canonical_source(raw_source, identity)
     git_dir = _discover_git_dir(source, identity)
@@ -649,6 +679,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
 
+    probe = sub.add_parser(
+        "probe-source", help="verify one proposed local Git source without a run"
+    )
+    probe.add_argument("--source", required=True)
+
     verify = sub.add_parser("verify", help="verify every effective repository baseline")
     verify.add_argument("--run", required=True, type=Path)
 
@@ -674,6 +709,29 @@ def _write_json(report: Mapping[str, Any], stream: Any = sys.stdout) -> None:
 
 def main(argv: Optional[list[str]] = None) -> int:
     args = build_parser().parse_args(argv)
+    if args.command == "probe-source":
+        try:
+            probe_source(args.source)
+        except RepositoryBlocked as exc:
+            _write_json(
+                {
+                    "version": REPORT_VERSION,
+                    "command": "probe-source",
+                    "verdict": "BLOCKED",
+                    "gaps": [Gap(exc.code, None, exc.problem, exc.resume_action).as_dict()],
+                }
+            )
+            return 1
+        _write_json(
+            {
+                "version": REPORT_VERSION,
+                "command": "probe-source",
+                "verdict": "PASS",
+                "gaps": [],
+            }
+        )
+        return 0
+
     verification = verify_run(args.run)
     if args.command == "verify":
         _write_json(verification.report())

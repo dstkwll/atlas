@@ -229,6 +229,70 @@ class AtlasRepositoryTest(unittest.TestCase):
     def verify(self, *, cwd=None, env=None):
         return self.run_cli("verify", "--run", self.run_dir, cwd=cwd, env=env)
 
+    def test_probe_source_rejects_nested_worktree_directory(self):
+        nested = self.repo / "src"
+
+        result = self.run_cli("probe-source", "--source", nested)
+
+        report = self.assert_blocked(result, "source_not_repository_root")
+        self.assertNotIn("baseline", json.dumps(report))
+
+    def test_probe_source_requires_no_run_and_never_claims_baseline(self):
+        before_head = git(self.repo, "rev-parse", "HEAD")
+        before_status = git(self.repo, "status", "--porcelain=v1", "--untracked-files=all")
+        before_index = sha256(self.repo / ".git" / "index")
+        before_git_metadata = {
+            str(path.relative_to(self.repo / ".git")): sha256(path)
+            for path in (self.repo / ".git").rglob("*")
+            if path.is_file()
+        }
+
+        result = self.run_cli("probe-source", "--source", self.repo)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        report = self.parse_report(result)
+        self.assertEqual(report, {
+            "command": "probe-source",
+            "gaps": [],
+            "verdict": "PASS",
+            "version": 1,
+        })
+        self.assertNotIn("run", report)
+        self.assertNotIn("repository", report)
+        self.assertNotIn("baseline", report)
+        self.assertNotIn("commit", report)
+        self.assertNotIn("tree", report)
+        self.assertEqual(git(self.repo, "rev-parse", "HEAD"), before_head)
+        self.assertEqual(
+            git(self.repo, "status", "--porcelain=v1", "--untracked-files=all"),
+            before_status,
+        )
+        self.assertEqual(sha256(self.repo / ".git" / "index"), before_index)
+        self.assertEqual(
+            {
+                str(path.relative_to(self.repo / ".git")): sha256(path)
+                for path in (self.repo / ".git").rglob("*")
+                if path.is_file()
+            },
+            before_git_metadata,
+        )
+
+        link = self.root / "repo-link"
+        link.symlink_to(self.repo, target_is_directory=True)
+        plain = self.root / "plain-source"
+        plain.mkdir()
+        for source, code in (
+            (Path("relative-source"), "source_not_absolute"),
+            (link, "source_symlink"),
+            (plain, "source_not_git"),
+        ):
+            with self.subTest(source=source):
+                blocked = self.run_cli("probe-source", "--source", source)
+                report = self.assert_blocked(blocked, code)
+                self.assertEqual(report["command"], "probe-source")
+                self.assertNotIn("run", report)
+                self.assertNotIn("baseline", json.dumps(report))
+
     def test_verify_uses_native_config_before_legacy_fallback(self):
         self.initialize_run()
         self.write_config({"fixture": str(self.repo)})
@@ -612,6 +676,7 @@ class AtlasRepositoryTest(unittest.TestCase):
             "  'no_replace': os.environ.get('GIT_NO_REPLACE_OBJECTS'),\n"
             "  'no_lazy_fetch': os.environ.get('GIT_NO_LAZY_FETCH'),\n"
             "  'terminal_prompt': os.environ.get('GIT_TERMINAL_PROMPT'),\n"
+            "  'allow_protocol': os.environ.get('GIT_ALLOW_PROTOCOL'),\n"
             "  'stdin_devnull': stat.S_ISCHR(stdin.st_mode) and stdin.st_rdev == null.st_rdev,\n"
             "}\n"
             "with open(os.environ['ATLAS_GIT_LOG'], 'a', encoding='utf-8') as handle:\n"
@@ -628,21 +693,29 @@ class AtlasRepositoryTest(unittest.TestCase):
             }
         )
 
+        elsewhere = self.root / "probe-caller"
+        elsewhere.mkdir()
+        probed = self.run_cli(
+            "probe-source", "--source", self.repo, cwd=elsewhere, env=env
+        )
         result = self.verify(env=env)
 
+        self.assertEqual(probed.returncode, 0, probed.stderr)
         self.assertEqual(result.returncode, 0, result.stderr)
         rows = [json.loads(line) for line in log.read_text(encoding="utf-8").splitlines()]
-        self.assertGreaterEqual(len(rows), 3)
+        self.assertGreaterEqual(len(rows), 4)
         for row in rows:
             self.assertEqual(row["optional_locks"], "0")
             self.assertEqual(row["no_replace"], "1")
             self.assertEqual(row["no_lazy_fetch"], "1")
             self.assertEqual(row["terminal_prompt"], "0")
+            self.assertEqual(row["allow_protocol"], "file")
             self.assertIs(row["stdin_devnull"], True)
 
     def test_help_exists_for_top_level_and_every_command(self):
         for args in (
             ("--help",),
+            ("probe-source", "--help"),
             ("verify", "--help"),
             ("list", "--help"),
             ("search", "--help"),
