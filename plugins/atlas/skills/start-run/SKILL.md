@@ -80,7 +80,16 @@ This idempotent command uses its own `.atlas-planning.lock`. It strictly initial
 
 Read authoritative `control.json`. If its current phase is `discovery`, it owns the live cursor; offer `atlas:discovery`. If its phase is `system_design`, `program_design`, or `tickets`, complete the shared `ensure` handoff from §2 and re-read `planning-control.json`; validated `planning-control.json.phase` is the actual current planning phase. Hand off to that owner, not to the frozen downstream handoff phase in `control.json`.
 
-This is a bounded continuation loop, not one-shot dispatch. After an invoked producer and its internal control handoff return, run `ensure` again and re-read validated `planning-control.json`; route only from that fresh phase. The only legal downstream continuation after `system_design` is `program_design` or `tickets`; after `program_design` it is `tickets`. Invoke at most two downstream producers during one `start-run` invocation. If the phase is unchanged, the invoked stage's gate remains `PENDING`, the transition is unexpected, or an invoked owner stops `BLOCKED` or `DESIGN_BLOCKED`, stop without retrying that producer. Never derive a producer dynamically from the stage list.
+This is a bounded continuation loop, not one-shot dispatch. After an invoked producer and its internal control handoff return, run `ensure` again and re-read validated `planning-control.json`; route only from that fresh phase. The only legal downstream continuation after `system_design` is `program_design` or `tickets`; after `program_design` it is `tickets`. Invoke at most two downstream producers during one `start-run` invocation. Outside the exact repair flow, apply this stop rule: If the phase is unchanged, the invoked stage's gate remains `PENDING`, the transition is unexpected, or an invoked owner stops `BLOCKED` or `DESIGN_BLOCKED`, stop without retrying that producer. Never derive a producer dynamically from the stage list.
+
+A validated `BLOCKED` planning state is resumable only for these exact triples:
+
+- `BLOCKED/system_design/SYSTEM_DESIGN_STALE` → run `python3 "<atlas-plugin-root>/tools/atlas_planning.py" reserve-repair-attempt --run "<run-directory>" --stage system_design`, require success, then enter `atlas:system-design` as an internal skill call.
+- `BLOCKED/program_design/PROGRAM_DESIGN_RESUMED` → run the same command with `--stage program_design`, require success, then enter `atlas:program-design` as an internal skill call.
+
+The reservation command durably commits and reload-verifies the next attempt before returning. Re-read `planning-control.json`, require the matching incremented `attempts_used` and `current_attempt`, and only then invoke that exact producer. Exhaustion or any reservation failure stays `BLOCKED`: report it and stop. Any other `BLOCKED` status/phase/reason combination is not routable and stops unchanged. The producer performs the existing internal `atlas:control-planning` handoff and configured authority flow; never ask the user to route a stage or issue a separate authority command.
+
+For validated `PLANNING` state:
 
 - If validated planning phase is `system_design`, invoke `atlas:system-design` internally.
 - If validated planning phase is `program_design`, invoke `atlas:program-design` internally.

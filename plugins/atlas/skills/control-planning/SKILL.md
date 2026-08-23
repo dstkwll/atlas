@@ -14,7 +14,7 @@ The normal entry is the exact internal handoff from `atlas:system-design` or `at
 
 ## 1. Establish the supported branch
 
-Read immutable `run.yaml`, Stage 0 `control.json`, and `planning-control.json`. Require the explicit stage to equal current planning phase with gate `PENDING`.
+Read immutable `run.yaml`, Stage 0 `control.json`, and `planning-control.json`. Accept normal status `PLANNING` when the explicit stage equals current phase with gate `PENDING`. Also accept one reserved `BLOCKED` repair tuple: `system_design` / gate `STALE` / `SYSTEM_DESIGN_STALE` / matching System attempt, or `program_design` / gate `PENDING` / `PROGRAM_DESIGN_RESUMED` / matching Program attempt. Every other blocked tuple or missing reservation stops unchanged.
 
 For `system_design`, require frozen participation `agent_led` or `co_design` and one exact System Design policy: `HUMAN`, `AGENT_REVIEW`, or canonical `HUMAN_IF_CHANGED` with the seven dimensions in [`references/system-design-authority.md`](references/system-design-authority.md). Participation changes collaboration only. Do not re-ask it or use it to choose authority.
 
@@ -63,6 +63,8 @@ Follow the exact schema, dimensions, fail-closed mapping, reviewer output, and a
 - `AGENT_REVIEW`: invoke one fresh read-only semantic reviewer using the seven Stage 3 dimensions. It reads mechanics, source/baselines, then the exact candidate; it edits no candidate, state, evidence, or repository and grants no authority. Assemble materiality null plus its exact semantic result.
 - `HUMAN_IF_CHANGED`: first invoke a fresh read-only classifier against the exact repository/current-system baselines and candidate. The classifier edits nothing and grants no authority. Persist per-dimension evidence. Any material/unavailable result maps to `HUMAN`; seven exact `NOT_MATERIAL` rows map to `AGENT_REVIEW`. Classifier failure or schema defects are persisted with a nonempty `unavailable_reason` and route `HUMAN`; unexplained bad output stops.
 - When classification maps to `AGENT_REVIEW`, invoke a distinct fresh semantic reviewer after classification and assemble its result. When it maps to `HUMAN`, set semantic review null and obtain explicit approval. Reviewer `BLOCKED` returns every gap to the producer and never mutates state.
+
+For the D-082 System replacement only, every policy uses a fresh review envelope with the controller-required `repair_context`: episode start revision, complete superseded System acceptance, contradiction review reference/hash and finding, attempts used, and expected acceptance revision. Direct `HUMAN` repair sets materiality and semantic review null, then requires both that fresh review envelope and explicit human approval; normal direct `HUMAN` remains review-free. Agent-review and mapped branches retain their normal judgments plus the same `repair_context`.
 
 Freshness, role identity, and read order are procedural and honestly unauthenticated by the controller. Before any human System Design decision, present the exact canonical `30-system-design.md`, version/SHA-256, source binding, and classification evidence. Never treat conversational agreement as approval; chat choices, co-design, `gate_ready`, board, silence, classifier, or reviewer grant no human authority. If approval is declined, leave `PENDING`; no reject command exists. Do not change candidate, board, state, repository, or evidence after the final read.
 

@@ -909,3 +909,28 @@ re-read per attempt because two machines may reach the same immutable Git commit
 paths. Conversely, an abbreviated baseline is not an environment problem that a binding can repair;
 new intake records the full ID, and an already-downstream V1 run with bad intake starts again rather
 than gaining an invented reopen path.
+
+---
+
+## L-022 — A session-local repair cap is not a durable bound
+
+### Initial attraction
+
+The initially attractive session-local four-step cap was not durable. It looked bounded in
+conversation, but a restarted skill, process, or session could begin the count again. The same
+apparent safety limit therefore authorized unbounded producer work over time.
+
+### Course correction
+
+The exact four-attempt budget belongs to D-080's deterministic downstream planning controller, not
+to an agent session. The controller must reserve and persist each attempt before producer-owned
+candidate writes; a crash consumes the reservation. Review, controller transitions, and authority
+acts do not spend it, and restart cannot reset it.
+
+### Standing result
+
+Exact repair budgets must be controller-owned and persisted before writes. A second contradiction
+cannot nest or reset the active episode, and exhaustion must remain loud and durable. The same
+persistence discipline applies to the repair's why: every replacement evidence envelope carries the
+complete validated contradiction finding plus its one immediate superseded acceptance and original
+contradiction reference/hash, without turning that provenance into recursive history.

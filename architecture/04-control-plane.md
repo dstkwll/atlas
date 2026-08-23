@@ -302,7 +302,27 @@ both upstream semantic boundaries are `NOT_REQUIRED`. The downstream judge reads
 selected stages, chooses exactly one branch, and never treats `NOT_REQUIRED` as approval. Program
 Design requires independent semantic review and never raw `AUTO`; the recommended standard
 authority is `AGENT_REVIEW`, with `HUMAN` available under governance/high assurance. A Stage 4
-finding that would change a Stage 3 commitment returns `DESIGN_BLOCKED` upstream.
+finding that would change a Stage 3 commitment returns `DESIGN_BLOCKED` upstream as evidence, not as
+state authority.
+
+D-082 permits this controller to act on that evidence only for pending Program Design bound to
+selected accepted System Design, and only after the separate read-only upstream-block judge returns
+`CONFIRMED_UPSTREAM_CONTRADICTION`. The controller atomically opens one `BLOCKED` repair episode,
+marks System Design `STALE`, preserves its acceptance as non-current provenance, returns the phase to
+`system_design`, and leaves Program Design `PENDING` with null acceptance. System Design N+1
+reacceptance advances to Program Design without ending the episode; fresh Program Design acceptance
+against N+1 ends it and restores `PLANNING`. Before opening the episode, the controller proves the
+original no-clobber upstream-block envelope's single complete predecessor-acceptance object exactly
+equals the live current System Design acceptance under JSON-type-sensitive comparison. That
+immutable object remains authoritative for all later episode validation; retained and review-context
+copies must match it exactly and grant no authority of their own.
+
+The episode has exactly four producer attempts shared across replacement System Design and resumed
+Program Design. The controller reserves and persists an attempt before candidate bytes change; a
+crash consumes it. Reviews, controller actions, and approvals do not. Restart cannot reset the
+budget, a second contradiction cannot nest or reset the episode, and exhaustion remains loud and
+durable. These constraints use the existing `blocked_reason` slot and leave storage representation
+to Program Design; they add no generalized router, rollback/reopen facility, or history/event system.
 
 Stage 5 has its own boundary inside that same controller:
 

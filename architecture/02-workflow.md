@@ -272,6 +272,34 @@ Program Design always has semantic questions and therefore never uses raw `AUTO`
 standard authority is `AGENT_REVIEW`; `HUMAN` remains available under governance or high assurance.
 An independent fresh review remains mandatory.
 
+### Bounded selected-System-Design repair
+
+D-082 adds one exception to forward-only Stage 4 progression. While Program Design is `PENDING`, has
+null acceptance, and is bound to currently accepted System Design, exact frozen repository evidence
+may prove that the accepted commitment cannot be faithfully realized without changing it. Producer
+prose or `DESIGN_BLOCKED` alone cannot route the run. `control-planning` must obtain the independent
+`reviews/program-design-upstream-block-v1.json` judgment; only
+`CONFIRMED_UPSTREAM_CONTRADICTION` authorizes the existing downstream controller to mutate state.
+
+That mutation is one atomic invalidation-and-replacement transition, not rollback or reopen: status
+becomes `BLOCKED`, phase returns to `system_design`, the System Design gate becomes `STALE`, its old
+acceptance remains auditable but non-current, Program Design remains `PENDING` with null acceptance,
+the bounded episode is recorded in the existing `blocked_reason`, and revision increments once.
+
+The System Design producer may then create exactly version `N+1` with a different hash and the same
+still-current source binding. It receives fresh checks, fresh review/classification when configured,
+and the unchanged configured authority. Reacceptance advances to Program Design inside the same
+episode, but status
+remains `BLOCKED`; only fresh Program Design acceptance against N+1 clears the episode and restores
+`PLANNING`. Across replacement System Design and resumed Program Design, exactly four
+controller-authorized producer attempts are available. The controller reserves and persists each
+attempt before candidate bytes change, so a crash consumes it; reviews, controller actions, and
+approvals do not. Restarts cannot reset the budget, a second contradiction cannot nest or reset it,
+and exhaustion is loud and durable.
+
+This path does not apply to Product Closure, direct Stage 0, accepted Program Design, or Stage 5 and
+tickets. Their current fail-closed boundaries remain unchanged.
+
 A design review should explicitly challenge:
 
 - shallow wrappers

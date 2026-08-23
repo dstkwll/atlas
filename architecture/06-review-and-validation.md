@@ -298,14 +298,50 @@ environment and retry; do not route that failure to an upstream design authority
 New intake records the full canonical commit ID. A syntactically accepted abbreviation is still
 `BLOCKED` at this boundary and is never expanded silently. Discovery may use its existing accepted
 `repos` correction while it owns the cursor; after downstream handoff, V1 requires a corrected new
-run because no downstream reopen/rebind path exists.
+run because no downstream Stage 0 reopen/rebind path exists. D-082's selected-System-Design repair
+does not change that new-run-only rule.
 
 The Stage 4 judge evaluates files/packages/types, language signatures, internal state mutation and
 call graph, locking/concurrency/lifetime mechanics, migration implementation order, and test seams.
 If exact baseline inspection shows that acceptance would require changing a caller, peer, or
 operator-facing contract or another accepted guarantee, the finding belongs upstream: return
-`DESIGN_BLOCKED` rather than seek a human exception inside Stage 4. Environment repair alone never
-qualifies. Stage 3 and Stage 4 always produce distinct outcomes; there is no joint bundle verdict.
+`DESIGN_BLOCKED` evidence rather than seek a human exception inside Stage 4. That producer result
+does not itself change state. Environment repair alone never qualifies. Stage 3 and Stage 4 always
+produce distinct outcomes; there is no joint bundle verdict.
+
+### Program Design upstream-block confirmation
+
+Before a ready Program Design candidate exists, `control-planning` may ask a fresh read-only judge
+for the independent envelope `reviews/program-design-upstream-block-v1.json`. This is not the normal
+candidate-bound Program Design review. It binds the exact current run and planning revision,
+the complete immediate predecessor System Design acceptance, ordered effective repository
+baselines, one code-cited `upstream_commitment_realization` contradiction, and the smallest required
+System Design change. The predecessor acceptance is one canonical nested object containing its
+version/hash, authority, accepted date/value, review reference/hash, source bindings, and repository
+baselines. It must exactly equal the live acceptance under JSON-type-sensitive comparison before
+the no-clobber envelope publication and stale transition.
+
+The judge returns exactly `CONFIRMED_UPSTREAM_CONTRADICTION`, `NOT_CONFIRMED`, or `UNAVAILABLE`.
+Only `CONFIRMED_UPSTREAM_CONTRADICTION` may authorize the controller to mutate state. Confirmation
+requires the exact accepted System Design and exact frozen repository evidence to prove together
+that Program Design cannot faithfully realize the accepted commitment without changing it. The
+envelope is actionable only while Program Design is selected and `PENDING` with null acceptance,
+its selected source is currently approved System Design, the planning revision and bindings still
+match, and repository access passes. Malformed, stale, replayed, raced, wrong-source, repeated,
+`NOT_CONFIRMED`, or `UNAVAILABLE` results change nothing.
+
+Replacement System Design N+1 receives the ordinary fresh System Design mechanical checks, fresh
+semantic review/classification when configured, and unchanged configured authority. Every repair
+replacement also has a hash-bound System Design evidence envelope. Its `repair_context` carries the
+complete validated contradiction finding, immediate superseded acceptance, and original
+contradiction reference/hash;
+it never chains beyond that immediate predecessor. For direct `HUMAN` System Design, the envelope's
+semantic/materiality fields are null. It grants no authority, and human approval remains the
+acceptance authority. This is conditional repair evidence, not a normal-path review requirement, nor
+does it widen the acceptance schema. Resumed Program Design must then receive a fresh candidate-bound
+review against N+1. The copied predecessor in `repair_context` must exactly equal the original
+immutable upstream-block snapshot on every repair reload, reservation, review construction, and N+1
+acceptance; it is not a second authority source. Any field or JSON-type mismatch fails unchanged.
 
 ---
 

@@ -135,9 +135,9 @@ the next selected stage without creating mutable state for that stage.
 An accepted discovery/product-closure candidate remains in its prescribed artifact path.
 Acceptance records its current version and content hash in `control.json`; V1 does not create a
 second approved copy or retain a separate acceptance history. The Stage 0–2 controller provides no
-post-closure reopen. A version increment replaces a previously accepted candidate only through a
-future downstream reopen owner; until that owner exists, any live mismatch against an accepted
-binding fails closed (see 08 — State and Governance).
+post-closure reopen. D-082 does not alter that rule: its one replacement path is owned by the
+downstream planning controller and reaches only selected System Design from pending Program Design.
+Any live Stage 0–2 mismatch after acceptance still fails closed (see 08 — State and Governance).
 
 Stages 3–5 do not widen this file. One downstream planning controller is the logical mutable authority
 for their separate System Design, Program Design, and ticket-graph outcomes, exact
@@ -146,6 +146,14 @@ all directly dependent downstream acceptances stale in the same logical atomic t
 controller ends at Stage 5 and owns no repository-scoped execution state. Its exact file, storage
 representation, schema fields, lock, and module/CLI decomposition remain implementation choices;
 v0.8 adds no separate compilation controller or generalized router.
+
+D-082 constrains that existing downstream state without prescribing a new schema. During its one
+selected-System-Design repair episode, the existing `blocked_reason` slot carries the active bounded
+episode and attempt usage. The independently judged contradiction is stored at
+`reviews/program-design-upstream-block-v1.json`; it is not a Program Design candidate review and
+requires no ready candidate. Its one canonical nested predecessor-acceptance object immutably binds
+the complete live System Design acceptance before that acceptance becomes stale. No candidate body,
+history array, event log, approved-copy store, or additional top-level control field is introduced.
 
 ---
 
@@ -264,6 +272,18 @@ The omitted-Product-Closure branch creates no PRD or approval. A change to the b
 accepted System Design stale and transitively stales any dependent Program Design in the same
 logical downstream transition.
 
+In the D-082 repair state only, the stale accepted candidate remains at this canonical path as
+non-current provenance until version `N+1` replaces it. N+1 must have a different content hash and
+the same still-current source binding, and must pass fresh mechanical checks, fresh semantic
+review/classification when configured, and the unchanged configured authority. Every repair
+replacement also has a hash-bound System Design evidence envelope whose `repair_context` carries the
+complete validated contradiction finding, immediate superseded acceptance, and original
+contradiction reference/hash.
+For direct `HUMAN`, its semantic/materiality fields are null; it grants no authority, and human
+approval remains the acceptance authority. This conditional repair evidence is not a normal-path
+review requirement and does not widen the acceptance schema. It records one immediate predecessor,
+not a recursive chain or history.
+
 ---
 
 ## `30-system-design.html`
@@ -324,6 +344,13 @@ they omit references to nonexistent PRD or System Design artifacts. Program Desi
 judge and outcome; there is no joint design-bundle verdict. An accepted System Design change makes it
 stale. A finding that requires changing a system commitment returns `DESIGN_BLOCKED` upstream rather
 than being approved inside Stage 4.
+
+For the one D-082 path, that return begins before candidate readiness: pending Program Design has
+null acceptance, and `reviews/program-design-upstream-block-v1.json` independently confirms whether
+the exact accepted System Design and exact frozen repository evidence prove that Program Design
+cannot faithfully realize the commitment without changing it. Producer text alone cannot invalidate
+the upstream acceptance. After System Design N+1 is accepted, this same Program Design candidate may
+remain version 1, but its bytes and fresh review must bind N+1 before acceptance.
 
 ---
 
@@ -448,6 +475,15 @@ Example:
 ```
 
 This allows deterministic routing without requiring code to parse prose sentiment.
+
+The D-082 upstream-block envelope is deliberately separate from those candidate-bound reviews. It
+has exactly three verdicts: `CONFIRMED_UPSTREAM_CONTRADICTION`, `NOT_CONFIRMED`, and `UNAVAILABLE`.
+Only `CONFIRMED_UPSTREAM_CONTRADICTION` may authorize a state change. Its bound evidence includes the
+current planning identity/revision, complete immediate predecessor System Design acceptance, ordered
+effective repository baselines, the code-cited contradiction, and the smallest required upstream
+change. That predecessor is one canonical nested object; retained episode and later review-context
+copies must match it exactly and grant no authority. The envelope is evidence for one active episode,
+not an acceptance or history ledger.
 
 For the discovery product-closure `AGENT_REVIEW` gate, the invoker persists the read-only judge's
 structured output as `reviews/product_closure-v<version>.json`. It binds `run`; a `stage` field
