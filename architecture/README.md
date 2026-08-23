@@ -6,11 +6,12 @@ The numbered documents are authoritative. `rolling-monolith.md` is generated fro
 
 ## Current baseline
 
-**v0.10** gives D-080's downstream planning controller one bounded repair path when pending Program
-Design proves an exact-code contradiction with its selected accepted System Design. Independent
-confirmation starts a durable four-attempt invalidation-and-replacement episode; System Design N+1
-and resumed Program Design receive fresh acceptance without rollback, user routing, or a generalized
-staleness mechanism. It builds on v0.9's exact portable repository grounding.
+**v0.11** defines the authority boundary after D-082's one bounded repair episode cannot converge.
+The failed run remains durably `BLOCKED`; Atlas diagnoses preserved evidence and asks the human for a
+substantive direction rather than an internal stage or command. This adds no recovery runtime,
+second repair episode, reopen path, successor-run contract, or generalized router. The next
+substantive implementation remains the Stage 5 Ticket Graph Compiler. It builds on v0.10's
+independently confirmed four-attempt System N+1 repair and Program Design resume.
 
 ## Change discipline
 

@@ -934,3 +934,28 @@ cannot nest or reset the active episode, and exhaustion must remain loud and dur
 persistence discipline applies to the repair's why: every replacement evidence envelope carries the
 complete validated contradiction finding plus its one immediate superseded acceptance and original
 contradiction reference/hash, without turning that provenance into recursive history.
+
+---
+
+## L-023 — Loud repair failure ends autonomous authority, not necessarily the goal
+
+### Initial attraction
+
+A durable exhausted D-082 episode can look terminal: the controller cannot legally advance, so
+"fail loudly" is easy to read as "the work is dead." The opposite shortcut is also tempting—offer
+the user a menu of internal stages and let them operate the compiler.
+
+### Course correction
+
+The durable `BLOCKED` state is a statement about Atlas's current authority, not a product judgment.
+Atlas should diagnose the preserved evidence first: shared failure assumptions, nearest accepted
+truth plausibly responsible, materially different architecture families, and consequences of
+changing product or run assumptions. The diagnosis recommends; it does not authorize.
+
+### Standing result
+
+After one bounded automatic repair cannot converge, the human chooses a substantive direction:
+another materially different architecture, upstream product reconsideration, corrected successor
+run, or stop/defer. Atlas owns internal orchestration, but no recovery mechanism is implied until a
+real failed case earns it. Preserve the principle now and return implementation energy to the normal
+Stage 5 Ticket Graph Compiler path.

@@ -856,6 +856,20 @@ and exhaustion is loud and durable.
 This path does not apply to Product Closure, direct Stage 0, accepted Program Design, or Stage 5 and
 tickets. Their current fail-closed boundaries remain unchanged.
 
+### Human replanning escalation after non-convergence
+
+If D-082 exhausts its budget or resumed Program Design still cannot converge, autonomous replanning
+ends and the run remains durably `BLOCKED` with its evidence preserved. Atlas first diagnoses the
+shared failure assumptions, nearest accepted truth plausibly responsible, credible untried
+architecture families, and consequences of changing product or run assumptions. Diagnosis is
+recommendation evidence, not authority.
+
+The human then chooses the substance: try another materially different architecture, reconsider an
+upstream product commitment, reframe the work as a corrected successor run, or stop/defer. Atlas does
+not ask the user to select an internal stage or command. D-083 defines this authority boundary only;
+it adds no second repair episode, reopen path, successor-run contract, state transition, or recovery
+runtime. Stage 5 remains the next substantive implementation.
+
 A design review should explicitly challenge:
 
 - shallow wrappers
@@ -1896,6 +1910,13 @@ crash consumes it. Reviews, controller actions, and approvals do not. Restart ca
 budget, a second contradiction cannot nest or reset the episode, and exhaustion remains loud and
 durable. These constraints use the existing `blocked_reason` slot and leave storage representation
 to Program Design; they add no generalized router, rollback/reopen facility, or history/event system.
+
+D-083 adds no controller transition after that stop. Exhaustion or non-convergence leaves the current
+run `BLOCKED`; a fresh diagnosis may recommend which accepted assumption to reconsider but grants no
+authority. Only explicit human judgment may widen the search, and the mechanism that translates a
+substantive direction into a later System Design attempt, product reconsideration, successor run, or
+stop/defer outcome remains future work. The controller must not emulate an unsupported direction by
+resetting D-082 or exposing internal stage routing to the user.
 
 Stage 5 has its own boundary inside that same controller:
 
@@ -6106,6 +6127,31 @@ contradiction reference/hash, without turning that provenance into recursive his
 
 ---
 
+## L-023 — Loud repair failure ends autonomous authority, not necessarily the goal
+
+### Initial attraction
+
+A durable exhausted D-082 episode can look terminal: the controller cannot legally advance, so
+"fail loudly" is easy to read as "the work is dead." The opposite shortcut is also tempting—offer
+the user a menu of internal stages and let them operate the compiler.
+
+### Course correction
+
+The durable `BLOCKED` state is a statement about Atlas's current authority, not a product judgment.
+Atlas should diagnose the preserved evidence first: shared failure assumptions, nearest accepted
+truth plausibly responsible, materially different architecture families, and consequences of
+changing product or run assumptions. The diagnosis recommends; it does not authorize.
+
+### Standing result
+
+After one bounded automatic repair cannot converge, the human chooses a substantive direction:
+another materially different architecture, upstream product reconsideration, corrected successor
+run, or stop/defer. Atlas owns internal orchestration, but no recovery mechanism is implied until a
+real failed case earns it. Preserve the principle now and return implementation energy to the normal
+Stage 5 Ticket Graph Compiler path.
+
+---
+
 # 17 — Agent Roles, Rosters, Model Policy, and Outcome Telemetry
 
 **Added in:** v0.3  
@@ -7802,3 +7848,92 @@ evidence; its storage representation remains for Program Design.
 > evidence trigger one durable, controller-bounded invalidation-and-replacement episode; preserve the
 > superseded contract as non-current provenance, spend attempts before writes, and move forward
 > through fresh System Design and Program Design acceptance without inventing rollback or a router.**
+
+---
+
+# 26 — v0.11 Decisions
+
+v0.11 defines the human-authority boundary after D-082's one automatic repair episode cannot
+converge. It does not add a recovery runtime. The failed run remains loudly `BLOCKED`; Atlas must
+stop widening accepted truth autonomously, diagnose the preserved evidence, and ask the human for a
+substantive judgment rather than an internal stage or command.
+
+---
+
+## D-083 — Human replanning escalation after bounded repair non-convergence
+
+D-083 applies only after D-082 cannot close through fresh Program Design acceptance. Two cases carry
+different diagnostic weight:
+
+- the four-attempt budget is exhausted before System Design N+1 is accepted; or
+- N+1 is accepted, but resumed code-grounded Program Design still disproves or cannot realize it.
+
+The second case is stronger evidence because two separately accepted System Designs have failed at
+the exact-code boundary. Neither case authorizes another automatic repair episode.
+
+### End autonomous replanning; preserve the goal as a human decision
+
+D-082 non-convergence ends Atlas's autonomous authority to widen the search. It does not by itself
+declare the user's goal dead, reopen any upstream artifact, or create a transition out of the durable
+`BLOCKED` state. Existing contradiction, attempt, review, acceptance, candidate, and repository
+evidence remains the basis for the next judgment.
+
+Before asking the human, Atlas must form a fresh evidence-grounded diagnosis that identifies:
+
+- what failed and whether failures share one assumption;
+- the nearest accepted truth plausibly responsible;
+- any materially different untried architecture family;
+- implicated product commitments or frozen run assumptions;
+- the consequence of each credible direction; and
+- Atlas's recommended direction.
+
+The diagnosis is evidence and recommendation, never acceptance authority.
+
+### Human chooses substance; Atlas owns orchestration
+
+The human-facing choices are exactly these substantive directions:
+
+1. try another materially different System Design approach;
+2. reconsider an implicated upstream product commitment;
+3. reframe the work as a corrected successor run; or
+4. stop or defer.
+
+The user does not select `system_design`, Product Closure, Discovery, Stage 0, or a controller
+command. Atlas is responsible for translating an authorized substantive direction into internal
+workflow action when that action has a separately designed and implemented contract.
+
+A System Design version after N+1 is architecturally legal only as a new human-authorized replanning
+act. It is not a reset, extension, or second budget for D-082. The diagnosis role, authorization
+representation, retry bound, Product Closure reopen, successor-run provenance, and execution-originated
+repair remain deliberately unspecified.
+
+### Scope and sequencing
+
+D-083 adds no controller transition, state field, skill, reviewer role, evidence schema, repair
+budget, successor-run mechanism, reopen command, stale-propagation graph, history/event facility, or
+generalized router. Current V1 behavior remains a durable `BLOCKED` stop requiring explicit human
+judgment; unsupported directions cannot be simulated by mutating state manually.
+
+The next substantive implementation remains the Stage 5 Ticket Graph Compiler, including its trivial
+one-node path. Post-D-082 recovery machinery is deferred until a real failed case earns a specific
+mechanism.
+
+### Rejected alternatives
+
+- **Automatic v3/v4 search:** rejected because one bounded exceptional repair has not earned recursive
+  replanning authority.
+- **Ask the user which stage to reopen:** rejected because the user supplies judgment, not workflow
+  orchestration.
+- **Treat non-convergence as automatic goal termination:** rejected because the evidence may support
+  product reconsideration, run reframing, or a materially different architecture.
+- **Build all four recovery branches now:** rejected because exceptional-path principles do not earn
+  generalized rollback, reopen, provenance, or routing seams.
+
+---
+
+## v0.11 north star
+
+> **One bounded automatic repair may test whether accepted architecture can be made real; if it does
+> not converge, preserve the evidence, end autonomous replanning, diagnose which accepted assumption
+> may be wrong, and ask the human for the substantive direction while keeping internal workflow
+> mechanics inside Atlas.**

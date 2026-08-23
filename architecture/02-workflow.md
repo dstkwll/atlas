@@ -300,6 +300,20 @@ and exhaustion is loud and durable.
 This path does not apply to Product Closure, direct Stage 0, accepted Program Design, or Stage 5 and
 tickets. Their current fail-closed boundaries remain unchanged.
 
+### Human replanning escalation after non-convergence
+
+If D-082 exhausts its budget or resumed Program Design still cannot converge, autonomous replanning
+ends and the run remains durably `BLOCKED` with its evidence preserved. Atlas first diagnoses the
+shared failure assumptions, nearest accepted truth plausibly responsible, credible untried
+architecture families, and consequences of changing product or run assumptions. Diagnosis is
+recommendation evidence, not authority.
+
+The human then chooses the substance: try another materially different architecture, reconsider an
+upstream product commitment, reframe the work as a corrected successor run, or stop/defer. Atlas does
+not ask the user to select an internal stage or command. D-083 defines this authority boundary only;
+it adds no second repair episode, reopen path, successor-run contract, state transition, or recovery
+runtime. Stage 5 remains the next substantive implementation.
+
 A design review should explicitly challenge:
 
 - shallow wrappers
