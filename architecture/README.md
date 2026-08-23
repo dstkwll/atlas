@@ -6,12 +6,12 @@ The numbered documents are authoritative. `rolling-monolith.md` is generated fro
 
 ## Current baseline
 
-**v0.11** defines the authority boundary after D-082's one bounded repair episode cannot converge.
-The failed run remains durably `BLOCKED`; Atlas diagnoses preserved evidence and asks the human for a
-substantive direction rather than an internal stage or command. This adds no recovery runtime,
-second repair episode, reopen path, successor-run contract, or generalized router. The next
-substantive implementation remains the Stage 5 Ticket Graph Compiler. It builds on v0.10's
-independently confirmed four-attempt System N+1 repair and Program Design resume.
+**v0.12** defines Stage 5 ticket graphs as ordered vertical tracer slices: each non-enabling ticket
+carries observable behavior across every boundary that behavior requires, is independently
+verifiable, and preserves the applicable selected-path sources. Enabling tickets must justify why an imminent
+vertical consumer cannot contain them, and the first frontier validates important risky seams early.
+This adds no graph schema, compiler, controller transition, skill, or execution runtime. It builds on
+v0.11's human replanning authority boundary.
 
 ## Change discipline
 

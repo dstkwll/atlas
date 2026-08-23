@@ -134,18 +134,21 @@ def known_stage_five_contract_regressions(text):
 
 
 class PairedDesignArchitectureTests(unittest.TestCase):
-    def test_v011_d083_is_current_and_v010_bounds_d082_repair(self):
+    def test_v012_d084_is_current_and_prior_repair_boundaries_remain(self):
         root_readme = (ROOT / "README.md").read_text(encoding="utf-8")
         architecture_readme = read("README.md")
         v08_decisions = read("23-v0.8-decisions.md")
         v09_decisions = normalized("24-v0.9-decisions.md")
         v10_path = ARCH / "25-v0.10-decisions.md"
         v11_path = ARCH / "26-v0.11-decisions.md"
+        v12_path = ARCH / "27-v0.12-decisions.md"
 
         self.assertTrue(v10_path.exists(), "v0.10/D-082 decision record is absent")
         self.assertTrue(v11_path.exists(), "v0.11/D-083 decision record is absent")
+        self.assertTrue(v12_path.exists(), "v0.12/D-084 decision record is absent")
         v10_decisions = normalized("25-v0.10-decisions.md")
         v11_decisions = normalized("26-v0.11-decisions.md")
+        v12_decisions = normalized("27-v0.12-decisions.md")
         workflow = normalized("02-workflow.md")
         artifacts = normalized("03-artifact-model.md")
         control = normalized("04-control-plane.md")
@@ -154,10 +157,23 @@ class PairedDesignArchitectureTests(unittest.TestCase):
         runtime = normalized("13-runtime-protocol.md")
         learnings = normalized("16-learnings-and-course-corrections.md")
         combined = " ".join((v10_decisions, workflow, artifacts, control, review, state, runtime))
+        stage5 = " ".join((v12_decisions, workflow, review))
 
-        self.assertIn("architecture/26-v0.11-decisions.md", root_readme)
-        self.assertIn("**v0.11**", root_readme)
-        self.assertIn("**v0.11**", architecture_readme)
+        self.assertIn("architecture/27-v0.12-decisions.md", root_readme)
+        self.assertIn("**v0.12**", root_readme)
+        self.assertIn("**v0.12**", architecture_readme)
+        self.assertIn("D-084", v12_decisions)
+        self.assertIn("v0.12 north star", v12_decisions.lower())
+        for invariant in ("Outcome-bearing", "Cross-boundary where required", "Independently verifiable", "No redesign"):
+            self.assertIn(invariant, v12_decisions)
+        self.assertIn("every boundary required by that behavior", stage5)
+        self.assertRegex(stage5, r"Selected Program Design.{0,100}exact acceptance")
+        self.assertRegex(stage5, r"otherwise.{0,100}applicable source")
+        self.assertRegex(stage5, r"enabling ticket.{0,220}imminent vertical slice.{0,220}cannot safely")
+        self.assertRegex(stage5, r"riskiest or most important seams")
+        self.assertIn("rejects horizontal slabs", stage5)
+        self.assertRegex(v12_decisions, r"`trivial` path remains one one-node graph")
+        self.assertRegex(v12_decisions, r"adds no graph schema.{0,180}compiler.{0,180}execution runtime")
         self.assertIn("D-083", v11_decisions)
         self.assertIn("v0.11 north star", v11_decisions.lower())
         self.assertRegex(v11_decisions, r"ends Atlas's autonomous authority.{0,120}does not.{0,100}declare the user's goal dead")
