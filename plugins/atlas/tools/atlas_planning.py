@@ -123,9 +123,8 @@ PROGRAM_DESIGN_REVIEW_FIELDS = {
 }
 UPSTREAM_BLOCK_REVIEW_FIELDS = {
     "version", "run", "stage", "planning_revision", "verdict",
-    "system_design_binding", "repository_baselines", "finding", "review_evidence",
+    "system_design_acceptance", "repository_baselines", "finding", "review_evidence",
 }
-UPSTREAM_BLOCK_SYSTEM_FIELDS = {"artifact", "version", "sha256", "source_binding"}
 UPSTREAM_BLOCK_FINDING_FIELDS = {
     "code", "dimension", "problem", "upstream_source", "upstream_issue",
     "resume_boundary", "resume_action", "code_evidence",
@@ -323,6 +322,10 @@ def expected_system_repair_context(
         hashlib.sha256(contradiction_bytes).hexdigest() != episode["review_sha256"]
         or not isinstance(contradiction, dict)
         or not isinstance(contradiction.get("finding"), dict)
+        or not json_equal_exact(
+            contradiction.get("system_design_acceptance"),
+            episode["superseded_system_design"],
+        )
     ):
         raise ControlError("System Design repair contradiction evidence is not current")
     return {
@@ -494,21 +497,6 @@ def load_program_design_review(
     return envelope, review_sha256
 
 
-def expected_system_design_binding(acceptance: Any) -> dict[str, Any]:
-    if (
-        not isinstance(acceptance, dict)
-        or not isinstance(acceptance.get("source_bindings"), list)
-        or len(acceptance["source_bindings"]) != 1
-    ):
-        raise ControlError("current System Design acceptance is unavailable")
-    return {
-        "artifact": SYSTEM_DESIGN_FILE,
-        "version": acceptance.get("candidate_version"),
-        "sha256": acceptance.get("candidate_sha256"),
-        "source_binding": acceptance["source_bindings"][0],
-    }
-
-
 def validate_upstream_block_review(
     envelope: Any,
     *,
@@ -536,13 +524,14 @@ def validate_upstream_block_review(
         raise ControlError("Program Design upstream-block evidence is not current")
     if contains_machine_local_path(envelope):
         raise ControlError("Program Design upstream-block evidence contains a machine-local path")
-    binding = envelope.get("system_design_binding")
+    predecessor = envelope.get("system_design_acceptance")
     if (
-        not isinstance(binding, dict)
-        or set(binding) != UPSTREAM_BLOCK_SYSTEM_FIELDS
-        or not json_equal_exact(binding, expected_system_design_binding(system_acceptance))
+        not isinstance(predecessor, dict)
+        or not json_equal_exact(predecessor, system_acceptance)
     ):
-        raise ControlError("Program Design upstream-block evidence does not bind current System Design")
+        raise ControlError(
+            "Program Design upstream-block evidence does not bind the complete current System Design acceptance"
+        )
     finding = envelope.get("finding")
     if not isinstance(finding, dict) or set(finding) != UPSTREAM_BLOCK_FINDING_FIELDS:
         raise ControlError("Program Design upstream-block finding does not match its exact schema")

@@ -151,8 +151,9 @@ D-082 constrains that existing downstream state without prescribing a new schema
 selected-System-Design repair episode, the existing `blocked_reason` slot carries the active bounded
 episode and attempt usage. The independently judged contradiction is stored at
 `reviews/program-design-upstream-block-v1.json`; it is not a Program Design candidate review and
-requires no ready candidate. No history array, event log, approved-copy store, or additional
-top-level control field is introduced.
+requires no ready candidate. Its one canonical nested predecessor-acceptance object immutably binds
+the complete live System Design acceptance before that acceptance becomes stale. No candidate body,
+history array, event log, approved-copy store, or additional top-level control field is introduced.
 
 ---
 
@@ -478,9 +479,11 @@ This allows deterministic routing without requiring code to parse prose sentimen
 The D-082 upstream-block envelope is deliberately separate from those candidate-bound reviews. It
 has exactly three verdicts: `CONFIRMED_UPSTREAM_CONTRADICTION`, `NOT_CONFIRMED`, and `UNAVAILABLE`.
 Only `CONFIRMED_UPSTREAM_CONTRADICTION` may authorize a state change. Its bound evidence includes the
-current planning identity/revision, accepted System Design identity and source binding, ordered
+current planning identity/revision, complete immediate predecessor System Design acceptance, ordered
 effective repository baselines, the code-cited contradiction, and the smallest required upstream
-change. The envelope is evidence for one active episode, not an acceptance or history ledger.
+change. That predecessor is one canonical nested object; retained episode and later review-context
+copies must match it exactly and grant no authority. The envelope is evidence for one active episode,
+not an acceptance or history ledger.
 
 For the discovery product-closure `AGENT_REVIEW` gate, the invoker persists the read-only judge's
 structured output as `reviews/product_closure-v<version>.json`. It binds `run`; a `stage` field

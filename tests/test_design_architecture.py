@@ -200,6 +200,19 @@ class PairedDesignArchitectureTests(unittest.TestCase):
         self.assertRegex(combined, r"immediate superseded acceptance.{0,160}contradiction provenance")
         self.assertIn("complete validated contradiction finding", combined)
         self.assertRegex(combined, r"contradiction (?:envelope )?reference/hash")
+        self.assertRegex(
+            combined,
+            r"original no-clobber upstream-block envelope.{0,180}authoritative.{0,160}complete predecessor acceptance",
+        )
+        self.assertRegex(
+            combined,
+            r"complete immediate predecessor System Design acceptance.{0,600}JSON-type-sensitive equality",
+        )
+        self.assertRegex(
+            combined,
+            r"copied immediate predecessor grants no authority.{0,180}(?:never|not).{0,80}(?:competing|second).{0,40}(?:source of truth|truth)",
+        )
+        self.assertRegex(v10_decisions, r"candidate content itself is not copied")
 
         self.assertRegex(combined, r"exactly four.{0,120}producer attempts")
         self.assertRegex(combined, r"reserves.{0,100}before.{0,100}candidate (?:bytes|write)")

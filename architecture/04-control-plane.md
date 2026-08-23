@@ -311,7 +311,11 @@ selected accepted System Design, and only after the separate read-only upstream-
 marks System Design `STALE`, preserves its acceptance as non-current provenance, returns the phase to
 `system_design`, and leaves Program Design `PENDING` with null acceptance. System Design N+1
 reacceptance advances to Program Design without ending the episode; fresh Program Design acceptance
-against N+1 ends it and restores `PLANNING`.
+against N+1 ends it and restores `PLANNING`. Before opening the episode, the controller proves the
+original no-clobber upstream-block envelope's single complete predecessor-acceptance object exactly
+equals the live current System Design acceptance under JSON-type-sensitive comparison. That
+immutable object remains authoritative for all later episode validation; retained and review-context
+copies must match it exactly and grant no authority of their own.
 
 The episode has exactly four producer attempts shared across replacement System Design and resumed
 Program Design. The controller reserves and persists an attempt before candidate bytes change; a

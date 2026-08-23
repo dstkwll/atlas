@@ -173,7 +173,11 @@ finding, immediate superseded acceptance, and original contradiction reference/h
 it grants no authority, and human approval remains the acceptance authority. This is not a
 normal-path review requirement and does not widen the acceptance schema. It records one immediate
 predecessor only, not a recursive chain. No history array, event log, rollback ledger, or new
-top-level state field is implied.
+top-level state field is implied. The original no-clobber upstream-block envelope is authoritative
+for that complete predecessor acceptance. The live acceptance must exactly match it before
+staleness, and every retained or copied predecessor must remain JSON-type-exactly equal through
+reload, reservation, review, and N+1 acceptance. The later `repair_context` copy cannot grant
+authority or become a second truth.
 
 ---
 

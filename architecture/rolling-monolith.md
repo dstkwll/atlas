@@ -1200,8 +1200,9 @@ D-082 constrains that existing downstream state without prescribing a new schema
 selected-System-Design repair episode, the existing `blocked_reason` slot carries the active bounded
 episode and attempt usage. The independently judged contradiction is stored at
 `reviews/program-design-upstream-block-v1.json`; it is not a Program Design candidate review and
-requires no ready candidate. No history array, event log, approved-copy store, or additional
-top-level control field is introduced.
+requires no ready candidate. Its one canonical nested predecessor-acceptance object immutably binds
+the complete live System Design acceptance before that acceptance becomes stale. No candidate body,
+history array, event log, approved-copy store, or additional top-level control field is introduced.
 
 ---
 
@@ -1527,9 +1528,11 @@ This allows deterministic routing without requiring code to parse prose sentimen
 The D-082 upstream-block envelope is deliberately separate from those candidate-bound reviews. It
 has exactly three verdicts: `CONFIRMED_UPSTREAM_CONTRADICTION`, `NOT_CONFIRMED`, and `UNAVAILABLE`.
 Only `CONFIRMED_UPSTREAM_CONTRADICTION` may authorize a state change. Its bound evidence includes the
-current planning identity/revision, accepted System Design identity and source binding, ordered
+current planning identity/revision, complete immediate predecessor System Design acceptance, ordered
 effective repository baselines, the code-cited contradiction, and the smallest required upstream
-change. The envelope is evidence for one active episode, not an acceptance or history ledger.
+change. That predecessor is one canonical nested object; retained episode and later review-context
+copies must match it exactly and grant no authority. The envelope is evidence for one active episode,
+not an acceptance or history ledger.
 
 For the discovery product-closure `AGENT_REVIEW` gate, the invoker persists the read-only judge's
 structured output as `reviews/product_closure-v<version>.json`. It binds `run`; a `stage` field
@@ -1881,7 +1884,11 @@ selected accepted System Design, and only after the separate read-only upstream-
 marks System Design `STALE`, preserves its acceptance as non-current provenance, returns the phase to
 `system_design`, and leaves Program Design `PENDING` with null acceptance. System Design N+1
 reacceptance advances to Program Design without ending the episode; fresh Program Design acceptance
-against N+1 ends it and restores `PLANNING`.
+against N+1 ends it and restores `PLANNING`. Before opening the episode, the controller proves the
+original no-clobber upstream-block envelope's single complete predecessor-acceptance object exactly
+equals the live current System Design acceptance under JSON-type-sensitive comparison. That
+immutable object remains authoritative for all later episode validation; retained and review-context
+copies must match it exactly and grant no authority of their own.
 
 The episode has exactly four producer attempts shared across replacement System Design and resumed
 Program Design. The controller reserves and persists an attempt before candidate bytes change; a
@@ -2527,9 +2534,12 @@ produce distinct outcomes; there is no joint bundle verdict.
 Before a ready Program Design candidate exists, `control-planning` may ask a fresh read-only judge
 for the independent envelope `reviews/program-design-upstream-block-v1.json`. This is not the normal
 candidate-bound Program Design review. It binds the exact current run and planning revision,
-accepted System Design version/hash/source binding, ordered effective repository baselines, one
-code-cited `upstream_commitment_realization` contradiction, and the smallest required System Design
-change.
+the complete immediate predecessor System Design acceptance, ordered effective repository
+baselines, one code-cited `upstream_commitment_realization` contradiction, and the smallest required
+System Design change. The predecessor acceptance is one canonical nested object containing its
+version/hash, authority, accepted date/value, review reference/hash, source bindings, and repository
+baselines. It must exactly equal the live acceptance under JSON-type-sensitive comparison before
+the no-clobber envelope publication and stale transition.
 
 The judge returns exactly `CONFIRMED_UPSTREAM_CONTRADICTION`, `NOT_CONFIRMED`, or `UNAVAILABLE`.
 Only `CONFIRMED_UPSTREAM_CONTRADICTION` may authorize the controller to mutate state. Confirmation
@@ -2549,7 +2559,9 @@ it never chains beyond that immediate predecessor. For direct `HUMAN` System Des
 semantic/materiality fields are null. It grants no authority, and human approval remains the
 acceptance authority. This is conditional repair evidence, not a normal-path review requirement, nor
 does it widen the acceptance schema. Resumed Program Design must then receive a fresh candidate-bound
-review against N+1.
+review against N+1. The copied predecessor in `repair_context` must exactly equal the original
+immutable upstream-block snapshot on every repair reload, reservation, review construction, and N+1
+acceptance; it is not a second authority source. Any field or JSON-type mismatch fails unchanged.
 
 ---
 
@@ -3007,7 +3019,11 @@ finding, immediate superseded acceptance, and original contradiction reference/h
 it grants no authority, and human approval remains the acceptance authority. This is not a
 normal-path review requirement and does not widen the acceptance schema. It records one immediate
 predecessor only, not a recursive chain. No history array, event log, rollback ledger, or new
-top-level state field is implied.
+top-level state field is implied. The original no-clobber upstream-block envelope is authoritative
+for that complete predecessor acceptance. The live acceptance must exactly match it before
+staleness, and every retained or copied predecessor must remain JSON-type-exactly equal through
+reload, reservation, review, and N+1 acceptance. The later `repair_context` copy cannot grant
+authority or become a second truth.
 
 ---
 
@@ -7663,9 +7679,15 @@ controller.
 A producer-authored `DESIGN_BLOCKED` claim is evidence only and cannot mutate planning state.
 `control-planning` obtains a fresh read-only judgment and persists the independent envelope at
 `reviews/program-design-upstream-block-v1.json`; no ready Program Design candidate is required. The
-envelope is bound to the exact run and planning revision, current accepted System Design
-version/hash/source binding, ordered effective repository baselines, one code-cited
+envelope is bound to the exact run and planning revision, the complete immediate predecessor System
+Design acceptance, ordered effective repository baselines, one code-cited
 `upstream_commitment_realization` contradiction, and the smallest required System Design change.
+That predecessor object is the one canonical representation of the accepted version/hash,
+authority, accepted date/value, review reference/hash, source bindings, and repository baselines.
+Before no-clobber publication and the stale transition, the controller requires exact
+JSON-type-sensitive equality with the live current acceptance. Every later repair reload,
+reservation, replacement-review construction, and N+1 acceptance requires the episode's retained
+predecessor to remain exactly equal to this immutable snapshot. Any mismatch fails unchanged.
 
 The judge has exactly three verdicts:
 
@@ -7712,7 +7734,10 @@ chain or history. For direct `HUMAN` System Design, the envelope's semantic/mate
 null; it grants no authority, and human approval remains the acceptance authority. This is
 conditional repair evidence, not a normal-path review requirement, and it does not widen the
 acceptance schema. It prevents later evidence replacement from preserving only a reference to bytes
-that may no longer be available while losing why version N ceased to be current.
+that may no longer be available while losing why version N ceased to be current. The copied
+immediate predecessor grants no authority and must exactly equal the original immutable
+upstream-block snapshot; it is never an independent or competing source of truth. The accepted
+candidate content itself is not copied because its version/hash already identifies those bytes.
 
 Reacceptance is one atomic forward transition inside the same episode. The controller replaces the
 System Design acceptance with System Design N+1, restores the derived approved System Design gate,

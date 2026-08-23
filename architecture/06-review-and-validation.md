@@ -314,9 +314,12 @@ produce distinct outcomes; there is no joint bundle verdict.
 Before a ready Program Design candidate exists, `control-planning` may ask a fresh read-only judge
 for the independent envelope `reviews/program-design-upstream-block-v1.json`. This is not the normal
 candidate-bound Program Design review. It binds the exact current run and planning revision,
-accepted System Design version/hash/source binding, ordered effective repository baselines, one
-code-cited `upstream_commitment_realization` contradiction, and the smallest required System Design
-change.
+the complete immediate predecessor System Design acceptance, ordered effective repository
+baselines, one code-cited `upstream_commitment_realization` contradiction, and the smallest required
+System Design change. The predecessor acceptance is one canonical nested object containing its
+version/hash, authority, accepted date/value, review reference/hash, source bindings, and repository
+baselines. It must exactly equal the live acceptance under JSON-type-sensitive comparison before
+the no-clobber envelope publication and stale transition.
 
 The judge returns exactly `CONFIRMED_UPSTREAM_CONTRADICTION`, `NOT_CONFIRMED`, or `UNAVAILABLE`.
 Only `CONFIRMED_UPSTREAM_CONTRADICTION` may authorize the controller to mutate state. Confirmation
@@ -336,7 +339,9 @@ it never chains beyond that immediate predecessor. For direct `HUMAN` System Des
 semantic/materiality fields are null. It grants no authority, and human approval remains the
 acceptance authority. This is conditional repair evidence, not a normal-path review requirement, nor
 does it widen the acceptance schema. Resumed Program Design must then receive a fresh candidate-bound
-review against N+1.
+review against N+1. The copied predecessor in `repair_context` must exactly equal the original
+immutable upstream-block snapshot on every repair reload, reservation, review construction, and N+1
+acceptance; it is not a second authority source. Any field or JSON-type mismatch fails unchanged.
 
 ---
 

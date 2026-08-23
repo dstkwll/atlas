@@ -517,7 +517,6 @@ def write_upstream_block_review_input(run: Path, planning: dict, *, verdict="CON
     acceptance = planning["acceptances"]["system_design"]
     assert isinstance(acceptance, dict)
     assert isinstance(_TEST_REPOSITORY_BASELINES, list)
-    source_binding = acceptance["source_bindings"][0]
     path = run / "reviews" / ".program-design-upstream-block.input.json"
     path.parent.mkdir(exist_ok=True)
     path.write_text(json.dumps({
@@ -526,12 +525,7 @@ def write_upstream_block_review_input(run: Path, planning: dict, *, verdict="CON
         "stage": "program_design",
         "planning_revision": planning["revision"],
         "verdict": verdict,
-        "system_design_binding": {
-            "artifact": "30-system-design.md",
-            "version": acceptance["candidate_version"],
-            "sha256": acceptance["candidate_sha256"],
-            "source_binding": source_binding,
-        },
+        "system_design_acceptance": copy.deepcopy(acceptance),
         "repository_baselines": _TEST_REPOSITORY_BASELINES,
         "finding": {
             "code": "EXACT_CODE_CONTRADICTION",
@@ -551,6 +545,27 @@ def write_upstream_block_review_input(run: Path, planning: dict, *, verdict="CON
         "review_evidence": "Exact accepted design and baseline code cannot both be honored; see https://example.invalid/spec.",
     }, indent=2) + "\n", encoding="utf-8")
     return path
+
+
+def mutate_system_acceptance_field(record: dict, field: str) -> None:
+    if field == "candidate_version":
+        record[field] = False
+    elif field == "candidate_sha256":
+        record[field] = "0" * 64
+    elif field == "authority":
+        record[field] = "AGENT_REVIEW" if record[field] == "HUMAN" else "HUMAN"
+    elif field == "accepted":
+        record[field] = "2099-12-31"
+    elif field == "review_reference":
+        record[field] = "reviews/forged-system-review.json"
+    elif field == "review_sha256":
+        record[field] = "0" * 64
+    elif field == "source_bindings":
+        record[field][0]["effective_config_revision"] = False
+    elif field == "repository_baselines":
+        record[field] = False
+    else:
+        raise AssertionError(field)
 
 
 def initialize_program_source(run: Path, source_kind: str, *, authority="AGENT_REVIEW") -> dict:
@@ -3079,7 +3094,7 @@ class AtlasPlanningTests(unittest.TestCase):
             envelope["planning_revision"] -= 1
 
         def wrong_system(envelope):
-            envelope["system_design_binding"]["sha256"] = "0" * 64
+            envelope["system_design_acceptance"]["candidate_sha256"] = "0" * 64
 
         def wrong_repositories(envelope):
             envelope["repository_baselines"] = []
@@ -3317,7 +3332,7 @@ class AtlasPlanningTests(unittest.TestCase):
                 elif case == "boolean-system-version":
                     review = run / "reviews" / "program-design-upstream-block-v1.json"
                     envelope = json.loads(review.read_text(encoding="utf-8"))
-                    envelope["system_design_binding"]["version"] = True
+                    envelope["system_design_acceptance"]["candidate_version"] = True
                     review.write_text(json.dumps(envelope, indent=2) + "\n", encoding="utf-8")
                     state["blocked_reason"]["review_sha256"] = sha256(review)
                 elif case == "stale-tickets":
@@ -3350,7 +3365,7 @@ class AtlasPlanningTests(unittest.TestCase):
 
                 with self.assertRaisesRegex(
                     PLANNING.ControlError,
-                    "repair episode|does not bind current System Design",
+                    "repair episode|does not bind (the complete )?current System Design",
                 ):
                     PLANNING.load_planning_control(run)
 
@@ -4068,6 +4083,94 @@ class AtlasPlanningTests(unittest.TestCase):
 
                 self.assertNotEqual(result.returncode, 0)
                 self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
+
+    def test_upstream_envelope_requires_complete_exact_system_acceptance(self):
+        fields = tuple(sorted(PLANNING.PLANNING_ACCEPTANCE_FIELDS))
+
+        for field in fields:
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                planning = initialize_program_after_system(run)
+                review_input = write_upstream_block_review_input(run, planning)
+                envelope = json.loads(review_input.read_text(encoding="utf-8"))
+                mutate_system_acceptance_field(envelope["system_design_acceptance"], field)
+                review_input.write_text(json.dumps(envelope, indent=2) + "\n", encoding="utf-8")
+                planning_before = (run / "planning-control.json").read_bytes()
+
+                result = planning_cli(
+                    "return-upstream", "--run", run,
+                    "--review-input", review_input.relative_to(run),
+                )
+
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
+                self.assertFalse(
+                    (run / "reviews" / "program-design-upstream-block-v1.json").exists()
+                )
+
+    def test_immutable_upstream_envelope_rejects_every_predecessor_field_mutation(self):
+        fields = tuple(sorted(PLANNING.PLANNING_ACCEPTANCE_FIELDS))
+
+        for boundary in ("review-context", "reservation", "acceptance"):
+            for field in fields:
+                with self.subTest(boundary=boundary, field=field), tempfile.TemporaryDirectory() as td:
+                    run = Path(td)
+                    planning = initialize_program_after_system(run)
+                    review_input = write_upstream_block_review_input(run, planning)
+                    returned = planning_cli(
+                        "return-upstream", "--run", run,
+                        "--review-input", review_input.relative_to(run),
+                    )
+                    self.assertEqual(returned.returncode, 0, returned.stderr)
+                    review = None
+
+                    if boundary == "acceptance":
+                        reserved = planning_cli(
+                            "reserve-repair-attempt", "--run", run, "--stage", "system_design",
+                        )
+                        self.assertEqual(reserved.returncode, 0, reserved.stderr)
+                        current = PLANNING.load_planning_control(run)
+                        write_system_design(
+                            run,
+                            copy.deepcopy(
+                                current["blocked_reason"]["superseded_system_design"]["source_bindings"][0]
+                            ),
+                            version=2,
+                        )
+                        review = write_system_repair_review(run)
+
+                    forged = json.loads((run / "planning-control.json").read_text(encoding="utf-8"))
+                    mutate_system_acceptance_field(forged["acceptances"]["system_design"], field)
+                    mutate_system_acceptance_field(forged["blocked_reason"]["superseded_system_design"], field)
+                    (run / "planning-control.json").write_text(
+                        json.dumps(forged, indent=2) + "\n",
+                        encoding="utf-8",
+                    )
+                    planning_before = (run / "planning-control.json").read_bytes()
+
+                    if boundary == "review-context":
+                        with self.assertRaises(PLANNING.ControlError):
+                            PLANNING.expected_system_repair_context(
+                                run,
+                                forged,
+                                forged["revision"] + 1,
+                            )
+                        self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
+                        continue
+                    if boundary == "reservation":
+                        result = planning_cli(
+                            "reserve-repair-attempt", "--run", run, "--stage", "system_design",
+                        )
+                    else:
+                        self.assertIsNotNone(review)
+                        result = planning_cli(
+                            "advance", "--run", run, "--stage", "system_design",
+                            "--approval", "human", "--review", review.relative_to(run),  # type: ignore[union-attr]
+                            "--date", "2026-08-22",
+                        )
+
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
 
     def test_system_reacceptance_rolls_back_final_boundary_candidate_and_review_races(self):
         for case in ("candidate", "review"):
