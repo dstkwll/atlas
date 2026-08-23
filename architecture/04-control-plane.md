@@ -324,6 +324,13 @@ budget, a second contradiction cannot nest or reset the episode, and exhaustion 
 durable. These constraints use the existing `blocked_reason` slot and leave storage representation
 to Program Design; they add no generalized router, rollback/reopen facility, or history/event system.
 
+D-083 adds no controller transition after that stop. Exhaustion or non-convergence leaves the current
+run `BLOCKED`; a fresh diagnosis may recommend which accepted assumption to reconsider but grants no
+authority. Only explicit human judgment may widen the search, and the mechanism that translates a
+substantive direction into a later System Design attempt, product reconsideration, successor run, or
+stop/defer outcome remains future work. The controller must not emulate an unsupported direction by
+resetting D-082 or exposing internal stage routing to the user.
+
 Stage 5 has its own boundary inside that same controller:
 
 ```text

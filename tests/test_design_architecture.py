@@ -134,15 +134,18 @@ def known_stage_five_contract_regressions(text):
 
 
 class PairedDesignArchitectureTests(unittest.TestCase):
-    def test_v010_d082_is_current_and_bounds_program_design_upstream_repair(self):
+    def test_v011_d083_is_current_and_v010_bounds_d082_repair(self):
         root_readme = (ROOT / "README.md").read_text(encoding="utf-8")
         architecture_readme = read("README.md")
         v08_decisions = read("23-v0.8-decisions.md")
         v09_decisions = normalized("24-v0.9-decisions.md")
         v10_path = ARCH / "25-v0.10-decisions.md"
+        v11_path = ARCH / "26-v0.11-decisions.md"
 
         self.assertTrue(v10_path.exists(), "v0.10/D-082 decision record is absent")
+        self.assertTrue(v11_path.exists(), "v0.11/D-083 decision record is absent")
         v10_decisions = normalized("25-v0.10-decisions.md")
+        v11_decisions = normalized("26-v0.11-decisions.md")
         workflow = normalized("02-workflow.md")
         artifacts = normalized("03-artifact-model.md")
         control = normalized("04-control-plane.md")
@@ -152,9 +155,22 @@ class PairedDesignArchitectureTests(unittest.TestCase):
         learnings = normalized("16-learnings-and-course-corrections.md")
         combined = " ".join((v10_decisions, workflow, artifacts, control, review, state, runtime))
 
-        self.assertIn("architecture/25-v0.10-decisions.md", root_readme)
-        self.assertIn("**v0.10**", root_readme)
-        self.assertIn("**v0.10**", architecture_readme)
+        self.assertIn("architecture/26-v0.11-decisions.md", root_readme)
+        self.assertIn("**v0.11**", root_readme)
+        self.assertIn("**v0.11**", architecture_readme)
+        self.assertIn("D-083", v11_decisions)
+        self.assertIn("v0.11 north star", v11_decisions.lower())
+        self.assertRegex(v11_decisions, r"ends Atlas's autonomous authority.{0,120}does not.{0,100}declare the user's goal dead")
+        for direction in (
+            "another materially different System Design approach",
+            "upstream product commitment",
+            "corrected successor run",
+            "stop or defer",
+        ):
+            self.assertIn(direction, v11_decisions)
+        self.assertIn("D-083 adds no controller transition", v11_decisions)
+        self.assertIn("does not add a recovery runtime", v11_decisions)
+        self.assertRegex(v11_decisions, r"next substantive implementation remains the Stage 5 Ticket Graph Compiler")
         self.assertIn("D-080", v08_decisions)
         self.assertIn("Refined by D-082", v08_decisions)
         self.assertIn("D-081", v09_decisions)
