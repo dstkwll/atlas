@@ -288,17 +288,10 @@ def validate_complete_materiality(materiality: Any) -> str:
 def expected_system_repair_context(
     run_dir: Path,
     planning: dict[str, Any],
-    acceptance_revision: int,
+    acceptance_revision: Optional[int],
 ) -> dict[str, Any]:
     episode = planning.get("blocked_reason")
     state = episode.get("state") if isinstance(episode, dict) else None
-    expected_acceptance_revision = (
-        planning["revision"] + 1
-        if state == "SYSTEM_DESIGN_STALE"
-        else planning["revision"]
-        if state == "PROGRAM_DESIGN_RESUMED"
-        else None
-    )
     if (
         not isinstance(episode, dict)
         or set(episode) != REPAIR_EPISODE_FIELDS
@@ -308,10 +301,50 @@ def expected_system_repair_context(
         or not re.fullmatch(r"[0-9a-f]{64}", str(episode.get("review_sha256", "")))
         or not isinstance(episode.get("superseded_system_design"), dict)
         or type(episode.get("attempts_used")) is not int
-        or type(acceptance_revision) is not int
-        or acceptance_revision != expected_acceptance_revision
     ):
         raise ControlError("System Design repair context requires the active stale episode")
+    if state == "SYSTEM_DESIGN_STALE":
+        expected_acceptance_revision = planning["revision"] + 1
+        if (
+            type(acceptance_revision) is not int
+            or acceptance_revision != expected_acceptance_revision
+        ):
+            raise ControlError("System Design repair context requires the active stale episode")
+        context_attempts = episode["attempts_used"]
+        context_acceptance_revision = acceptance_revision
+    elif state == "PROGRAM_DESIGN_RESUMED":
+        system_acceptance = planning.get("acceptances", {}).get("system_design")
+        if (
+            not isinstance(system_acceptance, dict)
+            or system_acceptance.get("review_reference") != SYSTEM_DESIGN_REVIEW_REFERENCE
+            or type(system_acceptance.get("review_sha256")) is not str
+        ):
+            raise ControlError("accepted System Design repair evidence is unavailable")
+        review_path = managed_path(run_dir, SYSTEM_DESIGN_REVIEW_REFERENCE)
+        try:
+            review_bytes = review_path.read_bytes()
+            review = load_json(review_bytes.decode("utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise ControlError("accepted System Design repair evidence is unavailable") from exc
+        persisted_context = review.get("repair_context") if isinstance(review, dict) else None
+        if (
+            hashlib.sha256(review_bytes).hexdigest() != system_acceptance["review_sha256"]
+            or not isinstance(persisted_context, dict)
+            or set(persisted_context) != SYSTEM_REPAIR_CONTEXT_FIELDS
+        ):
+            raise ControlError("accepted System Design repair evidence is not current")
+        context_attempts = persisted_context.get("attempts_used")
+        context_acceptance_revision = persisted_context.get("acceptance_revision")
+        if (
+            type(context_attempts) is not int
+            or not 1 <= context_attempts <= episode["attempts_used"]
+            or type(context_acceptance_revision) is not int
+            or context_acceptance_revision
+            != episode["started_from_revision"] + 2 + context_attempts
+        ):
+            raise ControlError("accepted System Design repair context is incoherent")
+    else:
+        raise ControlError("System Design repair context requires an active repair episode")
     contradiction_path = managed_path(run_dir, episode["review_reference"])
     try:
         contradiction_bytes = contradiction_path.read_bytes()
@@ -334,8 +367,8 @@ def expected_system_repair_context(
         "contradiction_review_reference": episode["review_reference"],
         "contradiction_review_sha256": episode["review_sha256"],
         "contradiction_finding": copy.deepcopy(contradiction["finding"]),
-        "attempts_used": episode["attempts_used"],
-        "acceptance_revision": acceptance_revision,
+        "attempts_used": context_attempts,
+        "acceptance_revision": context_acceptance_revision,
     }
 
 
@@ -1052,7 +1085,7 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
     repair_episode = blocked_reason if isinstance(blocked_reason, dict) else {}
     repair_attempts = repair_episode.get("attempts_used")
     system_acceptance_repair_context = (
-        expected_system_repair_context(run_dir, planning, planning["revision"])
+        expected_system_repair_context(run_dir, planning, None)
         if repair_episode.get("state") == "PROGRAM_DESIGN_RESUMED"
         else None
     )
@@ -1203,6 +1236,16 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
         else:
             current_system = acceptances["system_design"]
             superseded = blocked_reason["superseded_system_design"]
+            system_attempts = (
+                system_acceptance_repair_context.get("attempts_used")
+                if isinstance(system_acceptance_repair_context, dict)
+                else None
+            )
+            program_attempts = (
+                blocked_reason["attempts_used"] - system_attempts
+                if type(system_attempts) is int
+                else -1
+            )
             if (
                 not isinstance(current_system, dict)
                 or current_system["candidate_version"] != superseded["candidate_version"] + 1
@@ -1212,7 +1255,19 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
                     superseded["source_bindings"],
                 )
                 or blocked_reason["attempts_used"] < 1
-                or blocked_reason.get("current_attempt") is not None
+                or program_attempts < 0
+                or (
+                    program_attempts == 0
+                    and blocked_reason.get("current_attempt") is not None
+                )
+                or (
+                    program_attempts > 0
+                    and not valid_repair_attempt(
+                        blocked_reason.get("current_attempt"),
+                        blocked_reason["attempts_used"],
+                        "program_design",
+                    )
+                )
                 or planning.get("phase") != "program_design"
                 or gates["system_design"] not in {"HUMAN_APPROVED", "AGENT_APPROVED"}
                 or planning["revision"] != (
@@ -1603,14 +1658,42 @@ def reserve_repair_attempt(run_dir: Path, stage: str) -> dict[str, Any]:
         ):
             raise ControlError("repair state or candidate changed at the reservation boundary")
 
-    write_planning_control_atomic(
-        run_dir,
-        updated,
-        precondition=revalidate_before_reservation,
-    )
-    committed = load_planning_control(run_dir)
-    if committed != updated:
-        raise ControlError("committed repair attempt reservation is not current")
+    updated_bytes = planning_control_bytes(updated)
+    try:
+        write_planning_control_atomic(
+            run_dir,
+            updated,
+            precondition=revalidate_before_reservation,
+        )
+        committed = load_planning_control(run_dir)
+        if not json_equal_exact(committed, updated):
+            raise ControlError("committed repair attempt reservation is not current")
+    except BaseException as exc:
+        try:
+            current_bytes = planning_path.read_bytes()
+        except BaseException as inspection_exc:
+            raise ControlError(
+                "repair attempt reservation failed and resulting planning state could not be inspected"
+            ) from inspection_exc
+        if current_bytes == updated_bytes:
+            try:
+                write_planning_control_bytes_atomic(run_dir, planning_bytes)
+                if planning_path.read_bytes() != planning_bytes:
+                    raise ControlError("prior planning bytes did not survive rollback")
+            except BaseException as rollback_exc:
+                raise ControlError(
+                    "repair attempt reservation failed and prior state could not be restored"
+                ) from rollback_exc
+            if isinstance(exc, Exception):
+                raise ControlError(
+                    f"repair attempt reservation failed final validation and was rolled back: {exc}"
+                ) from exc
+            raise
+        if current_bytes != planning_bytes:
+            raise ControlError(
+                "repair attempt reservation failed after planning state changed independently"
+            ) from exc
+        raise
     if repair_candidate_sha256_before(run_dir, stage) != candidate_before:
         raise ControlError(
             f"repair candidate changed during reservation; attempt {attempt_number} remains consumed"

@@ -3970,6 +3970,69 @@ class AtlasPlanningTests(unittest.TestCase):
                 superseded["candidate_sha256"],
             )
 
+    def test_first_program_repair_attempt_reservation_is_durable_reloadable_and_transactional(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            planning = initialize_program_after_system(run)
+            review_input = write_upstream_block_review_input(run, planning)
+            returned = planning_cli(
+                "return-upstream", "--run", run,
+                "--review-input", review_input.relative_to(run),
+            )
+            self.assertEqual(returned.returncode, 0, returned.stderr)
+            system_reservation = planning_cli(
+                "reserve-repair-attempt", "--run", run, "--stage", "system_design",
+            )
+            self.assertEqual(system_reservation.returncode, 0, system_reservation.stderr)
+            stale = PLANNING.load_planning_control(run)
+            superseded = stale["blocked_reason"]["superseded_system_design"]
+            write_system_design(
+                run,
+                copy.deepcopy(superseded["source_bindings"][0]),
+                version=superseded["candidate_version"] + 1,
+            )
+            review = write_system_repair_review(run)
+            advanced = planning_cli(
+                "advance", "--run", run, "--stage", "system_design",
+                "--approval", "human", "--review", review.relative_to(run),
+                "--date", "2026-08-22",
+            )
+            self.assertEqual(advanced.returncode, 0, advanced.stderr)
+            resumed = PLANNING.load_planning_control(run)
+            program_before = PLANNING.repair_candidate_sha256_before(run, "program_design")
+
+            reserved = planning_cli(
+                "reserve-repair-attempt", "--run", run, "--stage", "program_design",
+            )
+
+            self.assertEqual(reserved.returncode, 0, reserved.stderr)
+            reloaded = PLANNING.load_planning_control(run)
+            self.assertEqual(reloaded["revision"], resumed["revision"] + 1)
+            self.assertEqual(reloaded["blocked_reason"]["attempts_used"], 2)
+            self.assertEqual(reloaded["blocked_reason"]["current_attempt"], {
+                "number": 2,
+                "stage": "program_design",
+                "candidate_sha256_before": program_before,
+            })
+
+            before_failed_commit = (run / "planning-control.json").read_bytes()
+            real_load = PLANNING.load_planning_control
+            calls = 0
+
+            def fail_post_write_reload(path):
+                nonlocal calls
+                calls += 1
+                if calls == 3:
+                    raise PLANNING.ControlError("injected post-write validation failure")
+                return real_load(path)
+
+            with mock.patch.object(PLANNING, "load_planning_control", side_effect=fail_post_write_reload):
+                with self.assertRaisesRegex(PLANNING.ControlError, "rolled back"):
+                    with PLANNING.planning_lock(run):
+                        PLANNING.reserve_repair_attempt(run, "program_design")
+            self.assertEqual((run / "planning-control.json").read_bytes(), before_failed_commit)
+            PLANNING.load_planning_control(run)
+
     def test_replacement_review_binds_immediate_superseded_acceptance_and_contradiction(self):
         mutations = {
             "superseded": lambda context: context["superseded_system_design"].__setitem__(
