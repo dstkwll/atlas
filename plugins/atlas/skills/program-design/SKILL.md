@@ -12,7 +12,7 @@ Resolve `<atlas-plugin-root>` from this installed skill before invoking a packag
 
 ## 1. Resume frozen authority
 
-Read immutable `run.yaml`, authoritative Stage 0 `control.json`, and `planning-control.json` before any producer action. Require current phase `program_design`, gate `PENDING`, and exact configured authority `AGENT_REVIEW` or `HUMAN`. Reject contradictory, aliased, or incomplete state rather than repairing it or falling back. Program Design never asks a participation question; Stage 4 has no participation mode.
+Read immutable `run.yaml`, authoritative Stage 0 `control.json`, and `planning-control.json` before any producer action. Require current phase `program_design`, gate `PENDING`, and exact configured authority `AGENT_REVIEW` or `HUMAN`. The normal branch has status `PLANNING`; the D-082 branch is the exact reserved tuple `BLOCKED` / `program_design` / `PROGRAM_DESIGN_RESUMED` with `current_attempt.stage: program_design`. Reject every other blocked tuple, missing reservation, aliased authority, or incomplete state rather than repairing it or falling back. Program Design never asks a participation question; Stage 4 has no participation mode. The D-082 branch still uses normal fresh review and configured authority.
 
 ## 2. Verify and inspect the exact repository baseline
 

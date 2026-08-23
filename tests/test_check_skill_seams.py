@@ -1717,6 +1717,35 @@ class SkillSeamHardeningTests(unittest.TestCase):
                 found = any("may not mutate immutable run.yaml" in message for _, message in findings)
                 self.assertEqual(found, expected)
 
+    def test_d082_repair_producer_and_authority_skills_cover_exact_reserved_states(self):
+        plugin = ROOT / "plugins" / "atlas"
+        clauses = {
+            plugin / "skills" / "system-design" / "SKILL.md": (
+                "`BLOCKED` / `system_design` / `SYSTEM_DESIGN_STALE`",
+                "version is the superseded acceptance version plus one",
+                "same exact source binding",
+            ),
+            plugin / "skills" / "program-design" / "SKILL.md": (
+                "`BLOCKED` / `program_design` / `PROGRAM_DESIGN_RESUMED`",
+                "normal fresh review and configured authority",
+            ),
+            plugin / "skills" / "control-planning" / "SKILL.md": (
+                "reserved `BLOCKED` repair tuple",
+                "repair_context",
+                "the user does not issue a second command",
+            ),
+            plugin / "skills" / "control-planning" / "references" / "system-design-authority.md": (
+                "D-082 replacement",
+                "direct `HUMAN` repair",
+                "fresh review envelope",
+            ),
+        }
+        for path, required in clauses.items():
+            text = path.read_text(encoding="utf-8")
+            for clause in required:
+                with self.subTest(path=path.name, clause=clause):
+                    self.assertIn(clause, text)
+
     def test_spike_cannot_restore_projection_as_authority(self):
         with tempfile.TemporaryDirectory() as td:
             skills = self.copy_plugin(Path(td))

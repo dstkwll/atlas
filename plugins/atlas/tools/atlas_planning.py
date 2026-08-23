@@ -133,6 +133,7 @@ CODE_EVIDENCE_FIELDS = {"repository", "baseline", "path", "evidence"}
 REPAIR_EPISODE_FIELDS = {
     "kind", "state", "started_from_revision", "review_reference", "review_sha256",
     "superseded_system_design", "attempts_used", "current_attempt",
+    "initial_program_candidate_sha256",
 }
 REPAIR_ATTEMPT_FIELDS = {"number", "stage", "candidate_sha256_before"}
 SYSTEM_DESIGN_DIMENSIONS = (
@@ -370,6 +371,75 @@ def expected_system_repair_context(
         "attempts_used": context_attempts,
         "acceptance_revision": context_acceptance_revision,
     }
+
+
+def persisted_system_repair_context(
+    run_dir: Path,
+    planning: dict[str, Any],
+    effective: dict[str, Any],
+) -> Optional[dict[str, Any]]:
+    current = planning.get("acceptances", {}).get("system_design")
+    if not isinstance(current, dict) or current.get("candidate_version") == 1:
+        return None
+    if current.get("review_reference") != SYSTEM_DESIGN_REVIEW_REFERENCE:
+        raise ControlError("accepted System Design repair evidence is unavailable")
+    review_path = managed_path(run_dir, SYSTEM_DESIGN_REVIEW_REFERENCE)
+    try:
+        review_bytes = review_path.read_bytes()
+        review = load_json(review_bytes.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ControlError("accepted System Design repair evidence is unavailable") from exc
+    context = review.get("repair_context") if isinstance(review, dict) else None
+    if (
+        hashlib.sha256(review_bytes).hexdigest() != current.get("review_sha256")
+        or not isinstance(context, dict)
+        or set(context) != SYSTEM_REPAIR_CONTEXT_FIELDS
+    ):
+        raise ControlError("accepted System Design repair evidence is not current")
+    predecessor = context.get("superseded_system_design")
+    attempts = context.get("attempts_used")
+    started = context.get("episode_started_from_revision")
+    acceptance_revision = context.get("acceptance_revision")
+    if (
+        not isinstance(predecessor, dict)
+        or set(predecessor) != PLANNING_ACCEPTANCE_FIELDS
+        or type(predecessor.get("candidate_version")) is not int
+        or context.get("contradiction_review_reference") != UPSTREAM_BLOCK_REVIEW_REFERENCE
+        or type(attempts) is not int
+        or not 1 <= attempts <= 4
+        or type(started) is not int
+        or type(acceptance_revision) is not int
+        or acceptance_revision != started + 2 + attempts
+        or current.get("candidate_version") != predecessor.get("candidate_version", 0) + 1
+        or current.get("candidate_sha256") == predecessor.get("candidate_sha256")
+        or not json_equal_exact(current.get("source_bindings"), predecessor.get("source_bindings"))
+    ):
+        raise ControlError("accepted System Design repair context is incoherent")
+    validate_system_design_acceptance(
+        run_dir, planning["stage0_anchor"], effective, predecessor, historical=True
+    )
+    contradiction_path = managed_path(run_dir, str(context.get("contradiction_review_reference")))
+    try:
+        contradiction_bytes = contradiction_path.read_bytes()
+        contradiction = load_json(contradiction_bytes.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ControlError("accepted System Design repair contradiction evidence is unavailable") from exc
+    if hashlib.sha256(contradiction_bytes).hexdigest() != context.get("contradiction_review_sha256"):
+        raise ControlError("accepted System Design repair contradiction evidence is not current")
+    validate_upstream_block_review(
+        contradiction,
+        run=planning["run"],
+        planning_revision=started,
+        system_acceptance=predecessor,
+        effective=effective,
+        repository_verification=None,
+    )
+    if (
+        contradiction.get("verdict") != "CONFIRMED_UPSTREAM_CONTRADICTION"
+        or not json_equal_exact(contradiction.get("finding"), context.get("contradiction_finding"))
+    ):
+        raise ControlError("accepted System Design repair contradiction evidence is not confirmed")
+    return context
 
 
 def load_system_design_review(
@@ -1087,6 +1157,8 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
     system_acceptance_repair_context = (
         expected_system_repair_context(run_dir, planning, None)
         if repair_episode.get("state") == "PROGRAM_DESIGN_RESUMED"
+        else persisted_system_repair_context(run_dir, planning, effective)
+        if blocked_reason is None and acceptances.get("program_design") is not None
         else None
     )
     system_candidate_may_diverge = (
@@ -1192,6 +1264,16 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
             or not re.fullmatch(r"[0-9a-f]{64}", str(blocked_reason.get("review_sha256", "")))
             or not isinstance(blocked_reason.get("superseded_system_design"), dict)
             or set(blocked_reason["superseded_system_design"]) != PLANNING_ACCEPTANCE_FIELDS
+            or (
+                blocked_reason.get("initial_program_candidate_sha256") is not None
+                and (
+                    type(blocked_reason.get("initial_program_candidate_sha256")) is not str
+                    or re.fullmatch(
+                        r"[0-9a-f]{64}",
+                        blocked_reason["initial_program_candidate_sha256"],
+                    ) is None
+                )
+            )
             or type(blocked_reason.get("attempts_used")) is not int
             or not 0 <= blocked_reason["attempts_used"] <= 4
             or planning.get("status") != "BLOCKED"
@@ -1201,6 +1283,22 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
             or acceptances["tickets"] is not None
         ):
             raise ControlError("planning-control.json repair episode is malformed")
+        program_candidate_reserved = (
+            blocked_reason["state"] == "PROGRAM_DESIGN_RESUMED"
+            and valid_repair_attempt(
+                blocked_reason.get("current_attempt"),
+                blocked_reason["attempts_used"],
+                "program_design",
+            )
+        )
+        if (
+            not program_candidate_reserved
+            and repair_candidate_sha256_before(run_dir, "program_design")
+            != blocked_reason.get("initial_program_candidate_sha256")
+        ):
+            raise ControlError(
+                "initial Program Design candidate changed before its first producer reservation"
+            )
         if blocked_reason["state"] == "SYSTEM_DESIGN_STALE":
             if (
                 not json_equal_exact(
@@ -1302,12 +1400,29 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
         return planning
 
     pending = [stage for stage in DOWNSTREAM_STAGES if gates[stage] == "PENDING"]
+    completed_repair_attempts = (
+        planning["revision"] - system_acceptance_repair_context["acceptance_revision"] - 1
+        if system_acceptance_repair_context is not None
+        else None
+    )
+    completed_repair_remaining = (
+        4 - system_acceptance_repair_context["attempts_used"]
+        if system_acceptance_repair_context is not None
+        else None
+    )
     if (
         planning.get("status") != "PLANNING"
         or "STALE" in gates.values()
         or not pending
         or planning.get("phase") != pending[0]
-        or planning["revision"] != 1 + len(approved_stages)
+        or (
+            planning["revision"] != 1 + len(approved_stages)
+            if completed_repair_attempts is None
+            else not (
+                completed_repair_remaining is not None
+                and 1 <= completed_repair_attempts <= completed_repair_remaining
+            )
+        )
     ):
         raise ControlError("planning-control.json values are not a coherent current planning state")
     return planning
@@ -1525,6 +1640,9 @@ def return_to_system_design(run_dir: Path, review_input: Path) -> str:
             "superseded_system_design": copy.deepcopy(planning["acceptances"]["system_design"]),
             "attempts_used": 0,
             "current_attempt": None,
+            "initial_program_candidate_sha256": repair_candidate_sha256_before(
+                run_dir, "program_design"
+            ),
         }
         final_bytes = planning_control_bytes(final_planning)
 
@@ -1546,6 +1664,8 @@ def return_to_system_design(run_dir: Path, review_input: Path) -> str:
                 or current_bytes != review_bytes
                 or current_envelope != envelope
                 or current_sha256 != review_sha256
+                or repair_candidate_sha256_before(run_dir, "program_design")
+                != final_planning["blocked_reason"]["initial_program_candidate_sha256"]
             ):
                 raise ControlError("planning state or upstream-block evidence changed at the write boundary")
 
@@ -2331,6 +2451,13 @@ def advance_program_design_boundary(
     )
     final_planning["phase"] = "tickets"
     final_planning["revision"] += 1
+    repair_episode = planning.get("blocked_reason")
+    if (
+        isinstance(repair_episode, dict)
+        and repair_episode.get("state") == "PROGRAM_DESIGN_RESUMED"
+    ):
+        final_planning["status"] = "PLANNING"
+        final_planning["blocked_reason"] = None
     write_planning_control_atomic(
         run_dir,
         final_planning,

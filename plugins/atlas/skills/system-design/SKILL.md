@@ -12,13 +12,18 @@ Resolve `<atlas-plugin-root>` from this installed skill before invoking a packag
 
 ## 1. Resume frozen authority
 
-Read `run.yaml`, authoritative Stage 0 `control.json`, and `planning-control.json`. Require current phase `system_design`, gate `PENDING`, frozen participation `agent_led` or `co_design`, and an exact supported policy: `HUMAN`, `AGENT_REVIEW`, or canonical `HUMAN_IF_CHANGED`.
+Read `run.yaml`, authoritative Stage 0 `control.json`, and `planning-control.json`. Accept exactly one branch:
+
+- normal: status `PLANNING`, phase `system_design`, gate `PENDING`;
+- D-082 repair: exact reserved tuple `BLOCKED` / `system_design` / `SYSTEM_DESIGN_STALE`, gate `STALE`, with `current_attempt.stage: system_design`.
+
+Both branches require frozen participation `agent_led` or `co_design` and an exact supported policy: `HUMAN`, `AGENT_REVIEW`, or canonical `HUMAN_IF_CHANGED`. Any other blocked tuple or missing reservation stops unchanged.
 
 System Design reads the frozen value and never asks again for participation. It also reads policy literally; participation stays orthogonal. The producer does not classify materiality, invoke the acceptance reviewer, assemble evidence, obtain approval, or reinterpret/fall back from policy; those belong to the internal control handoff.
 
 ## 2. Bind the one applicable source
 
-Read selected stages and immutable `stage0_anchor`; choose exactly one `source_binding`:
+Read selected stages and immutable `stage0_anchor`; choose exactly one `source_binding`. On the D-082 repair branch, copy the same exact source binding from `blocked_reason.superseded_system_design`; never reselect or change it. On the normal branch:
 
 - selected Product Closure: record `kind: product_closure`, `artifact: 20-prd.md`, and its exact accepted integer `version` and `sha256`;
 - omitted Product Closure: record `kind: stage0`, `artifact: run.yaml`, exact base `sha256`, `effective_config_hash`, and integer `effective_config_revision`.
@@ -27,7 +32,7 @@ The direct branch has no PRD field. If source bytes or the recorded binding disa
 
 ## 3. Produce the Stage 3 candidate
 
-Use [`references/system-design-file.md`](references/system-design-file.md) as the exact shape. Frontmatter records `run`, integer `version: 1`, `status: draft`, boolean `gate_ready`, frozen `participation`, intake `opened`, and the selected discriminated `source_binding`; preserve exactly those fields. While drafting keep `gate_ready: false`.
+Use [`references/system-design-file.md`](references/system-design-file.md) as the exact shape. Frontmatter records `run`, integer `version`, `status: draft`, boolean `gate_ready`, frozen `participation`, intake `opened`, and the selected discriminated `source_binding`; preserve exactly those fields. Normal version is `1`; on the D-082 repair branch, version is the superseded acceptance version plus one. While drafting keep `gate_ready: false`.
 
 Write from the reliance horizon: changing a Stage 3 choice requires a caller, peer, or operator to adjust or changes an accepted guarantee. Cover all twelve required sections. Keep file placement, language signatures, internal calls, locking mechanics, migration order, and test seams in Program Design.
 

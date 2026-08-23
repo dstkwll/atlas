@@ -46,7 +46,7 @@ The exact top-level shape is:
 Rules:
 
 - Top-level fields are exact. `version`, `stage`, `candidate_version`, filename, run identity, candidate SHA-256, and `repository_baselines` bind the exact current inputs. Baselines are the exact ordered effective repository/baseline pairs after applying every accepted Stage 0 amendment; unamended runs therefore match `run.yaml.repos` exactly.
-- `policy` is exactly `AGENT_REVIEW` or `HUMAN_IF_CHANGED`. Direct `AGENT_REVIEW` sets `materiality` to null. `HUMAN_IF_CHANGED` uses the exact materiality object above.
+- On the normal path, `policy` is exactly `AGENT_REVIEW` or `HUMAN_IF_CHANGED`; normal direct `HUMAN` has no envelope. A D-082 replacement additionally permits configured `HUMAN` only under the repair rules below. Direct `AGENT_REVIEW` sets `materiality` to null. `HUMAN_IF_CHANGED` uses the exact materiality object above.
 - A usable materiality row has exactly `dimension`, `result`, and nonempty `evidence`. `result` is `MATERIAL`, `NOT_MATERIAL`, or `UNAVAILABLE`. The seven canonical dimensions occur exactly once; aliases are invalid.
 - Seven `NOT_MATERIAL` rows plus null `unavailable_reason` map deterministically to `AGENT_REVIEW`. Any `MATERIAL` or `UNAVAILABLE` row maps to `HUMAN`.
 - Classifier failure, unavailable baseline, or missing/duplicate/unknown/malformed dimension output is persisted with the returned rows (possibly incomplete) and a nonempty `unavailable_reason`; that explained fail-closed shape maps to `HUMAN`. Missing or empty explanation is rejected.
@@ -67,11 +67,18 @@ Each BLOCKED gap has this exact shape:
 
 Gap dimensions are known, unique, and cover every blocked row. Every string is nonempty.
 
+## D-082 replacement evidence
+
+A D-082 replacement uses the same envelope plus exact `repair_context`. It binds the episode start revision, complete superseded System acceptance, contradiction review reference/hash and finding, attempts used, and expected acceptance revision. The candidate is predecessor version plus one, has a different hash, and keeps the same source binding. This provenance grants no authority.
+
+Every replacement receives a fresh review envelope. For direct `HUMAN` repair, `policy` is `HUMAN`, materiality and semantic review are null, and acceptance requires both the exact envelope and explicit human approval. Normal direct `HUMAN` remains review-free. Other policies retain their normal judgment fields and add the same repair context.
+
 ## Authority matrix
 
 | Frozen policy / derived authority | Required CLI evidence | Recorded authority |
 |---|---|---|
-| `HUMAN` | `--approval human`; no review | `HUMAN`, null review ref/hash |
+| `HUMAN` normal | `--approval human`; no review | `HUMAN`, null review ref/hash |
+| `HUMAN` D-082 replacement | exact repair review plus `--approval human` | `HUMAN` with review ref/hash |
 | `AGENT_REVIEW` | `--review reviews/system-design-v1.json`; no human approval | `AGENT_REVIEW` |
 | `HUMAN_IF_CHANGED` → `HUMAN` | both exact review and `--approval human` | `HUMAN` with review ref/hash |
 | `HUMAN_IF_CHANGED` → `AGENT_REVIEW` | exact review; no human approval | `AGENT_REVIEW` |

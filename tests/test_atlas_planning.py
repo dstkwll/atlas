@@ -3314,6 +3314,7 @@ class AtlasPlanningTests(unittest.TestCase):
             "forged-revisions",
             "first-attempt-missing-prior-hash",
             "integer-attempt-hash",
+            "integer-initial-program-hash",
         ):
             with self.subTest(case=case), tempfile.TemporaryDirectory() as td:
                 run = Path(td)
@@ -3353,7 +3354,7 @@ class AtlasPlanningTests(unittest.TestCase):
                         "candidate_sha256_before": None,
                     }
                     state["revision"] += 1
-                else:
+                elif case == "integer-attempt-hash":
                     state["blocked_reason"]["attempts_used"] = 2
                     state["blocked_reason"]["current_attempt"] = {
                         "number": 2,
@@ -3361,6 +3362,8 @@ class AtlasPlanningTests(unittest.TestCase):
                         "candidate_sha256_before": int("1" * 64),
                     }
                     state["revision"] += 2
+                else:
+                    state["blocked_reason"]["initial_program_candidate_sha256"] = int("1" * 64)
                 planning_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
 
                 with self.assertRaisesRegex(
@@ -3717,6 +3720,10 @@ class AtlasPlanningTests(unittest.TestCase):
             self.assertNotEqual(fifth.returncode, 0)
             self.assertIn("exhausted", fifth.stderr)
             self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
+            exhausted = PLANNING.load_planning_control(run)
+            self.assertEqual((exhausted["status"], exhausted["phase"]), ("BLOCKED", "system_design"))
+            self.assertEqual(exhausted["blocked_reason"]["state"], "SYSTEM_DESIGN_STALE")
+            self.assertEqual(exhausted["blocked_reason"]["attempts_used"], 4)
 
     def test_normal_path_cannot_reserve_repair_attempt(self):
         with tempfile.TemporaryDirectory() as td:
@@ -3969,6 +3976,136 @@ class AtlasPlanningTests(unittest.TestCase):
                 resumed["acceptances"]["system_design"]["candidate_sha256"],
                 superseded["candidate_sha256"],
             )
+
+    def test_repair_episode_preserves_initial_program_bytes_until_program_reservation(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            planning = initialize_program_after_system(run)
+            accepted_system = planning["acceptances"]["system_design"]
+            write_program_design(run, {
+                "kind": "system_design",
+                "artifact": "30-system-design.md",
+                "version": accepted_system["candidate_version"],
+                "sha256": accepted_system["candidate_sha256"],
+            })
+            initial_program_sha256 = sha256(run / "40-program-design.md")
+            review_input = write_upstream_block_review_input(run, planning)
+            returned = planning_cli(
+                "return-upstream", "--run", run,
+                "--review-input", review_input.relative_to(run),
+            )
+            self.assertEqual(returned.returncode, 0, returned.stderr)
+            stale = PLANNING.load_planning_control(run)
+            self.assertEqual(
+                stale["blocked_reason"]["initial_program_candidate_sha256"],
+                initial_program_sha256,
+            )
+
+            system_reserved = planning_cli(
+                "reserve-repair-attempt", "--run", run, "--stage", "system_design",
+            )
+            self.assertEqual(system_reserved.returncode, 0, system_reserved.stderr)
+            self.assertEqual(sha256(run / "40-program-design.md"), initial_program_sha256)
+            episode = PLANNING.load_planning_control(run)["blocked_reason"]
+            write_system_design(
+                run,
+                copy.deepcopy(episode["superseded_system_design"]["source_bindings"][0]),
+                version=2,
+            )
+            review = write_system_repair_review(run)
+            advanced = planning_cli(
+                "advance", "--run", run, "--stage", "system_design",
+                "--approval", "human", "--review", review.relative_to(run),
+                "--date", "2026-08-22",
+            )
+            self.assertEqual(advanced.returncode, 0, advanced.stderr)
+            self.assertEqual(sha256(run / "40-program-design.md"), initial_program_sha256)
+
+            program_path = run / "40-program-design.md"
+            initial_program_bytes = program_path.read_bytes()
+            program_path.write_bytes(initial_program_bytes + b"\ntampered before reservation\n")
+            with self.assertRaisesRegex(PLANNING.ControlError, "initial Program Design candidate"):
+                PLANNING.load_planning_control(run)
+            program_path.write_bytes(initial_program_bytes)
+            program_reserved = planning_cli(
+                "reserve-repair-attempt", "--run", run, "--stage", "program_design",
+            )
+            self.assertEqual(program_reserved.returncode, 0, program_reserved.stderr)
+            program_path.write_bytes(initial_program_bytes + b"\nproducer rewrite after reservation\n")
+            PLANNING.load_planning_control(run)
+
+    def test_resumed_program_uses_fresh_review_of_new_system_and_clears_episode(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            planning = initialize_program_after_system(run)
+            accepted_system = planning["acceptances"]["system_design"]
+            old_source = {
+                "kind": "system_design",
+                "artifact": "30-system-design.md",
+                "version": accepted_system["candidate_version"],
+                "sha256": accepted_system["candidate_sha256"],
+            }
+            write_program_design(run, old_source)
+            stale_review = write_program_review(run, policy="AGENT_REVIEW").read_bytes()
+            review_input = write_upstream_block_review_input(run, planning)
+            returned = planning_cli(
+                "return-upstream", "--run", run,
+                "--review-input", review_input.relative_to(run),
+            )
+            self.assertEqual(returned.returncode, 0, returned.stderr)
+            system_reserved = planning_cli(
+                "reserve-repair-attempt", "--run", run, "--stage", "system_design",
+            )
+            self.assertEqual(system_reserved.returncode, 0, system_reserved.stderr)
+            episode = PLANNING.load_planning_control(run)["blocked_reason"]
+            write_system_design(
+                run,
+                copy.deepcopy(episode["superseded_system_design"]["source_bindings"][0]),
+                version=2,
+            )
+            system_review = write_system_repair_review(run)
+            advanced_system = planning_cli(
+                "advance", "--run", run, "--stage", "system_design",
+                "--approval", "human", "--review", system_review.relative_to(run),
+                "--date", "2026-08-22",
+            )
+            self.assertEqual(advanced_system.returncode, 0, advanced_system.stderr)
+            resumed = PLANNING.load_planning_control(run)
+            accepted_replacement = resumed["acceptances"]["system_design"]
+            program_reserved = planning_cli(
+                "reserve-repair-attempt", "--run", run, "--stage", "program_design",
+            )
+            self.assertEqual(program_reserved.returncode, 0, program_reserved.stderr)
+            new_source = {
+                "kind": "system_design",
+                "artifact": "30-system-design.md",
+                "version": accepted_replacement["candidate_version"],
+                "sha256": accepted_replacement["candidate_sha256"],
+            }
+            write_program_design(run, new_source)
+            review_path = run / "reviews" / "program-design-v1.json"
+            review_path.write_bytes(stale_review)
+            before = (run / "planning-control.json").read_bytes()
+            stale = planning_cli(
+                "advance", "--run", run, "--stage", "program_design",
+                "--review", review_path.relative_to(run), "--date", "2026-08-22",
+            )
+            self.assertNotEqual(stale.returncode, 0)
+            self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+            fresh_review = write_program_review(run, policy="AGENT_REVIEW")
+            accepted = planning_cli(
+                "advance", "--run", run, "--stage", "program_design",
+                "--review", fresh_review.relative_to(run), "--date", "2026-08-22",
+            )
+            self.assertEqual(accepted.returncode, 0, accepted.stderr)
+            completed = PLANNING.load_planning_control(run)
+            self.assertEqual((completed["status"], completed["phase"]), ("PLANNING", "tickets"))
+            self.assertIsNone(completed["blocked_reason"])
+            self.assertEqual(completed["gates"]["program_design"], "AGENT_APPROVED")
+            self.assertEqual(completed["acceptances"]["program_design"]["authority"], "AGENT_REVIEW")
+            self.assertEqual(completed["acceptances"]["program_design"]["source_bindings"], [new_source])
+            self.assertEqual(completed["acceptances"]["program_design"]["review_sha256"], sha256(fresh_review))
 
     def test_first_program_repair_attempt_reservation_is_durable_reloadable_and_transactional(self):
         with tempfile.TemporaryDirectory() as td:

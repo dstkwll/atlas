@@ -68,7 +68,9 @@ When the live planning phase reaches System Design, Atlas enters that producer i
 
 Program Design accepts only from a fresh exact PASS review under configured `AGENT_REVIEW` or reviewed `HUMAN`; `AUTO` and `HUMAN_IF_CHANGED` are unavailable. The existing `planning-control.json` remains the only mutable Stage 3–5 authority. `atlas_planning.py` accepts mechanical `check` and authority-matrix `advance` commands for explicit `system_design` or `program_design`; it never routes. After accepted Program Design, tickets remain intentionally unsupported: start/resume and control stop loudly because no first-party ticket producer exists.
 
-System/Program Design rejection, reopen, replacement acceptance, staleness propagation, ticket compilation/acceptance, and execution remain deferred. The shared `ensure --run PATH` handoff remains strict, idempotent, and non-overwriting. The Stage 0–2 controller remains separate; this slice adds no model router, controller, state file, renderer, manifest dependency, or revision snapshot.
+For the one D-082 repair episode, `start-run` recognizes only `BLOCKED/system_design/SYSTEM_DESIGN_STALE` and `BLOCKED/program_design/PROGRAM_DESIGN_RESUMED`. It durably reserves one of four shared attempts before internally invoking the exact producer; producers retain their normal internal control handoff and configured authority. System repair preserves the episode-opening Program candidate hash until the first Program reservation. Fresh Program acceptance against System N+1 clears the episode, restores `PLANNING`, and advances to tickets; exhaustion stays durably `BLOCKED`.
+
+Generalized System/Program Design rejection, reopen, replacement acceptance, staleness propagation, ticket compilation/acceptance, and execution remain deferred. The shared `ensure --run PATH` handoff remains strict, idempotent, and non-overwriting. The Stage 0–2 controller remains separate; this slice adds no model router, controller, state file, renderer, manifest dependency, or revision snapshot.
 
 ## Licence
 
