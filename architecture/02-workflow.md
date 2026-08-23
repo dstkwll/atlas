@@ -335,6 +335,16 @@ Question:
 
 This stage should be treated as a **compiler**, not another open-ended design step.
 
+Its ticket graph is an execution ordering for early seam validation, not a decomposition of work
+volume by architectural layer. Every non-enabling ticket must establish observable behavior, cross
+every boundary required by that behavior (not every possible layer), be independently verifiable,
+and stay within the applicable accepted selected-path sources; selected Program Design remains the
+exact decomposition contract. The first frontier takes the thinnest real path through the riskiest
+or most important seams rather than the easiest fraction of the work.
+
+A standalone enabling ticket must name and block an imminent vertical slice and explain why it cannot
+safely live there. Unconsumed foundation epics and layer slabs are not vertical slices.
+
 Inputs are the applicable accepted sources for the actual selected path:
 
 - exact accepted product PRD when product closure is selected;

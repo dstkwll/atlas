@@ -959,3 +959,20 @@ another materially different architecture, upstream product reconsideration, cor
 run, or stop/defer. Atlas owns internal orchestration, but no recovery mechanism is implied until a
 real failed case earns it. Preserve the principle now and return implementation energy to the normal
 Stage 5 Ticket Graph Compiler path.
+
+---
+
+## L-024 — A vertical label does not make horizontal work vertical
+
+### Course correction
+
+An earlier decomposition called layer slabs "vertical slices" while sequencing schema, services,
+interfaces, and integration separately. That delays the only proof that matters: whether the accepted
+boundaries compose into real behavior.
+
+### Standing result
+
+Stage 5 follows behavior paths across every boundary they require, not a checklist of every layer.
+The first frontier targets important risky seams, and each non-enabling ticket is outcome-bearing and
+independently verifiable. Standalone enabling work must name its imminent vertical consumer and prove
+it cannot safely be inlined; imagined future reuse does not earn a foundation seam.

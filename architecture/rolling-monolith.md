@@ -891,6 +891,16 @@ Question:
 
 This stage should be treated as a **compiler**, not another open-ended design step.
 
+Its ticket graph is an execution ordering for early seam validation, not a decomposition of work
+volume by architectural layer. Every non-enabling ticket must establish observable behavior, cross
+every boundary required by that behavior (not every possible layer), be independently verifiable,
+and stay within the applicable accepted selected-path sources; selected Program Design remains the
+exact decomposition contract. The first frontier takes the thinnest real path through the riskiest
+or most important seams rather than the easiest fraction of the work.
+
+A standalone enabling ticket must name and block an imminent vertical slice and explain why it cannot
+safely live there. Unconsumed foundation epics and layer slabs are not vertical slices.
+
 Inputs are the applicable accepted sources for the actual selected path:
 
 - exact accepted product PRD when product closure is selected;
@@ -2598,11 +2608,16 @@ dependency references, require unambiguous repository targets, verify declared v
 and prove every ticket's upstream references are drawn from the selected path's applicable accepted
 sources. The candidate also binds the frozen baseline for every target repository.
 
-Semantic review checks that slices are vertical and independently verifiable, dependencies are
-complete without hiding a global ordering, acceptance criteria are observable, validators cover the
-promised behavior, and implementation decisions do not leak back into compilation. PASS proceeds to
-the configured `tickets` authority; the downstream planning controller records the acceptance.
-BLOCKED returns to Stage 5 without changing authoritative state.
+Semantic review checks that every non-enabling ticket is outcome-bearing, crosses every boundary
+required by its behavior rather than grouping one architectural layer, and is independently
+verifiable. It rejects horizontal slabs, integration-later graphs, and generic foundation tickets.
+Any enabling ticket must name and block its imminent vertical consumer and explain why it cannot be
+incorporated there. The graph's first non-enabling frontier must exercise the riskiest or most
+important seams early. Dependencies must be complete without hiding a global ordering, acceptance
+criteria observable, validators sufficient for the promised behavior, and implementation decisions
+absent from compilation. PASS proceeds to the configured `tickets` authority; the downstream
+planning controller records the acceptance. BLOCKED returns to Stage 5 without changing
+authoritative state.
 
 Any accepted System Design or Program Design change makes every dependent ticket-graph acceptance
 stale in the same logical atomic transition as the upstream change. Execution preflight consumes and
@@ -6152,6 +6167,23 @@ Stage 5 Ticket Graph Compiler path.
 
 ---
 
+## L-024 — A vertical label does not make horizontal work vertical
+
+### Course correction
+
+An earlier decomposition called layer slabs "vertical slices" while sequencing schema, services,
+interfaces, and integration separately. That delays the only proof that matters: whether the accepted
+boundaries compose into real behavior.
+
+### Standing result
+
+Stage 5 follows behavior paths across every boundary they require, not a checklist of every layer.
+The first frontier targets important risky seams, and each non-enabling ticket is outcome-bearing and
+independently verifiable. Standalone enabling work must name its imminent vertical consumer and prove
+it cannot safely be inlined; imagined future reuse does not earn a foundation seam.
+
+---
+
 # 17 — Agent Roles, Rosters, Model Policy, and Outcome Telemetry
 
 **Added in:** v0.3  
@@ -7937,3 +7969,61 @@ mechanism.
 > not converge, preserve the evidence, end autonomous replanning, diagnose which accepted assumption
 > may be wrong, and ask the human for the substantive direction while keeping internal workflow
 > mechanics inside Atlas.**
+
+---
+
+# 27 — v0.12 Decisions
+
+v0.12 makes Stage 5 verticality a compilation contract rather than a label. The ticket graph orders
+work to validate important seams early; it does not divide implementation into architectural-layer
+slabs and defer integration until the end.
+
+---
+
+## D-084 — Ticket graphs are ordered vertical tracer slices
+
+A Stage 5 vertical slice is the smallest independently verifiable, outcome-bearing behavior that
+crosses every implementation boundary required to prove that real path. It does not need to touch
+an irrelevant UI, API, database, or other layer merely to satisfy a checklist.
+
+Every non-enabling ticket must satisfy four invariants:
+
+1. **Outcome-bearing:** completion establishes real observable behavior.
+2. **Cross-boundary where required:** its shape follows the behavior path, not architectural layers.
+3. **Independently verifiable:** deterministic evidence can show the promised behavior works.
+4. **No redesign:** it adds no design decision. Selected Program Design stays the exact acceptance;
+   otherwise the applicable source governs. New architecture or code shape returns `DESIGN_BLOCKED`.
+
+The first non-enabling frontier should be the thinnest real path through the riskiest or most
+important seams, not merely the easiest fraction of the work. Later slices deepen behavior through
+those proven seams, add paths and failure cases, then broaden or harden.
+
+### Enabling-ticket exception
+
+A standalone enabling ticket is legal only when it names the imminent vertical slice that requires
+it, blocks that slice explicitly, and explains why the enabling work cannot safely be incorporated
+into the slice. A generic foundation, schema layer, service layer, API layer, or integration-later
+epic with no such consumer is not a valid substitute for vertical decomposition.
+
+The `trivial` path remains one one-node graph from frozen Stage 0 intake and target baseline. It
+proves the direct compilation/acceptance path without manufacturing unused semantic layers; it does
+not weaken verticality for non-trivial work.
+
+### Scope and sequencing
+
+D-084 defines ticket semantics and judge obligations only. It adds no graph schema, compiler,
+controller transition, skill, storage format, tracker integration, execution runtime, or new layer.
+
+### Rejected alternatives
+
+- **Layer-by-layer construction with final integration:** rejected because seam proof arrives too late.
+- **Require every slice to touch every layer:** rejected because it manufactures irrelevant work.
+- **Unconsumed foundation tickets:** rejected because features, not imagined reuse, pay for seams.
+- **Easiest-first ordering:** rejected when it avoids seams whose failure would invalidate the graph.
+
+---
+
+## v0.12 north star
+
+> **Compile the thinnest real behavior through every boundary it needs, prove it independently, and
+> make the riskiest seams fail early—not after horizontal layers are declared complete.**

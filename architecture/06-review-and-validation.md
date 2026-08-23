@@ -357,11 +357,16 @@ dependency references, require unambiguous repository targets, verify declared v
 and prove every ticket's upstream references are drawn from the selected path's applicable accepted
 sources. The candidate also binds the frozen baseline for every target repository.
 
-Semantic review checks that slices are vertical and independently verifiable, dependencies are
-complete without hiding a global ordering, acceptance criteria are observable, validators cover the
-promised behavior, and implementation decisions do not leak back into compilation. PASS proceeds to
-the configured `tickets` authority; the downstream planning controller records the acceptance.
-BLOCKED returns to Stage 5 without changing authoritative state.
+Semantic review checks that every non-enabling ticket is outcome-bearing, crosses every boundary
+required by its behavior rather than grouping one architectural layer, and is independently
+verifiable. It rejects horizontal slabs, integration-later graphs, and generic foundation tickets.
+Any enabling ticket must name and block its imminent vertical consumer and explain why it cannot be
+incorporated there. The graph's first non-enabling frontier must exercise the riskiest or most
+important seams early. Dependencies must be complete without hiding a global ordering, acceptance
+criteria observable, validators sufficient for the promised behavior, and implementation decisions
+absent from compilation. PASS proceeds to the configured `tickets` authority; the downstream
+planning controller records the acceptance. BLOCKED returns to Stage 5 without changing
+authoritative state.
 
 Any accepted System Design or Program Design change makes every dependent ticket-graph acceptance
 stale in the same logical atomic transition as the upstream change. Execution preflight consumes and
