@@ -1803,6 +1803,30 @@ class SkillSeamHardeningTests(unittest.TestCase):
             findings = SEAMS.cross_skill_contracts(skills)
             self.assertTrue(any("to-spec remains" in message for _, message in findings))
 
+    def test_atlas_root_manifest_conforms_to_portable_agent_plugins_v1(self):
+        manifest = json.loads(
+            (ROOT / "plugins" / "atlas" / "plugin.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(
+            manifest.get("$schema"),
+            "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+        )
+        self.assertEqual(
+            set(manifest) - {
+                "$schema",
+                "name",
+                "version",
+                "description",
+                "author",
+                "homepage",
+                "repository",
+                "license",
+                "keywords",
+                "extensions",
+            },
+            set(),
+        )
+
     def test_atlas_manifests_describe_the_current_stage0_through_stage5_surface(self):
         manifests = (
             ROOT / "plugins" / "atlas" / "plugin.json",
