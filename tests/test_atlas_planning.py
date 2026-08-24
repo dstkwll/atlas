@@ -1048,6 +1048,34 @@ class AtlasPlanningTests(unittest.TestCase):
             self.assertTrue(any("preferred_order" in item["problem"] for item in report["gaps"]))
             self.assertEqual((run / "planning-control.json").read_bytes(), before)
 
+    def test_ticket_graph_nested_unhashable_values_are_structured_blocked(self):
+        mutations = {
+            "reference-kind": lambda ticket: ticket["references"][0].update({"kind": {"bad": True}}),
+            "validator-id": lambda ticket: ticket["validators"][0].update({"id": {"bad": True}}),
+            "outcome-id": lambda ticket: ticket["outcomes"][0].update({"id": {"bad": True}}),
+            "review-kind": lambda ticket: ticket.update({"reviews": [{"bad": True}]}),
+        }
+        for name, mutate in mutations.items():
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                _, _, manifest_path = initialize_trivial_ticket_candidate(run)
+                ticket_path = run / "tickets" / "demo-01.md"
+                frontmatter, body = PLANNING.read_frontmatter(ticket_path)
+                mutate(frontmatter)
+                write_markdown(ticket_path, frontmatter, body)
+                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                manifest["tickets"][0]["sha256"] = sha256(ticket_path)
+                manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+                before = (run / "planning-control.json").read_bytes()
+
+                result = planning_cli("check", "--run", run, "--stage", "tickets")
+
+                self.assertEqual(result.returncode, 1, result.stderr)
+                self.assertNotIn("Traceback", result.stderr)
+                report = json.loads(result.stdout)
+                self.assertEqual(report["verdict"], "BLOCKED")
+                self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
     def test_ticket_graph_reports_self_dependency_and_review_cannot_replace_deterministic_proof(self):
         with tempfile.TemporaryDirectory() as td:
             run = Path(td)

@@ -2705,11 +2705,10 @@ def ticket_graph_report(
         if (
             not isinstance(references, list)
             or not references
-            or len(reference_kinds) != len(set(reference_kinds))
-            or set(reference_kinds) != source_kinds
             or any(
                 not isinstance(item, dict)
                 or set(item) != TICKET_REFERENCE_FIELDS
+                or not nonempty_string(item.get("kind"))
                 or item.get("kind") not in source_kinds
                 or not isinstance(item.get("sections"), list)
                 or any(not nonempty_string(section) for section in item.get("sections", []))
@@ -2726,11 +2725,14 @@ def ticket_graph_report(
                 )
                 for item in references or []
             )
+            or len(reference_kinds) != len(set(reference_kinds))
+            or set(reference_kinds) != source_kinds
         ):
             gaps.append(gap(expected_path, "ticket reference section does not resolve in every applicable accepted source", "tickets", "cite exact existing sections from every applicable source"))
 
         validators = frontmatter.get("validators")
         validator_ids = [item.get("id") for item in validators or [] if isinstance(item, dict)]
+        valid_validator_ids = {item for item in validator_ids if isinstance(item, str)}
         if (
             not isinstance(validators, list)
             or not validators
@@ -2760,7 +2762,7 @@ def ticket_graph_report(
                 or any(not nonempty_string(value) for value in item.get("acceptance", []))
                 or not isinstance(item.get("validator_ids"), list)
                 or not item.get("validator_ids")
-                or any(value not in set(validator_ids) for value in item.get("validator_ids", []))
+                or any(value not in valid_validator_ids for value in item.get("validator_ids", []))
                 for item in outcomes or []
             )
             or len(set(outcome_ids)) != len(outcome_ids)
@@ -2770,8 +2772,12 @@ def ticket_graph_report(
         reviews = frontmatter.get("reviews")
         if (
             not isinstance(reviews, list)
+            or any(
+                not isinstance(item, str)
+                or item not in {"semantic", "design", "quality"}
+                for item in reviews or []
+            )
             or len(set(reviews)) != len(reviews)
-            or any(item not in {"semantic", "design", "quality"} for item in reviews)
         ):
             gaps.append(gap(expected_path, "reviews must use unique supplemental review kinds", "tickets", "declare only semantic, design, or quality review obligations"))
         externals = frontmatter.get("external_prerequisites")
