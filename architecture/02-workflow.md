@@ -345,6 +345,17 @@ or most important seams rather than the easiest fraction of the work.
 A standalone enabling ticket must name and block an imminent vertical slice and explain why it cannot
 safely live there. Unconsumed foundation epics and layer slabs are not vertical slices.
 
+The same accepted graph must also be execution-complete. A dependency remains a real prerequisite
+and states what the downstream ticket relies on it establishing. Separately, canonical graph order
+preserves the risk-informed preference among tickets that are already ready. V1 selects the first
+ready ticket in that order; no agent chooses between ready tickets.
+
+Readiness is closed over every accepted execution-preventing condition, including a non-ticket
+external prerequisite such as merge, CI, or exact artifact publication. Topology or an accepted
+upstream commit alone cannot prove that external fact. Stage 5 preserves the observable satisfaction
+condition and accepted proof path but does not invent a missing delivery contract. `continue` or
+`resume` later wakes deterministic revalidation; it never grants the awaited truth.
+
 Inputs are the applicable accepted sources for the actual selected path:
 
 - exact accepted product PRD when product closure is selected;
@@ -361,11 +372,12 @@ and target repository baseline. It creates no substitute PRD or design artifact.
 
 Outputs:
 
-- ticket graph
-- blocking relationships
-- tracer slice where useful
-- deterministic validation contracts
-- explicit references to upstream sections
+- one execution-complete ticket graph;
+- truthful blocking relationships plus canonical preferred order;
+- observable external-prerequisite satisfaction conditions where applicable;
+- explicit proof paths linking promised outcomes to validators/review gates;
+- the real tracer ticket where useful; and
+- explicit references to upstream sections.
 
 Stage 5 is the final pre-execution planning boundary. The compiler proposes the complete ticket
 graph; it does not accept its own output. A read-only ticket-graph judge evaluates verticality,
@@ -381,8 +393,10 @@ file, schema, lock, and implementation decomposition remain Program Design choic
 separate compilation controller.
 
 Tickets should reference upstream source-of-truth sections rather than copying them. Execution
-receives only an exact accepted ticket-graph binding; it may verify that acceptance and its currency
-but may not create or record it.
+receives only the exact accepted ticket-graph binding; it may verify that acceptance and currency but
+may not create or record them. The supervisor deterministically derives a non-authoritative worker
+brief from that graph, its applicable accepted bindings, and current validated runtime evidence. It
+does not invoke a planner or treat the raw user prompt as a coequal contract.
 
 ---
 

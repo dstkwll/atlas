@@ -901,6 +901,17 @@ or most important seams rather than the easiest fraction of the work.
 A standalone enabling ticket must name and block an imminent vertical slice and explain why it cannot
 safely live there. Unconsumed foundation epics and layer slabs are not vertical slices.
 
+The same accepted graph must also be execution-complete. A dependency remains a real prerequisite
+and states what the downstream ticket relies on it establishing. Separately, canonical graph order
+preserves the risk-informed preference among tickets that are already ready. V1 selects the first
+ready ticket in that order; no agent chooses between ready tickets.
+
+Readiness is closed over every accepted execution-preventing condition, including a non-ticket
+external prerequisite such as merge, CI, or exact artifact publication. Topology or an accepted
+upstream commit alone cannot prove that external fact. Stage 5 preserves the observable satisfaction
+condition and accepted proof path but does not invent a missing delivery contract. `continue` or
+`resume` later wakes deterministic revalidation; it never grants the awaited truth.
+
 Inputs are the applicable accepted sources for the actual selected path:
 
 - exact accepted product PRD when product closure is selected;
@@ -917,11 +928,12 @@ and target repository baseline. It creates no substitute PRD or design artifact.
 
 Outputs:
 
-- ticket graph
-- blocking relationships
-- tracer slice where useful
-- deterministic validation contracts
-- explicit references to upstream sections
+- one execution-complete ticket graph;
+- truthful blocking relationships plus canonical preferred order;
+- observable external-prerequisite satisfaction conditions where applicable;
+- explicit proof paths linking promised outcomes to validators/review gates;
+- the real tracer ticket where useful; and
+- explicit references to upstream sections.
 
 Stage 5 is the final pre-execution planning boundary. The compiler proposes the complete ticket
 graph; it does not accept its own output. A read-only ticket-graph judge evaluates verticality,
@@ -937,8 +949,10 @@ file, schema, lock, and implementation decomposition remain Program Design choic
 separate compilation controller.
 
 Tickets should reference upstream source-of-truth sections rather than copying them. Execution
-receives only an exact accepted ticket-graph binding; it may verify that acceptance and its currency
-but may not create or record it.
+receives only the exact accepted ticket-graph binding; it may verify that acceptance and currency but
+may not create or record them. The supervisor deterministically derives a non-authoritative worker
+brief from that graph, its applicable accepted bindings, and current validated runtime evidence. It
+does not invoke a planner or treat the raw user prompt as a coequal contract.
 
 ---
 
@@ -1487,6 +1501,10 @@ review:
 ---
 ```
 
+The illustrative `status: ready` is planning prose, not execution readiness authority. Runtime
+readiness is derived from the current accepted graph plus demonstrated satisfaction of every
+execution-preventing condition; editing a ticket file cannot make work runnable.
+
 The compiler replaces the placeholder with one entry for each applicable accepted source on the
 selected path. It never emits the placeholder itself. Product Closure, System Design, and Program
 Design entries appear only when those boundaries are selected. A direct Program Design path lists
@@ -1502,6 +1520,13 @@ target repository. This is an acceptance of the complete graph, not permission f
 self-approve. Any bound upstream acceptance or baseline change makes the graph stale. The artifact
 model fixes those semantic bindings but does not yet fix whether a future implementation represents
 the graph with an index, manifest, canonical serialization, or another deterministic form.
+
+That same candidate preserves truthful prerequisite meaning, a preferred order distinct from edges,
+observable satisfaction conditions for any non-ticket external prerequisite, explicit proof paths
+for each promised outcome, and tracer identity where applicable. It is acyclic. External facts and
+runtime-produced values join execution evidence only when they satisfy the graph's accepted
+condition; they do not mutate planning truth. Relevant Program Design touchpoints remain normative
+expectations rather than an exhaustive runtime file allowlist.
 
 Human-readable body:
 
@@ -2047,7 +2072,8 @@ Deterministic checks should include as appropriate:
 - ticket schema valid
 - all referenced upstream artifacts exist
 - required gates are approved
-- blocking tickets are complete
+- graph is acyclic and its readiness/proof contract is valid
+- every ticket prerequisite and external readiness condition is demonstrably satisfied
 - repository/worktree is clean enough to start
 - ticket is not already active elsewhere
 - validation commands are declared
@@ -2057,22 +2083,32 @@ Preflight verifies and consumes the accepted ticket-graph binding. It does not c
 manufacture graph acceptance, and it does not silently recompile a stale graph. A missing, stale, or
 mismatched binding fails closed before any ticket becomes active. The frozen baseline is the run's
 immutable starting point, not a requirement that worktree HEAD remain equal to it after accepted
-ticket commits; the expected accepted-commit chain supplies that later currency check.
+ticket commits; the expected accepted-commit chain supplies that later currency check. A graph whose
+readiness/proof contract is invalid fails before a builder attempt, preserves evidence, and is not
+silently recompiled or weakened by the executor.
 
 ---
 
 ## Executor contract
 
-The executor receives:
+The trusted supervisor derives a compact execution brief through fixed projection rules. The brief
+has no independent acceptance and contains only the selected ticket plus mechanically selected
+material from:
 
-- ticket
-- minimal referenced upstream design sections
-- relevant repository context
-- explicit allowed/expected scope
-- validator commands
-- previous repair feedback for this ticket
+- the exact accepted graph and applicable selected-path source bindings;
+- frozen Stage 0 on direct/`trivial` paths;
+- current repository baseline/accepted-commit-chain facts;
+- evidence satisfying ticket and external prerequisite conditions;
+- frozen execution configuration/staffing and validated runtime-produced values;
+- relevant Program Design touchpoints and validator/review proof paths; and
+- previous repair findings for this ticket.
 
-It may:
+Prefer exact references and excerpts over duplicated planning history. The raw user prompt is
+provenance rather than a coequal instruction. No planner or summarizer agent authors this brief.
+Program Design touchpoints are normative expectations, not an exhaustive file allowlist; runtime
+write capability is enforced separately.
+
+The executor may:
 
 - implement
 - run local exploratory commands
@@ -2198,15 +2234,21 @@ current exact accepted ticket-graph binding before selecting any ticket.
 
 Responsibilities:
 
-- load ticket dependency graph
-- resolve next unblocked ticket
+- load the exact accepted ticket graph
+- derive readiness from all accepted ticket and external conditions
+- select the first ready ticket in canonical graph order
 - invoke ticket factory
-- persist ticket state
+- persist ticket state and any external/human wait reason
+- on explicit `continue`/`resume`, reload and revalidate rather than grant readiness
+- bind runtime-produced values only after evidence satisfies the accepted condition
 - stop on terminal/escalation conditions
 - enforce policy checkpoints
 - optionally parallelize later
 
-Parallelism should be conservative initially.
+Dependencies remain real prerequisites; canonical order is a separate tie-break among ready tickets.
+V1 does not poll CI, registries, deployment systems, or human processes. A manual wake followed by
+revalidation is the complete initial external-wait behavior. Parallelism should be conservative
+initially.
 
 ---
 
@@ -2604,19 +2646,25 @@ before requiring an upstream artifact and never writes a missing ticket, edge, v
 or acceptance to satisfy its own finding.
 
 Deterministic checks bind the exact graph version/SHA-256, assert unique ticket identities and valid
-dependency references, require unambiguous repository targets, verify declared validation commands,
-and prove every ticket's upstream references are drawn from the selected path's applicable accepted
-sources. The candidate also binds the frozen baseline for every target repository.
+dependency references, reject self-dependencies and cycles, require unambiguous repository targets,
+verify canonical ticket order and declared validation commands, and prove every ticket's upstream
+references are drawn from the selected path's applicable accepted sources. Every promised obligation
+must name an accepted proof path through declared validators and/or required review gates. The
+candidate also binds the frozen baseline for every target repository.
 
 Semantic review checks that every non-enabling ticket is outcome-bearing, crosses every boundary
 required by its behavior rather than grouping one architectural layer, and is independently
 verifiable. It rejects horizontal slabs, integration-later graphs, and generic foundation tickets.
 Any enabling ticket must name and block its imminent vertical consumer and explain why it cannot be
 incorporated there. The graph's first non-enabling frontier must exercise the riskiest or most
-important seams early. Dependencies must be complete without hiding a global ordering, acceptance
-criteria observable, validators sufficient for the promised behavior, and implementation decisions
-absent from compilation. PASS proceeds to the configured `tickets` authority; the downstream
-planning controller records the acceptance. BLOCKED returns to Stage 5 without changing
+important seams early. Each dependency must describe a real prerequisite and what the downstream
+ticket relies on it establishing; risk preference belongs in canonical order rather than a fake
+edge. Every execution-preventing external condition needs an observable satisfaction rule. If
+accepted publication, consumption, delivery, or design truth is missing, the judge blocks
+compilation and identifies an upstream `DESIGN_BLOCKED` gap rather than inventing it. Acceptance
+criteria remain observable, proof paths sufficient for the promised behavior, and implementation
+decisions absent from compilation. PASS proceeds to the configured `tickets` authority; the
+downstream planning controller records the acceptance. BLOCKED returns to Stage 5 without changing
 authoritative state.
 
 Any accepted System Design or Program Design change makes every dependent ticket-graph acceptance
@@ -4465,6 +4513,7 @@ Before copying code, pin an upstream commit and verify the license at that revis
 
 Repository: https://github.com/disler/super-simple-software-factory  
 License observed at snapshot: **MIT**
+D-085 inspection point: `de31374882e7a4e3e5b7bb9bd09e69dc2f779356`
 
 ## Why it matters
 
@@ -4477,7 +4526,7 @@ This is the strongest current **implementation baseline for our inner determinis
 | Deterministic Python owning the phase graph | **REUSE / ADAPT** | Foundation of `TicketFactory` and later `FeatureFactory`. |
 | Agent vs code phase distinction | **REUSE** | Tests/build/lint/git/state transitions are code phases; reasoning phases are agents. |
 | Typed JSON phase envelopes | **REUSE / ADAPT** | Becomes our runtime protocol API; schemas will use our ticket/design semantics. |
-| Bounded repair loops that preserve builder session | **ADAPT** | Keep builder context across repair; reviewer contexts remain fresh. |
+| Bounded repair loops that preserve builder session | **ADAPT** | Keep builder context across repair. SSSF also reuses named reviewer sessions; Atlas deliberately overrides that behavior with fresh reviewer context on re-review. |
 | SQLite/event tracing | **ADAPT** | Strong reference for later observability; V1 may begin JSON/JSONL and grow into SQLite. |
 | Agent roster/model configuration | **ADAPT** | Becomes our independent `roster` configuration dimension. |
 | Phase permissions/config | **ADAPT** | Reference for mechanically verified write boundaries. V1 may use post-hoc detect/restore/fail; preventive capability enforcement is optional where risk justifies it. |
@@ -4496,8 +4545,13 @@ When implementing, inventory the stamped `adws/` output generated by the skill a
 
 ## Explicitly do not import
 
+- **REJECT:** an execution-time planner on the normal accepted-graph path. Program Design owns code
+  shape, Stage 5 owns decomposition/proof obligations, and the trusted supervisor deterministically
+  derives the bounded worker brief.
 - **REJECT:** its shallow `request → planner → builder` planning methodology as our main design pipeline.
 - **REJECT:** letting a planner agent collapse behavioral specification, architecture, program design, and execution decomposition into one phase.
+- **REJECT:** its named reviewer-session reuse as Atlas's re-review policy; Atlas uses fresh reviewer
+  context while preserving builder context for repair.
 - **REJECT:** treating the factory's own reviewer as final merge authority.
 
 ## Likely implementation role
@@ -8027,3 +8081,102 @@ controller transition, skill, storage format, tracker integration, execution run
 
 > **Compile the thinnest real behavior through every boundary it needs, prove it independently, and
 > make the riskiest seams fail early—not after horizontal layers are declared complete.**
+
+---
+
+# 28 — v0.13 Decisions
+
+v0.13 closes the semantic handoff from accepted planning into execution without adding another graph,
+planner, controller, or runtime. Stage 5 makes D-080's one accepted ticket graph execution-complete;
+normal execution consumes that graph without deciding what the work means.
+
+---
+
+## D-085 — One execution-complete ticket graph, one derived worker handoff
+
+The accepted D-080 ticket graph must let deterministic execution decide what work is legally runnable
+and derive the bounded worker handoff without making a new product, system, program, dependency, or
+acceptance decision.
+
+It therefore preserves, without fixing an exact schema:
+
+- every executable ticket's repository, promised outcome, applicable accepted selected-path sources,
+  and relevant Program Design touchpoints when that stage applies;
+- every real prerequisite and what the downstream ticket relies on it establishing;
+- a canonical preferred ticket order distinct from dependency truth;
+- every execution-preventing external condition and its observable satisfaction rule;
+- an explicit accepted proof path from each promised obligation through declared deterministic
+  validators and/or required review gates; and
+- the real tracer ticket when one applies.
+
+The graph is acyclic. Self-dependencies and dependency cycles are mechanically rejected.
+
+### Truthful readiness and preferred order
+
+A ticket is ready only when every accepted condition that can prevent its execution is demonstrably
+satisfied. Topology alone is insufficient. An accepted upstream ticket or commit does not prove a PR
+merged, CI succeeded, an exact artifact was published, propagation completed, or that a downstream
+consumer can resolve that immutable result. If accepted upstream truth never defined a required
+publication, consumption, or delivery condition, Stage 5 blocks compilation and identifies an
+upstream `DESIGN_BLOCKED` gap rather than inventing it.
+
+Dependencies remain real prerequisites. Risk or convenience does not become a fake edge. Separately,
+the compiler preserves D-084's risk-informed preferred order; V1 selects the first currently ready
+ticket in canonical graph order. Exact representation and future parallel scheduling remain deferred.
+
+A non-ticket external prerequisite may guard readiness inside the same accepted graph. This creates no
+second delivery graph. V1 may pause on an unsatisfied external or human-controlled fact. Explicit
+`continue` or `resume` authorizes another progression attempt and revalidation; it does not satisfy the
+prerequisite. Machine evidence is preferred. A governance-authorized human assertion, when mechanical
+verification is unavailable, is explicit and provenance-bearing rather than inferred from casual
+continuation.
+
+Runtime-produced values may fill relationships already authorized by accepted planning truth. They
+may not change dependency, compatibility, interface, code-shape, repository, or design meaning. A
+mutable alias cannot stand in for an exact result when the accepted condition requires one.
+
+### Derived execution brief
+
+The trusted supervisor deterministically projects the selected ticket, exact accepted graph/source
+bindings, current accepted-chain facts, evidence satisfying the accepted prerequisite conditions,
+frozen execution configuration/staffing, validated runtime values, and prior ticket repair findings
+into a compact execution brief.
+
+That brief is not agent-authored synthesis, carries no independent gate or acceptance, and prefers
+exact references/bindings plus mechanically selected excerpts over duplicated planning prose. The raw
+user prompt remains provenance rather than a coequal instruction. On direct and `trivial` paths, the
+frozen Stage 0 binding governs without manufacturing a semantic artifact.
+
+Program Design touchpoints are normative expectations, not an exhaustive file allowlist. Runtime
+capability/write policy remains separate. An adjacent helper, test, or configuration file is reviewed
+for scope and design drift; it is not automatically `DESIGN_BLOCKED`. Materially new code shape,
+ownership/interface decisions, accepted-design changes, or mutation of protected planning,
+governance, or validator mechanisms remain upstream conflicts.
+
+### SSSF disposition and scope
+
+SSSF remains the leading inner-workcell donor for deterministic phase ownership, typed envelopes,
+known commands as code phases, and bounded builder repair. Normal Atlas execution does not retain its
+planner: Program Design owns accepted code shape, Stage 5 owns decomposition and proof obligations,
+and the supervisor derives the worker brief. SSSF's named reviewer session is also not Atlas's
+freshness model; Atlas preserves builder context across repair and uses fresh reviewer context for
+re-review.
+
+D-085 adds no graph, brief, external-prerequisite, human-assertion, or runtime-state schema; no
+execution supervisor, workcell, Stage 5 compiler, poller, watcher, webhook, automatic merge,
+cross-repository transaction, Kanban lifecycle, or graph-reopen mechanism. Preflight still fails
+before a builder attempt when the accepted graph's readiness or proof contract is invalid.
+
+### Rejected alternatives
+
+- **A second accepted execution packet/graph:** rejected because D-080 already owns acceptance.
+- **Preference encoded as dependency:** rejected because it makes graph meaning false.
+- **Topology-only readiness or `resume`-as-truth:** rejected because neither proves external reality.
+- **Agent-authored worker brief or retained SSSF planner:** rejected because execution would replan.
+- **Polling/delivery orchestration in V1:** rejected because manual wake-and-revalidate closes the seam.
+
+---
+
+## v0.13 north star
+
+> **One graph, truthful readiness, deterministic handoff, no hidden replanning.**

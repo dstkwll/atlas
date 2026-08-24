@@ -134,7 +134,7 @@ def known_stage_five_contract_regressions(text):
 
 
 class PairedDesignArchitectureTests(unittest.TestCase):
-    def test_v012_d084_is_current_and_prior_repair_boundaries_remain(self):
+    def test_v013_d085_is_current_and_prior_repair_boundaries_remain(self):
         root_readme = (ROOT / "README.md").read_text(encoding="utf-8")
         architecture_readme = read("README.md")
         v08_decisions = read("23-v0.8-decisions.md")
@@ -142,26 +142,45 @@ class PairedDesignArchitectureTests(unittest.TestCase):
         v10_path = ARCH / "25-v0.10-decisions.md"
         v11_path = ARCH / "26-v0.11-decisions.md"
         v12_path = ARCH / "27-v0.12-decisions.md"
+        v13_path = ARCH / "28-v0.13-decisions.md"
 
         self.assertTrue(v10_path.exists(), "v0.10/D-082 decision record is absent")
         self.assertTrue(v11_path.exists(), "v0.11/D-083 decision record is absent")
         self.assertTrue(v12_path.exists(), "v0.12/D-084 decision record is absent")
+        self.assertTrue(v13_path.exists(), "v0.13/D-085 decision record is absent")
         v10_decisions = normalized("25-v0.10-decisions.md")
         v11_decisions = normalized("26-v0.11-decisions.md")
         v12_decisions = normalized("27-v0.12-decisions.md")
+        v13_decisions = normalized("28-v0.13-decisions.md")
         workflow = normalized("02-workflow.md")
         artifacts = normalized("03-artifact-model.md")
         control = normalized("04-control-plane.md")
         review = normalized("06-review-and-validation.md")
+        execution = normalized("05-execution-factory.md")
+        borrow_map = normalized("15-reference-implementation-borrow-map.md")
         state = normalized("08-state-and-governance.md")
         runtime = normalized("13-runtime-protocol.md")
         learnings = normalized("16-learnings-and-course-corrections.md")
         combined = " ".join((v10_decisions, workflow, artifacts, control, review, state, runtime))
-        stage5 = " ".join((v12_decisions, workflow, review))
+        stage5 = " ".join((v12_decisions, v13_decisions, workflow, artifacts, execution, review))
 
-        self.assertIn("architecture/27-v0.12-decisions.md", root_readme)
-        self.assertIn("**v0.12**", root_readme)
-        self.assertIn("**v0.12**", architecture_readme)
+        self.assertIn("architecture/28-v0.13-decisions.md", root_readme)
+        self.assertIn("**v0.13**", root_readme)
+        self.assertIn("**v0.13**", architecture_readme)
+        self.assertIn("D-085", v13_decisions)
+        self.assertIn("v0.13 north star", v13_decisions.lower())
+        self.assertRegex(v13_decisions, r"D-080's one accepted ticket graph execution-complete")
+        self.assertRegex(stage5, r"dependency remains a real prerequisite")
+        self.assertRegex(stage5, r"first (?:currently )?ready ticket in canonical graph order")
+        self.assertRegex(stage5, r"continue.{0,40}resume.{0,180}(?:does not satisfy|never grants)")
+        self.assertRegex(stage5, r"deterministic.{0,80}(?:execution|worker) brief")
+        self.assertRegex(stage5, r"raw user prompt.{0,100}(?:not a coequal|rather than a coequal)")
+        self.assertRegex(stage5, r"reject self-dependencies and cycles")
+        self.assertRegex(stage5, r"proof path.{0,160}validators.{0,100}review gates")
+        self.assertRegex(v13_decisions, r"adds no graph, brief, external-prerequisite.{0,220}runtime-state schema")
+        self.assertRegex(v13_decisions, r"without adding another graph, planner, controller, or runtime")
+        self.assertRegex(borrow_map, r"SSSF also reuses named reviewer sessions.{0,180}fresh reviewer context")
+        self.assertRegex(borrow_map, r"execution-time planner.{0,220}deterministically.{0,100}worker brief")
         self.assertIn("D-084", v12_decisions)
         self.assertIn("v0.12 north star", v12_decisions.lower())
         for invariant in ("Outcome-bearing", "Cross-boundary where required", "Independently verifiable", "No redesign"):
