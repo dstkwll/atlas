@@ -57,7 +57,8 @@ Deterministic checks should include as appropriate:
 - ticket schema valid
 - all referenced upstream artifacts exist
 - required gates are approved
-- blocking tickets are complete
+- graph is acyclic and its readiness/proof contract is valid
+- every ticket prerequisite and external readiness condition is demonstrably satisfied
 - repository/worktree is clean enough to start
 - ticket is not already active elsewhere
 - validation commands are declared
@@ -67,22 +68,32 @@ Preflight verifies and consumes the accepted ticket-graph binding. It does not c
 manufacture graph acceptance, and it does not silently recompile a stale graph. A missing, stale, or
 mismatched binding fails closed before any ticket becomes active. The frozen baseline is the run's
 immutable starting point, not a requirement that worktree HEAD remain equal to it after accepted
-ticket commits; the expected accepted-commit chain supplies that later currency check.
+ticket commits; the expected accepted-commit chain supplies that later currency check. A graph whose
+readiness/proof contract is invalid fails before a builder attempt, preserves evidence, and is not
+silently recompiled or weakened by the executor.
 
 ---
 
 ## Executor contract
 
-The executor receives:
+The trusted supervisor derives a compact execution brief through fixed projection rules. The brief
+has no independent acceptance and contains only the selected ticket plus mechanically selected
+material from:
 
-- ticket
-- minimal referenced upstream design sections
-- relevant repository context
-- explicit allowed/expected scope
-- validator commands
-- previous repair feedback for this ticket
+- the exact accepted graph and applicable selected-path source bindings;
+- frozen Stage 0 on direct/`trivial` paths;
+- current repository baseline/accepted-commit-chain facts;
+- evidence satisfying ticket and external prerequisite conditions;
+- frozen execution configuration/staffing and validated runtime-produced values;
+- relevant Program Design touchpoints and validator/review proof paths; and
+- previous repair findings for this ticket.
 
-It may:
+Prefer exact references and excerpts over duplicated planning history. The raw user prompt is
+provenance rather than a coequal instruction. No planner or summarizer agent authors this brief.
+Program Design touchpoints are normative expectations, not an exhaustive file allowlist; runtime
+write capability is enforced separately.
+
+The executor may:
 
 - implement
 - run local exploratory commands
@@ -208,15 +219,21 @@ current exact accepted ticket-graph binding before selecting any ticket.
 
 Responsibilities:
 
-- load ticket dependency graph
-- resolve next unblocked ticket
+- load the exact accepted ticket graph
+- derive readiness from all accepted ticket and external conditions
+- select the first ready ticket in canonical graph order
 - invoke ticket factory
-- persist ticket state
+- persist ticket state and any external/human wait reason
+- on explicit `continue`/`resume`, reload and revalidate rather than grant readiness
+- bind runtime-produced values only after evidence satisfies the accepted condition
 - stop on terminal/escalation conditions
 - enforce policy checkpoints
 - optionally parallelize later
 
-Parallelism should be conservative initially.
+Dependencies remain real prerequisites; canonical order is a separate tie-break among ready tickets.
+V1 does not poll CI, registries, deployment systems, or human processes. A manual wake followed by
+revalidation is the complete initial external-wait behavior. Parallelism should be conservative
+initially.
 
 ---
 

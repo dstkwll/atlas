@@ -414,6 +414,10 @@ review:
 ---
 ```
 
+The illustrative `status: ready` is planning prose, not execution readiness authority. Runtime
+readiness is derived from the current accepted graph plus demonstrated satisfaction of every
+execution-preventing condition; editing a ticket file cannot make work runnable.
+
 The compiler replaces the placeholder with one entry for each applicable accepted source on the
 selected path. It never emits the placeholder itself. Product Closure, System Design, and Program
 Design entries appear only when those boundaries are selected. A direct Program Design path lists
@@ -429,6 +433,13 @@ target repository. This is an acceptance of the complete graph, not permission f
 self-approve. Any bound upstream acceptance or baseline change makes the graph stale. The artifact
 model fixes those semantic bindings but does not yet fix whether a future implementation represents
 the graph with an index, manifest, canonical serialization, or another deterministic form.
+
+That same candidate preserves truthful prerequisite meaning, a preferred order distinct from edges,
+observable satisfaction conditions for any non-ticket external prerequisite, explicit proof paths
+for each promised outcome, and tracer identity where applicable. It is acyclic. External facts and
+runtime-produced values join execution evidence only when they satisfy the graph's accepted
+condition; they do not mutate planning truth. Relevant Program Design touchpoints remain normative
+expectations rather than an exhaustive runtime file allowlist.
 
 Human-readable body:
 

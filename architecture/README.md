@@ -6,12 +6,12 @@ The numbered documents are authoritative. `rolling-monolith.md` is generated fro
 
 ## Current baseline
 
-**v0.12** defines Stage 5 ticket graphs as ordered vertical tracer slices: each non-enabling ticket
-carries observable behavior across every boundary that behavior requires, is independently
-verifiable, and preserves the applicable selected-path sources. Enabling tickets must justify why an imminent
-vertical consumer cannot contain them, and the first frontier validates important risky seams early.
-This adds no graph schema, compiler, controller transition, skill, or execution runtime. It builds on
-v0.11's human replanning authority boundary.
+**v0.13** makes D-080's one accepted ticket graph execution-complete. Dependencies preserve real
+prerequisite meaning while canonical order carries D-084's risk preference among ready tickets;
+external readiness needs observable evidence, and `resume` only wakes revalidation. The trusted
+supervisor deterministically derives a non-authoritative worker brief from accepted bindings and
+current validated evidence, without an execution-time planner. D-085 adds no graph/brief/runtime
+schema, second acceptance layer, monitoring machinery, or execution implementation.
 
 ## Change discipline
 
