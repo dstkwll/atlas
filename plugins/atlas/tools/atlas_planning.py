@@ -2613,7 +2613,8 @@ def ticket_graph_report(
     preferred_order = manifest.get("preferred_order")
     if (
         not isinstance(preferred_order, list)
-        or preferred_order != list(dict.fromkeys(preferred_order))
+        or any(not isinstance(ticket_id, str) for ticket_id in preferred_order)
+        or len(set(preferred_order)) != len(preferred_order)
         or set(preferred_order) != set(entry_ids)
     ):
         gaps.append(gap(TICKET_GRAPH_FILE, "preferred_order must contain every ticket exactly once", "tickets", "write the canonical preferred order"))
