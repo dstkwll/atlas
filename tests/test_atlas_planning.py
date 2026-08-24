@@ -841,6 +841,154 @@ class AtlasPlanningTests(unittest.TestCase):
             self.assertNotEqual(repeated.returncode, 0)
             self.assertEqual((run / "planning-control.json").read_bytes(), before_repeat)
 
+    def test_program_design_ticket_graph_rejects_invented_source_section_then_accepts_vertical_graph(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            planning = initialize_direct_program(run, authority="AGENT_REVIEW")
+            anchor = planning["stage0_anchor"]
+            stage0_source = {
+                "kind": "stage0",
+                "artifact": "run.yaml",
+                "sha256": anchor["base_run_sha256"],
+                "effective_config_hash": anchor["effective_config_hash"],
+                "effective_config_revision": anchor["effective_config_revision"],
+            }
+            write_program_design(run, stage0_source)
+            program_review = write_program_review(run, policy="AGENT_REVIEW")
+            accepted_program = planning_cli(
+                "advance", "--run", run, "--stage", "program_design",
+                "--review", program_review.relative_to(run), "--date", "2026-08-24",
+            )
+            self.assertEqual(accepted_program.returncode, 0, accepted_program.stderr)
+            program_source = {
+                "kind": "program_design",
+                "artifact": "40-program-design.md",
+                "version": 1,
+                "sha256": sha256(run / "40-program-design.md"),
+            }
+            source_bindings = [stage0_source, program_source]
+
+            def ticket(
+                ticket_id,
+                *,
+                kind="vertical",
+                blocked_by=None,
+                tracer=False,
+                enabling=None,
+                sections=None,
+                external_prerequisites=None,
+            ):
+                validator_id = f"{ticket_id}-proof"
+                return {
+                    "id": ticket_id,
+                    "kind": kind,
+                    "status": "ready",
+                    "repository": "fixture",
+                    "blocked_by": blocked_by or [],
+                    "tracer": tracer,
+                    "enabling": enabling,
+                    "references": [
+                        {"kind": "stage0", "sections": []},
+                        {"kind": "program_design", "sections": sections or ["Test seams and validation plan"]},
+                    ],
+                    "external_prerequisites": external_prerequisites or [],
+                    "validators": [{
+                        "id": validator_id,
+                        "command": f"python3 -c 'print(\"{ticket_id}\")'",
+                        "success": "exit_zero",
+                    }],
+                    "outcomes": [{
+                        "id": f"{ticket_id}-outcome",
+                        "promise": f"{ticket_id} establishes one observable behavior.",
+                        "acceptance": [f"{ticket_id} behavior is observed through its public seam."],
+                        "validator_ids": [validator_id],
+                    }],
+                    "reviews": ["design"] if kind == "vertical" else [],
+                }
+
+            tickets = [
+                ticket(
+                    "baseline-validator",
+                    kind="enabling",
+                    enabling={
+                        "consumer": "vertical-command-flow",
+                        "rationale": "The exact baseline probe must be callable before the first behavior slice can prove its path.",
+                    },
+                ),
+                ticket(
+                    "vertical-command-flow",
+                    blocked_by=[{
+                        "ticket": "baseline-validator",
+                        "establishes": "A deterministic exact-baseline validator is available to the vertical flow.",
+                    }],
+                    tracer=True,
+                    sections=["Imaginary design section"],
+                    external_prerequisites=[{
+                        "id": "baseline-object-readable",
+                        "condition": "The frozen target commit object is locally readable.",
+                        "satisfaction": {
+                            "kind": "command",
+                            "command": f"git cat-file -e {self.fixture_baseline}^{{commit}}",
+                            "success": "exit_zero",
+                        },
+                    }],
+                ),
+                ticket(
+                    "vertical-failure-path",
+                    blocked_by=[{
+                        "ticket": "vertical-command-flow",
+                        "establishes": "The real command path exists before its failure behavior is added.",
+                    }],
+                    sections=["Migration and local failure-path implementation"],
+                ),
+            ]
+            before = (run / "planning-control.json").read_bytes()
+            write_ticket_graph(
+                run,
+                source_bindings,
+                tickets=tickets,
+                preferred_order=[
+                    "baseline-validator", "vertical-command-flow", "vertical-failure-path",
+                ],
+                tracer_ticket="vertical-command-flow",
+            )
+
+            invalid = planning_cli("check", "--run", run, "--stage", "tickets")
+            self.assertEqual(invalid.returncode, 1, invalid.stderr)
+            invalid_report = json.loads(invalid.stdout)
+            self.assertTrue(any("reference section" in item["problem"] for item in invalid_report["gaps"]))
+            self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+            shutil.rmtree(run / "tickets")
+            (run / "50-ticket-graph.json").unlink()
+            tickets[1]["references"][1]["sections"] = [
+                "Types and boundary signatures",
+                "Call and data flow",
+                "Test seams and validation plan",
+            ]
+            manifest = write_ticket_graph(
+                run,
+                source_bindings,
+                tickets=tickets,
+                preferred_order=[
+                    "baseline-validator", "vertical-command-flow", "vertical-failure-path",
+                ],
+                tracer_ticket="vertical-command-flow",
+            )
+            review = write_ticket_review(run, policy="HUMAN")
+            accepted = planning_cli(
+                "advance", "--run", run, "--stage", "tickets",
+                "--review", review.relative_to(run), "--approval", "human", "--date", "2026-08-24",
+            )
+
+            self.assertEqual(accepted.returncode, 0, accepted.stderr)
+            state = PLANNING.load_planning_control(run)
+            self.assertEqual((state["status"], state["phase"]), ("READY_FOR_EXECUTION", "tickets"))
+            self.assertEqual(state["gates"]["tickets"], "HUMAN_APPROVED")
+            self.assertEqual(state["acceptances"]["tickets"]["candidate_sha256"], sha256(manifest))
+            self.assertEqual(state["acceptances"]["tickets"]["source_bindings"], source_bindings)
+            self.assertFalse((run / ".factory").exists())
+
     def test_program_design_check_blocks_missing_binding_without_mutation(self):
         with tempfile.TemporaryDirectory() as td:
             run = Path(td)

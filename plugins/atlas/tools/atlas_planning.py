@@ -2621,6 +2621,24 @@ def ticket_graph_report(
     expected_paths: set[str] = set()
     tickets: dict[str, dict[str, Any]] = {}
     source_kinds = {item["kind"] for item in expected_sources}
+    source_sections: dict[str, set[str]] = {"stage0": set()}
+    for source in expected_sources:
+        source_kind = source["kind"]
+        if source_kind == "stage0":
+            continue
+        source_path = managed_path(run_dir, source["artifact"])
+        try:
+            _, source_body = read_frontmatter(source_path)
+        except (ControlError, yaml.YAMLError, UnicodeError) as exc:
+            gaps.append(gap(
+                source["artifact"],
+                f"accepted source cannot resolve ticket reference sections: {exc}",
+                "tickets",
+                "restore the exact accepted source bytes",
+            ))
+            source_sections[source_kind] = set()
+        else:
+            source_sections[source_kind] = set(re.findall(r"(?m)^## ([^\n]+?)\s*$", source_body))
     repositories = {item["repository"] for item in effective["repos"]}
     for entry in entries:
         if not isinstance(entry, dict) or set(entry) != TICKET_GRAPH_ENTRY_FIELDS:
@@ -2682,16 +2700,33 @@ def ticket_graph_report(
             gaps.append(gap(expected_path, "blocked_by contains duplicate prerequisites", "tickets", "deduplicate prerequisite edges"))
 
         references = frontmatter.get("references")
-        if not isinstance(references, list) or not references or any(
-            not isinstance(item, dict)
-            or set(item) != TICKET_REFERENCE_FIELDS
-            or item.get("kind") not in source_kinds
-            or not isinstance(item.get("sections"), list)
-            or any(not nonempty_string(section) for section in item.get("sections", []))
-            or (item.get("kind") == "stage0" and item.get("sections") != [])
-            for item in references or []
+        reference_kinds = [item.get("kind") for item in references or [] if isinstance(item, dict)]
+        if (
+            not isinstance(references, list)
+            or not references
+            or len(reference_kinds) != len(set(reference_kinds))
+            or set(reference_kinds) != source_kinds
+            or any(
+                not isinstance(item, dict)
+                or set(item) != TICKET_REFERENCE_FIELDS
+                or item.get("kind") not in source_kinds
+                or not isinstance(item.get("sections"), list)
+                or any(not nonempty_string(section) for section in item.get("sections", []))
+                or (item.get("kind") == "stage0" and item.get("sections") != [])
+                or (
+                    item.get("kind") != "stage0"
+                    and (
+                        not item.get("sections")
+                        or any(
+                            section not in source_sections.get(str(item.get("kind")), set())
+                            for section in item.get("sections", [])
+                        )
+                    )
+                )
+                for item in references or []
+            )
         ):
-            gaps.append(gap(expected_path, "references are not drawn from applicable accepted sources", "tickets", "cite only exact applicable source kinds and sections"))
+            gaps.append(gap(expected_path, "ticket reference section does not resolve in every applicable accepted source", "tickets", "cite exact existing sections from every applicable source"))
 
         validators = frontmatter.get("validators")
         validator_ids = [item.get("id") for item in validators or [] if isinstance(item, dict)]
