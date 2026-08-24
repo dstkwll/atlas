@@ -707,7 +707,7 @@ def load_ticket_graph_review(
         or envelope.get("version") != 1
         or envelope.get("run") != effective["run"]
         or envelope.get("stage") != "tickets"
-        or configured not in {"AGENT_REVIEW", "HUMAN", "CONDITIONAL"}
+        or configured not in {"AGENT_REVIEW", "HUMAN"}
         or envelope.get("policy") != configured
         or type(envelope.get("candidate_version")) is not int
         or envelope.get("candidate_version") != candidate_version
@@ -1292,7 +1292,7 @@ def validate_ticket_graph_acceptance(
     except ControlError as exc:
         raise ControlError("planning-control.json ticket-graph acceptance is malformed") from exc
     expected_sources = expected_ticket_graph_sources(planning, effective)
-    expected_authority = resolve_tickets_policy(effective)
+    expected_authority = effective["gates"]["tickets"]["authority"]
     if (
         type(record.get("candidate_version")) is not int
         or record["candidate_version"] != 1
@@ -1698,28 +1698,12 @@ def validate_system_design_policy(policy: Any) -> None:
 
 
 def validate_tickets_policy(policy: Any) -> None:
-    if isinstance(policy, dict) and policy.get("authority") in {"HUMAN", "AGENT_REVIEW"}:
-        validate_basic_policy(policy, "tickets", {"HUMAN", "AGENT_REVIEW"})
-        return
-    if not isinstance(policy, dict) or set(policy) != {"authority", "conditions", "otherwise"}:
-        raise ControlError("tickets gate policy is incomplete or uses an illegal authority")
-    conditions = policy.get("conditions")
-    outcomes = {"HUMAN", "AGENT_REVIEW"}
     if (
-        policy.get("authority") != "CONDITIONAL"
-        or policy.get("otherwise") not in outcomes
-        or not isinstance(conditions, list)
-        or not conditions
-        or any(
-            not isinstance(item, dict)
-            or set(item) != {"when", "then"}
-            or not isinstance(item.get("when"), str)
-            or not item["when"].strip()
-            or item.get("then") not in outcomes
-            for item in conditions
-        )
+        not isinstance(policy, dict)
+        or set(policy) != {"authority"}
+        or policy.get("authority") not in {"HUMAN", "AGENT_REVIEW"}
     ):
-        raise ControlError("tickets CONDITIONAL requires complete ordered conditions and otherwise")
+        raise ControlError("tickets supports only configured AGENT_REVIEW or HUMAN authority")
 
 
 def validate_downstream_policies(effective: dict[str, Any]) -> None:
@@ -2908,15 +2892,22 @@ def ticket_graph_report(
         gaps.append(gap(TICKET_GRAPH_FILE, "ticket dependency graph contains a cycle", "tickets", "remove the cyclic prerequisite edge"))
 
     tracer_ticket = manifest.get("tracer_ticket")
-    if tracer_ticket is not None and (
+    tracer_ids = [
+        ticket_id
+        for ticket_id, ticket in tickets.items()
+        if ticket.get("tracer") is True
+    ]
+    if tracer_ticket is None:
+        if tracer_ids:
+            gaps.append(gap(TICKET_GRAPH_FILE, "graph has tracer tickets but no tracer_ticket identity", "tickets", "record the one tracer identity in the manifest"))
+    elif (
         not isinstance(tracer_ticket, str)
+        or len(tracer_ids) != 1
+        or tracer_ids[0] != tracer_ticket
         or tracer_ticket not in tickets
         or tickets[tracer_ticket].get("kind") != "vertical"
-        or tickets[tracer_ticket].get("tracer") is not True
     ):
-        gaps.append(gap(TICKET_GRAPH_FILE, "tracer_ticket does not name the real vertical tracer", "tickets", "bind tracer_ticket to one explicit vertical tracer"))
-    if any(ticket.get("tracer") is True for ticket in tickets.values()) and tracer_ticket is None:
-        gaps.append(gap(TICKET_GRAPH_FILE, "graph has a tracer ticket but no tracer_ticket identity", "tickets", "record the tracer identity in the manifest"))
+        gaps.append(gap(TICKET_GRAPH_FILE, "tracer_ticket must name exactly one real vertical tracer", "tickets", "bind tracer_ticket to the graph's one explicit vertical tracer"))
     if not any(stage in effective["stages"] for stage in ("discovery", "system_design", "program_design")) and len(entries) != 1:
         gaps.append(gap(TICKET_GRAPH_FILE, "trivial path must compile exactly one one-node ticket graph", "tickets", "compile one ticket directly from frozen Stage 0"))
 
@@ -3015,27 +3006,6 @@ def resolve_program_design_authority(
     raise ControlError("Program Design supports only configured AGENT_REVIEW or HUMAN authority")
 
 
-def resolve_tickets_policy(effective: dict[str, Any]) -> str:
-    policy = effective.get("gates", {}).get("tickets", {})
-    configured = policy.get("authority") if isinstance(policy, dict) else None
-    if configured in {"AGENT_REVIEW", "HUMAN"}:
-        return configured
-    if configured != "CONDITIONAL":
-        raise ControlError("tickets supports only configured AGENT_REVIEW, HUMAN, or CONDITIONAL authority")
-    repository_count = len(effective["repos"])
-    predicates = {
-        "single_repository": repository_count == 1,
-        "multi_repository": repository_count > 1,
-    }
-    for condition in policy["conditions"]:
-        predicate = condition["when"]
-        if predicate not in predicates:
-            raise ControlError(f"tickets CONDITIONAL predicate is unsupported: {predicate}")
-        if predicates[predicate]:
-            return condition["then"]
-    return policy["otherwise"]
-
-
 def resolve_ticket_graph_authority(
     run_dir: Path,
     effective: dict[str, Any],
@@ -3053,7 +3023,7 @@ def resolve_ticket_graph_authority(
         source_bindings,
         review_reference,
     )
-    authority = resolve_tickets_policy(effective)
+    authority = effective["gates"]["tickets"]["authority"]
     if authority == "AGENT_REVIEW":
         if approval is not None:
             raise ControlError("AGENT_REVIEW tickets gate does not accept human approval")

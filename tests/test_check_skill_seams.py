@@ -476,6 +476,8 @@ class SkillSeamHardeningTests(unittest.TestCase):
             self.assertTrue(path.is_file(), path)
 
         producer = compile_path.read_text(encoding="utf-8")
+        template = template_path.read_text(encoding="utf-8")
+        authority = authority_path.read_text(encoding="utf-8")
         control = (plugin / "skills" / "control-planning" / "SKILL.md").read_text(encoding="utf-8")
         start = (plugin / "skills" / "start-run" / "SKILL.md").read_text(encoding="utf-8")
         readme = (plugin / "README.md").read_text(encoding="utf-8")
@@ -494,6 +496,11 @@ class SkillSeamHardeningTests(unittest.TestCase):
         ):
             self.assertIn(clause, producer)
         self.assertEqual(producer.count("atlas:control-planning"), 1)
+        self.assertIn("configured tickets authority `AGENT_REVIEW` or `HUMAN`", producer)
+        self.assertNotIn("canonical `CONDITIONAL`", producer)
+        self.assertIn("exactly one `vertical` ticket has `tracer: true`", template)
+        self.assertIn("Ticket-graph acceptance has no `CONDITIONAL` branch in V1", authority)
+        self.assertNotIn("`CONDITIONAL` →", authority)
 
         agent = SEAMS.yaml.safe_load(agent_path.read_text(encoding="utf-8"))
         self.assertEqual(agent["interface"], {

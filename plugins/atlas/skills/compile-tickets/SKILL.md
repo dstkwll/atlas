@@ -12,7 +12,7 @@ Resolve `<atlas-plugin-root>` from this installed skill before invoking a packag
 
 ## 1. Resume frozen authority
 
-Read immutable `run.yaml`, authoritative Stage 0 `control.json`, and `planning-control.json` before any producer action. Require current status `PLANNING`, phase `tickets`, gate `PENDING`, and no ticket-graph acceptance. Require exact configured tickets authority `AGENT_REVIEW`, `HUMAN`, or canonical `CONDITIONAL`. Reject every other status, phase, gate, prior acceptance, aliased authority, or incomplete state rather than repairing it or routing elsewhere.
+Read immutable `run.yaml`, authoritative Stage 0 `control.json`, and `planning-control.json` before any producer action. Require current status `PLANNING`, phase `tickets`, gate `PENDING`, and no ticket-graph acceptance. Require exact configured tickets authority `AGENT_REVIEW` or `HUMAN`. Reject every other status, phase, gate, prior acceptance, aliased authority, or incomplete state rather than repairing it or routing elsewhere.
 
 Derive every applicable source only from effective selected stages and exact current acceptances:
 

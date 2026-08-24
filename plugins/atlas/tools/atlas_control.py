@@ -371,6 +371,12 @@ def validate_run(config: dict[str, Any]) -> None:
             raise ControlError(f"run.yaml gate policy is malformed: {stage}")
     if discovery_selected and gates["discovery"].get("authority") not in {"AGENT_REVIEW", "HUMAN"}:
         raise ControlError("the semantic discovery boundary requires AGENT_REVIEW or HUMAN")
+    tickets_policy = gates.get("tickets")
+    if tickets_policy is not None and (
+        set(tickets_policy) != {"authority"}
+        or tickets_policy.get("authority") not in {"AGENT_REVIEW", "HUMAN"}
+    ):
+        raise ControlError("tickets supports only AGENT_REVIEW or HUMAN")
     root = config.get("planning_root")
     if not isinstance(root, dict) or set(root) != {"source", "mode", "path"}:
         raise ControlError("run.yaml planning_root is malformed")

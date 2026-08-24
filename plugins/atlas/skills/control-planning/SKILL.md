@@ -20,7 +20,7 @@ For `system_design`, require frozen participation `agent_led` or `co_design` and
 
 For `program_design`, require the configured `AGENT_REVIEW` or `HUMAN` authority exactly as defined in [`references/program-design-authority.md`](references/program-design-authority.md). Program Design has no participation, `AUTO`, or `HUMAN_IF_CHANGED` branch. If any frozen policy is incomplete, aliased, or contradictory, stop; no configured path falls back to another.
 
-For `tickets`, require configured `AGENT_REVIEW`, `HUMAN`, or canonical `CONDITIONAL` exactly as defined in [`references/ticket-graph-authority.md`](references/ticket-graph-authority.md). Tickets has no participation, `AUTO`, or `HUMAN_IF_CHANGED` branch. V1 conditional predicates are literal `single_repository` and `multi_repository`; unknown predicates fail closed.
+For `tickets`, require configured `AGENT_REVIEW` or `HUMAN` exactly as defined in [`references/ticket-graph-authority.md`](references/ticket-graph-authority.md). Tickets has no participation, `AUTO`, `CONDITIONAL`, or `HUMAN_IF_CHANGED` branch in V1.
 
 If files, fields, phase, policy, or frozen participation contradict one another, report the exact mismatch and stop. Never repair state, candidate bytes, board bytes, source bindings, or intake.
 
@@ -84,9 +84,9 @@ Follow the exact reviewer output, `DESIGN_BLOCKED` semantics, and authority matr
 
 ## Ticket graph branch
 
-Follow the exact seven-dimension judge schema, `DESIGN_BLOCKED` gap semantics, conditional mapping, and authority matrix in [`references/ticket-graph-authority.md`](references/ticket-graph-authority.md). Evidence lives only at `reviews/ticket-graph-v1.json`; the invoker assembles exact duplicate-safe JSON bytes after one fresh read-only judge examines the exact complete graph. Every configured or mapped path requires PASS. `BLOCKED` returns all local gaps to `atlas:compile-tickets`; a `DESIGN_BLOCKED` row remains a BLOCKED verdict and names the exact applicable upstream source without mutating it.
+Follow the exact seven-dimension judge schema, `DESIGN_BLOCKED` gap semantics, and authority matrix in [`references/ticket-graph-authority.md`](references/ticket-graph-authority.md). Evidence lives only at `reviews/ticket-graph-v1.json`; the invoker assembles exact duplicate-safe JSON bytes after one fresh read-only judge examines the exact complete graph. Every configured path requires PASS. `BLOCKED` returns all local gaps to `atlas:compile-tickets`; a `DESIGN_BLOCKED` row remains a BLOCKED verdict and names the exact applicable upstream source without mutating it.
 
-Resolve direct `AGENT_REVIEW` or `HUMAN`, or evaluate canonical `CONDITIONAL` entries in order using only literal `single_repository` and `multi_repository`, then `otherwise`. Unknown predicates stop. Mapped `AGENT_REVIEW` rejects human approval. Direct or mapped `HUMAN` requires explicit approval of the exact reviewed graph after PASS. The judge and human edit no ticket, manifest, source, repository, evidence, or state. No branch invokes execution.
+Resolve exact configured `AGENT_REVIEW` or `HUMAN`. `AGENT_REVIEW` rejects human approval. `HUMAN` requires explicit approval of the exact reviewed graph after PASS. The judge and human edit no ticket, manifest, source, repository, evidence, or state. No branch invokes execution.
 
 ## 4. Record one transition
 

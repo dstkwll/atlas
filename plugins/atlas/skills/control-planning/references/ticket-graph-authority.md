@@ -33,7 +33,7 @@
 Rules:
 
 - Top-level fields are exact. `version` and `candidate_version` are integers. Run, stage, configured policy, graph version/SHA-256, exact applicable source bindings, and repository baselines must match the current mechanically valid candidate.
-- `policy` records configured `AGENT_REVIEW`, `HUMAN`, or `CONDITIONAL`. For `CONDITIONAL`, V1 evaluates ordered literal `single_repository` and `multi_repository` predicates and then `otherwise`; unknown predicates fail closed.
+- `policy` records configured `AGENT_REVIEW` or `HUMAN`. Ticket-graph acceptance has no `CONDITIONAL` branch in V1.
 - The seven dimension identifiers above occur exactly once. Each row has exact `dimension`, `result`, and nonempty `evidence`. `result` is `PASS`, `BLOCKED`, or `DESIGN_BLOCKED`.
 - Envelope verdict is only `PASS` or `BLOCKED`: all rows PASS gives PASS; any other row gives BLOCKED. Gaps exactly cover non-PASS dimensions.
 - A local Stage 5 defect uses exact `code`, `dimension`, `problem`, and `resume_action`.
@@ -42,12 +42,10 @@ Rules:
 
 ## Authority matrix
 
-| Configured/mapped policy | Required evidence | Recorded authority |
+| Configured policy | Required evidence | Recorded authority |
 |---|---|---|
 | `AGENT_REVIEW` | exact PASS `reviews/ticket-graph-v1.json`; no human approval | `AGENT_REVIEW` |
 | `HUMAN` | same exact PASS review plus explicit approval of that graph | `HUMAN` |
-| `CONDITIONAL` → `AGENT_REVIEW` | exact PASS review; no human approval | `AGENT_REVIEW` |
-| `CONDITIONAL` → `HUMAN` | exact PASS review plus explicit approval | `HUMAN` |
 
 Fresh review is mandatory on every path. Human approval never bypasses review. BLOCKED or DESIGN_BLOCKED changes no state.
 

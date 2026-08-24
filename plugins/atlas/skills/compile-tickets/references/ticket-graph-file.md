@@ -42,7 +42,7 @@ Rules:
 - `source_bindings` exactly equals the applicable accepted selected-path source list. It may contain `product_closure`, `system_design`, `program_design`, and the discriminated Stage 0 binding only where applicable. Omitted boundaries never appear.
 - `repository_baselines` exactly equals effective frozen `run.yaml` repositories in order.
 - `preferred_order` contains every ticket identity exactly once and is distinct from dependency truth.
-- `tracer_ticket` is `null` when no tracer applies; otherwise it names one `vertical` ticket whose `tracer` field is `true`.
+- `tracer_ticket` is `null` exactly when zero tickets have `tracer: true`; otherwise exactly one `vertical` ticket has `tracer: true` and its identity equals `tracer_ticket`.
 - `tickets` indexes every and only `tickets/*.md` file. Each path is exactly `tickets/<id>.md`; each SHA-256 binds exact file bytes.
 - The direct trivial path has exactly one ticket, one manifest entry, and the frozen Stage 0 source binding.
 

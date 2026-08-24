@@ -86,20 +86,14 @@ overrides:
 - `recommendation` records workflow, governance, execution policy, environment policy, roster, the complete recommended gate map, and structured evidence before overrides.
 - `workflow` records the accepted workflow depth; `stages` records its resolved ordered stages beginning with the selected earliest producer. Discovery is present only when selected and is first when present.
 - `system_design_participation` is exactly the user's explicit `agent_led` or `co_design` choice when `system_design` is selected and is `null` otherwise. Stage 0 presents both choices neutrally exactly once; the classifier neither recommends nor chooses the value. Participation affects collaboration only, never acceptance authority. Downstream System Design reads the frozen value and never asks again. Program Design and tickets have no participation mode.
-- `governance` records the accepted posture; `gates` records the fully resolved policy for every selected stage and every run-relevant conditionally reachable route. Every entry has `authority`. General vocabulary is `AUTO`, `AGENT_REVIEW`, `HUMAN`, `CONDITIONAL`, and `HUMAN_IF_CHANGED`, but each boundary narrows it. Discovery allows only `AGENT_REVIEW` or `HUMAN`. System Design allows `HUMAN`, `AGENT_REVIEW`, or `HUMAN_IF_CHANGED`, never `AUTO`; `HUMAN_IF_CHANGED` requires `otherwise: AGENT_REVIEW` and exactly these seven `material_dimensions` in this order: `responsibilities_and_system_seams`, `authoritative_data_ownership`, `cross_module_external_contracts_and_dependencies`, `target_schema_protocol`, `end_to_end_lifecycle_failure_recovery`, `compatibility_guarantees`, `trust_security_operational_commitments`. Program Design allows only `HUMAN` or `AGENT_REVIEW`. Tickets allows `HUMAN`, `AGENT_REVIEW`, or `CONDITIONAL`, but not `AUTO` in V1; `CONDITIONAL` requires a nonempty ordered `conditions` list whose entries each contain `when` and `then`, plus `otherwise`. When a stage is omitted, omit its gate policy too. The explicit map wins over later changes to global profiles.
+- `governance` records the accepted posture; `gates` records the fully resolved policy for every selected stage and every run-relevant conditionally reachable route. Every entry has `authority`. General vocabulary is `AUTO`, `AGENT_REVIEW`, `HUMAN`, `CONDITIONAL`, and `HUMAN_IF_CHANGED`, but each boundary narrows it. Discovery allows only `AGENT_REVIEW` or `HUMAN`. System Design allows `HUMAN`, `AGENT_REVIEW`, or `HUMAN_IF_CHANGED`, never `AUTO`; `HUMAN_IF_CHANGED` requires `otherwise: AGENT_REVIEW` and exactly these seven `material_dimensions` in this order: `responsibilities_and_system_seams`, `authoritative_data_ownership`, `cross_module_external_contracts_and_dependencies`, `target_schema_protocol`, `end_to_end_lifecycle_failure_recovery`, `compatibility_guarantees`, `trust_security_operational_commitments`. Program Design allows only `HUMAN` or `AGENT_REVIEW`. Tickets allows only `HUMAN` or `AGENT_REVIEW` in V1; it has no `AUTO` or `CONDITIONAL` branch. When a stage is omitted, omit its gate policy too. The explicit map wins over later changes to global profiles.
 - A conditionally reachable route omitted from `stages` records `activation.when` separately from gate review policy. This remains immutable policy in `run.yaml`; it does not create mutable gate state in the Stage 0–2 `control.json`, which owns the discovery boundary only when selected. If discovery is omitted, the controller creates no mutable gates and starts at the actual first selected phase. The later-stage controller that owns the route may materialize `NOT_REQUIRED` and reachable states when that capability is implemented.
 - A `CONDITIONAL` entry also records ordered `conditions`, the authority produced by each match, and `otherwise` authority. A `HUMAN_IF_CHANGED` entry records the exact ordered seven System Design identifiers above and the `otherwise` authority used when none changed. Never write either authority without those operands: a label that requires later profile interpretation is not a resolved snapshot.
 
-Use these exact shapes when either special authority is selected:
+Use this exact shape when `HUMAN_IF_CHANGED` is selected:
 
 ```yaml
 gates:
-  tickets:
-    authority: CONDITIONAL
-    conditions:
-      - when: <structured predicate over run or artifact state>
-        then: HUMAN
-    otherwise: AGENT_REVIEW
   system_design:
     authority: HUMAN_IF_CHANGED
     material_dimensions:

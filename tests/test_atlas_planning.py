@@ -1167,48 +1167,77 @@ class AtlasPlanningTests(unittest.TestCase):
             report = json.loads(result.stdout)
             self.assertTrue(any("contains a cycle" in item["problem"] for item in report["gaps"]), report)
 
-    def test_ticket_graph_conditional_authority_maps_known_predicate_and_rejects_unknown(self):
-        known = {
-            "authority": "CONDITIONAL",
-            "conditions": [
-                {"when": "multi_repository", "then": "HUMAN"},
-                {"when": "single_repository", "then": "AGENT_REVIEW"},
-            ],
-            "otherwise": "HUMAN",
-        }
+    def test_ticket_graph_rejects_multiple_tracer_flags(self):
         with tempfile.TemporaryDirectory() as td:
             run = Path(td)
-            _, _, _ = initialize_trivial_ticket_candidate(run, ticket_policy=known)
-            review = write_ticket_review(run, policy="CONDITIONAL")
-
-            result = planning_cli(
-                "advance", "--run", run, "--stage", "tickets",
-                "--review", review.relative_to(run), "--date", "2026-08-24",
+            planning = initialize_direct_program(run, authority="AGENT_REVIEW")
+            anchor = planning["stage0_anchor"]
+            stage0_source = {
+                "kind": "stage0",
+                "artifact": "run.yaml",
+                "sha256": anchor["base_run_sha256"],
+                "effective_config_hash": anchor["effective_config_hash"],
+                "effective_config_revision": anchor["effective_config_revision"],
+            }
+            write_program_design(run, stage0_source)
+            program_review = write_program_review(run, policy="AGENT_REVIEW")
+            accepted_program = planning_cli(
+                "advance", "--run", run, "--stage", "program_design",
+                "--review", program_review.relative_to(run), "--date", "2026-08-24",
             )
-
-            self.assertEqual(result.returncode, 0, result.stderr)
-            state = PLANNING.load_planning_control(run)
-            self.assertEqual(state["acceptances"]["tickets"]["authority"], "AGENT_REVIEW")
-            self.assertEqual(state["status"], "READY_FOR_EXECUTION")
-
-        unknown = {
-            "authority": "CONDITIONAL",
-            "conditions": [{"when": "invented_predicate", "then": "HUMAN"}],
-            "otherwise": "AGENT_REVIEW",
-        }
-        with tempfile.TemporaryDirectory() as td:
-            run = Path(td)
-            _, _, _ = initialize_trivial_ticket_candidate(run, ticket_policy=unknown)
-            review = write_ticket_review(run, policy="CONDITIONAL")
+            self.assertEqual(accepted_program.returncode, 0, accepted_program.stderr)
+            source_bindings = [stage0_source, {
+                "kind": "program_design",
+                "artifact": "40-program-design.md",
+                "version": 1,
+                "sha256": sha256(run / "40-program-design.md"),
+            }]
+            tickets = []
+            for ticket_id in ("tracer-a", "tracer-b"):
+                validator_id = f"{ticket_id}-proof"
+                tickets.append({
+                    "id": ticket_id,
+                    "kind": "vertical",
+                    "status": "ready",
+                    "repository": "fixture",
+                    "blocked_by": [],
+                    "tracer": True,
+                    "enabling": None,
+                    "references": [
+                        {"kind": "stage0", "sections": []},
+                        {"kind": "program_design", "sections": ["Call and data flow"]},
+                    ],
+                    "external_prerequisites": [],
+                    "validators": [{
+                        "id": validator_id,
+                        "command": f"python3 -c 'print(\"{ticket_id}\")'",
+                        "success": "exit_zero",
+                    }],
+                    "outcomes": [{
+                        "id": f"{ticket_id}-outcome",
+                        "promise": f"{ticket_id} establishes one observable behavior.",
+                        "acceptance": [f"{ticket_id} behavior is observed through its public seam."],
+                        "validator_ids": [validator_id],
+                    }],
+                    "reviews": ["design"],
+                })
             before = (run / "planning-control.json").read_bytes()
-
-            result = planning_cli(
-                "advance", "--run", run, "--stage", "tickets",
-                "--review", review.relative_to(run), "--date", "2026-08-24",
+            write_ticket_graph(
+                run,
+                source_bindings,
+                tickets=tickets,
+                preferred_order=["tracer-a", "tracer-b"],
+                tracer_ticket="tracer-a",
             )
 
-            self.assertNotEqual(result.returncode, 0)
-            self.assertIn("unsupported", result.stderr)
+            result = planning_cli("check", "--run", run, "--stage", "tickets")
+
+            self.assertEqual(result.returncode, 1, result.stderr)
+            report = json.loads(result.stdout)
+            self.assertTrue(
+                any("exactly one" in item["problem"] for item in report["gaps"]),
+                report,
+            )
             self.assertEqual((run / "planning-control.json").read_bytes(), before)
 
     def test_accepted_ticket_graph_revalidates_manifest_ticket_review_and_repository_currency(self):
@@ -2654,13 +2683,6 @@ class AtlasPlanningTests(unittest.TestCase):
             "program CONDITIONAL": (
                 "program_design", {"authority": "CONDITIONAL", "conditions": [{"when": "changed", "then": "HUMAN"}], "otherwise": "AGENT_REVIEW"}
             ),
-            "tickets AUTO": ("tickets", {"authority": "AUTO"}),
-            "tickets CONDITIONAL missing conditions": (
-                "tickets", {"authority": "CONDITIONAL", "conditions": [], "otherwise": "AGENT_REVIEW"}
-            ),
-            "tickets CONDITIONAL incomplete condition": (
-                "tickets", {"authority": "CONDITIONAL", "conditions": [{"when": "large"}], "otherwise": "AGENT_REVIEW"}
-            ),
         }
         for name, (stage, policy) in cases.items():
             with self.subTest(name=name), tempfile.TemporaryDirectory() as td:
@@ -2687,14 +2709,7 @@ class AtlasPlanningTests(unittest.TestCase):
                 "material_dimensions": list(SYSTEM_DESIGN_DIMENSIONS),
                 "otherwise": "AGENT_REVIEW",
             }
-            config["gates"]["tickets"] = {
-                "authority": "CONDITIONAL",
-                "conditions": [
-                    {"when": "multi_repository", "then": "HUMAN"},
-                    {"when": "single_repository", "then": "AGENT_REVIEW"},
-                ],
-                "otherwise": "AGENT_REVIEW",
-            }
+            config["gates"]["tickets"] = {"authority": "AGENT_REVIEW"}
             write_stage0_run(run, config)
 
             result = planning_cli("initialize", "--run", run)

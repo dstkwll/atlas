@@ -300,7 +300,7 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "READY_FOR_EXECUTION",
         ],
         "ticket-graph-template": [
-            '"preferred_order"', '"tracer_ticket"', '"source_bindings"',
+            '"preferred_order"', '"tracer_ticket"', '"source_bindings"', "exactly one",
             "blocked_by:", "external_prerequisites:", "validators:", "outcomes:",
             "What becomes true", "Acceptance", "Relevant design",
         ],
@@ -337,7 +337,7 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "BLOCKED", "DESIGN_BLOCKED", "upstream_issue", "resume_boundary",
         ],
         "ticket-graph-authority": [
-            "reviews/ticket-graph-v1.json", "AGENT_REVIEW", "HUMAN", "CONDITIONAL",
+            "reviews/ticket-graph-v1.json", "AGENT_REVIEW", "HUMAN",
             "PASS", "BLOCKED", "DESIGN_BLOCKED", "deterministic_behavior_proof",
             "READY_FOR_EXECUTION",
         ],

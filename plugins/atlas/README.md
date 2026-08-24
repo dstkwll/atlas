@@ -20,7 +20,7 @@ start-run freezes run.yaml and initializes control.json
   → atlas_planning.py records one exact Program Design acceptance and advances to tickets
   → compile-tickets writes filesystem-backed vertical ticket contracts plus one hashable graph manifest
   → read-only mechanical graph check and fresh seven-dimension semantic judge
-  → workflow-internal control-planning applies configured AGENT_REVIEW, HUMAN, or canonical CONDITIONAL tickets authority
+  → workflow-internal control-planning applies configured AGENT_REVIEW or HUMAN tickets authority
   → atlas_planning.py records exact graph acceptance and stops at `READY_FOR_EXECUTION`
 ```
 
