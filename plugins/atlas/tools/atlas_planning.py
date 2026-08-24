@@ -1627,22 +1627,31 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
         return planning
 
     pending = [stage for stage in DOWNSTREAM_STAGES if gates[stage] == "PENDING"]
-    completed_repair_attempts = (
+    repaired_revision_delta = (
         planning["revision"] - system_acceptance_repair_context["acceptance_revision"] - 1
         if system_acceptance_repair_context is not None
         else None
     )
-    completed_repair_remaining = (
+    repaired_attempts_remaining = (
         4 - system_acceptance_repair_context["attempts_used"]
         if system_acceptance_repair_context is not None
         else None
     )
-    revision_is_coherent = (
-        planning["revision"] == 1 + len(approved_stages)
-        if completed_repair_attempts is None
+    normal_revision_is_coherent = planning["revision"] == 1 + len(approved_stages)
+    planning_revision_is_coherent = (
+        normal_revision_is_coherent
+        if repaired_revision_delta is None
         else (
-            completed_repair_remaining is not None
-            and 1 <= completed_repair_attempts <= completed_repair_remaining
+            repaired_attempts_remaining is not None
+            and 1 <= repaired_revision_delta <= repaired_attempts_remaining
+        )
+    )
+    ready_revision_is_coherent = (
+        normal_revision_is_coherent
+        if repaired_revision_delta is None
+        else (
+            repaired_attempts_remaining is not None
+            and 2 <= repaired_revision_delta <= repaired_attempts_remaining + 1
         )
     )
     ready_for_execution = (
@@ -1652,7 +1661,7 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
         and gates["tickets"] in {"HUMAN_APPROVED", "AGENT_APPROVED"}
         and acceptances["tickets"] is not None
         and "STALE" not in gates.values()
-        and revision_is_coherent
+        and ready_revision_is_coherent
     )
     if ready_for_execution:
         return planning
@@ -1661,7 +1670,7 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
         or "STALE" in gates.values()
         or not pending
         or planning.get("phase") != pending[0]
-        or not revision_is_coherent
+        or not planning_revision_is_coherent
     ):
         raise ControlError("planning-control.json values are not a coherent current planning state")
     return planning

@@ -1273,85 +1273,112 @@ class AtlasPlanningTests(unittest.TestCase):
                         )
             self.assertEqual((run / "planning-control.json").read_bytes(), before)
 
-    def test_ticket_graph_acceptance_completes_after_bounded_system_repair(self):
-        with tempfile.TemporaryDirectory() as td:
-            run = Path(td)
-            planning = initialize_program_after_system(run, system_authority="AGENT_REVIEW")
-            original_system = planning["acceptances"]["system_design"]
-            write_program_design(run, {
-                "kind": "system_design",
-                "artifact": "30-system-design.md",
-                "version": original_system["candidate_version"],
-                "sha256": original_system["candidate_sha256"],
-            })
-            review_input = write_upstream_block_review_input(run, planning)
-            returned = planning_cli(
-                "return-upstream", "--run", run,
-                "--review-input", review_input.relative_to(run),
-            )
-            self.assertEqual(returned.returncode, 0, returned.stderr)
-            system_reserved = planning_cli(
-                "reserve-repair-attempt", "--run", run, "--stage", "system_design",
-            )
-            self.assertEqual(system_reserved.returncode, 0, system_reserved.stderr)
-            episode = PLANNING.load_planning_control(run)["blocked_reason"]
-            write_system_design(
-                run,
-                copy.deepcopy(episode["superseded_system_design"]["source_bindings"][0]),
-                version=2,
-            )
-            system_review = write_system_repair_review(run)
-            system_accepted = planning_cli(
-                "advance", "--run", run, "--stage", "system_design",
-                "--review", system_review.relative_to(run), "--date", "2026-08-24",
-            )
-            self.assertEqual(system_accepted.returncode, 0, system_accepted.stderr)
+    def advance_bounded_repair_to_ready(self, run: Path, *, program_attempts: int) -> dict:
+        planning = initialize_program_after_system(run, system_authority="AGENT_REVIEW")
+        original_system = planning["acceptances"]["system_design"]
+        write_program_design(run, {
+            "kind": "system_design",
+            "artifact": "30-system-design.md",
+            "version": original_system["candidate_version"],
+            "sha256": original_system["candidate_sha256"],
+        })
+        review_input = write_upstream_block_review_input(run, planning)
+        returned = planning_cli(
+            "return-upstream", "--run", run,
+            "--review-input", review_input.relative_to(run),
+        )
+        self.assertEqual(returned.returncode, 0, returned.stderr)
+        system_reserved = planning_cli(
+            "reserve-repair-attempt", "--run", run, "--stage", "system_design",
+        )
+        self.assertEqual(system_reserved.returncode, 0, system_reserved.stderr)
+        episode = PLANNING.load_planning_control(run)["blocked_reason"]
+        write_system_design(
+            run,
+            copy.deepcopy(episode["superseded_system_design"]["source_bindings"][0]),
+            version=2,
+        )
+        system_review = write_system_repair_review(run)
+        system_accepted = planning_cli(
+            "advance", "--run", run, "--stage", "system_design",
+            "--review", system_review.relative_to(run), "--date", "2026-08-24",
+        )
+        self.assertEqual(system_accepted.returncode, 0, system_accepted.stderr)
+        for _ in range(program_attempts):
             program_reserved = planning_cli(
                 "reserve-repair-attempt", "--run", run, "--stage", "program_design",
             )
             self.assertEqual(program_reserved.returncode, 0, program_reserved.stderr)
-            repaired = PLANNING.load_planning_control(run)["acceptances"]["system_design"]
-            write_program_design(run, {
-                "kind": "system_design",
-                "artifact": "30-system-design.md",
-                "version": repaired["candidate_version"],
-                "sha256": repaired["candidate_sha256"],
-            })
-            program_review = write_program_review(run, policy="AGENT_REVIEW")
-            program_accepted = planning_cli(
-                "advance", "--run", run, "--stage", "program_design",
-                "--review", program_review.relative_to(run), "--date", "2026-08-24",
-            )
-            self.assertEqual(program_accepted.returncode, 0, program_accepted.stderr)
-            pending = PLANNING.load_planning_control(run)
-            self.assertEqual((pending["status"], pending["phase"], pending["revision"]), ("PLANNING", "tickets", 7))
-            _, effective = PLANNING.verified_state(run)
-            sources = PLANNING.expected_ticket_graph_sources(pending, effective)
-            manifest_path = write_ticket_graph(run, sources)
-            ticket_path = run / "tickets" / "demo-01.md"
-            ticket, body = PLANNING.read_frontmatter(ticket_path)
-            ticket["references"] = [
-                {"kind": "system_design", "sections": ["Contracts and interfaces"]},
-                {"kind": "program_design", "sections": ["Call and data flow"]},
-            ]
-            write_markdown(ticket_path, ticket, body)
-            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-            manifest["tickets"][0]["sha256"] = sha256(ticket_path)
-            manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
-            ticket_review = write_ticket_review(run, policy="HUMAN")
+        repaired = PLANNING.load_planning_control(run)["acceptances"]["system_design"]
+        write_program_design(run, {
+            "kind": "system_design",
+            "artifact": "30-system-design.md",
+            "version": repaired["candidate_version"],
+            "sha256": repaired["candidate_sha256"],
+        })
+        program_review = write_program_review(run, policy="AGENT_REVIEW")
+        program_accepted = planning_cli(
+            "advance", "--run", run, "--stage", "program_design",
+            "--review", program_review.relative_to(run), "--date", "2026-08-24",
+        )
+        self.assertEqual(program_accepted.returncode, 0, program_accepted.stderr)
+        pending = PLANNING.load_planning_control(run)
+        expected_pending_revision = 6 + program_attempts
+        self.assertEqual(
+            (pending["status"], pending["phase"], pending["revision"]),
+            ("PLANNING", "tickets", expected_pending_revision),
+        )
+        _, effective = PLANNING.verified_state(run)
+        sources = PLANNING.expected_ticket_graph_sources(pending, effective)
+        manifest_path = write_ticket_graph(run, sources)
+        ticket_path = run / "tickets" / "demo-01.md"
+        ticket, body = PLANNING.read_frontmatter(ticket_path)
+        ticket["references"] = [
+            {"kind": "system_design", "sections": ["Contracts and interfaces"]},
+            {"kind": "program_design", "sections": ["Call and data flow"]},
+        ]
+        write_markdown(ticket_path, ticket, body)
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["tickets"][0]["sha256"] = sha256(ticket_path)
+        manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+        ticket_review = write_ticket_review(run, policy="HUMAN")
+        accepted = planning_cli(
+            "advance", "--run", run, "--stage", "tickets",
+            "--review", ticket_review.relative_to(run),
+            "--approval", "human", "--date", "2026-08-24",
+        )
+        self.assertEqual(accepted.returncode, 0, accepted.stderr)
+        return PLANNING.load_planning_control(run)
 
-            accepted = planning_cli(
-                "advance", "--run", run, "--stage", "tickets",
-                "--review", ticket_review.relative_to(run),
-                "--approval", "human", "--date", "2026-08-24",
-            )
+    def test_ticket_graph_acceptance_supports_complete_repair_attempt_budget(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            final = self.advance_bounded_repair_to_ready(run, program_attempts=3)
 
-            self.assertEqual(accepted.returncode, 0, accepted.stderr)
-            final = PLANNING.load_planning_control(run)
-            self.assertEqual((final["status"], final["phase"], final["revision"]), ("READY_FOR_EXECUTION", "tickets", 8))
+            self.assertEqual(
+                (final["status"], final["phase"], final["revision"]),
+                ("READY_FOR_EXECUTION", "tickets", 10),
+            )
             self.assertEqual(final["gates"]["tickets"], "HUMAN_APPROVED")
             self.assertIsNone(final["blocked_reason"])
             self.assertFalse((run / ".factory").exists())
+
+    def test_repaired_ready_state_rejects_decremented_terminal_revision(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            final = self.advance_bounded_repair_to_ready(run, program_attempts=1)
+            self.assertEqual(final["revision"], 8)
+            final["revision"] = 7
+            (run / "planning-control.json").write_text(
+                json.dumps(final, indent=2) + "\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(
+                PLANNING.ControlError,
+                "planning-control.json values are not a coherent current planning state",
+            ):
+                PLANNING.load_planning_control(run)
 
     def test_program_design_check_blocks_missing_binding_without_mutation(self):
         with tempfile.TemporaryDirectory() as td:
