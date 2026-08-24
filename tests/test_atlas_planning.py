@@ -173,6 +173,15 @@ PROGRAM_DESIGN_DIMENSIONS = (
     "migration_and_local_failure_path_implementation",
     "testability_and_compilation_readiness",
 )
+TICKET_GRAPH_DIMENSIONS = (
+    "selected_path_applicability_and_no_redesign",
+    "vertical_outcomes_and_required_boundaries",
+    "enabling_ticket_justification",
+    "dependency_truth_and_preferred_order",
+    "external_readiness_and_design_blocking",
+    "deterministic_behavior_proof",
+    "execution_handoff_completeness",
+)
 
 
 def write_system_design(run: Path, source_binding: dict, **overrides) -> None:
@@ -513,6 +522,132 @@ def write_program_review(run: Path, *, policy: str, review=None) -> Path:
     return path
 
 
+def write_ticket_graph(
+    run: Path,
+    source_bindings: list[dict],
+    *,
+    tickets=None,
+    preferred_order=None,
+    tracer_ticket="demo-01",
+) -> Path:
+    config = yaml.safe_load((run / "run.yaml").read_text(encoding="utf-8"))
+    tickets_dir = run / "tickets"
+    tickets_dir.mkdir()
+    if tickets is None:
+        tickets = [{
+            "id": "demo-01",
+            "kind": "vertical",
+            "status": "ready",
+            "repository": config["repos"][0]["repository"],
+            "blocked_by": [],
+            "tracer": True,
+            "enabling": None,
+            "references": [{"kind": "stage0", "sections": []}],
+            "external_prerequisites": [],
+            "validators": [{
+                "id": "goal-recognized",
+                "command": "python3 -c 'print(\"goal recognized\")'",
+                "success": "exit_zero",
+            }],
+            "outcomes": [{
+                "id": "goal-recognized",
+                "promise": "The accepted direct goal is represented by one executable ticket.",
+                "acceptance": ["The one-node graph exposes exactly one independently runnable ticket."],
+                "validator_ids": ["goal-recognized"],
+            }],
+            "reviews": [],
+        }]
+    entries = []
+    for ticket in tickets:
+        path = tickets_dir / f"{ticket['id']}.md"
+        body = (
+            f"# {ticket['id']}\n\n"
+            "## What becomes true\n\n"
+            f"{ticket['outcomes'][0]['promise']}\n\n"
+            "## Acceptance\n\n"
+            + "\n".join(f"- {item}" for item in ticket["outcomes"][0]["acceptance"])
+            + "\n\n## Relevant design\n\n"
+            + "\n".join(f"- `{item['kind']}`" for item in ticket["references"])
+            + "\n"
+        )
+        write_markdown(path, ticket, body)
+        entries.append({
+            "id": ticket["id"],
+            "path": path.relative_to(run).as_posix(),
+            "sha256": sha256(path),
+        })
+    manifest = run / "50-ticket-graph.json"
+    manifest.write_text(json.dumps({
+        "version": 1,
+        "run": config["run"],
+        "status": "draft",
+        "gate_ready": True,
+        "source_bindings": source_bindings,
+        "repository_baselines": config["repos"],
+        "preferred_order": preferred_order or [ticket["id"] for ticket in tickets],
+        "tracer_ticket": tracer_ticket,
+        "tickets": entries,
+    }, indent=2) + "\n", encoding="utf-8")
+    return manifest
+
+
+def write_ticket_review(run: Path, *, policy: str, verdict: str = "PASS") -> Path:
+    manifest = json.loads((run / "50-ticket-graph.json").read_text(encoding="utf-8"))
+    blocked = verdict != "PASS"
+    rows = [{
+        "dimension": dimension,
+        "result": "BLOCKED" if blocked and index == 0 else "PASS",
+        "evidence": f"Independent Stage 5 evidence for {dimension}.",
+    } for index, dimension in enumerate(TICKET_GRAPH_DIMENSIONS)]
+    gaps = ([{
+        "code": "ticket-graph-gap-1",
+        "dimension": TICKET_GRAPH_DIMENSIONS[0],
+        "problem": "The graph does not preserve the accepted selected path.",
+        "resume_action": "Repair the exact Stage 5 candidate graph.",
+    }] if blocked else [])
+    path = run / "reviews" / "ticket-graph-v1.json"
+    path.parent.mkdir(exist_ok=True)
+    path.write_text(json.dumps({
+        "version": 1,
+        "run": manifest["run"],
+        "stage": "tickets",
+        "policy": policy,
+        "candidate_version": manifest["version"],
+        "candidate_sha256": sha256(run / "50-ticket-graph.json"),
+        "source_bindings": manifest["source_bindings"],
+        "repository_baselines": manifest["repository_baselines"],
+        "semantic_review": {
+            "verdict": verdict,
+            "dimensions": rows,
+            "gaps": gaps,
+        },
+    }, indent=2) + "\n", encoding="utf-8")
+    return path
+
+
+def initialize_trivial_ticket_candidate(run: Path, *, ticket_policy=None) -> tuple[dict, dict, Path]:
+    config = run_config()
+    config["version"] = 2
+    config["system_design_participation"] = None
+    config["stages"] = ["tickets", "execute"]
+    config["gates"] = {"tickets": ticket_policy or {"authority": "AGENT_REVIEW"}}
+    config["recommendation"]["gates"] = config["gates"]
+    write_stage0_run(run, config)
+    initialized = planning_cli("initialize", "--run", run)
+    if initialized.returncode != 0:
+        raise AssertionError(initialized.stderr)
+    planning = PLANNING.load_planning_control(run)
+    anchor = planning["stage0_anchor"]
+    source = {
+        "kind": "stage0",
+        "artifact": "run.yaml",
+        "sha256": anchor["base_run_sha256"],
+        "effective_config_hash": anchor["effective_config_hash"],
+        "effective_config_revision": anchor["effective_config_revision"],
+    }
+    return planning, source, write_ticket_graph(run, [source])
+
+
 def write_upstream_block_review_input(run: Path, planning: dict, *, verdict="CONFIRMED_UPSTREAM_CONTRADICTION") -> Path:
     acceptance = planning["acceptances"]["system_design"]
     assert isinstance(acceptance, dict)
@@ -657,6 +792,622 @@ class AtlasPlanningTests(unittest.TestCase):
         _TEST_REPOSITORY_SOURCES = {}
         self.environment.stop()
         self.machine_temp.cleanup()
+
+    def test_trivial_one_node_ticket_graph_is_accepted_and_stops_at_execution_boundary(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            config = run_config()
+            config["version"] = 2
+            config["system_design_participation"] = None
+            config["stages"] = ["tickets", "execute"]
+            config["gates"] = {"tickets": {"authority": "AGENT_REVIEW"}}
+            config["recommendation"]["gates"] = config["gates"]
+            write_stage0_run(run, config)
+            initialized = planning_cli("initialize", "--run", run)
+            self.assertEqual(initialized.returncode, 0, initialized.stderr)
+            planning = PLANNING.load_planning_control(run)
+            anchor = planning["stage0_anchor"]
+            source = {
+                "kind": "stage0",
+                "artifact": "run.yaml",
+                "sha256": anchor["base_run_sha256"],
+                "effective_config_hash": anchor["effective_config_hash"],
+                "effective_config_revision": anchor["effective_config_revision"],
+            }
+            manifest = write_ticket_graph(run, [source])
+            review = write_ticket_review(run, policy="AGENT_REVIEW")
+            immutable_before = {
+                path.relative_to(run).as_posix(): path.read_bytes()
+                for path in (manifest, run / "tickets" / "demo-01.md", review, run / "control.json")
+            }
+
+            checked = planning_cli("check", "--run", run, "--stage", "tickets")
+            self.assertEqual(checked.returncode, 0, checked.stderr)
+            report = json.loads(checked.stdout)
+            self.assertEqual(report["verdict"], "PASS")
+            self.assertEqual(report["candidate_sha256"], sha256(manifest))
+            self.assertEqual(report["source_bindings"], [source])
+
+            accepted = planning_cli(
+                "advance", "--run", run, "--stage", "tickets",
+                "--review", "reviews/ticket-graph-v1.json", "--date", "2026-08-24",
+            )
+            self.assertEqual(accepted.returncode, 0, accepted.stderr)
+            self.assertIn("READY_FOR_EXECUTION", accepted.stdout)
+            state = PLANNING.load_planning_control(run)
+            self.assertEqual((state["status"], state["phase"], state["revision"]), (
+                "READY_FOR_EXECUTION", "tickets", 2,
+            ))
+            self.assertEqual(state["gates"]["tickets"], "AGENT_APPROVED")
+            self.assertEqual(state["acceptances"]["tickets"], {
+                "candidate_version": 1,
+                "candidate_sha256": sha256(manifest),
+                "authority": "AGENT_REVIEW",
+                "accepted": "2026-08-24",
+                "review_reference": "reviews/ticket-graph-v1.json",
+                "review_sha256": sha256(review),
+                "source_bindings": [source],
+                "repository_baselines": config["repos"],
+            })
+            self.assertEqual({
+                path.relative_to(run).as_posix(): path.read_bytes()
+                for path in (manifest, run / "tickets" / "demo-01.md", review, run / "control.json")
+            }, immutable_before)
+            self.assertFalse((run / ".factory").exists())
+            self.assertFalse((run / "execution-brief.json").exists())
+
+            before_repeat = (run / "planning-control.json").read_bytes()
+            repeated = planning_cli(
+                "advance", "--run", run, "--stage", "tickets",
+                "--review", "reviews/ticket-graph-v1.json", "--date", "2026-08-24",
+            )
+            self.assertNotEqual(repeated.returncode, 0)
+            self.assertEqual((run / "planning-control.json").read_bytes(), before_repeat)
+
+    def test_program_design_ticket_graph_rejects_invented_source_section_then_accepts_vertical_graph(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            planning = initialize_direct_program(run, authority="AGENT_REVIEW")
+            anchor = planning["stage0_anchor"]
+            stage0_source = {
+                "kind": "stage0",
+                "artifact": "run.yaml",
+                "sha256": anchor["base_run_sha256"],
+                "effective_config_hash": anchor["effective_config_hash"],
+                "effective_config_revision": anchor["effective_config_revision"],
+            }
+            write_program_design(run, stage0_source)
+            program_review = write_program_review(run, policy="AGENT_REVIEW")
+            accepted_program = planning_cli(
+                "advance", "--run", run, "--stage", "program_design",
+                "--review", program_review.relative_to(run), "--date", "2026-08-24",
+            )
+            self.assertEqual(accepted_program.returncode, 0, accepted_program.stderr)
+            program_source = {
+                "kind": "program_design",
+                "artifact": "40-program-design.md",
+                "version": 1,
+                "sha256": sha256(run / "40-program-design.md"),
+            }
+            source_bindings = [stage0_source, program_source]
+
+            def ticket(
+                ticket_id,
+                *,
+                kind="vertical",
+                blocked_by=None,
+                tracer=False,
+                enabling=None,
+                sections=None,
+                external_prerequisites=None,
+            ):
+                validator_id = f"{ticket_id}-proof"
+                return {
+                    "id": ticket_id,
+                    "kind": kind,
+                    "status": "ready",
+                    "repository": "fixture",
+                    "blocked_by": blocked_by or [],
+                    "tracer": tracer,
+                    "enabling": enabling,
+                    "references": [
+                        {"kind": "stage0", "sections": []},
+                        {"kind": "program_design", "sections": sections or ["Test seams and validation plan"]},
+                    ],
+                    "external_prerequisites": external_prerequisites or [],
+                    "validators": [{
+                        "id": validator_id,
+                        "command": f"python3 -c 'print(\"{ticket_id}\")'",
+                        "success": "exit_zero",
+                    }],
+                    "outcomes": [{
+                        "id": f"{ticket_id}-outcome",
+                        "promise": f"{ticket_id} establishes one observable behavior.",
+                        "acceptance": [f"{ticket_id} behavior is observed through its public seam."],
+                        "validator_ids": [validator_id],
+                    }],
+                    "reviews": ["design"] if kind == "vertical" else [],
+                }
+
+            tickets = [
+                ticket(
+                    "baseline-validator",
+                    kind="enabling",
+                    enabling={
+                        "consumer": "vertical-command-flow",
+                        "rationale": "The exact baseline probe must be callable before the first behavior slice can prove its path.",
+                    },
+                ),
+                ticket(
+                    "vertical-command-flow",
+                    blocked_by=[{
+                        "ticket": "baseline-validator",
+                        "establishes": "A deterministic exact-baseline validator is available to the vertical flow.",
+                    }],
+                    tracer=True,
+                    sections=["Imaginary design section"],
+                    external_prerequisites=[{
+                        "id": "baseline-object-readable",
+                        "condition": "The frozen target commit object is locally readable.",
+                        "satisfaction": {
+                            "kind": "command",
+                            "command": f"git cat-file -e {self.fixture_baseline}^{{commit}}",
+                            "success": "exit_zero",
+                        },
+                    }],
+                ),
+                ticket(
+                    "vertical-failure-path",
+                    blocked_by=[{
+                        "ticket": "vertical-command-flow",
+                        "establishes": "The real command path exists before its failure behavior is added.",
+                    }],
+                    sections=["Migration and local failure-path implementation"],
+                ),
+            ]
+            before = (run / "planning-control.json").read_bytes()
+            write_ticket_graph(
+                run,
+                source_bindings,
+                tickets=tickets,
+                preferred_order=[
+                    "baseline-validator", "vertical-command-flow", "vertical-failure-path",
+                ],
+                tracer_ticket="vertical-command-flow",
+            )
+
+            invalid = planning_cli("check", "--run", run, "--stage", "tickets")
+            self.assertEqual(invalid.returncode, 1, invalid.stderr)
+            invalid_report = json.loads(invalid.stdout)
+            self.assertTrue(any("reference section" in item["problem"] for item in invalid_report["gaps"]))
+            self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+            shutil.rmtree(run / "tickets")
+            (run / "50-ticket-graph.json").unlink()
+            tickets[1]["references"][1]["sections"] = [
+                "Types and boundary signatures",
+                "Call and data flow",
+                "Test seams and validation plan",
+            ]
+            manifest = write_ticket_graph(
+                run,
+                source_bindings,
+                tickets=tickets,
+                preferred_order=[
+                    "baseline-validator", "vertical-command-flow", "vertical-failure-path",
+                ],
+                tracer_ticket="vertical-command-flow",
+            )
+            review = write_ticket_review(run, policy="HUMAN")
+            accepted = planning_cli(
+                "advance", "--run", run, "--stage", "tickets",
+                "--review", review.relative_to(run), "--approval", "human", "--date", "2026-08-24",
+            )
+
+            self.assertEqual(accepted.returncode, 0, accepted.stderr)
+            state = PLANNING.load_planning_control(run)
+            self.assertEqual((state["status"], state["phase"]), ("READY_FOR_EXECUTION", "tickets"))
+            self.assertEqual(state["gates"]["tickets"], "HUMAN_APPROVED")
+            self.assertEqual(state["acceptances"]["tickets"]["candidate_sha256"], sha256(manifest))
+            self.assertEqual(state["acceptances"]["tickets"]["source_bindings"], source_bindings)
+            self.assertFalse((run / ".factory").exists())
+
+    def test_ticket_graph_malformed_preferred_order_is_structured_blocked_without_mutation(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            config = run_config()
+            config["version"] = 2
+            config["system_design_participation"] = None
+            config["stages"] = ["tickets", "execute"]
+            config["gates"] = {"tickets": {"authority": "AGENT_REVIEW"}}
+            config["recommendation"]["gates"] = config["gates"]
+            write_stage0_run(run, config)
+            initialized = planning_cli("initialize", "--run", run)
+            self.assertEqual(initialized.returncode, 0, initialized.stderr)
+            planning = PLANNING.load_planning_control(run)
+            anchor = planning["stage0_anchor"]
+            source = {
+                "kind": "stage0",
+                "artifact": "run.yaml",
+                "sha256": anchor["base_run_sha256"],
+                "effective_config_hash": anchor["effective_config_hash"],
+                "effective_config_revision": anchor["effective_config_revision"],
+            }
+            manifest_path = write_ticket_graph(run, [source])
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["preferred_order"] = [{"not": "a ticket id"}]
+            manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+            before = (run / "planning-control.json").read_bytes()
+
+            result = planning_cli("check", "--run", run, "--stage", "tickets")
+
+            self.assertEqual(result.returncode, 1, result.stderr)
+            self.assertNotIn("Traceback", result.stderr)
+            report = json.loads(result.stdout)
+            self.assertEqual(report["verdict"], "BLOCKED")
+            self.assertTrue(any("preferred_order" in item["problem"] for item in report["gaps"]))
+            self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+    def test_ticket_graph_nested_unhashable_values_are_structured_blocked(self):
+        mutations = {
+            "reference-kind": lambda ticket, manifest: ticket["references"][0].update({"kind": {"bad": True}}),
+            "validator-id": lambda ticket, manifest: ticket["validators"][0].update({"id": {"bad": True}}),
+            "outcome-id": lambda ticket, manifest: ticket["outcomes"][0].update({"id": {"bad": True}}),
+            "outcome-validator-id": lambda ticket, manifest: ticket["outcomes"][0].update({"validator_ids": [{"bad": True}]}),
+            "dependency-ticket": lambda ticket, manifest: ticket.update({
+                "blocked_by": [{"ticket": {"bad": True}, "establishes": "Malformed dependency identity."}],
+            }),
+            "enabling-consumer": lambda ticket, manifest: ticket.update({
+                "kind": "enabling",
+                "enabling": {"consumer": {"bad": True}, "rationale": "Malformed consumer identity."},
+            }),
+            "review-kind": lambda ticket, manifest: ticket.update({"reviews": [{"bad": True}]}),
+            "tracer-ticket": lambda ticket, manifest: manifest.update({"tracer_ticket": {"bad": True}}),
+        }
+        for name, mutate in mutations.items():
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                _, _, manifest_path = initialize_trivial_ticket_candidate(run)
+                ticket_path = run / "tickets" / "demo-01.md"
+                frontmatter, body = PLANNING.read_frontmatter(ticket_path)
+                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                mutate(frontmatter, manifest)
+                write_markdown(ticket_path, frontmatter, body)
+                manifest["tickets"][0]["sha256"] = sha256(ticket_path)
+                manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+                before = (run / "planning-control.json").read_bytes()
+
+                result = planning_cli("check", "--run", run, "--stage", "tickets")
+
+                self.assertEqual(result.returncode, 1, result.stderr)
+                self.assertNotIn("Traceback", result.stderr)
+                report = json.loads(result.stdout)
+                self.assertEqual(report["verdict"], "BLOCKED")
+                self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+    def test_ticket_graph_review_unhashable_gap_dimension_is_cleanly_rejected(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            _, _, _ = initialize_trivial_ticket_candidate(run)
+            review = write_ticket_review(run, policy="AGENT_REVIEW", verdict="BLOCKED")
+            envelope = json.loads(review.read_text(encoding="utf-8"))
+            envelope["semantic_review"]["gaps"][0]["dimension"] = {"bad": True}
+            review.write_text(json.dumps(envelope, indent=2) + "\n", encoding="utf-8")
+            before = (run / "planning-control.json").read_bytes()
+
+            result = planning_cli(
+                "advance", "--run", run, "--stage", "tickets",
+                "--review", review.relative_to(run), "--date", "2026-08-24",
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertNotIn("Traceback", result.stderr)
+            self.assertIn("ticket-graph", result.stderr)
+            self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+    def test_ticket_graph_reports_self_dependency_and_review_cannot_replace_deterministic_proof(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            _, _, manifest_path = initialize_trivial_ticket_candidate(run)
+            ticket_path = run / "tickets" / "demo-01.md"
+            frontmatter, body = PLANNING.read_frontmatter(ticket_path)
+            frontmatter["blocked_by"] = [{
+                "ticket": "demo-01",
+                "establishes": "A ticket cannot establish its own prerequisite.",
+            }]
+            frontmatter["validators"] = []
+            frontmatter["outcomes"][0]["validator_ids"] = []
+            frontmatter["reviews"] = ["design"]
+            write_markdown(ticket_path, frontmatter, body)
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["tickets"][0]["sha256"] = sha256(ticket_path)
+            manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+            before = (run / "planning-control.json").read_bytes()
+
+            result = planning_cli("check", "--run", run, "--stage", "tickets")
+
+            self.assertEqual(result.returncode, 1, result.stderr)
+            report = json.loads(result.stdout)
+            problems = [item["problem"] for item in report["gaps"]]
+            self.assertTrue(any("depend on itself" in problem for problem in problems), problems)
+            self.assertTrue(any("deterministic validator proof" in problem for problem in problems), problems)
+            self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+    def test_ticket_graph_dependency_cycle_is_structured_blocked(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            _, source, manifest_path = initialize_trivial_ticket_candidate(run)
+            base, _ = PLANNING.read_frontmatter(run / "tickets" / "demo-01.md")
+            shutil.rmtree(run / "tickets")
+            manifest_path.unlink()
+            tickets = []
+            for ticket_id, dependency in (("cycle-a", "cycle-b"), ("cycle-b", "cycle-a")):
+                item = copy.deepcopy(base)
+                item["id"] = ticket_id
+                item["tracer"] = ticket_id == "cycle-a"
+                item["blocked_by"] = [{
+                    "ticket": dependency,
+                    "establishes": f"{dependency} establishes the prerequisite for {ticket_id}.",
+                }]
+                item["validators"][0]["id"] = f"{ticket_id}-proof"
+                item["outcomes"][0]["id"] = f"{ticket_id}-outcome"
+                item["outcomes"][0]["validator_ids"] = [f"{ticket_id}-proof"]
+                tickets.append(item)
+            write_ticket_graph(
+                run,
+                [source],
+                tickets=tickets,
+                preferred_order=["cycle-a", "cycle-b"],
+                tracer_ticket="cycle-a",
+            )
+
+            result = planning_cli("check", "--run", run, "--stage", "tickets")
+
+            self.assertEqual(result.returncode, 1, result.stderr)
+            report = json.loads(result.stdout)
+            self.assertTrue(any("contains a cycle" in item["problem"] for item in report["gaps"]), report)
+
+    def test_ticket_graph_rejects_multiple_tracer_flags(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            planning = initialize_direct_program(run, authority="AGENT_REVIEW")
+            anchor = planning["stage0_anchor"]
+            stage0_source = {
+                "kind": "stage0",
+                "artifact": "run.yaml",
+                "sha256": anchor["base_run_sha256"],
+                "effective_config_hash": anchor["effective_config_hash"],
+                "effective_config_revision": anchor["effective_config_revision"],
+            }
+            write_program_design(run, stage0_source)
+            program_review = write_program_review(run, policy="AGENT_REVIEW")
+            accepted_program = planning_cli(
+                "advance", "--run", run, "--stage", "program_design",
+                "--review", program_review.relative_to(run), "--date", "2026-08-24",
+            )
+            self.assertEqual(accepted_program.returncode, 0, accepted_program.stderr)
+            source_bindings = [stage0_source, {
+                "kind": "program_design",
+                "artifact": "40-program-design.md",
+                "version": 1,
+                "sha256": sha256(run / "40-program-design.md"),
+            }]
+            tickets = []
+            for ticket_id in ("tracer-a", "tracer-b"):
+                validator_id = f"{ticket_id}-proof"
+                tickets.append({
+                    "id": ticket_id,
+                    "kind": "vertical",
+                    "status": "ready",
+                    "repository": "fixture",
+                    "blocked_by": [],
+                    "tracer": True,
+                    "enabling": None,
+                    "references": [
+                        {"kind": "stage0", "sections": []},
+                        {"kind": "program_design", "sections": ["Call and data flow"]},
+                    ],
+                    "external_prerequisites": [],
+                    "validators": [{
+                        "id": validator_id,
+                        "command": f"python3 -c 'print(\"{ticket_id}\")'",
+                        "success": "exit_zero",
+                    }],
+                    "outcomes": [{
+                        "id": f"{ticket_id}-outcome",
+                        "promise": f"{ticket_id} establishes one observable behavior.",
+                        "acceptance": [f"{ticket_id} behavior is observed through its public seam."],
+                        "validator_ids": [validator_id],
+                    }],
+                    "reviews": ["design"],
+                })
+            before = (run / "planning-control.json").read_bytes()
+            write_ticket_graph(
+                run,
+                source_bindings,
+                tickets=tickets,
+                preferred_order=["tracer-a", "tracer-b"],
+                tracer_ticket="tracer-a",
+            )
+
+            result = planning_cli("check", "--run", run, "--stage", "tickets")
+
+            self.assertEqual(result.returncode, 1, result.stderr)
+            report = json.loads(result.stdout)
+            self.assertTrue(
+                any("exactly one" in item["problem"] for item in report["gaps"]),
+                report,
+            )
+            self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+    def test_accepted_ticket_graph_revalidates_manifest_ticket_review_and_repository_currency(self):
+        for mutation in ("manifest", "ticket", "review", "repository-access"):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as td:
+                write_repository_bindings({"fixture": _TEST_REPOSITORY_SOURCES["fixture"]})
+                run = Path(td)
+                _, _, manifest = initialize_trivial_ticket_candidate(run)
+                review = write_ticket_review(run, policy="AGENT_REVIEW")
+                accepted = planning_cli(
+                    "advance", "--run", run, "--stage", "tickets",
+                    "--review", review.relative_to(run), "--date", "2026-08-24",
+                )
+                self.assertEqual(accepted.returncode, 0, accepted.stderr)
+                PLANNING.load_planning_control(run)
+                before = (run / "planning-control.json").read_bytes()
+
+                if mutation == "manifest":
+                    manifest.write_bytes(manifest.read_bytes() + b" \n")
+                    expected = "ticket graph"
+                elif mutation == "ticket":
+                    ticket_path = run / "tickets" / "demo-01.md"
+                    ticket_path.write_bytes(ticket_path.read_bytes() + b"\nchanged accepted ticket\n")
+                    expected = "ticket graph"
+                elif mutation == "review":
+                    review.write_bytes(review.read_bytes() + b" \n")
+                    expected = "evidence"
+                else:
+                    write_repository_bindings({})
+                    expected = "ticket graph"
+
+                with self.assertRaisesRegex(PLANNING.ControlError, expected):
+                    PLANNING.load_planning_control(run)
+                self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+    def test_ticket_graph_final_write_revalidates_ticket_bytes(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            _, _, _ = initialize_trivial_ticket_candidate(run)
+            review = write_ticket_review(run, policy="AGENT_REVIEW")
+            before = (run / "planning-control.json").read_bytes()
+            ticket_path = run / "tickets" / "demo-01.md"
+            original_write = PLANNING.write_planning_control_atomic
+
+            def mutate_at_write_boundary(*args, **kwargs):
+                ticket_path.write_bytes(ticket_path.read_bytes() + b"\nwrite-boundary drift\n")
+                return original_write(*args, **kwargs)
+
+            with PLANNING.planning_lock(run):
+                with mock.patch.object(
+                    PLANNING,
+                    "write_planning_control_atomic",
+                    side_effect=mutate_at_write_boundary,
+                ):
+                    with self.assertRaisesRegex(PLANNING.ControlError, "write boundary"):
+                        PLANNING.advance_boundary(
+                            run,
+                            "tickets",
+                            None,
+                            review.relative_to(run).as_posix(),
+                            "2026-08-24",
+                        )
+            self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+    def advance_bounded_repair_to_ready(self, run: Path, *, program_attempts: int) -> dict:
+        planning = initialize_program_after_system(run, system_authority="AGENT_REVIEW")
+        original_system = planning["acceptances"]["system_design"]
+        write_program_design(run, {
+            "kind": "system_design",
+            "artifact": "30-system-design.md",
+            "version": original_system["candidate_version"],
+            "sha256": original_system["candidate_sha256"],
+        })
+        review_input = write_upstream_block_review_input(run, planning)
+        returned = planning_cli(
+            "return-upstream", "--run", run,
+            "--review-input", review_input.relative_to(run),
+        )
+        self.assertEqual(returned.returncode, 0, returned.stderr)
+        system_reserved = planning_cli(
+            "reserve-repair-attempt", "--run", run, "--stage", "system_design",
+        )
+        self.assertEqual(system_reserved.returncode, 0, system_reserved.stderr)
+        episode = PLANNING.load_planning_control(run)["blocked_reason"]
+        write_system_design(
+            run,
+            copy.deepcopy(episode["superseded_system_design"]["source_bindings"][0]),
+            version=2,
+        )
+        system_review = write_system_repair_review(run)
+        system_accepted = planning_cli(
+            "advance", "--run", run, "--stage", "system_design",
+            "--review", system_review.relative_to(run), "--date", "2026-08-24",
+        )
+        self.assertEqual(system_accepted.returncode, 0, system_accepted.stderr)
+        for _ in range(program_attempts):
+            program_reserved = planning_cli(
+                "reserve-repair-attempt", "--run", run, "--stage", "program_design",
+            )
+            self.assertEqual(program_reserved.returncode, 0, program_reserved.stderr)
+        repaired = PLANNING.load_planning_control(run)["acceptances"]["system_design"]
+        write_program_design(run, {
+            "kind": "system_design",
+            "artifact": "30-system-design.md",
+            "version": repaired["candidate_version"],
+            "sha256": repaired["candidate_sha256"],
+        })
+        program_review = write_program_review(run, policy="AGENT_REVIEW")
+        program_accepted = planning_cli(
+            "advance", "--run", run, "--stage", "program_design",
+            "--review", program_review.relative_to(run), "--date", "2026-08-24",
+        )
+        self.assertEqual(program_accepted.returncode, 0, program_accepted.stderr)
+        pending = PLANNING.load_planning_control(run)
+        expected_pending_revision = 6 + program_attempts
+        self.assertEqual(
+            (pending["status"], pending["phase"], pending["revision"]),
+            ("PLANNING", "tickets", expected_pending_revision),
+        )
+        _, effective = PLANNING.verified_state(run)
+        sources = PLANNING.expected_ticket_graph_sources(pending, effective)
+        manifest_path = write_ticket_graph(run, sources)
+        ticket_path = run / "tickets" / "demo-01.md"
+        ticket, body = PLANNING.read_frontmatter(ticket_path)
+        ticket["references"] = [
+            {"kind": "system_design", "sections": ["Contracts and interfaces"]},
+            {"kind": "program_design", "sections": ["Call and data flow"]},
+        ]
+        write_markdown(ticket_path, ticket, body)
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["tickets"][0]["sha256"] = sha256(ticket_path)
+        manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+        ticket_review = write_ticket_review(run, policy="HUMAN")
+        accepted = planning_cli(
+            "advance", "--run", run, "--stage", "tickets",
+            "--review", ticket_review.relative_to(run),
+            "--approval", "human", "--date", "2026-08-24",
+        )
+        self.assertEqual(accepted.returncode, 0, accepted.stderr)
+        return PLANNING.load_planning_control(run)
+
+    def test_ticket_graph_acceptance_supports_complete_repair_attempt_budget(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            final = self.advance_bounded_repair_to_ready(run, program_attempts=3)
+
+            self.assertEqual(
+                (final["status"], final["phase"], final["revision"]),
+                ("READY_FOR_EXECUTION", "tickets", 10),
+            )
+            self.assertEqual(final["gates"]["tickets"], "HUMAN_APPROVED")
+            self.assertIsNone(final["blocked_reason"])
+            self.assertFalse((run / ".factory").exists())
+
+    def test_repaired_ready_state_rejects_decremented_terminal_revision(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            final = self.advance_bounded_repair_to_ready(run, program_attempts=1)
+            self.assertEqual(final["revision"], 8)
+            final["revision"] = 7
+            (run / "planning-control.json").write_text(
+                json.dumps(final, indent=2) + "\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(
+                PLANNING.ControlError,
+                "planning-control.json values are not a coherent current planning state",
+            ):
+                PLANNING.load_planning_control(run)
 
     def test_program_design_check_blocks_missing_binding_without_mutation(self):
         with tempfile.TemporaryDirectory() as td:
@@ -1932,13 +2683,6 @@ class AtlasPlanningTests(unittest.TestCase):
             "program CONDITIONAL": (
                 "program_design", {"authority": "CONDITIONAL", "conditions": [{"when": "changed", "then": "HUMAN"}], "otherwise": "AGENT_REVIEW"}
             ),
-            "tickets AUTO": ("tickets", {"authority": "AUTO"}),
-            "tickets CONDITIONAL missing conditions": (
-                "tickets", {"authority": "CONDITIONAL", "conditions": [], "otherwise": "AGENT_REVIEW"}
-            ),
-            "tickets CONDITIONAL incomplete condition": (
-                "tickets", {"authority": "CONDITIONAL", "conditions": [{"when": "large"}], "otherwise": "AGENT_REVIEW"}
-            ),
         }
         for name, (stage, policy) in cases.items():
             with self.subTest(name=name), tempfile.TemporaryDirectory() as td:
@@ -1965,14 +2709,7 @@ class AtlasPlanningTests(unittest.TestCase):
                 "material_dimensions": list(SYSTEM_DESIGN_DIMENSIONS),
                 "otherwise": "AGENT_REVIEW",
             }
-            config["gates"]["tickets"] = {
-                "authority": "CONDITIONAL",
-                "conditions": [
-                    {"when": "multi_repository", "then": "HUMAN"},
-                    {"when": "single_repository", "then": "AGENT_REVIEW"},
-                ],
-                "otherwise": "AGENT_REVIEW",
-            }
+            config["gates"]["tickets"] = {"authority": "AGENT_REVIEW"}
             write_stage0_run(run, config)
 
             result = planning_cli("initialize", "--run", run)

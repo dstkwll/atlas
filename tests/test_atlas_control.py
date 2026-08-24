@@ -426,6 +426,25 @@ class AtlasControlTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(read_control(run)["phase"], "discovery")
 
+    def test_initialize_rejects_conditional_tickets_before_freezing_control(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            config = run_config()
+            config["stages"] = ["discovery", "tickets", "execute", "final_review", "pr"]
+            config["gates"]["tickets"] = {
+                "authority": "CONDITIONAL",
+                "conditions": [{"when": "security_sensitive", "then": "HUMAN"}],
+                "otherwise": "AGENT_REVIEW",
+            }
+            config["recommendation"]["gates"] = config["gates"]
+            (run / "run.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+
+            result = initialize_cli(run)
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("tickets supports only AGENT_REVIEW or HUMAN", result.stderr)
+            self.assertFalse((run / "control.json").exists())
+
     def test_producer_readiness_claim_passes_read_only_check_but_is_not_acceptance(self):
         with tempfile.TemporaryDirectory() as td:
             run = Path(td)

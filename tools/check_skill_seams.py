@@ -176,9 +176,13 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         "program-design": skills / "program-design" / "SKILL.md",
         "program-design-template": skills / "program-design" / "references" / "program-design-file.md",
         "program-design-agent": skills / "program-design" / "agents" / "openai.yaml",
+        "compile-tickets": skills / "compile-tickets" / "SKILL.md",
+        "ticket-graph-template": skills / "compile-tickets" / "references" / "ticket-graph-file.md",
+        "compile-tickets-agent": skills / "compile-tickets" / "agents" / "openai.yaml",
         "control-planning": skills / "control-planning" / "SKILL.md",
         "system-design-authority": skills / "control-planning" / "references" / "system-design-authority.md",
         "program-design-authority": skills / "control-planning" / "references" / "program-design-authority.md",
+        "ticket-graph-authority": skills / "control-planning" / "references" / "ticket-graph-authority.md",
         "program-design-blocked": skills.parent / "references" / "program-design-blocked.md",
         "control-planning-agent": skills / "control-planning" / "agents" / "openai.yaml",
         "renderer": skills.parent / "tools" / "render_prd.py",
@@ -191,7 +195,7 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         else:
             texts[name] = path.read_text(encoding="utf-8")
 
-    required_plugin_description_clauses = ("Stage 0", "System", "Program Design", "Stage 4")
+    required_plugin_description_clauses = ("Stage 0", "System", "Program Design", "Stage 5", "ticket graphs")
     try:
         plugin_manifest = json.loads(texts.get("plugin-manifest", ""))
         codex_plugin_manifest = json.loads(texts.get("codex-plugin-manifest", ""))
@@ -207,15 +211,16 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             or descriptions[0] != descriptions[1]
             or any(clause not in descriptions[0] for clause in required_plugin_description_clauses)
         ):
-            findings.append(("cross", "Atlas plugin manifest descriptions do not expose the current Stage 0-4 surface"))
+            findings.append(("cross", "Atlas plugin manifest descriptions do not expose the current Stage 0-5 surface"))
 
     required = {
         "readme": [
-            "First-party Stage 0–4 skills",
+            "First-party Stage 0–5 skills",
             "| `setup-atlas` | Configure the planning root and verify an installed host. |",
             "| `start-run` | Accept immutable Stage 0 `run.yaml`, initialize control, or resume from authoritative state. |",
             "| `program-design` | Produce the exact Stage 4 candidate, record readiness, and continue the internal control handoff. |",
-            "tickets remain intentionally unsupported",
+            "| `compile-tickets` | Compile and hand off the exact Stage 5 ticket graph candidate. |",
+            "stops at `READY_FOR_EXECUTION`",
         ],
         "setup-agent": [
             'short_description: "Configure or verify Atlas on this machine"',
@@ -249,6 +254,8 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             'PLANNING_LOCK_FILE = ".atlas-planning.lock"',
             "def load_planning_control", "def initialize_planning", "def ensure_planning", "def check_boundary",
             "def advance_boundary", 'SYSTEM_DESIGN_FILE = "30-system-design.md"',
+            'TICKET_GRAPH_FILE = "50-ticket-graph.json"', "def ticket_graph_report",
+            "def advance_ticket_graph_boundary", 'TICKET_GRAPH_REVIEW_REFERENCE = "reviews/ticket-graph-v1.json"',
             "verify_system_design_board", "30-system-design.html",
         ],
         "repository": [
@@ -286,6 +293,23 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "Use $program-design to produce the exact Atlas Program Design candidate and continue its internal control handoff.",
             "allow_implicit_invocation: false",
         ],
+        "compile-tickets": [
+            "name: compile-tickets", "disable-model-invocation: true",
+            "references/ticket-graph-file.md", "D-084", "D-085",
+            "tickets/*.md", "50-ticket-graph.json", "atlas:control-planning",
+            "READY_FOR_EXECUTION",
+        ],
+        "ticket-graph-template": [
+            '"preferred_order"', '"tracer_ticket"', '"source_bindings"', "exactly one",
+            "blocked_by:", "external_prerequisites:", "validators:", "outcomes:",
+            "What becomes true", "Acceptance", "Relevant design",
+        ],
+        "compile-tickets-agent": [
+            'display_name: "Atlas Ticket Graph Compiler"',
+            'short_description: "Compile Stage 5 and hand it to planning control"',
+            "Use $compile-tickets to compile the exact Atlas Stage 5 ticket graph and continue its internal control handoff.",
+            "allow_implicit_invocation: false",
+        ],
         "system-design-board": [
             "30-system-design.md", "30-system-design.html", "Inapplicable:",
             "non-authoritative", "no independent acceptance hash",
@@ -297,10 +321,11 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "atlas_planning.py", "advance --run", "--approval human", "--date",
             "re-read `planning-control.json`", "AGENT_REVIEW", "HUMAN_IF_CHANGED", "Slice 2",
             "fresh read-only classifier", "distinct fresh semantic reviewer", "invoker assembles",
-            "reviews/system-design-v1.json", "supports exactly the explicit stages `system_design` and `program_design`",
+            "reviews/system-design-v1.json", "supports exactly the explicit stages `system_design`, `program_design`, and `tickets`",
             "never discovers, infers, or reroutes a stage", "references/program-design-authority.md",
             "configured `AGENT_REVIEW` or `HUMAN` authority", "fresh exact PASS review",
-            "reviews/program-design-v1.json",
+            "reviews/program-design-v1.json", "references/ticket-graph-authority.md",
+            "reviews/ticket-graph-v1.json", "## Ticket graph branch",
         ],
         "system-design-authority": [
             "reviews/system-design-v1.json", "candidate_version", "candidate_sha256",
@@ -310,6 +335,11 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         "program-design-authority": [
             "reviews/program-design-v1.json", "AGENT_REVIEW", "HUMAN", "PASS",
             "BLOCKED", "DESIGN_BLOCKED", "upstream_issue", "resume_boundary",
+        ],
+        "ticket-graph-authority": [
+            "reviews/ticket-graph-v1.json", "AGENT_REVIEW", "HUMAN",
+            "PASS", "BLOCKED", "DESIGN_BLOCKED", "deterministic_behavior_proof",
+            "READY_FOR_EXECUTION",
         ],
         "control-planning-agent": ["allow_implicit_invocation: false"],
         "renderer": ["def write_canonical", "def render", "def verify", "RENDERER_VERSION"],
@@ -361,12 +391,13 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         findings.append(("cross", "installed-host-calibration: missing five packaged CLIs with the recorded interpreter"))
 
     readme_program_contract = (
-        "First-party Stage 0–4 skills",
+        "First-party Stage 0–5 skills",
         "| `program-design` | Produce the exact Stage 4 candidate, record readiness, and continue the internal control handoff. |",
-        "tickets remain intentionally unsupported",
+        "| `compile-tickets` | Compile and hand off the exact Stage 5 ticket graph candidate. |",
+        "stops at `READY_FOR_EXECUTION`",
     )
     if any(clause not in texts.get("readme", "") for clause in readme_program_contract):
-        findings.append(("cross", "README Program Design inventory is incomplete"))
+        findings.append(("cross", "README Stage 0-5 inventory is incomplete"))
 
     readme_repository_classification = (
         "missing binding, source, exact commit/tree/blob, submodule content, or Git LFS content returns `BLOCKED`; "
@@ -543,9 +574,26 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
     ):
         findings.append(("cross", "program-design: missing exact internal control-planning handoff"))
 
+    compile_tickets = texts.get("compile-tickets", "")
+    compile_contract = (
+        "Resolve `<atlas-plugin-root>` from this installed skill",
+        "Require current status `PLANNING`, phase `tickets`, gate `PENDING`, and no ticket-graph acceptance",
+        "Derive every applicable source only from effective selected stages and exact current acceptances",
+        "write only canonical `tickets/*.md` and `50-ticket-graph.json` candidate/readiness bytes",
+        "never create or modify `reviews/ticket-graph-v1.json`",
+        "never write `planning-control.json`",
+        'check --run "<run-directory>" --stage tickets',
+        "unchanged `<run-directory>` and explicit stage `tickets`",
+    )
+    compile_handoff = "After mechanical `PASS`, perform the exact named internal handoff to `atlas:control-planning`"
+    if any(clause not in compile_tickets for clause in compile_contract):
+        findings.append(("cross", "compile-tickets: incomplete Stage 5 producer ownership or source contract"))
+    if compile_tickets.count("atlas:control-planning") != 1 or compile_handoff not in compile_tickets:
+        findings.append(("cross", "compile-tickets internal control-planning handoff is incomplete"))
+
     control_planning = texts.get("control-planning", "")
     stage_check_selector = (
-        "Run exactly one mechanical check selected by the explicit stage; never run both commands"
+        "Run exactly one mechanical check selected by the explicit stage; never run more than one command"
     )
     system_check = (
         'python3 "<atlas-plugin-root>/tools/atlas_planning.py" check '
@@ -555,12 +603,18 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         'python3 "<atlas-plugin-root>/tools/atlas_planning.py" check '
         '--run "<run-directory>" --stage program_design'
     )
+    ticket_check = (
+        'python3 "<atlas-plugin-root>/tools/atlas_planning.py" check '
+        '--run "<run-directory>" --stage tickets'
+    )
     if (
         stage_check_selector not in control_planning
         or "For explicit stage `system_design`, run only:" not in control_planning
         or "For explicit stage `program_design`, run only:" not in control_planning
+        or "For explicit stage `tickets`, run only:" not in control_planning
         or control_planning.count(system_check) != 1
         or control_planning.count(program_check) != 1
+        or control_planning.count(ticket_check) != 1
     ):
         findings.append(("cross", "control-planning: missing explicit-stage-only check selection"))
 
@@ -590,15 +644,18 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
     try:
         system_agent = yaml.safe_load(texts.get("system-design-agent", ""))
         program_agent = yaml.safe_load(texts.get("program-design-agent", ""))
+        compile_agent = yaml.safe_load(texts.get("compile-tickets-agent", ""))
         control_agent = yaml.safe_load(texts.get("control-planning-agent", ""))
         system_prompt = system_agent["interface"]["default_prompt"]
         program_interface = program_agent["interface"]
-        control_text = " ".join(control_agent["interface"].values())
+        compile_interface = compile_agent["interface"]
+        control_interface = control_agent["interface"]
         system_implicit = system_agent["policy"]["allow_implicit_invocation"]
         program_implicit = program_agent["policy"]["allow_implicit_invocation"]
+        compile_implicit = compile_agent["policy"]["allow_implicit_invocation"]
         control_implicit = control_agent["policy"]["allow_implicit_invocation"]
     except (TypeError, KeyError, yaml.YAMLError) as exc:
-        findings.append(("cross", f"System and Program Design model metadata is unreadable: {exc}"))
+        findings.append(("cross", f"System, Program, ticket, or control model metadata is unreadable: {exc}"))
     else:
         expected_program_interface = {
             "display_name": "Atlas Program Design",
@@ -608,8 +665,28 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
                 "and continue its internal control handoff."
             ),
         }
+        expected_compile_interface = {
+            "display_name": "Atlas Ticket Graph Compiler",
+            "short_description": "Compile Stage 5 and hand it to planning control",
+            "default_prompt": (
+                "Use $compile-tickets to compile the exact Atlas Stage 5 ticket graph "
+                "and continue its internal control handoff."
+            ),
+        }
+        expected_control_interface = {
+            "display_name": "Atlas Control Planning",
+            "short_description": "Apply configured System, Program, or ticket authority once",
+            "default_prompt": (
+                "Use $control-planning to apply one explicit configured System Design, Program Design, "
+                "or ticket-graph boundary and record at most one transition."
+            ),
+        }
         if program_interface != expected_program_interface:
             findings.append(("cross", "Program Design model metadata must expose the exact producer interface"))
+        if compile_interface != expected_compile_interface:
+            findings.append(("cross", "Ticket compiler model metadata must expose the exact producer interface"))
+        if control_interface != expected_control_interface:
+            findings.append(("cross", "control-planning model metadata must expose all three explicit boundaries"))
         if (
             "current agent-led" in system_prompt.lower()
             or "frozen agent_led or co_design participation" not in system_prompt
@@ -618,12 +695,12 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         ):
             findings.append(("cross", "system-design-agent: stale Slice 1 agent-led priming remains in model metadata"))
         if (
-            "HUMAN handoff" in control_text
-            or "configured HUMAN, AGENT_REVIEW, or HUMAN_IF_CHANGED System Design boundary once" not in control_text
+            system_implicit is not False
+            or program_implicit is not False
+            or compile_implicit is not False
+            or control_implicit is not False
         ):
-            findings.append(("cross", "control-planning-agent: stale Slice 1 HUMAN-only priming remains in model metadata"))
-        if system_implicit is not False or program_implicit is not False or control_implicit is not False:
-            findings.append(("cross", "System and Program Design model metadata must keep implicit invocation false"))
+            findings.append(("cross", "Stage 3-5 model metadata must keep implicit invocation false"))
 
     planning_command = 'python3 "<atlas-plugin-root>/tools/atlas_planning.py" ensure --run "<run-directory>"'
     for name in ("start", "control"):
@@ -644,19 +721,19 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
     start_route_contract = (
         "If validated planning phase is `system_design`, invoke `atlas:system-design` internally",
         "If validated planning phase is `program_design`, invoke `atlas:program-design` internally",
-        "If validated planning phase is `tickets`, stop loudly",
-        "no first-party ticket producer exists",
-        "Preserve the existing Product Closure and System Design paths",
+        "If validated planning phase is `tickets`, invoke `atlas:compile-tickets` internally",
+        "If validated planning status is `READY_FOR_EXECUTION`, stop at the execution boundary",
+        "Preserve the existing Product Closure, System Design, and Program Design paths",
     )
     if any(clause not in start_text for clause in start_route_contract):
-        findings.append(("cross", "start: missing implemented Program Design route and tickets stop"))
+        findings.append(("cross", "start: missing complete Stage 3-5 producer route and execution-boundary stop"))
 
     start_continuation_contract = (
         "This is a bounded continuation loop, not one-shot dispatch",
         "After an invoked producer and its internal control handoff return, run `ensure` again and re-read validated `planning-control.json`",
-        "The only legal downstream continuation after `system_design` is `program_design` or `tickets`; after `program_design` it is `tickets`",
-        "Invoke at most two downstream producers during one `start-run` invocation",
-        "If the phase is unchanged, the invoked stage's gate remains `PENDING`, the transition is unexpected, or an invoked owner stops `BLOCKED` or `DESIGN_BLOCKED`, stop without retrying that producer",
+        "The only legal downstream continuation after `system_design` is `program_design` or `tickets`; after `program_design` it is `tickets`; after pending `tickets` it is `READY_FOR_EXECUTION`",
+        "Invoke at most three downstream producers during one `start-run` invocation",
+        "If the phase is unchanged while status remains `PLANNING`, the invoked stage's gate remains `PENDING`, the transition is unexpected, or an invoked owner stops `BLOCKED` or `DESIGN_BLOCKED`, stop without retrying that producer",
         "Never derive a producer dynamically from the stage list",
     )
     if any(clause not in start_text for clause in start_continuation_contract):
@@ -664,6 +741,7 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
 
     check_command = 'python3 "<atlas-plugin-root>/tools/atlas_planning.py" check --run "<run-directory>" --stage system_design'
     program_check_command = 'python3 "<atlas-plugin-root>/tools/atlas_planning.py" check --run "<run-directory>" --stage program_design'
+    ticket_check_command = 'python3 "<atlas-plugin-root>/tools/atlas_planning.py" check --run "<run-directory>" --stage tickets'
     advance_command = 'python3 "<atlas-plugin-root>/tools/atlas_planning.py" advance --run "<run-directory>" --stage system_design --approval human --date "<YYYY-MM-DD>"'
     for name in ("system-design", "control-planning"):
         if check_command not in texts.get(name, ""):
@@ -671,6 +749,9 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
     for name in ("program-design", "control-planning"):
         if program_check_command not in texts.get(name, ""):
             findings.append(("cross", f"{name}: missing caller-CWD-independent Program Design check command"))
+    for name in ("compile-tickets", "control-planning"):
+        if ticket_check_command not in texts.get(name, ""):
+            findings.append(("cross", f"{name}: missing caller-CWD-independent tickets check command"))
     if advance_command not in texts.get("control-planning", ""):
         findings.append(("cross", "control-planning: missing exact HUMAN System Design advance command"))
     for command in (
@@ -685,6 +766,12 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
     ):
         if command not in texts.get("control-planning", ""):
             findings.append(("cross", f"control-planning: missing Program Design authority-matrix command `{command}`"))
+    for command in (
+        'advance --run "<run-directory>" --stage tickets --review reviews/ticket-graph-v1.json --date "<YYYY-MM-DD>"',
+        'advance --run "<run-directory>" --stage tickets --review reviews/ticket-graph-v1.json --approval human --date "<YYYY-MM-DD>"',
+    ):
+        if command not in texts.get("control-planning", ""):
+            findings.append(("cross", f"control-planning: missing ticket-graph authority-matrix command `{command}`"))
     renderer_commands = (
         'python3 "<atlas-plugin-root>/tools/render_system_design.py" write --run "<run-directory>" --draft .30-system-design.next.md',
         'python3 "<atlas-plugin-root>/tools/render_system_design.py" render --run "<run-directory>"',
@@ -795,6 +882,41 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         combined_program = texts.get("program-design", "") + texts.get("program-design-template", "")
         if "participation:" in combined_program.lower() or "40-program-design.html" in combined_program.lower():
             findings.append(("cross", "Program Design must have no participation field or HTML artifact"))
+
+    try:
+        graph_fields = set(assigned_literal(texts.get("planning", ""), "TICKET_GRAPH_FIELDS"))
+        ticket_fields = set(assigned_literal(texts.get("planning", ""), "TICKET_FIELDS"))
+        graph_dimensions = tuple(assigned_literal(texts.get("planning", ""), "TICKET_GRAPH_DIMENSIONS"))
+        graph_review_fields = set(assigned_literal(texts.get("planning", ""), "TICKET_GRAPH_REVIEW_FIELDS"))
+        graph_review_reference = assigned_literal(texts.get("planning", ""), "TICKET_GRAPH_REVIEW_REFERENCE")
+        graph_maps = json_maps(texts.get("ticket-graph-template", ""))
+        ticket_maps = frontmatter_maps(texts.get("ticket-graph-template", ""))
+        authority_maps = json_maps(texts.get("ticket-graph-authority", ""))
+    except (SyntaxError, ValueError, json.JSONDecodeError, yaml.YAMLError) as exc:
+        findings.append(("cross", f"Ticket graph schema seam is unreadable: {exc}"))
+    else:
+        manifest = graph_maps[0] if len(graph_maps) == 1 else {}
+        ticket = ticket_maps[0] if len(ticket_maps) == 1 else {}
+        envelope = authority_maps[0] if authority_maps else {}
+        semantic = envelope.get("semantic_review") if isinstance(envelope, dict) else None
+        rows = semantic.get("dimensions") if isinstance(semantic, dict) else None
+        row_dimensions = tuple(
+            item.get("dimension") for item in rows if isinstance(item, dict)
+        ) if isinstance(rows, list) else ()
+        if set(manifest) != graph_fields:
+            findings.append(("cross", "ticket graph manifest schema does not match planning TICKET_GRAPH_FIELDS"))
+        if set(ticket) != ticket_fields:
+            findings.append(("cross", "ticket frontmatter schema does not match planning TICKET_FIELDS"))
+        if set(envelope) != graph_review_fields:
+            findings.append(("cross", "Ticket graph authority envelope does not match planning schema"))
+        if row_dimensions != graph_dimensions:
+            findings.append(("cross", "Ticket graph semantic review dimensions do not match planning TICKET_GRAPH_DIMENSIONS"))
+        exact_filename = "`reviews/ticket-graph-v1.json` is the one exact run-relative envelope."
+        if (
+            graph_review_reference != "reviews/ticket-graph-v1.json"
+            or exact_filename not in texts.get("ticket-graph-authority", "")
+        ):
+            findings.append(("cross", "Ticket graph authority filename is not exact across controller and reference"))
 
     try:
         board_views = tuple(assigned_literal(texts.get("system-renderer", ""), "REQUIRED_VIEWS"))
@@ -968,10 +1090,15 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         ):
             findings.append(("cross", "Program Design portable repository baseline authority is incomplete"))
 
-    for name in ("system-design", "control-planning"):
+    skill_line_bounds = {
+        "system-design": (70, 110),
+        "control-planning": (70, 135),
+        "compile-tickets": (60, 130),
+    }
+    for name, (minimum, maximum) in skill_line_bounds.items():
         count = len(texts.get(name, "").splitlines())
-        if not 70 <= count <= 110:
-            findings.append(("cross", f"{name}: SKILL.md line count {count} is outside 70-110"))
+        if not minimum <= count <= maximum:
+            findings.append(("cross", f"{name}: SKILL.md line count {count} is outside {minimum}-{maximum}"))
     if re.search(r"\b(?:must|never|required)\b", texts.get("system-design-template", ""), re.I):
         findings.append(("cross", "System Design reference is not shape-only"))
 
