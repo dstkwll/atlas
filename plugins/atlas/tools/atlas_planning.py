@@ -654,7 +654,13 @@ def validate_ticket_graph_semantic_review(review: Any, source_kinds: set[str]) -
     if verdict != expected_verdict:
         raise ControlError("ticket-graph verdict must be derived from its dimension rows")
     nonpass = {dimension for dimension, result in results.items() if result != "PASS"}
-    if len(gaps) != len(nonpass) or {item.get("dimension") for item in gaps if isinstance(item, dict)} != nonpass:
+    if any(
+        not isinstance(item, dict)
+        or not nonempty_string(item.get("dimension"))
+        for item in gaps
+    ):
+        raise ControlError("ticket-graph gaps must exactly cover every non-PASS dimension")
+    if len(gaps) != len(nonpass) or {item["dimension"] for item in gaps} != nonpass:
         raise ControlError("ticket-graph gaps must exactly cover every non-PASS dimension")
     for item in gaps:
         dimension = item.get("dimension") if isinstance(item, dict) else None
@@ -1631,6 +1637,14 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
         if system_acceptance_repair_context is not None
         else None
     )
+    revision_is_coherent = (
+        planning["revision"] == 1 + len(approved_stages)
+        if completed_repair_attempts is None
+        else (
+            completed_repair_remaining is not None
+            and 1 <= completed_repair_attempts <= completed_repair_remaining
+        )
+    )
     ready_for_execution = (
         planning.get("status") == "READY_FOR_EXECUTION"
         and planning.get("phase") == "tickets"
@@ -1638,7 +1652,7 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
         and gates["tickets"] in {"HUMAN_APPROVED", "AGENT_APPROVED"}
         and acceptances["tickets"] is not None
         and "STALE" not in gates.values()
-        and planning["revision"] == 1 + len(approved_stages)
+        and revision_is_coherent
     )
     if ready_for_execution:
         return planning
@@ -1647,14 +1661,7 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
         or "STALE" in gates.values()
         or not pending
         or planning.get("phase") != pending[0]
-        or (
-            planning["revision"] != 1 + len(approved_stages)
-            if completed_repair_attempts is None
-            else not (
-                completed_repair_remaining is not None
-                and 1 <= completed_repair_attempts <= completed_repair_remaining
-            )
-        )
+        or not revision_is_coherent
     ):
         raise ControlError("planning-control.json values are not a coherent current planning state")
     return planning
@@ -2762,7 +2769,11 @@ def ticket_graph_report(
                 or any(not nonempty_string(value) for value in item.get("acceptance", []))
                 or not isinstance(item.get("validator_ids"), list)
                 or not item.get("validator_ids")
-                or any(value not in valid_validator_ids for value in item.get("validator_ids", []))
+                or any(
+                    not isinstance(value, str)
+                    or value not in valid_validator_ids
+                    for value in item.get("validator_ids", [])
+                )
                 for item in outcomes or []
             )
             or len(set(outcome_ids)) != len(outcome_ids)
@@ -2842,19 +2853,25 @@ def ticket_graph_report(
             continue
         for dependency in dependencies:
             dependency_id = dependency.get("ticket") if isinstance(dependency, dict) else None
+            if not isinstance(dependency_id, str):
+                continue
             if dependency_id == ticket_id:
                 gaps.append(gap(f"tickets/{ticket_id}.md", "ticket cannot depend on itself", "tickets", "remove the self-dependency"))
             elif dependency_id not in all_ids:
                 gaps.append(gap(f"tickets/{ticket_id}.md", f"dependency {dependency_id} is not in the graph", "tickets", "repair the dependency reference"))
         if ticket.get("kind") == "enabling" and isinstance(ticket.get("enabling"), dict):
             consumer_id = ticket["enabling"].get("consumer")
-            consumer = tickets.get(consumer_id)
+            consumer = tickets.get(consumer_id) if isinstance(consumer_id, str) else None
             consumer_dependencies = consumer.get("blocked_by") if isinstance(consumer, dict) else None
             if (
                 not isinstance(consumer, dict)
                 or consumer.get("kind") != "vertical"
                 or not isinstance(consumer_dependencies, list)
-                or ticket_id not in {item.get("ticket") for item in consumer_dependencies if isinstance(item, dict)}
+                or ticket_id not in {
+                    item.get("ticket")
+                    for item in consumer_dependencies
+                    if isinstance(item, dict) and isinstance(item.get("ticket"), str)
+                }
             ):
                 gaps.append(gap(f"tickets/{ticket_id}.md", "enabling ticket does not block its named imminent vertical consumer", "tickets", "make the named vertical consumer depend on this enabling ticket"))
 
@@ -2883,7 +2900,8 @@ def ticket_graph_report(
 
     tracer_ticket = manifest.get("tracer_ticket")
     if tracer_ticket is not None and (
-        tracer_ticket not in tickets
+        not isinstance(tracer_ticket, str)
+        or tracer_ticket not in tickets
         or tickets[tracer_ticket].get("kind") != "vertical"
         or tickets[tracer_ticket].get("tracer") is not True
     ):
