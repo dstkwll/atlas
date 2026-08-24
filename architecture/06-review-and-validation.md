@@ -355,9 +355,11 @@ or acceptance to satisfy its own finding.
 Deterministic checks bind the exact graph version/SHA-256, assert unique ticket identities and valid
 dependency references, reject self-dependencies and cycles, require unambiguous repository targets,
 verify canonical ticket order and declared validation commands, and prove every ticket's upstream
-references are drawn from the selected path's applicable accepted sources. Every promised obligation
-must name an accepted proof path through declared validators and/or required review gates. The
-candidate also binds the frozen baseline for every target repository.
+references are drawn from the selected path's applicable accepted sources. Every promised behavioral
+outcome must name an accepted proof path through sufficient deterministic validators/evidence.
+Required review gates may supplement that proof for semantic, design, or quality obligations; they
+may not substitute for deterministic proof of the ticket's outcome-bearing behavior. The candidate
+also binds the frozen baseline for every target repository.
 
 Semantic review checks that every non-enabling ticket is outcome-bearing, crosses every boundary
 required by its behavior rather than grouping one architectural layer, and is independently

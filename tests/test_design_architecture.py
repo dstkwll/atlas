@@ -176,7 +176,9 @@ class PairedDesignArchitectureTests(unittest.TestCase):
         self.assertRegex(stage5, r"deterministic.{0,80}(?:execution|worker) brief")
         self.assertRegex(stage5, r"raw user prompt.{0,100}(?:not a coequal|rather than a coequal)")
         self.assertRegex(stage5, r"reject self-dependencies and cycles")
-        self.assertRegex(stage5, r"proof path.{0,160}validators.{0,100}review gates")
+        for proof_contract in (v13_decisions, review):
+            self.assertRegex(proof_contract, r"(?i)promised behavioral outcome.{0,180}deterministic validators/evidence")
+            self.assertRegex(proof_contract, r"(?i)review gates.{0,180}supplement.{0,180}(?:never|may not) substitute.{0,180}deterministic proof.{0,180}outcome-bearing")
         self.assertRegex(v13_decisions, r"adds no graph, brief, external-prerequisite.{0,220}runtime-state schema")
         self.assertRegex(v13_decisions, r"without adding another graph, planner, controller, or runtime")
         self.assertRegex(borrow_map, r"SSSF also reuses named reviewer sessions.{0,180}fresh reviewer context")
