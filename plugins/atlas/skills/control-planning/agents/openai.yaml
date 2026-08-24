@@ -1,6 +1,6 @@
 interface:
   display_name: "Atlas Control Planning"
-  short_description: "Apply configured System or Program Design authority once"
-  default_prompt: "Use $control-planning to apply the configured HUMAN, AGENT_REVIEW, or HUMAN_IF_CHANGED System Design boundary once, or the configured HUMAN or AGENT_REVIEW explicit system_design or program_design boundary once."
+  short_description: "Apply configured System, Program, or ticket authority once"
+  default_prompt: "Use $control-planning to apply one explicit configured System Design, Program Design, or ticket-graph boundary and record at most one transition."
 policy:
   allow_implicit_invocation: false

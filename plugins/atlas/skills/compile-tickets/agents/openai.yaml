@@ -1,0 +1,6 @@
+interface:
+  display_name: "Atlas Ticket Graph Compiler"
+  short_description: "Compile Stage 5 and hand it to planning control"
+  default_prompt: "Use $compile-tickets to compile the exact Atlas Stage 5 ticket graph and continue its internal control handoff."
+policy:
+  allow_implicit_invocation: false

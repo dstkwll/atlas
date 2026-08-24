@@ -1,6 +1,6 @@
 # atlas plugin
 
-First-party Stage 0–4 skills implementing the Atlas architecture through exact System Design participation and frozen System/Program Design authority paths. `architecture/` remains authoritative; report conflicts rather than silently reconciling them. The neighboring `incubator` plugin is not part of this workflow and intentionally retains its own independent example transition material.
+First-party Stage 0–5 skills implementing the Atlas architecture through exact accepted ticket-graph authority. `architecture/` remains authoritative; report conflicts rather than silently reconciling them. The neighboring `incubator` plugin remains reference material and is not a workflow owner.
 
 ## Implemented flow
 
@@ -18,7 +18,10 @@ start-run freezes run.yaml and initializes control.json
   → read-only Program Design mechanical check
   → workflow-internal control-planning requires fresh Program Design review and applies AGENT_REVIEW or HUMAN authority
   → atlas_planning.py records one exact Program Design acceptance and advances to tickets
-  → tickets remain intentionally unsupported and fail closed
+  → compile-tickets writes filesystem-backed vertical ticket contracts plus one hashable graph manifest
+  → read-only mechanical graph check and fresh seven-dimension semantic judge
+  → workflow-internal control-planning applies configured AGENT_REVIEW, HUMAN, or canonical CONDITIONAL tickets authority
+  → atlas_planning.py records exact graph acceptance and stops at `READY_FOR_EXECUTION`
 ```
 
 | Skill | Responsibility |
@@ -30,7 +33,8 @@ start-run freezes run.yaml and initializes control.json
 | `control-run` | Run the read-only product-closure check, consume authority, and invoke one deterministic transition. |
 | `system-design` | Produce the exact agent-led or co-design Stage 3 candidate/board, record readiness, and continue the internal control handoff. |
 | `program-design` | Produce the exact Stage 4 candidate, record readiness, and continue the internal control handoff. |
-| `control-planning` | Check explicit System or Program Design, consume its frozen authority matrix, assemble exact evidence when required, and invoke one deterministic planning transition. |
+| `compile-tickets` | Compile and hand off the exact Stage 5 ticket graph candidate. |
+| `control-planning` | Check one explicit Stage 3–5 candidate, consume its frozen authority matrix, assemble exact evidence, and invoke one deterministic planning transition. |
 
 Enter a normal workflow through `atlas:start-run`; implemented downstream owners route and hand off internally. A direct `atlas:<skill>` invocation is reserved for bounded entry, testing, or diagnosis.
 
@@ -66,11 +70,11 @@ System Design retains frozen `agent_led` or `co_design` participation independen
 
 When the live planning phase reaches System Design, Atlas enters that producer internally; it hands off to `atlas:control-planning` without a second user routing command. When the live planning phase reaches Program Design, Atlas enters the Program Design producer internally. A direct `atlas:program-design` invocation is a bounded entry point for testing or diagnosis, not a normal routing requirement. The producer reads exactly one D-079 source, writes only `40-program-design.md` readiness after exact baseline access is proven, runs the mechanical check, and performs the internal handoff with stage `program_design`. Program Design never asks a participation question and creates no HTML. Producer-discovered `DESIGN_BLOCKED` stops read-only before readiness; reviewer-discovered `DESIGN_BLOCKED` exists only in fresh `reviews/program-design-v1.json`. Neither mutates planning state.
 
-Program Design accepts only from a fresh exact PASS review under configured `AGENT_REVIEW` or reviewed `HUMAN`; `AUTO` and `HUMAN_IF_CHANGED` are unavailable. The existing `planning-control.json` remains the only mutable Stage 3–5 authority. `atlas_planning.py` accepts mechanical `check` and authority-matrix `advance` commands for explicit `system_design` or `program_design`; it never routes. After accepted Program Design, tickets remain intentionally unsupported: start/resume and control stop loudly because no first-party ticket producer exists.
+Program Design accepts only from a fresh exact PASS review under configured `AGENT_REVIEW` or reviewed `HUMAN`; `AUTO` and `HUMAN_IF_CHANGED` are unavailable. The existing `planning-control.json` remains the only mutable Stage 3–5 authority. `atlas_planning.py` accepts mechanical `check` and authority-matrix `advance` commands for explicit `system_design`, `program_design`, or `tickets`; it never routes. Pending tickets enter `atlas:compile-tickets` internally. That producer writes only exact `tickets/*.md` and `50-ticket-graph.json` readiness, then hands off to `atlas:control-planning`. Every tickets authority path requires a fresh exact seven-dimension PASS review; direct or conditionally mapped HUMAN also requires explicit approval. Acceptance binds exact graph/source/baseline/review bytes, records `READY_FOR_EXECUTION`, and stops before execution.
 
 For the one D-082 repair episode, `start-run` recognizes only `BLOCKED/system_design/SYSTEM_DESIGN_STALE` and `BLOCKED/program_design/PROGRAM_DESIGN_RESUMED`. It durably reserves one of four shared attempts before internally invoking the exact producer; producers retain their normal internal control handoff and configured authority. System repair preserves the episode-opening Program candidate hash until the first Program reservation. Fresh Program acceptance against System N+1 clears the episode, restores `PLANNING`, and advances to tickets; exhaustion stays durably `BLOCKED`.
 
-Generalized System/Program Design rejection, reopen, replacement acceptance, staleness propagation, ticket compilation/acceptance, and execution remain deferred. The shared `ensure --run PATH` handoff remains strict, idempotent, and non-overwriting. The Stage 0–2 controller remains separate; this slice adds no model router, controller, state file, renderer, manifest dependency, or revision snapshot.
+Generalized System/Program Design rejection, reopen, replacement acceptance, execution-originated graph reopening, and execution remain deferred. The shared `ensure --run PATH` handoff remains strict, idempotent, and non-overwriting. The Stage 0–2 controller remains separate; Stage 5 adds no model router, execution controller, runtime state file, worker brief, poller, watcher, publication path, or automatic merge.
 
 ## Licence
 

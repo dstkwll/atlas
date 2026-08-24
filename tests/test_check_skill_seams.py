@@ -466,6 +466,69 @@ class SkillSeamHardeningTests(unittest.TestCase):
                     findings,
                 )
 
+    def test_stage5_first_party_producer_authority_and_start_run_route_are_complete(self):
+        plugin = ROOT / "plugins" / "atlas"
+        compile_path = plugin / "skills" / "compile-tickets" / "SKILL.md"
+        template_path = plugin / "skills" / "compile-tickets" / "references" / "ticket-graph-file.md"
+        agent_path = plugin / "skills" / "compile-tickets" / "agents" / "openai.yaml"
+        authority_path = plugin / "skills" / "control-planning" / "references" / "ticket-graph-authority.md"
+        for path in (compile_path, template_path, agent_path, authority_path):
+            self.assertTrue(path.is_file(), path)
+
+        producer = compile_path.read_text(encoding="utf-8")
+        control = (plugin / "skills" / "control-planning" / "SKILL.md").read_text(encoding="utf-8")
+        start = (plugin / "skills" / "start-run" / "SKILL.md").read_text(encoding="utf-8")
+        readme = (plugin / "README.md").read_text(encoding="utf-8")
+        for clause in (
+            "name: compile-tickets",
+            "Resolve `<atlas-plugin-root>` from this installed skill",
+            "Require current status `PLANNING`, phase `tickets`, gate `PENDING`, and no ticket-graph acceptance",
+            "Derive every applicable source only from effective selected stages and exact current acceptances",
+            "write only canonical `tickets/*.md` and `50-ticket-graph.json` candidate/readiness bytes",
+            "never create or modify `reviews/ticket-graph-v1.json`",
+            "never write `planning-control.json`",
+            "references/ticket-graph-file.md",
+            'check --run "<run-directory>" --stage tickets',
+            "After mechanical `PASS`, perform the exact named internal handoff to `atlas:control-planning`",
+            "unchanged `<run-directory>` and explicit stage `tickets`",
+        ):
+            self.assertIn(clause, producer)
+        self.assertEqual(producer.count("atlas:control-planning"), 1)
+
+        agent = SEAMS.yaml.safe_load(agent_path.read_text(encoding="utf-8"))
+        self.assertEqual(agent["interface"], {
+            "display_name": "Atlas Ticket Graph Compiler",
+            "short_description": "Compile Stage 5 and hand it to planning control",
+            "default_prompt": (
+                "Use $compile-tickets to compile the exact Atlas Stage 5 ticket graph "
+                "and continue its internal control handoff."
+            ),
+        })
+        self.assertFalse(agent["policy"]["allow_implicit_invocation"])
+
+        self.assertIn("supports exactly the explicit stages `system_design`, `program_design`, and `tickets`", control)
+        self.assertIn("## Ticket graph branch", control)
+        self.assertIn("references/ticket-graph-authority.md", control)
+        self.assertIn('check --run "<run-directory>" --stage tickets', control)
+        self.assertIn('advance --run "<run-directory>" --stage tickets --review reviews/ticket-graph-v1.json --date "<YYYY-MM-DD>"', control)
+        self.assertIn('advance --run "<run-directory>" --stage tickets --review reviews/ticket-graph-v1.json --approval human --date "<YYYY-MM-DD>"', control)
+
+        self.assertIn("If validated planning phase is `tickets`, invoke `atlas:compile-tickets` internally", start)
+        self.assertIn("If validated planning status is `READY_FOR_EXECUTION`, stop at the execution boundary", start)
+        self.assertIn("Invoke at most three downstream producers during one `start-run` invocation", start)
+        self.assertIn("First-party Stage 0–5 skills", readme)
+        self.assertIn("| `compile-tickets` | Compile and hand off the exact Stage 5 ticket graph candidate. |", readme)
+        self.assertIn("stops at `READY_FOR_EXECUTION`", readme)
+
+        with tempfile.TemporaryDirectory() as td:
+            skills = self.copy_plugin(Path(td))
+            path = skills / "compile-tickets" / "SKILL.md"
+            text = path.read_text(encoding="utf-8")
+            handoff = "After mechanical `PASS`, perform the exact named internal handoff to `atlas:control-planning`"
+            path.write_text(text.replace(handoff, "After mechanical PASS, report readiness", 1), encoding="utf-8")
+            findings = SEAMS.cross_skill_contracts(skills)
+            self.assertTrue(any("compile-tickets internal control-planning handoff" in message for _, message in findings), findings)
+
     def test_program_design_producer_metadata_and_inventory_are_exact(self):
         plugin = ROOT / "plugins" / "atlas"
         skill_path = plugin / "skills" / "program-design" / "SKILL.md"
@@ -634,28 +697,34 @@ class SkillSeamHardeningTests(unittest.TestCase):
             findings = SEAMS.cross_skill_contracts(skills)
             self.assertTrue(any("exact internal control-planning handoff" in message for _, message in findings), findings)
 
-    def test_control_planning_supports_only_two_explicit_stages_and_loads_program_authority(self):
+    def test_control_planning_supports_three_explicit_stages_and_loads_ticket_authority(self):
         plugin = ROOT / "plugins" / "atlas"
         control_path = plugin / "skills" / "control-planning" / "SKILL.md"
         agent_path = plugin / "skills" / "control-planning" / "agents" / "openai.yaml"
         control = control_path.read_text(encoding="utf-8")
-        self.assertIn("supports exactly the explicit stages `system_design` and `program_design`", control)
+        self.assertIn("supports exactly the explicit stages `system_design`, `program_design`, and `tickets`", control)
         self.assertIn("never discovers, infers, or reroutes a stage", control)
-        self.assertIn("references/system-design-authority.md", control)
-        self.assertIn("references/program-design-authority.md", control)
+        for reference in (
+            "references/system-design-authority.md",
+            "references/program-design-authority.md",
+            "references/ticket-graph-authority.md",
+        ):
+            self.assertIn(reference, control)
         self.assertIn("## Program Design branch", control)
-        self.assertIn("configured `AGENT_REVIEW` or `HUMAN` authority", control)
+        self.assertIn("## Ticket graph branch", control)
         self.assertIn("fresh exact PASS review", control)
-        self.assertIn("reviews/program-design-v1.json", control)
         for command in (
             'check --run "<run-directory>" --stage program_design',
+            'check --run "<run-directory>" --stage tickets',
             'advance --run "<run-directory>" --stage program_design --review reviews/program-design-v1.json --date "<YYYY-MM-DD>"',
             'advance --run "<run-directory>" --stage program_design --review reviews/program-design-v1.json --approval human --date "<YYYY-MM-DD>"',
+            'advance --run "<run-directory>" --stage tickets --review reviews/ticket-graph-v1.json --date "<YYYY-MM-DD>"',
+            'advance --run "<run-directory>" --stage tickets --review reviews/ticket-graph-v1.json --approval human --date "<YYYY-MM-DD>"',
         ):
             self.assertIn(command, control)
         agent = SEAMS.yaml.safe_load(agent_path.read_text(encoding="utf-8"))
-        self.assertEqual(agent["interface"]["short_description"], "Apply configured System or Program Design authority once")
-        self.assertIn("explicit system_design or program_design boundary once", agent["interface"]["default_prompt"])
+        self.assertEqual(agent["interface"]["short_description"], "Apply configured System, Program, or ticket authority once")
+        self.assertIn("System Design, Program Design, or ticket-graph boundary", agent["interface"]["default_prompt"])
 
         findings = SEAMS.cross_skill_contracts(plugin / "skills")
         self.assertFalse([item for item in findings if item[0] == "cross"], findings)
@@ -664,14 +733,10 @@ class SkillSeamHardeningTests(unittest.TestCase):
         plugin = ROOT / "plugins" / "atlas"
         control_path = plugin / "skills" / "control-planning" / "SKILL.md"
         control = control_path.read_text(encoding="utf-8")
-        selector = "Run exactly one mechanical check selected by the explicit stage; never run both commands"
+        selector = "Run exactly one mechanical check selected by the explicit stage; never run more than one command"
         self.assertIn(selector, control)
-        self.assertIn(
-            "For explicit stage `system_design`, run only:", control
-        )
-        self.assertIn(
-            "For explicit stage `program_design`, run only:", control
-        )
+        for stage in ("system_design", "program_design", "tickets"):
+            self.assertIn(f"For explicit stage `{stage}`, run only:", control)
 
         with tempfile.TemporaryDirectory() as td:
             skills = self.copy_plugin(Path(td))
@@ -739,21 +804,21 @@ class SkillSeamHardeningTests(unittest.TestCase):
                 findings,
             )
 
-    def test_start_run_routes_program_design_internally_and_stops_honestly_at_tickets(self):
+    def test_start_run_routes_all_planning_producers_and_stops_at_execution_boundary(self):
         plugin = ROOT / "plugins" / "atlas"
         start_path = plugin / "skills" / "start-run" / "SKILL.md"
         start = start_path.read_text(encoding="utf-8")
         clauses = (
             "If validated planning phase is `system_design`, invoke `atlas:system-design` internally",
             "If validated planning phase is `program_design`, invoke `atlas:program-design` internally",
-            "If validated planning phase is `tickets`, stop loudly",
-            "no first-party ticket producer exists",
-            "Preserve the existing Product Closure and System Design paths",
+            "If validated planning phase is `tickets`, invoke `atlas:compile-tickets` internally",
+            "If validated planning status is `READY_FOR_EXECUTION`, stop at the execution boundary",
+            "Preserve the existing Product Closure, System Design, and Program Design paths",
             "This is a bounded continuation loop, not one-shot dispatch",
             "After an invoked producer and its internal control handoff return, run `ensure` again and re-read validated `planning-control.json`",
-            "The only legal downstream continuation after `system_design` is `program_design` or `tickets`; after `program_design` it is `tickets`",
-            "Invoke at most two downstream producers during one `start-run` invocation",
-            "If the phase is unchanged, the invoked stage's gate remains `PENDING`, the transition is unexpected, or an invoked owner stops `BLOCKED` or `DESIGN_BLOCKED`, stop without retrying that producer",
+            "The only legal downstream continuation after `system_design` is `program_design` or `tickets`; after `program_design` it is `tickets`; after pending `tickets` it is `READY_FOR_EXECUTION`",
+            "Invoke at most three downstream producers during one `start-run` invocation",
+            "If the phase is unchanged while status remains `PLANNING`, the invoked stage's gate remains `PENDING`, the transition is unexpected, or an invoked owner stops `BLOCKED` or `DESIGN_BLOCKED`, stop without retrying that producer",
             "Never derive a producer dynamically from the stage list",
         )
         for clause in clauses:
@@ -778,9 +843,10 @@ class SkillSeamHardeningTests(unittest.TestCase):
             skills = self.copy_plugin(Path(td))
             path = skills / "start-run" / "SKILL.md"
             text = path.read_text(encoding="utf-8")
-            path.write_text(text.replace("invoke `atlas:program-design` internally", "report Program Design", 1), encoding="utf-8")
+            text = text.replace("invoke `atlas:compile-tickets` internally", "report tickets", 1)
+            path.write_text(text, encoding="utf-8")
             findings = SEAMS.cross_skill_contracts(skills)
-            self.assertTrue(any("Program Design route and tickets stop" in message for _, message in findings), findings)
+            self.assertTrue(any("Stage 3-5 producer route" in message for _, message in findings), findings)
 
     def test_program_design_packaged_commands_are_caller_cwd_independent(self):
         plugin = ROOT / "plugins" / "atlas"
@@ -808,17 +874,21 @@ class SkillSeamHardeningTests(unittest.TestCase):
             findings = SEAMS.cross_skill_contracts(skills)
             self.assertTrue(any("caller-CWD-independent Program Design skill root" in message for _, message in findings), findings)
 
-    def test_readme_exposes_the_single_program_design_producer_and_stage4_flow(self):
+    def test_readme_exposes_stage5_compiler_and_execution_boundary(self):
         plugin = ROOT / "plugins" / "atlas"
         readme_path = plugin / "README.md"
         readme = readme_path.read_text(encoding="utf-8")
-        self.assertIn("First-party Stage 0–4 skills", readme)
+        self.assertIn("First-party Stage 0–5 skills", readme)
         self.assertIn(
             "| `program-design` | Produce the exact Stage 4 candidate, record readiness, and continue the internal control handoff. |",
             readme,
         )
-        self.assertIn("tickets remain intentionally unsupported", readme)
-        self.assertNotIn("Program Design, ticket compilation/acceptance", readme)
+        self.assertIn(
+            "| `compile-tickets` | Compile and hand off the exact Stage 5 ticket graph candidate. |",
+            readme,
+        )
+        self.assertIn("stops at `READY_FOR_EXECUTION`", readme)
+        self.assertNotIn("tickets remain intentionally unsupported", readme)
         classification = (
             "missing binding, source, exact commit/tree/blob, submodule content, or Git LFS content returns `BLOCKED`; "
             "only an exact-code contradiction requiring accepted upstream truth to change returns `DESIGN_BLOCKED`"
@@ -840,27 +910,30 @@ class SkillSeamHardeningTests(unittest.TestCase):
                 findings,
             )
 
-    def test_readme_protects_automatic_program_design_orchestration_not_user_routing(self):
+    def test_readme_protects_automatic_stage5_orchestration_not_user_routing(self):
         plugin = ROOT / "plugins" / "atlas"
         readme = (plugin / "README.md").read_text(encoding="utf-8")
-        self.assertNotIn("The user invokes `atlas:program-design` once", readme)
+        self.assertNotIn("The user invokes `atlas:compile-tickets` once", readme)
         start = (plugin / "skills" / "start-run" / "SKILL.md").read_text(encoding="utf-8")
         program = (plugin / "skills" / "program-design" / "SKILL.md").read_text(encoding="utf-8")
+        compiler = (plugin / "skills" / "compile-tickets" / "SKILL.md").read_text(encoding="utf-8")
         self.assertIn("invoke `atlas:program-design` internally", start)
-        self.assertIn("If validated planning phase is `tickets`, stop loudly", start)
-        self.assertIn("exact named internal handoff to `atlas:control-planning`", program)
-        self.assertIn("without asking the user to issue a second routing command", program)
+        self.assertIn("invoke `atlas:compile-tickets` internally", start)
+        self.assertIn("If validated planning status is `READY_FOR_EXECUTION`, stop at the execution boundary", start)
+        for producer in (program, compiler):
+            self.assertIn("exact named internal handoff to `atlas:control-planning`", producer)
+            self.assertIn("without asking the user", producer)
 
         with tempfile.TemporaryDirectory() as td:
             skills = self.copy_plugin(Path(td))
             path = skills / "start-run" / "SKILL.md"
             text = path.read_text(encoding="utf-8")
             path.write_text(
-                text.replace("invoke `atlas:program-design` internally", "report Program Design", 1),
+                text.replace("invoke `atlas:compile-tickets` internally", "report tickets", 1),
                 encoding="utf-8",
             )
             findings = SEAMS.cross_skill_contracts(skills)
-            self.assertTrue(any("Program Design route and tickets stop" in message for _, message in findings), findings)
+            self.assertTrue(any("Stage 3-5 producer route" in message for _, message in findings), findings)
 
     def test_operational_runbooks_are_owned_and_reachable_without_new_stage_skills(self):
         plugin = ROOT / "plugins" / "atlas"
@@ -977,7 +1050,48 @@ class SkillSeamHardeningTests(unittest.TestCase):
             self.assertIn("interface:\n", text)
             path.write_text(text.replace("interface:\n", "stale_interface:\n", 1), encoding="utf-8")
             findings = SEAMS.cross_skill_contracts(skills)
-            self.assertTrue(any("Program Design model metadata" in message for _, message in findings), findings)
+            self.assertTrue(any("model metadata is unreadable" in message for _, message in findings), findings)
+
+    def test_ticket_graph_schema_dimensions_and_authority_filename_drift_are_detected(self):
+        cases = (
+            (
+                "manifest",
+                "compile-tickets/references/ticket-graph-file.md",
+                '"preferred_order":',
+                '"priority_order":',
+                "ticket graph manifest schema",
+            ),
+            (
+                "ticket",
+                "compile-tickets/references/ticket-graph-file.md",
+                "blocked_by: []",
+                "depends_on: []",
+                "ticket frontmatter schema",
+            ),
+            (
+                "dimensions",
+                "control-planning/references/ticket-graph-authority.md",
+                "deterministic_behavior_proof",
+                "drifted_behavior_proof",
+                "Ticket graph semantic review dimensions",
+            ),
+            (
+                "filename",
+                "control-planning/references/ticket-graph-authority.md",
+                "reviews/ticket-graph-v1.json",
+                "reviews/ticket-graph-v2.json",
+                "Ticket graph authority filename",
+            ),
+        )
+        for name, relative, old, new, expected in cases:
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as td:
+                skills = self.copy_plugin(Path(td))
+                path = skills / relative
+                text = path.read_text(encoding="utf-8")
+                self.assertIn(old, text)
+                path.write_text(text.replace(old, new, 1), encoding="utf-8")
+                findings = SEAMS.cross_skill_contracts(skills)
+                self.assertTrue(any(expected in message for _, message in findings), findings)
 
     def test_system_design_authority_reference_binds_exact_schema_dimensions_and_matrix(self):
         plugin = ROOT / "plugins" / "atlas"
@@ -1051,7 +1165,7 @@ class SkillSeamHardeningTests(unittest.TestCase):
         template = template_path.read_text(encoding="utf-8")
 
         self.assertTrue(70 <= len(system.splitlines()) <= 110)
-        self.assertTrue(70 <= len(control.splitlines()) <= 110)
+        self.assertTrue(70 <= len(control.splitlines()) <= 135)
         for text in (system, control):
             self.assertIn("disable-model-invocation: true", text)
             self.assertIn("third parent of this file", text)
@@ -1084,25 +1198,24 @@ class SkillSeamHardeningTests(unittest.TestCase):
         ):
             self.assertIn("allow_implicit_invocation: false", agent.read_text(encoding="utf-8"))
 
-    def test_model_metadata_describes_current_participation_and_authority_without_slice1_priming(self):
+    def test_model_metadata_describes_current_stage3_through_stage5_boundaries(self):
         plugin = ROOT / "plugins" / "atlas"
         system_path = plugin / "skills" / "system-design" / "agents" / "openai.yaml"
+        compile_path = plugin / "skills" / "compile-tickets" / "agents" / "openai.yaml"
         control_path = plugin / "skills" / "control-planning" / "agents" / "openai.yaml"
         system_data = SEAMS.yaml.safe_load(system_path.read_text(encoding="utf-8"))
+        compile_data = SEAMS.yaml.safe_load(compile_path.read_text(encoding="utf-8"))
         control_data = SEAMS.yaml.safe_load(control_path.read_text(encoding="utf-8"))
         system_prompt = system_data["interface"]["default_prompt"]
-        control_text = " ".join(control_data["interface"].values())
 
         self.assertIn("frozen agent_led or co_design participation", system_prompt)
         self.assertIn("candidate", system_prompt)
         self.assertIn("internal control handoff", system_prompt)
         self.assertNotIn("current agent-led", system_prompt.lower())
-        self.assertIn(
-            "configured HUMAN, AGENT_REVIEW, or HUMAN_IF_CHANGED System Design boundary once",
-            control_text,
-        )
-        self.assertNotIn("HUMAN handoff", control_text)
+        self.assertEqual(compile_data["interface"]["display_name"], "Atlas Ticket Graph Compiler")
+        self.assertIn("ticket-graph boundary", control_data["interface"]["default_prompt"])
         self.assertFalse(system_data["policy"]["allow_implicit_invocation"])
+        self.assertFalse(compile_data["policy"]["allow_implicit_invocation"])
         self.assertFalse(control_data["policy"]["allow_implicit_invocation"])
 
         cases = (
@@ -1114,9 +1227,9 @@ class SkillSeamHardeningTests(unittest.TestCase):
             ),
             (
                 "control-planning/agents/openai.yaml",
-                "configured HUMAN, AGENT_REVIEW, or HUMAN_IF_CHANGED System Design boundary once",
-                "current HUMAN System Design boundary once",
-                "stale Slice 1 HUMAN-only",
+                "ticket-graph boundary",
+                "System Design boundary",
+                "all three explicit boundaries",
             ),
         )
         for relative, old, new, expected in cases:
@@ -1683,7 +1796,7 @@ class SkillSeamHardeningTests(unittest.TestCase):
             findings = SEAMS.cross_skill_contracts(skills)
             self.assertTrue(any("to-spec remains" in message for _, message in findings))
 
-    def test_atlas_manifests_describe_the_current_stage0_through_stage4_surface(self):
+    def test_atlas_manifests_describe_the_current_stage0_through_stage5_surface(self):
         manifests = (
             ROOT / "plugins" / "atlas" / "plugin.json",
             ROOT / "plugins" / "atlas" / ".codex-plugin" / "plugin.json",
@@ -1692,7 +1805,7 @@ class SkillSeamHardeningTests(unittest.TestCase):
             json.loads(path.read_text(encoding="utf-8"))["description"] for path in manifests
         ]
         self.assertEqual(len(set(descriptions)), 1)
-        for clause in ("Stage 0", "System", "Program Design", "Stage 4"):
+        for clause in ("Stage 0", "System", "Program Design", "Stage 5", "ticket graphs"):
             self.assertIn(clause, descriptions[0])
 
         with tempfile.TemporaryDirectory() as td:
