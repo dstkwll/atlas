@@ -64,12 +64,30 @@ STAGE0_ANCHOR_FIELDS = {
 PRODUCT_CLOSURE_FIELDS = {"version", "sha256"}
 SYSTEM_DESIGN_FILE = "30-system-design.md"
 PROGRAM_DESIGN_FILE = "40-program-design.md"
+TICKET_GRAPH_FILE = "50-ticket-graph.json"
 SYSTEM_DESIGN_FIELDS = {
     "run", "version", "status", "gate_ready", "participation", "opened", "source_binding",
 }
 PROGRAM_DESIGN_FIELDS = {
     "run", "version", "status", "gate_ready", "opened", "source_binding",
 }
+TICKET_GRAPH_FIELDS = {
+    "version", "run", "status", "gate_ready", "source_bindings",
+    "repository_baselines", "preferred_order", "tracer_ticket", "tickets",
+}
+TICKET_GRAPH_ENTRY_FIELDS = {"id", "path", "sha256"}
+TICKET_FIELDS = {
+    "id", "kind", "status", "repository", "blocked_by", "tracer", "enabling",
+    "references", "external_prerequisites", "validators", "outcomes", "reviews",
+}
+TICKET_DEPENDENCY_FIELDS = {"ticket", "establishes"}
+TICKET_REFERENCE_FIELDS = {"kind", "sections"}
+TICKET_VALIDATOR_FIELDS = {"id", "command", "success"}
+TICKET_OUTCOME_FIELDS = {"id", "promise", "acceptance", "validator_ids"}
+TICKET_ENABLING_FIELDS = {"consumer", "rationale"}
+TICKET_EXTERNAL_FIELDS = {"id", "condition", "satisfaction"}
+TICKET_COMMAND_SATISFACTION_FIELDS = {"kind", "command", "success"}
+TICKET_HUMAN_SATISFACTION_FIELDS = {"kind", "authority", "statement", "provenance"}
 PRODUCT_SOURCE_FIELDS = {"kind", "artifact", "version", "sha256"}
 STAGE0_SOURCE_FIELDS = {
     "kind", "artifact", "sha256", "effective_config_hash", "effective_config_revision",
@@ -106,6 +124,7 @@ PROGRAM_DESIGN_SECTIONS = (
 )
 SYSTEM_DESIGN_REVIEW_REFERENCE = "reviews/system-design-v1.json"
 PROGRAM_DESIGN_REVIEW_REFERENCE = "reviews/program-design-v1.json"
+TICKET_GRAPH_REVIEW_REFERENCE = "reviews/ticket-graph-v1.json"
 UPSTREAM_BLOCK_REVIEW_REFERENCE = "reviews/program-design-upstream-block-v1.json"
 SYSTEM_DESIGN_REVIEW_FIELDS = {
     "version", "run", "stage", "policy", "candidate_version", "candidate_sha256",
@@ -120,6 +139,10 @@ SYSTEM_REPAIR_CONTEXT_FIELDS = {
 PROGRAM_DESIGN_REVIEW_FIELDS = {
     "version", "run", "stage", "policy", "candidate_version", "candidate_sha256",
     "repository_baselines", "semantic_review",
+}
+TICKET_GRAPH_REVIEW_FIELDS = {
+    "version", "run", "stage", "policy", "candidate_version", "candidate_sha256",
+    "source_bindings", "repository_baselines", "semantic_review",
 }
 UPSTREAM_BLOCK_REVIEW_FIELDS = {
     "version", "run", "stage", "planning_revision", "verdict",
@@ -153,6 +176,15 @@ PROGRAM_DESIGN_DIMENSIONS = (
     "state_locking_concurrency_and_lifetime",
     "migration_and_local_failure_path_implementation",
     "testability_and_compilation_readiness",
+)
+TICKET_GRAPH_DIMENSIONS = (
+    "selected_path_applicability_and_no_redesign",
+    "vertical_outcomes_and_required_boundaries",
+    "enabling_ticket_justification",
+    "dependency_truth_and_preferred_order",
+    "external_readiness_and_design_blocking",
+    "deterministic_behavior_proof",
+    "execution_handoff_completeness",
 )
 SEMANTIC_REVIEW_FIELDS = {"verdict", "dimensions", "gaps"}
 DIMENSION_REVIEW_FIELDS = {"dimension", "result", "evidence"}
@@ -597,6 +629,93 @@ def load_program_design_review(
     validate_program_design_semantic_review(envelope.get("semantic_review"), source_kind)
     if envelope["semantic_review"]["verdict"] != "PASS":
         raise ControlError(f"Program Design semantic review is {envelope['semantic_review']['verdict']}")
+    return envelope, review_sha256
+
+
+def validate_ticket_graph_semantic_review(review: Any, source_kinds: set[str]) -> None:
+    if not isinstance(review, dict) or set(review) != SEMANTIC_REVIEW_FIELDS:
+        raise ControlError("ticket-graph semantic_review does not match its exact schema")
+    verdict = review.get("verdict")
+    rows = review.get("dimensions")
+    gaps = review.get("gaps")
+    if verdict not in {"PASS", "BLOCKED"} or not isinstance(rows, list) or not isinstance(gaps, list):
+        raise ControlError("ticket-graph semantic_review is malformed")
+    if (
+        len(rows) != len(TICKET_GRAPH_DIMENSIONS)
+        or any(not isinstance(row, dict) or set(row) != DIMENSION_REVIEW_FIELDS for row in rows)
+        or any(row.get("dimension") not in TICKET_GRAPH_DIMENSIONS for row in rows)
+        or len({row.get("dimension") for row in rows}) != len(TICKET_GRAPH_DIMENSIONS)
+        or any(row.get("result") not in {"PASS", "BLOCKED", "DESIGN_BLOCKED"} for row in rows)
+        or any(not nonempty_string(row.get("evidence")) for row in rows)
+    ):
+        raise ControlError("ticket-graph semantic_review must cover the exact seven Stage 5 dimensions")
+    results = {row["dimension"]: row["result"] for row in rows}
+    expected_verdict = "PASS" if all(result == "PASS" for result in results.values()) else "BLOCKED"
+    if verdict != expected_verdict:
+        raise ControlError("ticket-graph verdict must be derived from its dimension rows")
+    nonpass = {dimension for dimension, result in results.items() if result != "PASS"}
+    if len(gaps) != len(nonpass) or {item.get("dimension") for item in gaps if isinstance(item, dict)} != nonpass:
+        raise ControlError("ticket-graph gaps must exactly cover every non-PASS dimension")
+    for item in gaps:
+        dimension = item.get("dimension") if isinstance(item, dict) else None
+        result = results.get(dimension)
+        expected_fields = DESIGN_BLOCKED_GAP_FIELDS if result == "DESIGN_BLOCKED" else SEMANTIC_GAP_FIELDS
+        if not isinstance(item, dict) or set(item) != expected_fields:
+            raise ControlError("ticket-graph gap does not match the exact result-specific schema")
+        if any(not nonempty_string(item.get(field)) for field in expected_fields - {"dimension"}):
+            raise ControlError("ticket-graph gaps require nonempty evidence fields")
+        if result == "DESIGN_BLOCKED" and (
+            item.get("upstream_source") not in source_kinds
+            or item.get("resume_boundary") != item.get("upstream_source")
+        ):
+            raise ControlError("ticket-graph DESIGN_BLOCKED must resume at an applicable source boundary")
+
+
+def load_ticket_graph_review(
+    run_dir: Path,
+    effective: dict[str, Any],
+    candidate_version: int,
+    candidate_sha256: str,
+    source_bindings: list[dict[str, Any]],
+    review_reference: Any,
+) -> tuple[dict[str, Any], str]:
+    if review_reference != TICKET_GRAPH_REVIEW_REFERENCE:
+        raise ControlError(f"ticket-graph review must use exact {TICKET_GRAPH_REVIEW_REFERENCE}")
+    path = managed_path(run_dir, review_reference)
+    if not path.is_file() or path.is_symlink():
+        raise ControlError("ticket-graph review evidence is missing or not a real file")
+    try:
+        review_bytes = path.read_bytes()
+        envelope = load_json(review_bytes.decode("utf-8"))
+    except UnicodeDecodeError as exc:
+        raise ControlError("ticket-graph review evidence is not valid UTF-8") from exc
+    except json.JSONDecodeError as exc:
+        raise ControlError("ticket-graph review evidence is not valid duplicate-safe JSON") from exc
+    review_sha256 = hashlib.sha256(review_bytes).hexdigest()
+    if not isinstance(envelope, dict) or set(envelope) != TICKET_GRAPH_REVIEW_FIELDS:
+        raise ControlError("ticket-graph review envelope does not match its exact schema")
+    policy = effective.get("gates", {}).get("tickets", {})
+    configured = policy.get("authority") if isinstance(policy, dict) else None
+    if (
+        type(envelope.get("version")) is not int
+        or envelope.get("version") != 1
+        or envelope.get("run") != effective["run"]
+        or envelope.get("stage") != "tickets"
+        or configured not in {"AGENT_REVIEW", "HUMAN", "CONDITIONAL"}
+        or envelope.get("policy") != configured
+        or type(envelope.get("candidate_version")) is not int
+        or envelope.get("candidate_version") != candidate_version
+        or envelope.get("candidate_sha256") != candidate_sha256
+        or not json_equal_exact(envelope.get("source_bindings"), source_bindings)
+        or envelope.get("repository_baselines") != effective["repos"]
+    ):
+        raise ControlError("ticket-graph review evidence does not match current policy, candidate, sources, or baselines")
+    validate_ticket_graph_semantic_review(
+        envelope.get("semantic_review"),
+        {item["kind"] for item in source_bindings},
+    )
+    if envelope["semantic_review"]["verdict"] != "PASS":
+        raise ControlError("ticket-graph semantic review is BLOCKED")
     return envelope, review_sha256
 
 
@@ -1045,6 +1164,62 @@ def expected_program_design_source(
     }
 
 
+def expected_ticket_graph_sources(
+    planning: dict[str, Any], effective: dict[str, Any]
+) -> list[dict[str, Any]]:
+    sources: list[dict[str, Any]] = []
+    stages = effective["stages"]
+    product = planning["stage0_anchor"].get("product_closure")
+    if "discovery" in stages:
+        if not isinstance(product, dict):
+            raise ControlError("ticket graph requires an accepted product-closure source")
+        sources.append({
+            "kind": "product_closure",
+            "artifact": "20-prd.md",
+            "version": product["version"],
+            "sha256": product["sha256"],
+        })
+    if "system_design" in stages:
+        system = planning["acceptances"].get("system_design")
+        if not isinstance(system, dict):
+            raise ControlError("ticket graph requires an accepted System Design source")
+        sources.append({
+            "kind": "system_design",
+            "artifact": SYSTEM_DESIGN_FILE,
+            "version": system["candidate_version"],
+            "sha256": system["candidate_sha256"],
+        })
+    if "program_design" in stages:
+        program = planning["acceptances"].get("program_design")
+        if not isinstance(program, dict):
+            raise ControlError("ticket graph requires an accepted Program Design source")
+        if "discovery" not in stages and "system_design" not in stages:
+            anchor = planning["stage0_anchor"]
+            sources.append({
+                "kind": "stage0",
+                "artifact": "run.yaml",
+                "sha256": anchor["base_run_sha256"],
+                "effective_config_hash": anchor["effective_config_hash"],
+                "effective_config_revision": anchor["effective_config_revision"],
+            })
+        sources.append({
+            "kind": "program_design",
+            "artifact": PROGRAM_DESIGN_FILE,
+            "version": program["candidate_version"],
+            "sha256": program["candidate_sha256"],
+        })
+    if not any(stage in stages for stage in ("discovery", "system_design", "program_design")):
+        anchor = planning["stage0_anchor"]
+        sources.append({
+            "kind": "stage0",
+            "artifact": "run.yaml",
+            "sha256": anchor["base_run_sha256"],
+            "effective_config_hash": anchor["effective_config_hash"],
+            "effective_config_revision": anchor["effective_config_revision"],
+        })
+    return sources
+
+
 def require_program_design_repository_access(run_dir: Path) -> atlas_repository.Verification:
     verification = atlas_repository.verify_run(run_dir)
     if verification.gaps:
@@ -1096,6 +1271,50 @@ def validate_program_design_acceptance(
     )
     if record.get("review_sha256") != review_sha256:
         raise ControlError("planning-control.json Program Design acceptance evidence is not current")
+
+
+def validate_ticket_graph_acceptance(
+    run_dir: Path,
+    planning: dict[str, Any],
+    effective: dict[str, Any],
+    record: Any,
+) -> None:
+    if not isinstance(record, dict) or set(record) != PLANNING_ACCEPTANCE_FIELDS:
+        raise ControlError("planning-control.json ticket-graph acceptance is malformed")
+    try:
+        canonical_date(record.get("accepted"), "ticket-graph acceptance date")
+    except ControlError as exc:
+        raise ControlError("planning-control.json ticket-graph acceptance is malformed") from exc
+    expected_sources = expected_ticket_graph_sources(planning, effective)
+    expected_authority = resolve_tickets_policy(effective)
+    if (
+        type(record.get("candidate_version")) is not int
+        or record["candidate_version"] != 1
+        or re.fullmatch(r"[0-9a-f]{64}", str(record.get("candidate_sha256", ""))) is None
+        or record.get("authority") != expected_authority
+        or record.get("review_reference") != TICKET_GRAPH_REVIEW_REFERENCE
+        or not json_equal_exact(record.get("source_bindings"), expected_sources)
+        or record.get("repository_baselines") != effective["repos"]
+    ):
+        raise ControlError("planning-control.json ticket-graph acceptance is malformed")
+    report = ticket_graph_report(run_dir, planning, effective)
+    if (
+        report.get("verdict") != "PASS"
+        or report.get("candidate_version") != record["candidate_version"]
+        or report.get("candidate_sha256") != record["candidate_sha256"]
+        or not json_equal_exact(report.get("source_bindings"), expected_sources)
+    ):
+        raise ControlError("accepted ticket graph is not current")
+    _, review_sha256 = load_ticket_graph_review(
+        run_dir,
+        effective,
+        record["candidate_version"],
+        record["candidate_sha256"],
+        expected_sources,
+        record["review_reference"],
+    )
+    if record.get("review_sha256") != review_sha256:
+        raise ControlError("planning-control.json ticket-graph acceptance evidence is not current")
 
 
 def load_planning_control(run_dir: Path) -> dict[str, Any]:
@@ -1191,7 +1410,9 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
                 )
             elif stage == "program_design":
                 validate_program_design_acceptance(run_dir, planning, effective, record)
-            else:
+            elif stage == "tickets":
+                validate_ticket_graph_acceptance(run_dir, planning, effective, record)
+            else:  # pragma: no cover
                 raise ControlError("planning-control.json contains an unsupported downstream acceptance")
             expected_gate = (
                 "HUMAN_APPROVED" if record["authority"] == "HUMAN" else "AGENT_APPROVED"
@@ -1410,6 +1631,17 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
         if system_acceptance_repair_context is not None
         else None
     )
+    ready_for_execution = (
+        planning.get("status") == "READY_FOR_EXECUTION"
+        and planning.get("phase") == "tickets"
+        and not pending
+        and gates["tickets"] in {"HUMAN_APPROVED", "AGENT_APPROVED"}
+        and acceptances["tickets"] is not None
+        and "STALE" not in gates.values()
+        and planning["revision"] == 1 + len(approved_stages)
+    )
+    if ready_for_execution:
+        return planning
     if (
         planning.get("status") != "PLANNING"
         or "STALE" in gates.values()
@@ -2274,13 +2506,366 @@ def program_design_report(
     return report
 
 
+def ticket_graph_report(
+    run_dir: Path,
+    planning: dict[str, Any],
+    effective: dict[str, Any],
+) -> dict[str, Any]:
+    gaps: list[dict[str, str]] = []
+    report: dict[str, Any] = {
+        "version": 1,
+        "run": planning["run"],
+        "verdict": "BLOCKED",
+        "stage": "tickets",
+        "boundary": "tickets",
+        "repository_baselines": effective["repos"],
+        "gaps": gaps,
+    }
+    repository_verification = atlas_repository.verify_run(run_dir)
+    for item in repository_verification.gaps:
+        artifact = f"repository:{item.repository}" if item.repository is not None else "repositories.bindings"
+        gaps.append(gap(artifact, f"{item.code}: {item.problem}", "tickets", item.resume_action))
+    pending_tickets = (
+        planning.get("status") == "PLANNING"
+        and planning.get("phase") == "tickets"
+        and planning["gates"].get("tickets") == "PENDING"
+    )
+    accepted_tickets = (
+        planning.get("status") == "READY_FOR_EXECUTION"
+        and planning.get("phase") == "tickets"
+        and planning["gates"].get("tickets") in {"HUMAN_APPROVED", "AGENT_APPROVED"}
+        and planning["acceptances"].get("tickets") is not None
+    )
+    if not pending_tickets and not accepted_tickets:
+        gaps.append(gap(
+            PLANNING_FILE,
+            "tickets is not the current pending planning boundary",
+            "tickets",
+            "resume the current planning-control phase",
+        ))
+    manifest_path = managed_path(run_dir, TICKET_GRAPH_FILE)
+    if not manifest_path.is_file() or manifest_path.is_symlink():
+        gaps.append(gap(
+            TICKET_GRAPH_FILE,
+            "ticket-graph manifest is missing or not a real file",
+            "tickets",
+            f"produce {TICKET_GRAPH_FILE}",
+        ))
+        return report
+    report["candidate_sha256"] = file_sha256(manifest_path)
+    try:
+        manifest = load_json(manifest_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, UnicodeError) as exc:
+        gaps.append(gap(TICKET_GRAPH_FILE, str(exc), "tickets", "repair the duplicate-safe JSON manifest"))
+        return report
+    if not isinstance(manifest, dict) or set(manifest) != TICKET_GRAPH_FIELDS:
+        gaps.append(gap(
+            TICKET_GRAPH_FILE,
+            "ticket-graph manifest does not match its exact schema",
+            "tickets",
+            "repair the exact manifest fields",
+        ))
+        return report
+    candidate_version = manifest.get("version")
+    if type(candidate_version) is int:
+        report["candidate_version"] = candidate_version
+    if type(candidate_version) is not int or candidate_version != 1:
+        gaps.append(gap(TICKET_GRAPH_FILE, "graph version must equal integer 1", "tickets", "write graph version 1"))
+    if manifest.get("run") != planning["run"]:
+        gaps.append(gap(TICKET_GRAPH_FILE, "graph run does not match planning-control.json", "tickets", "bind the graph to this run"))
+    if manifest.get("status") != "draft":
+        gaps.append(gap(TICKET_GRAPH_FILE, "producer graph status must remain draft", "tickets", "record readiness without acceptance"))
+    if manifest.get("gate_ready") is not True:
+        gaps.append(gap(TICKET_GRAPH_FILE, "producer has not recorded graph readiness", "tickets", "finish the graph and set gate_ready true"))
+
+    expected_sources = expected_ticket_graph_sources(planning, effective)
+    source_bindings = manifest.get("source_bindings")
+    if not isinstance(source_bindings, list) or not json_equal_exact(source_bindings, expected_sources):
+        gaps.append(gap(
+            TICKET_GRAPH_FILE,
+            "source_bindings do not match every applicable accepted selected-path source",
+            "tickets",
+            "bind the graph to the exact applicable accepted sources",
+        ))
+        report["source_bindings"] = None
+    else:
+        report["source_bindings"] = source_bindings
+    if manifest.get("repository_baselines") != effective["repos"]:
+        gaps.append(gap(
+            TICKET_GRAPH_FILE,
+            "repository_baselines do not match frozen effective repositories",
+            "tickets",
+            "bind every target repository to its exact frozen baseline",
+        ))
+
+    entries = manifest.get("tickets")
+    if not isinstance(entries, list) or not entries:
+        gaps.append(gap(TICKET_GRAPH_FILE, "graph must contain at least one ticket", "tickets", "compile the complete ticket set"))
+        return report
+    raw_entry_ids = [entry.get("id") for entry in entries if isinstance(entry, dict)]
+    entry_ids = [ticket_id for ticket_id in raw_entry_ids if isinstance(ticket_id, str)]
+    if (
+        len(entry_ids) != len(entries)
+        or len(set(entry_ids)) != len(entry_ids)
+        or any(re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", ticket_id) is None for ticket_id in entry_ids)
+    ):
+        gaps.append(gap(TICKET_GRAPH_FILE, "ticket identities must be unique stable slugs", "tickets", "repair ticket identities"))
+    preferred_order = manifest.get("preferred_order")
+    if (
+        not isinstance(preferred_order, list)
+        or preferred_order != list(dict.fromkeys(preferred_order))
+        or set(preferred_order) != set(entry_ids)
+    ):
+        gaps.append(gap(TICKET_GRAPH_FILE, "preferred_order must contain every ticket exactly once", "tickets", "write the canonical preferred order"))
+
+    expected_paths: set[str] = set()
+    tickets: dict[str, dict[str, Any]] = {}
+    source_kinds = {item["kind"] for item in expected_sources}
+    repositories = {item["repository"] for item in effective["repos"]}
+    for entry in entries:
+        if not isinstance(entry, dict) or set(entry) != TICKET_GRAPH_ENTRY_FIELDS:
+            gaps.append(gap(TICKET_GRAPH_FILE, "ticket index entry does not match its exact schema", "tickets", "repair every ticket index entry"))
+            continue
+        ticket_id = entry.get("id")
+        if not isinstance(ticket_id, str):
+            continue
+        expected_path = f"tickets/{ticket_id}.md"
+        if entry.get("path") != expected_path:
+            gaps.append(gap(TICKET_GRAPH_FILE, f"ticket {ticket_id} path is not canonical", "tickets", f"use {expected_path}"))
+            continue
+        expected_paths.add(expected_path)
+        if re.fullmatch(r"[0-9a-f]{64}", str(entry.get("sha256", ""))) is None:
+            gaps.append(gap(TICKET_GRAPH_FILE, f"ticket {ticket_id} hash is malformed", "tickets", "record the exact ticket SHA-256"))
+        try:
+            ticket_path = managed_path(run_dir, expected_path)
+        except ControlError as exc:
+            gaps.append(gap(expected_path, str(exc), "tickets", "replace the ticket with a managed run-local file"))
+            continue
+        if not ticket_path.is_file() or ticket_path.is_symlink():
+            gaps.append(gap(expected_path, "ticket is missing or not a real file", "tickets", "write the exact indexed ticket file"))
+            continue
+        if file_sha256(ticket_path) != entry.get("sha256"):
+            gaps.append(gap(expected_path, "ticket bytes do not match the manifest hash", "tickets", "recompile the manifest from exact ticket bytes"))
+        try:
+            frontmatter, body = read_frontmatter(ticket_path)
+        except (ControlError, yaml.YAMLError, UnicodeError) as exc:
+            gaps.append(gap(expected_path, str(exc), "tickets", "repair ticket frontmatter"))
+            continue
+        if not isinstance(frontmatter, dict) or set(frontmatter) != TICKET_FIELDS:
+            gaps.append(gap(expected_path, "ticket frontmatter does not match its exact schema", "tickets", "repair ticket frontmatter"))
+            continue
+        tickets[ticket_id] = frontmatter
+        if frontmatter.get("id") != ticket_id:
+            gaps.append(gap(expected_path, "ticket identity does not match its index entry", "tickets", "bind the file to its indexed identity"))
+        if frontmatter.get("kind") not in {"vertical", "enabling"}:
+            gaps.append(gap(expected_path, "ticket kind must be vertical or enabling", "tickets", "classify the ticket exactly"))
+        if frontmatter.get("status") != "ready":
+            gaps.append(gap(expected_path, "ticket planning status must be ready", "tickets", "finish the ticket contract"))
+        if frontmatter.get("repository") not in repositories:
+            gaps.append(gap(expected_path, "ticket repository is not a frozen target", "tickets", "use one exact frozen repository identity"))
+        if type(frontmatter.get("tracer")) is not bool:
+            gaps.append(gap(expected_path, "ticket tracer must be boolean", "tickets", "record explicit tracer identity"))
+        headings = tuple(re.findall(r"(?m)^## ([^\n]+?)\s*$", body))
+        if headings != ("What becomes true", "Acceptance", "Relevant design"):
+            gaps.append(gap(expected_path, "ticket body does not match the exact human-readable shape", "tickets", "restore the three required sections"))
+
+        dependencies = frontmatter.get("blocked_by")
+        if not isinstance(dependencies, list) or any(
+            not isinstance(item, dict)
+            or set(item) != TICKET_DEPENDENCY_FIELDS
+            or not nonempty_string(item.get("ticket"))
+            or not nonempty_string(item.get("establishes"))
+            for item in dependencies or []
+        ):
+            gaps.append(gap(expected_path, "blocked_by must contain exact prerequisite identities and reasons", "tickets", "repair truthful dependency entries"))
+        elif len({item["ticket"] for item in dependencies}) != len(dependencies):
+            gaps.append(gap(expected_path, "blocked_by contains duplicate prerequisites", "tickets", "deduplicate prerequisite edges"))
+
+        references = frontmatter.get("references")
+        if not isinstance(references, list) or not references or any(
+            not isinstance(item, dict)
+            or set(item) != TICKET_REFERENCE_FIELDS
+            or item.get("kind") not in source_kinds
+            or not isinstance(item.get("sections"), list)
+            or any(not nonempty_string(section) for section in item.get("sections", []))
+            or (item.get("kind") == "stage0" and item.get("sections") != [])
+            for item in references or []
+        ):
+            gaps.append(gap(expected_path, "references are not drawn from applicable accepted sources", "tickets", "cite only exact applicable source kinds and sections"))
+
+        validators = frontmatter.get("validators")
+        validator_ids = [item.get("id") for item in validators or [] if isinstance(item, dict)]
+        if (
+            not isinstance(validators, list)
+            or not validators
+            or any(
+                not isinstance(item, dict)
+                or set(item) != TICKET_VALIDATOR_FIELDS
+                or not nonempty_string(item.get("id"))
+                or not nonempty_string(item.get("command"))
+                or item.get("success") != "exit_zero"
+                for item in validators or []
+            )
+            or len(set(validator_ids)) != len(validator_ids)
+        ):
+            gaps.append(gap(expected_path, "validators must be unique deterministic exit-zero commands", "tickets", "declare sufficient deterministic validators"))
+        outcomes = frontmatter.get("outcomes")
+        outcome_ids = [item.get("id") for item in outcomes or [] if isinstance(item, dict)]
+        if (
+            not isinstance(outcomes, list)
+            or not outcomes
+            or any(
+                not isinstance(item, dict)
+                or set(item) != TICKET_OUTCOME_FIELDS
+                or not nonempty_string(item.get("id"))
+                or not nonempty_string(item.get("promise"))
+                or not isinstance(item.get("acceptance"), list)
+                or not item.get("acceptance")
+                or any(not nonempty_string(value) for value in item.get("acceptance", []))
+                or not isinstance(item.get("validator_ids"), list)
+                or not item.get("validator_ids")
+                or any(value not in set(validator_ids) for value in item.get("validator_ids", []))
+                for item in outcomes or []
+            )
+            or len(set(outcome_ids)) != len(outcome_ids)
+        ):
+            gaps.append(gap(expected_path, "every promised outcome requires observable acceptance and deterministic validator proof", "tickets", "bind each promised outcome to sufficient deterministic validators"))
+
+        reviews = frontmatter.get("reviews")
+        if (
+            not isinstance(reviews, list)
+            or len(set(reviews)) != len(reviews)
+            or any(item not in {"semantic", "design", "quality"} for item in reviews)
+        ):
+            gaps.append(gap(expected_path, "reviews must use unique supplemental review kinds", "tickets", "declare only semantic, design, or quality review obligations"))
+        externals = frontmatter.get("external_prerequisites")
+        if not isinstance(externals, list):
+            gaps.append(gap(expected_path, "external_prerequisites must be a list", "tickets", "declare observable external readiness conditions"))
+        else:
+            external_ids: list[str] = []
+            for item in externals:
+                if not isinstance(item, dict) or set(item) != TICKET_EXTERNAL_FIELDS:
+                    gaps.append(gap(expected_path, "external prerequisite does not match its exact schema", "tickets", "repair the external prerequisite"))
+                    continue
+                external_id = item.get("id")
+                if isinstance(external_id, str):
+                    external_ids.append(external_id)
+                satisfaction = item.get("satisfaction")
+                valid_satisfaction = False
+                if isinstance(satisfaction, dict) and satisfaction.get("kind") == "command":
+                    valid_satisfaction = (
+                        set(satisfaction) == TICKET_COMMAND_SATISFACTION_FIELDS
+                        and nonempty_string(satisfaction.get("command"))
+                        and satisfaction.get("success") == "exit_zero"
+                    )
+                elif isinstance(satisfaction, dict) and satisfaction.get("kind") == "human_assertion":
+                    valid_satisfaction = (
+                        set(satisfaction) == TICKET_HUMAN_SATISFACTION_FIELDS
+                        and satisfaction.get("authority") == "HUMAN"
+                        and nonempty_string(satisfaction.get("statement"))
+                        and nonempty_string(satisfaction.get("provenance"))
+                    )
+                if not nonempty_string(external_id) or not nonempty_string(item.get("condition")) or not valid_satisfaction:
+                    gaps.append(gap(expected_path, "external prerequisite lacks an observable satisfaction rule", "tickets", "declare a command or provenance-bearing HUMAN assertion"))
+            if len(external_ids) != len(set(external_ids)):
+                gaps.append(gap(expected_path, "external prerequisite identities are duplicated", "tickets", "deduplicate external prerequisites"))
+
+        enabling = frontmatter.get("enabling")
+        if frontmatter.get("kind") == "vertical" and enabling is not None:
+            gaps.append(gap(expected_path, "vertical ticket must not declare enabling metadata", "tickets", "remove enabling metadata"))
+        if frontmatter.get("kind") == "enabling" and (
+            not isinstance(enabling, dict)
+            or set(enabling) != TICKET_ENABLING_FIELDS
+            or not nonempty_string(enabling.get("consumer"))
+            or not nonempty_string(enabling.get("rationale"))
+        ):
+            gaps.append(gap(expected_path, "enabling ticket must name its imminent consumer and inlining rationale", "tickets", "bind the enabling ticket to one imminent vertical consumer"))
+
+    tickets_dir = managed_path(run_dir, "tickets")
+    if not tickets_dir.is_dir() or tickets_dir.is_symlink():
+        gaps.append(gap("tickets", "tickets directory is missing or not a real directory", "tickets", "write the indexed ticket directory"))
+    else:
+        actual_paths = {
+            path.relative_to(run_dir).as_posix()
+            for path in tickets_dir.iterdir()
+            if path.is_file() or path.is_symlink()
+        }
+        if actual_paths != expected_paths:
+            gaps.append(gap("tickets", "ticket directory contents do not exactly match the manifest", "tickets", "remove unindexed tickets and restore missing indexed tickets"))
+
+    all_ids = set(entry_ids)
+    for ticket_id, ticket in tickets.items():
+        dependencies = ticket.get("blocked_by")
+        if not isinstance(dependencies, list):
+            continue
+        for dependency in dependencies:
+            dependency_id = dependency.get("ticket") if isinstance(dependency, dict) else None
+            if dependency_id == ticket_id:
+                gaps.append(gap(f"tickets/{ticket_id}.md", "ticket cannot depend on itself", "tickets", "remove the self-dependency"))
+            elif dependency_id not in all_ids:
+                gaps.append(gap(f"tickets/{ticket_id}.md", f"dependency {dependency_id} is not in the graph", "tickets", "repair the dependency reference"))
+        if ticket.get("kind") == "enabling" and isinstance(ticket.get("enabling"), dict):
+            consumer_id = ticket["enabling"].get("consumer")
+            consumer = tickets.get(consumer_id)
+            consumer_dependencies = consumer.get("blocked_by") if isinstance(consumer, dict) else None
+            if (
+                not isinstance(consumer, dict)
+                or consumer.get("kind") != "vertical"
+                or not isinstance(consumer_dependencies, list)
+                or ticket_id not in {item.get("ticket") for item in consumer_dependencies if isinstance(item, dict)}
+            ):
+                gaps.append(gap(f"tickets/{ticket_id}.md", "enabling ticket does not block its named imminent vertical consumer", "tickets", "make the named vertical consumer depend on this enabling ticket"))
+
+    visiting: set[str] = set()
+    visited: set[str] = set()
+    cycle = False
+    def visit(ticket_id: str) -> None:
+        nonlocal cycle
+        if ticket_id in visiting:
+            cycle = True
+            return
+        if ticket_id in visited:
+            return
+        visiting.add(ticket_id)
+        ticket = tickets.get(ticket_id, {})
+        for dependency in ticket.get("blocked_by", []) if isinstance(ticket, dict) else []:
+            dependency_id = dependency.get("ticket") if isinstance(dependency, dict) else None
+            if isinstance(dependency_id, str) and dependency_id in all_ids:
+                visit(dependency_id)
+        visiting.remove(ticket_id)
+        visited.add(ticket_id)
+    for ticket_id in entry_ids:
+        visit(ticket_id)
+    if cycle:
+        gaps.append(gap(TICKET_GRAPH_FILE, "ticket dependency graph contains a cycle", "tickets", "remove the cyclic prerequisite edge"))
+
+    tracer_ticket = manifest.get("tracer_ticket")
+    if tracer_ticket is not None and (
+        tracer_ticket not in tickets
+        or tickets[tracer_ticket].get("kind") != "vertical"
+        or tickets[tracer_ticket].get("tracer") is not True
+    ):
+        gaps.append(gap(TICKET_GRAPH_FILE, "tracer_ticket does not name the real vertical tracer", "tickets", "bind tracer_ticket to one explicit vertical tracer"))
+    if any(ticket.get("tracer") is True for ticket in tickets.values()) and tracer_ticket is None:
+        gaps.append(gap(TICKET_GRAPH_FILE, "graph has a tracer ticket but no tracer_ticket identity", "tickets", "record the tracer identity in the manifest"))
+    if not any(stage in effective["stages"] for stage in ("discovery", "system_design", "program_design")) and len(entries) != 1:
+        gaps.append(gap(TICKET_GRAPH_FILE, "trivial path must compile exactly one one-node ticket graph", "tickets", "compile one ticket directly from frozen Stage 0"))
+
+    report["preferred_order"] = preferred_order
+    report["tracer_ticket"] = tracer_ticket
+    report["verdict"] = "PASS" if not gaps else "BLOCKED"
+    return report
+
+
 def check_boundary(run_dir: Path, stage: str) -> dict[str, Any]:
     planning, _, effective = verified_planning_state(run_dir)
     if stage == "system_design":
         return system_design_report(run_dir, planning, effective)
     if stage == "program_design":
         return program_design_report(run_dir, planning, effective)
-    raise ControlError("check supports only --stage system_design or program_design")
+    if stage == "tickets":
+        return ticket_graph_report(run_dir, planning, effective)
+    raise ControlError("check supports only --stage system_design, program_design, or tickets")
 
 
 def resolve_system_design_authority(
@@ -2359,6 +2944,158 @@ def resolve_program_design_authority(
             raise ControlError("HUMAN Program Design gate requires explicit --approval human after PASS review")
         return "HUMAN", review_sha256
     raise ControlError("Program Design supports only configured AGENT_REVIEW or HUMAN authority")
+
+
+def resolve_tickets_policy(effective: dict[str, Any]) -> str:
+    policy = effective.get("gates", {}).get("tickets", {})
+    configured = policy.get("authority") if isinstance(policy, dict) else None
+    if configured in {"AGENT_REVIEW", "HUMAN"}:
+        return configured
+    if configured != "CONDITIONAL":
+        raise ControlError("tickets supports only configured AGENT_REVIEW, HUMAN, or CONDITIONAL authority")
+    repository_count = len(effective["repos"])
+    predicates = {
+        "single_repository": repository_count == 1,
+        "multi_repository": repository_count > 1,
+    }
+    for condition in policy["conditions"]:
+        predicate = condition["when"]
+        if predicate not in predicates:
+            raise ControlError(f"tickets CONDITIONAL predicate is unsupported: {predicate}")
+        if predicates[predicate]:
+            return condition["then"]
+    return policy["otherwise"]
+
+
+def resolve_ticket_graph_authority(
+    run_dir: Path,
+    effective: dict[str, Any],
+    candidate_version: int,
+    candidate_sha256: str,
+    source_bindings: list[dict[str, Any]],
+    approval: Optional[str],
+    review_reference: Optional[str],
+) -> tuple[str, str]:
+    _, review_sha256 = load_ticket_graph_review(
+        run_dir,
+        effective,
+        candidate_version,
+        candidate_sha256,
+        source_bindings,
+        review_reference,
+    )
+    authority = resolve_tickets_policy(effective)
+    if authority == "AGENT_REVIEW":
+        if approval is not None:
+            raise ControlError("AGENT_REVIEW tickets gate does not accept human approval")
+    elif authority == "HUMAN":
+        if approval != "human":
+            raise ControlError("HUMAN tickets gate requires explicit --approval human after PASS review")
+    else:  # pragma: no cover - policy validation restricts outcomes
+        raise ControlError("tickets policy mapped to an unsupported authority")
+    return authority, review_sha256
+
+
+def advance_ticket_graph_boundary(
+    run_dir: Path,
+    approval: Optional[str],
+    review_reference: Optional[str],
+    accepted: str,
+) -> str:
+    planning, _, effective = verified_planning_state(run_dir)
+    if (
+        planning.get("status") != "PLANNING"
+        or planning.get("phase") != "tickets"
+        or planning["gates"].get("tickets") != "PENDING"
+        or planning["acceptances"].get("tickets") is not None
+    ):
+        raise ControlError("tickets is not the current pending planning boundary")
+    report = ticket_graph_report(run_dir, planning, effective)
+    if report["verdict"] != "PASS":
+        raise ControlError("mechanical tickets boundary check is BLOCKED")
+    accepted = canonical_date(accepted, "acceptance date")
+    candidate_version: int = report["candidate_version"]
+    candidate_sha256: str = report["candidate_sha256"]
+    source_bindings: list[dict[str, Any]] = report["source_bindings"]
+    authority, review_sha256 = resolve_ticket_graph_authority(
+        run_dir,
+        effective,
+        candidate_version,
+        candidate_sha256,
+        source_bindings,
+        approval,
+        review_reference,
+    )
+
+    final_report = ticket_graph_report(run_dir, planning, effective)
+    if (
+        final_report.get("verdict") != "PASS"
+        or final_report.get("candidate_version") != candidate_version
+        or final_report.get("candidate_sha256") != candidate_sha256
+        or not json_equal_exact(final_report.get("source_bindings"), source_bindings)
+    ):
+        raise ControlError("ticket graph or source bindings changed before acceptance")
+    try:
+        final_planning, _, final_effective = verified_planning_state(run_dir)
+        final_authority = resolve_ticket_graph_authority(
+            run_dir,
+            final_effective,
+            candidate_version,
+            candidate_sha256,
+            source_bindings,
+            approval,
+            review_reference,
+        )
+    except ControlError as exc:
+        raise ControlError("ticket graph, source bindings, policy, or review changed before acceptance") from exc
+    if final_planning != planning or final_authority != (authority, review_sha256):
+        raise ControlError("planning-control.json, policy, or review changed before ticket-graph acceptance")
+
+    def revalidate_immediately_before_replace() -> None:
+        current_planning, _, current_effective = verified_planning_state(run_dir)
+        current_report = ticket_graph_report(run_dir, current_planning, current_effective)
+        current_authority = resolve_ticket_graph_authority(
+            run_dir,
+            current_effective,
+            candidate_version,
+            candidate_sha256,
+            source_bindings,
+            approval,
+            review_reference,
+        )
+        if (
+            current_planning != planning
+            or current_report.get("verdict") != "PASS"
+            or current_report.get("candidate_version") != candidate_version
+            or current_report.get("candidate_sha256") != candidate_sha256
+            or not json_equal_exact(current_report.get("source_bindings"), source_bindings)
+            or current_authority != (authority, review_sha256)
+        ):
+            raise ControlError("ticket graph, source bindings, policy, or review changed at the write boundary")
+
+    final_planning["acceptances"]["tickets"] = {
+        "candidate_version": candidate_version,
+        "candidate_sha256": candidate_sha256,
+        "authority": authority,
+        "accepted": accepted,
+        "review_reference": review_reference,
+        "review_sha256": review_sha256,
+        "source_bindings": source_bindings,
+        "repository_baselines": final_effective["repos"],
+    }
+    final_planning["gates"]["tickets"] = (
+        "HUMAN_APPROVED" if authority == "HUMAN" else "AGENT_APPROVED"
+    )
+    final_planning["status"] = "READY_FOR_EXECUTION"
+    final_planning["phase"] = "tickets"
+    final_planning["revision"] += 1
+    write_planning_control_atomic(
+        run_dir,
+        final_planning,
+        precondition=revalidate_immediately_before_replace,
+    )
+    load_planning_control(run_dir)
+    return f"accepted tickets -> READY_FOR_EXECUTION; planning-control revision {final_planning['revision']}"
 
 
 def advance_program_design_boundary(
@@ -2474,10 +3211,12 @@ def advance_boundary(
     review_reference: Optional[str],
     accepted: str,
 ) -> str:
+    if stage == "tickets":
+        return advance_ticket_graph_boundary(run_dir, approval, review_reference, accepted)
     if stage == "program_design":
         return advance_program_design_boundary(run_dir, approval, review_reference, accepted)
     if stage != "system_design":
-        raise ControlError("advance supports only system_design or program_design acceptance")
+        raise ControlError("advance supports only system_design, program_design, or tickets acceptance")
     planning, _, effective = verified_planning_state(run_dir)
     planning_path = managed_path(run_dir, PLANNING_FILE)
     planning_bytes = planning_path.read_bytes()
@@ -2633,10 +3372,10 @@ def build_parser() -> argparse.ArgumentParser:
     ensure.add_argument("--run", required=True, type=Path)
     inspect = sub.add_parser("check")
     inspect.add_argument("--run", required=True, type=Path)
-    inspect.add_argument("--stage", required=True, choices=("system_design", "program_design"))
+    inspect.add_argument("--stage", required=True, choices=("system_design", "program_design", "tickets"))
     advance = sub.add_parser("advance")
     advance.add_argument("--run", required=True, type=Path)
-    advance.add_argument("--stage", required=True, choices=("system_design", "program_design"))
+    advance.add_argument("--stage", required=True, choices=("system_design", "program_design", "tickets"))
     advance.add_argument("--approval", choices=("human",))
     advance.add_argument("--review")
     advance.add_argument("--date", required=True)

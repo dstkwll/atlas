@@ -173,6 +173,15 @@ PROGRAM_DESIGN_DIMENSIONS = (
     "migration_and_local_failure_path_implementation",
     "testability_and_compilation_readiness",
 )
+TICKET_GRAPH_DIMENSIONS = (
+    "selected_path_applicability_and_no_redesign",
+    "vertical_outcomes_and_required_boundaries",
+    "enabling_ticket_justification",
+    "dependency_truth_and_preferred_order",
+    "external_readiness_and_design_blocking",
+    "deterministic_behavior_proof",
+    "execution_handoff_completeness",
+)
 
 
 def write_system_design(run: Path, source_binding: dict, **overrides) -> None:
@@ -513,6 +522,109 @@ def write_program_review(run: Path, *, policy: str, review=None) -> Path:
     return path
 
 
+def write_ticket_graph(
+    run: Path,
+    source_bindings: list[dict],
+    *,
+    tickets=None,
+    preferred_order=None,
+    tracer_ticket="demo-01",
+) -> Path:
+    config = yaml.safe_load((run / "run.yaml").read_text(encoding="utf-8"))
+    tickets_dir = run / "tickets"
+    tickets_dir.mkdir()
+    if tickets is None:
+        tickets = [{
+            "id": "demo-01",
+            "kind": "vertical",
+            "status": "ready",
+            "repository": config["repos"][0]["repository"],
+            "blocked_by": [],
+            "tracer": True,
+            "enabling": None,
+            "references": [{"kind": "stage0", "sections": []}],
+            "external_prerequisites": [],
+            "validators": [{
+                "id": "goal-recognized",
+                "command": "python3 -c 'print(\"goal recognized\")'",
+                "success": "exit_zero",
+            }],
+            "outcomes": [{
+                "id": "goal-recognized",
+                "promise": "The accepted direct goal is represented by one executable ticket.",
+                "acceptance": ["The one-node graph exposes exactly one independently runnable ticket."],
+                "validator_ids": ["goal-recognized"],
+            }],
+            "reviews": [],
+        }]
+    entries = []
+    for ticket in tickets:
+        path = tickets_dir / f"{ticket['id']}.md"
+        body = (
+            f"# {ticket['id']}\n\n"
+            "## What becomes true\n\n"
+            f"{ticket['outcomes'][0]['promise']}\n\n"
+            "## Acceptance\n\n"
+            + "\n".join(f"- {item}" for item in ticket["outcomes"][0]["acceptance"])
+            + "\n\n## Relevant design\n\n"
+            + "\n".join(f"- `{item['kind']}`" for item in ticket["references"])
+            + "\n"
+        )
+        write_markdown(path, ticket, body)
+        entries.append({
+            "id": ticket["id"],
+            "path": path.relative_to(run).as_posix(),
+            "sha256": sha256(path),
+        })
+    manifest = run / "50-ticket-graph.json"
+    manifest.write_text(json.dumps({
+        "version": 1,
+        "run": config["run"],
+        "status": "draft",
+        "gate_ready": True,
+        "source_bindings": source_bindings,
+        "repository_baselines": config["repos"],
+        "preferred_order": preferred_order or [ticket["id"] for ticket in tickets],
+        "tracer_ticket": tracer_ticket,
+        "tickets": entries,
+    }, indent=2) + "\n", encoding="utf-8")
+    return manifest
+
+
+def write_ticket_review(run: Path, *, policy: str, verdict: str = "PASS") -> Path:
+    manifest = json.loads((run / "50-ticket-graph.json").read_text(encoding="utf-8"))
+    blocked = verdict != "PASS"
+    rows = [{
+        "dimension": dimension,
+        "result": "BLOCKED" if blocked and index == 0 else "PASS",
+        "evidence": f"Independent Stage 5 evidence for {dimension}.",
+    } for index, dimension in enumerate(TICKET_GRAPH_DIMENSIONS)]
+    gaps = ([{
+        "code": "ticket-graph-gap-1",
+        "dimension": TICKET_GRAPH_DIMENSIONS[0],
+        "problem": "The graph does not preserve the accepted selected path.",
+        "resume_action": "Repair the exact Stage 5 candidate graph.",
+    }] if blocked else [])
+    path = run / "reviews" / "ticket-graph-v1.json"
+    path.parent.mkdir(exist_ok=True)
+    path.write_text(json.dumps({
+        "version": 1,
+        "run": manifest["run"],
+        "stage": "tickets",
+        "policy": policy,
+        "candidate_version": manifest["version"],
+        "candidate_sha256": sha256(run / "50-ticket-graph.json"),
+        "source_bindings": manifest["source_bindings"],
+        "repository_baselines": manifest["repository_baselines"],
+        "semantic_review": {
+            "verdict": verdict,
+            "dimensions": rows,
+            "gaps": gaps,
+        },
+    }, indent=2) + "\n", encoding="utf-8")
+    return path
+
+
 def write_upstream_block_review_input(run: Path, planning: dict, *, verdict="CONFIRMED_UPSTREAM_CONTRADICTION") -> Path:
     acceptance = planning["acceptances"]["system_design"]
     assert isinstance(acceptance, dict)
@@ -657,6 +769,77 @@ class AtlasPlanningTests(unittest.TestCase):
         _TEST_REPOSITORY_SOURCES = {}
         self.environment.stop()
         self.machine_temp.cleanup()
+
+    def test_trivial_one_node_ticket_graph_is_accepted_and_stops_at_execution_boundary(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            config = run_config()
+            config["version"] = 2
+            config["system_design_participation"] = None
+            config["stages"] = ["tickets", "execute"]
+            config["gates"] = {"tickets": {"authority": "AGENT_REVIEW"}}
+            config["recommendation"]["gates"] = config["gates"]
+            write_stage0_run(run, config)
+            initialized = planning_cli("initialize", "--run", run)
+            self.assertEqual(initialized.returncode, 0, initialized.stderr)
+            planning = PLANNING.load_planning_control(run)
+            anchor = planning["stage0_anchor"]
+            source = {
+                "kind": "stage0",
+                "artifact": "run.yaml",
+                "sha256": anchor["base_run_sha256"],
+                "effective_config_hash": anchor["effective_config_hash"],
+                "effective_config_revision": anchor["effective_config_revision"],
+            }
+            manifest = write_ticket_graph(run, [source])
+            review = write_ticket_review(run, policy="AGENT_REVIEW")
+            immutable_before = {
+                path.relative_to(run).as_posix(): path.read_bytes()
+                for path in (manifest, run / "tickets" / "demo-01.md", review, run / "control.json")
+            }
+
+            checked = planning_cli("check", "--run", run, "--stage", "tickets")
+            self.assertEqual(checked.returncode, 0, checked.stderr)
+            report = json.loads(checked.stdout)
+            self.assertEqual(report["verdict"], "PASS")
+            self.assertEqual(report["candidate_sha256"], sha256(manifest))
+            self.assertEqual(report["source_bindings"], [source])
+
+            accepted = planning_cli(
+                "advance", "--run", run, "--stage", "tickets",
+                "--review", "reviews/ticket-graph-v1.json", "--date", "2026-08-24",
+            )
+            self.assertEqual(accepted.returncode, 0, accepted.stderr)
+            self.assertIn("READY_FOR_EXECUTION", accepted.stdout)
+            state = PLANNING.load_planning_control(run)
+            self.assertEqual((state["status"], state["phase"], state["revision"]), (
+                "READY_FOR_EXECUTION", "tickets", 2,
+            ))
+            self.assertEqual(state["gates"]["tickets"], "AGENT_APPROVED")
+            self.assertEqual(state["acceptances"]["tickets"], {
+                "candidate_version": 1,
+                "candidate_sha256": sha256(manifest),
+                "authority": "AGENT_REVIEW",
+                "accepted": "2026-08-24",
+                "review_reference": "reviews/ticket-graph-v1.json",
+                "review_sha256": sha256(review),
+                "source_bindings": [source],
+                "repository_baselines": config["repos"],
+            })
+            self.assertEqual({
+                path.relative_to(run).as_posix(): path.read_bytes()
+                for path in (manifest, run / "tickets" / "demo-01.md", review, run / "control.json")
+            }, immutable_before)
+            self.assertFalse((run / ".factory").exists())
+            self.assertFalse((run / "execution-brief.json").exists())
+
+            before_repeat = (run / "planning-control.json").read_bytes()
+            repeated = planning_cli(
+                "advance", "--run", run, "--stage", "tickets",
+                "--review", "reviews/ticket-graph-v1.json", "--date", "2026-08-24",
+            )
+            self.assertNotEqual(repeated.returncode, 0)
+            self.assertEqual((run / "planning-control.json").read_bytes(), before_repeat)
 
     def test_program_design_check_blocks_missing_binding_without_mutation(self):
         with tempfile.TemporaryDirectory() as td:
