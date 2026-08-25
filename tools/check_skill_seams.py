@@ -342,7 +342,7 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "name: program-design", "disable-model-invocation: true",
             "Bounded proof", "accepted behavior classes, invariants, authority boundaries, and canonical transitions",
             "Do not multiply tests across prose variants",
-            "Every test seam must map to an accepted requirement or reachable failure class",
+            "Every test seam must map to an accepted requirement, a necessary invariant or authority boundary implied by accepted design, or a reachable failure class",
             "references/program-design-file.md", "cite every upstream commitment",
         ],
         "program-design-template": [
