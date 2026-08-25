@@ -34,7 +34,7 @@ The direct branch has no PRD field. If source bytes or the recorded binding disa
 
 Use [`references/system-design-file.md`](references/system-design-file.md) as the exact shape. Frontmatter records `run`, integer `version`, `status: draft`, boolean `gate_ready`, frozen `participation`, intake `opened`, and the selected discriminated `source_binding`; preserve exactly those fields. Normal version is `1`; on the D-082 repair branch, version is the superseded acceptance version plus one. While drafting keep `gate_ready: false`.
 
-Write from the reliance horizon: changing a Stage 3 choice requires a caller, peer, or operator to adjust or changes an accepted guarantee. Cover all twelve required sections. Keep file placement, language signatures, internal calls, locking mechanics, migration order, and test seams in Program Design.
+Write from the reliance horizon: changing a Stage 3 choice requires a caller, peer, or operator to adjust or changes an accepted guarantee. **Features pay for seams:** introduce or retain a system seam only when a named accepted behavior, authority boundary, or independently changing responsibility requires it. Delete speculative seams; anticipated reuse, aesthetic symmetry, and hypothetical flexibility do not pay for one. Cover all twelve required sections. Keep file placement, language signatures, internal calls, locking mechanics, migration order, and test seams in Program Design.
 
 ### `agent_led`
 

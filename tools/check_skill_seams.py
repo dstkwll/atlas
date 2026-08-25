@@ -326,6 +326,8 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         ],
         "system-design": [
             "disable-model-invocation: true", "third parent of this file", "agent_led",
+            "Features pay for seams", "named accepted behavior, authority boundary, or independently changing responsibility",
+            "Delete speculative seams",
             "co_design", "Slice 2", "references/system-design-file.md", "references/system-design-board.md",
             "gate_ready: true", "render_system_design.py", ".30-system-design.next.md",
             "atlas:control-planning", "without asking the user to issue a second command",
@@ -338,6 +340,9 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         "system-design-agent": ["allow_implicit_invocation: false"],
         "program-design": [
             "name: program-design", "disable-model-invocation: true",
+            "Bounded proof", "accepted behavior classes, invariants, authority boundaries, and canonical transitions",
+            "Do not multiply tests across prose variants",
+            "Every test seam must map to an accepted requirement or reachable failure class",
             "references/program-design-file.md", "cite every upstream commitment",
         ],
         "program-design-template": [
