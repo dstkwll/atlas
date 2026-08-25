@@ -68,6 +68,13 @@ class SkillSeamHardeningTests(unittest.TestCase):
     def copy_plugin(self, root: Path) -> Path:
         plugin = root / "plugins" / "atlas"
         shutil.copytree(ROOT / "plugins" / "atlas", plugin)
+        for relative in (
+            Path(".agents/plugins/marketplace.json"),
+            Path(".github/plugin/marketplace.json"),
+        ):
+            target = root / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(ROOT / relative, target)
         return plugin / "skills"
 
     def test_d081_new_intake_records_full_canonical_commit_oid(self):
@@ -175,7 +182,10 @@ class SkillSeamHardeningTests(unittest.TestCase):
         self.assertTrue(adapter_path.is_file())
         adapter = adapter_path.read_text(encoding="utf-8")
         for marker in (
+            "def selected_config_path",
+            "def load_machine_config",
             "def load_bindings",
+            "def repository_identity_for_location",
             "def probe_source",
             "def bind_repository",
             "def verify_run",
@@ -243,20 +253,21 @@ class SkillSeamHardeningTests(unittest.TestCase):
                 )
         self.assertNotIn("must never infer a binding from a remote or the current checkout", setup)
 
-    def test_d081_installed_host_calibration_runs_five_clis_with_recorded_interpreter(self):
+    def test_d081_installed_host_calibration_runs_six_clis_with_recorded_interpreter(self):
         plugin = ROOT / "plugins" / "atlas"
         path = plugin / "skills" / "setup-atlas" / "references" / "installed-host-calibration.md"
         calibration = path.read_text(encoding="utf-8")
         exact = (
-            "Invoke exactly these five packaged CLIs with `--help` using that same recorded interpreter: "
+            "Invoke exactly all six packaged CLIs with `--help` using that same recorded interpreter: "
             "`tools/atlas_control.py`, `tools/atlas_planning.py`, `tools/atlas_repository.py`, "
-            "`tools/render_prd.py`, and `tools/render_system_design.py`."
+            "`tools/atlas_gazetteer.py`, `tools/render_prd.py`, and `tools/render_system_design.py`."
         )
         self.assertIn(exact, calibration)
         for cli in (
             "tools/atlas_control.py",
             "tools/atlas_planning.py",
             "tools/atlas_repository.py",
+            "tools/atlas_gazetteer.py",
             "tools/render_prd.py",
             "tools/render_system_design.py",
         ):
@@ -267,12 +278,12 @@ class SkillSeamHardeningTests(unittest.TestCase):
             target = skills / "setup-atlas" / "references" / "installed-host-calibration.md"
             text = target.read_text(encoding="utf-8")
             target.write_text(
-                text.replace("`tools/atlas_repository.py`, ", "", 1),
+                text.replace("`tools/atlas_gazetteer.py`, ", "", 1),
                 encoding="utf-8",
             )
             findings = SEAMS.cross_skill_contracts(skills)
             self.assertTrue(
-                any("five packaged CLIs" in message for _, message in findings),
+                any("six packaged CLIs" in message for _, message in findings),
                 findings,
             )
 
@@ -821,7 +832,7 @@ class SkillSeamHardeningTests(unittest.TestCase):
             "If validated planning phase is `tickets`, invoke `atlas:compile-tickets` internally",
             "If validated planning status is `READY_FOR_EXECUTION`, stop at the execution boundary",
             "Preserve the existing Product Closure, System Design, and Program Design paths",
-            "This is a bounded continuation loop, not one-shot dispatch",
+            "For `AUTO_CONTINUE`, use the existing bounded continuation loop, not one-shot dispatch",
             "After an invoked producer and its internal control handoff return, run `ensure` again and re-read validated `planning-control.json`",
             "The only legal downstream continuation after `system_design` is `program_design` or `tickets`; after `program_design` it is `tickets`; after pending `tickets` it is `READY_FOR_EXECUTION`",
             "Invoke at most three downstream producers during one `start-run` invocation",

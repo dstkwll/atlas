@@ -4,7 +4,7 @@
     {
       "name": "atlas",
       "source": "./plugins/atlas",
-      "description": "Atlas pipeline skills written against the architecture in this repository: machine setup, run intake and control, decision discovery, living PRD closure, and bounded experiments.",
+      "description": "Atlas Gazetteer front door over Stage 0 intake, discovery, System and Program Design, and accepted Stage 5 ticket graphs.",
       "version": "0.1.0"
     },
     {

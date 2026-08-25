@@ -1,0 +1,28 @@
+# Gazetteer behavior inventory
+
+This is the required instruction-contract rewrite inventory for the Gazetteer change. It records disposition only; the handoff, skills, controllers, and deterministic state remain authoritative.
+
+| Surface / procedure | Classification | Preserved or changed behavior | Evidence |
+|---|---|---|---|
+| `setup-atlas` machine configuration | retained | Setup still owns planning-root and repository-binding configuration. Gazetteer may enter it and must return to the original request. | `setup-atlas/SKILL.md`; `gazetteer` §1 |
+| `start-run` new intake | retained | Fuzzy goals still enter only Stage 0 intake; complete `run.yaml` still requires human acceptance before initialization. | `start-run` §§0–2; new-goal contract witness |
+| `start-run` existing-run resume | intentionally extended | It remains the sole high-level continuation owner, now accepts invocation-local `INTERACTIVE` / `AUTO_CONTINUE` posture and revalidates state between handoffs. | `start-run` §3; installed-host `gazetteer → start-run → discovery` trace |
+| `start-run` producer dispatch | retained behind explicit owner-load trigger | Exact validated phase still selects only the existing named producer. The selected owner loads under `references/internal-owner-loading.md`; no dynamic router or `next_skill` exists. | `start-run` §3; seam checker |
+| Discovery rounds and durable frontier | retained | Discovery still owns product questions, durable decisions, PRD drafting, and HUMAN interaction until its stopping condition. | `discovery` §§1–2; mid-Discovery host trace |
+| Discovery → Product Closure | retained behind explicit owner-load trigger | Discovery still hands the unchanged candidate to `control-run`; the owner load is now host-calibrated without a user routing command. | `discovery` §3; Product Closure behavioral witness |
+| Product Closure authority | retained | `control-run` still validates mechanically, consumes configured HUMAN / AGENT_REVIEW authority, and records at most one transition. | `control-run` §§1–3; existing controller tests |
+| Product Closure post-transition routing | intentionally superseded | `control-run` returns freshly validated phase/status to the invoking continuation owner instead of choosing a downstream producer. `start-run` owns manual/auto posture. | `control-run` §3; continuation behavioral witness |
+| System Design production and co-design | retained | Participation, board, candidate, and planning-control handoff semantics are unchanged. Only exact owner loading is disclosed. | `system-design` §5; existing planning tests |
+| Program Design production | retained | Candidate production, readiness, and planning-control handoff semantics are unchanged. Only exact owner loading is disclosed. | `program-design`; existing planning tests |
+| Ticket graph compilation | retained | Stage 5 still produces an exact graph, hands to planning control, and stops at `READY_FOR_EXECUTION`; no execution owner is added. | `compile-tickets`; accepted-graph inventory witness |
+| Planning authority | retained | `control-planning` remains the only System/Program/ticket acceptance adapter and records one deterministic transition. | `control-planning`; existing planning tests |
+| Direct internal skill use | retained | Advanced/diagnostic direct use remains supported; internal skills do not depend on Gazetteer recursion. | Gazetteer §7; handoff §16 |
+| Internal skill invocation metadata | retained | Every internal skill keeps `disable-model-invocation: true`. On hosts honoring Atlas's invocation-policy metadata, internal skills keep `allow_implicit_invocation: false` and Gazetteer alone is implicit; on every host Gazetteer remains the documented canonical front door. | package contract; installed-host calibration |
+| Cross-skill loading | moved behind explicit trigger pointer | The already-selected named owner loads through safe nested invocation or the exact installed-procedure fallback. This pointer does not choose legality or expose internal commands. | `references/internal-owner-loading.md` |
+| Normal user entry | intentionally superseded | Gazetteer replaces `start-run` as the public front door; internal/direct skills remain available but are no longer normal-user knowledge. | README Start here; four package descriptions |
+| Run discovery and status | new read-only projection | `atlas_gazetteer.py` enumerates validated runs, current repository relevance, blockers, accepted boundaries, and exact accepted graph identity without selection or mutation. Invalid entries and unrelated stale bindings remain attached diagnostics and do not poison valid runs; inventory-level failures still block globally. | inventory tests and unchanged-byte witnesses |
+| Manual continuation | new invocation posture, no new authority | After a completed boundary, the continuation owner explains the meaningful next phase and offers one natural-language continue affordance. | Gazetteer §6; interactive continuation behavioral witness |
+| Auto-continuation | new invocation posture, no new authority | It crosses only existing legal non-HUMAN handoffs, revalidates after each owner, and always stops for HUMAN judgment, ambiguity, blocker, completion, or missing owner. | Gazetteer §6; auto-continuation behavioral witness |
+| Future execution / completed work | retained as honest future boundary | Exact ticket execution and terminal completed-work authority are not implemented or inferred. | Gazetteer §5; scenarios R and V |
+
+Completion requires the behavioral witnesses named above. Keyword and seam checks protect packaging drift but do not substitute for those executions.

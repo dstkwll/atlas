@@ -90,7 +90,7 @@ Merge only the confirmed changes into the existing configuration; do not replace
 
 ### 5. Verify the deterministic dependencies
 
-The installed plugin includes `<atlas-plugin-root>/tools/atlas_control.py`, `<atlas-plugin-root>/tools/atlas_planning.py`, `<atlas-plugin-root>/tools/atlas_repository.py`, and the mandatory renderers. They require Python 3.9 or newer plus the packages pinned in `<atlas-plugin-root>/requirements.txt`. Verify with the platform-native Python launcher:
+The installed plugin includes `<atlas-plugin-root>/tools/atlas_control.py`, `<atlas-plugin-root>/tools/atlas_planning.py`, `<atlas-plugin-root>/tools/atlas_repository.py`, `<atlas-plugin-root>/tools/atlas_gazetteer.py`, and the mandatory renderers. They require Python 3.9 or newer plus the packages pinned in `<atlas-plugin-root>/requirements.txt`. Verify with the platform-native Python launcher:
 
 ```shell
 python3 -c "import sys, yaml, markdown_it; assert sys.version_info >= (3, 9)"

@@ -68,4 +68,4 @@ python3 "<atlas-plugin-root>/tools/atlas_planning.py" check --run "<run-director
 
 A structured `BLOCKED` result returns all mechanical gaps to this producer. Repair only candidate-owned bytes and rerun. On any dependency/tool error, report it exactly and stop; never emulate checking or transition logic. Mechanical `PASS` is readiness only, not semantic review or acceptance.
 
-After mechanical `PASS`, perform the exact named internal handoff to `atlas:control-planning` without asking the user to issue a second routing command. Pass the unchanged `<run-directory>` and explicit stage `program_design`; do not invoke a reviewer or consume approval in this producer.
+After mechanical `PASS`, perform the exact named internal handoff to `atlas:control-planning` without asking the user to issue a second routing command. Load that exact owner under [`../../references/internal-owner-loading.md`](../../references/internal-owner-loading.md). Pass the unchanged `<run-directory>` and explicit stage `program_design`; do not invoke a reviewer or consume approval in this producer.

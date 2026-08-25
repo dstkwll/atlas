@@ -63,6 +63,6 @@ python3 "<atlas-plugin-root>/tools/atlas_planning.py" check --run "<run-director
 
 `BLOCKED` returns every mechanical gap to this producer without changing authoritative state. Repair only candidate-owned bytes and rerun. PASS proves mechanics only; it is not semantic judgment or acceptance.
 
-After mechanical `PASS`, perform the exact named internal handoff to `atlas:control-planning` without asking the user to issue another routing command. Pass the unchanged `<run-directory>` and explicit stage `tickets`; do not invoke a reviewer, request approval, or record acceptance in this producer.
+After mechanical `PASS`, perform the exact named internal handoff to `atlas:control-planning` without asking the user to issue another routing command. Load that exact owner under [`../../references/internal-owner-loading.md`](../../references/internal-owner-loading.md). Pass the unchanged `<run-directory>` and explicit stage `tickets`; do not invoke a reviewer, request approval, or record acceptance in this producer.
 
 After the authority adapter returns, re-read `planning-control.json`. Success is exact current ticket-graph acceptance with status `READY_FOR_EXECUTION`. Stop at that execution boundary. Do not select or execute a ticket.

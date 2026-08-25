@@ -65,7 +65,7 @@ These are producer completion claims, not acceptance. The candidate contains no 
 python3 "<atlas-plugin-root>/tools/atlas_control.py" check --run "<run-directory>"
 ```
 
-A `BLOCKED` report gives exhaustive mechanical gaps and exact resume points. Repair them here. Any repair after a blocked semantic review first uses the canonical writer to install a draft with `gate_ready: false`, then reruns the whole end sequence above and asks for a fresh review. No direct PRD mutation is legal. A `PASS` means only that mechanics pass; route the unchanged candidate to `atlas:control-run` for configured `AGENT_REVIEW` or `HUMAN` semantic acceptance.
+A `BLOCKED` report gives exhaustive mechanical gaps and exact resume points. Repair them here. Any repair after a blocked semantic review first uses the canonical writer to install a draft with `gate_ready: false`, then reruns the whole end sequence above and asks for a fresh review. No direct PRD mutation is legal. A `PASS` means only that mechanics pass; perform the exact named internal handoff to `atlas:control-run` without asking the user to issue a second routing command. Load that exact owner under [`../../references/internal-owner-loading.md`](../../references/internal-owner-loading.md). Pass the unchanged `<run-directory>` and unchanged candidate. Product Closure applies configured `AGENT_REVIEW` or `HUMAN` semantic acceptance; Discovery neither invokes its judge nor consumes approval itself. When `control-run` returns, return to the invoking continuation owner with no downstream producer invocation of your own. A direct Discovery invocation may recommend “Use Gazetteer to continue,” but must not require Gazetteer for its producer or authority work.
 
 ## Standing rules
 
