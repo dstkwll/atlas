@@ -275,6 +275,7 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "def inventory", "def _summarize_run", "def _accepted_boundaries",
             "def _accepted_graph", 'sub.add_parser("inventory"',
             "verified_state", "verified_planning_state", "load_machine_config", "NOT_CONFIGURED",
+            "PARTIAL", "repository_relevant_runs", "repository_blocked_runs",
             "ticket_ids", "candidate_sha256",
         ],
         "setup-agent": [

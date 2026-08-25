@@ -148,6 +148,28 @@ class AtlasGazetteerInventoryTest(unittest.TestCase):
         self.assertIn("machine config is unreadable or malformed", report["gaps"][0]["problem"])
         self.assertNotIn("Traceback", result.stderr)
 
+    @unittest.skipIf(os.name == "nt", "POSIX directory mode bits are not enforced on Windows")
+    def test_unreadable_planning_root_is_structured_global_blocker(self):
+        planning_root = self.root / "planning"
+        planning_root.mkdir()
+        self.configure_external_root(planning_root)
+        planning_root.chmod(0)
+        try:
+            result = run_cli(
+                "inventory", "--cwd", self.cwd,
+                cwd=self.cwd,
+                env=self.environment(),
+            )
+        finally:
+            planning_root.chmod(0o700)
+
+        self.assertEqual(result.returncode, 1, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report["verdict"], "BLOCKED")
+        self.assertEqual(report["gaps"][0]["code"], "inventory_unavailable")
+        self.assertEqual(report["runs"], [])
+        self.assertNotIn("Traceback", result.stderr)
+
     def test_inventory_validates_and_summarizes_one_discovery_run_read_only(self):
         planning_root = self.root / "planning"
         planning_root.mkdir()
@@ -264,6 +286,66 @@ class AtlasGazetteerInventoryTest(unittest.TestCase):
         self.assertEqual(report["current_repository_identity"], "repo-a")
         self.assertEqual(report["repository_relevant_runs"], ["for-a"])
         self.assertNotIn("selected_run", report)
+
+    def test_unrelated_stale_binding_is_diagnostic_not_global_blocker(self):
+        planning_root = self.root / "planning"
+        planning_root.mkdir()
+        repository = self.root / "repository"
+        baseline = create_repository(repository, "current repository\n")
+        self.configure_external_root(
+            planning_root,
+            bindings={
+                "current": str(repository),
+                "stale": str(self.root / "missing-repository"),
+            },
+        )
+        self.initialize_discovery_run(
+            planning_root,
+            slug="current-run",
+            repositories=[{"repository": "current", "baseline": baseline}],
+        )
+        self.initialize_discovery_run(
+            planning_root,
+            slug="stale-run",
+            repositories=[{"repository": "stale", "baseline": baseline}],
+        )
+
+        result = run_cli(
+            "inventory", "--cwd", repository,
+            cwd=repository,
+            env=self.environment(),
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report["verdict"], "PARTIAL")
+        self.assertEqual(report["current_repository_identity"], "current")
+        self.assertEqual(report["repository_relevant_runs"], ["current-run"])
+        self.assertEqual(report["repository_blocked_runs"], ["stale-run"])
+        self.assertEqual(report["gaps"][0]["code"], "binding_unavailable")
+        self.assertEqual(report["gaps"][0]["repository"], "stale")
+
+    def test_ambiguous_current_repository_bindings_block_inventory(self):
+        planning_root = self.root / "planning"
+        planning_root.mkdir()
+        repository = self.root / "repository"
+        create_repository(repository, "ambiguous repository\n")
+        self.configure_external_root(
+            planning_root,
+            bindings={"one": str(repository), "two": str(repository)},
+        )
+
+        result = run_cli(
+            "inventory", "--cwd", repository,
+            cwd=repository,
+            env=self.environment(),
+        )
+
+        self.assertEqual(result.returncode, 1, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report["verdict"], "BLOCKED")
+        self.assertEqual(report["gaps"][0]["code"], "ambiguous_binding")
+        self.assertEqual(report["runs"], [])
 
     def test_inventory_uses_validated_planning_cursor_for_downstream_run(self):
         planning_root = self.root / "planning"
@@ -394,7 +476,7 @@ class AtlasGazetteerInventoryTest(unittest.TestCase):
         )
         self.assertFalse((handoff / "planning-control.json").exists())
 
-    def test_inventory_fails_closed_on_tampered_authoritative_state(self):
+    def test_invalid_run_is_diagnostic_and_never_exposed_as_valid(self):
         planning_root = self.root / "planning"
         planning_root.mkdir()
         self.configure_external_root(planning_root)
@@ -405,9 +487,9 @@ class AtlasGazetteerInventoryTest(unittest.TestCase):
 
         result = run_cli("inventory", "--cwd", self.cwd, cwd=self.cwd, env=self.environment())
 
-        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertEqual(result.returncode, 0, result.stderr)
         report = json.loads(result.stdout)
-        self.assertEqual(report["verdict"], "BLOCKED")
+        self.assertEqual(report["verdict"], "PARTIAL")
         self.assertEqual(report["runs"], [])
         self.assertEqual(
             report["gaps"],
@@ -416,12 +498,42 @@ class AtlasGazetteerInventoryTest(unittest.TestCase):
                     "code": "invalid_run",
                     "problem": "demo: base run.yaml byte hash mismatch",
                     "resume_action": "restore the accepted run.yaml bytes or start a corrected new run",
+                    "run": "demo",
                 }
             ],
         )
         self.assertEqual(
             {name: (run / name).read_bytes() for name in before},
             before,
+        )
+
+    def test_invalid_run_does_not_poison_valid_unrelated_run(self):
+        planning_root = self.root / "planning"
+        planning_root.mkdir()
+        self.configure_external_root(planning_root)
+        invalid = self.initialize_discovery_run(planning_root, slug="invalid")
+        valid = self.initialize_discovery_run(planning_root, slug="valid")
+        valid_before = {
+            "run.yaml": sha256(valid / "run.yaml"),
+            "control.json": sha256(valid / "control.json"),
+        }
+        with (invalid / "run.yaml").open("a", encoding="utf-8") as handle:
+            handle.write("# tampered\n")
+
+        result = run_cli("inventory", "--cwd", self.cwd, cwd=self.cwd, env=self.environment())
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report["verdict"], "PARTIAL")
+        self.assertEqual([row["run"] for row in report["runs"]], ["valid"])
+        self.assertEqual(report["gaps"][0]["run"], "invalid")
+        self.assertEqual(report["gaps"][0]["code"], "invalid_run")
+        self.assertEqual(
+            {
+                "run.yaml": sha256(valid / "run.yaml"),
+                "control.json": sha256(valid / "control.json"),
+            },
+            valid_before,
         )
 
     def test_ready_inventory_exposes_exact_accepted_graph_and_ticket_ids_without_execution(self):
@@ -566,6 +678,9 @@ class AtlasGazetteerSkillContractTest(unittest.TestCase):
             "pass the fuzzy goal to `atlas:start-run` only for new intake",
             "carry run identity and explicit new user judgments, not the original fuzzy prompt",
             "Status and orientation are read-only",
+            "Treat `PARTIAL` as an inventory with isolated diagnostics",
+            "do not let an unrelated run or binding diagnostic block orientation",
+            "If the explicitly named, session-focused, or otherwise selected run appears in `gaps[].run`",
         )
         for clause in required:
             with self.subTest(clause=clause):
@@ -662,7 +777,9 @@ class AtlasGazetteerSkillContractTest(unittest.TestCase):
         self.assertIn("tools/atlas_gazetteer.py", calibration)
         self.assertIn("all six packaged CLIs", calibration)
         self.assertIn("`disable-model-invocation: true` is present on every internal/direct sibling", calibration)
-        self.assertIn("Gazetteer remains the only implicit entry", calibration)
+        self.assertIn("On hosts that honor Atlas's `agents/openai.yaml` invocation policy", calibration)
+        self.assertIn("implicit activation remains host policy", calibration)
+        self.assertIn("Gazetteer is the documented canonical front door on every host", calibration)
 
 
 if __name__ == "__main__":

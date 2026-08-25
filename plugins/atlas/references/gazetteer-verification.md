@@ -6,7 +6,7 @@ Dated calibration record for the Gazetteer implementation. This file records pro
 
 - Frozen handoff SHA-256: `bcb12596b1f1e1fa228c78ce6449496e1b8175626b012c22da5294f99f6483df`.
 - Evidence ledger matched scenarios A–V and completion criteria 1–18.
-- Complete repository gate after implementation and review fixes: 335 unit tests passed; architecture checker reported 29 consistent documents; seam checker reported zero findings, zero weak, zero skipped; Python compilation and `git diff --check` passed.
+- Complete repository gate after implementation and review fixes: 339 unit tests passed; architecture checker reported 29 consistent documents; seam checker reported zero findings, zero weak, zero skipped; Python compilation and `git diff --check` passed.
 - Hermes Plugin Doctor passed runtime discovery, manifest parsing, import, and registration.
 
 ## Fresh Copilot host — read-only resume
@@ -16,6 +16,17 @@ Host: GitHub Copilot CLI 1.0.80, isolated plugin home, exact installed/source by
 A fresh session began with Gazetteer and no chat history. It recovered the exact `demo` run, entered `start-run`, resumed the persisted Discovery frontier, surfaced the exact HUMAN question, and stopped without mutating the fixture. The before/after fixture fingerprint was identical.
 
 This proves the fresh-session resume, mid-Discovery recovery, HUMAN stop, no internal command burden, and read-only status behavior classes.
+
+## Fresh Copilot host — partial inventory isolation
+
+Fixture: one valid Discovery run plus one tampered unrelated run under the same planning root.
+
+Two fresh read-only sessions executed only `atlas_gazetteer.py inventory`:
+
+- an exact request for the tampered `invalid` run stopped on its `gaps[].run` diagnostic and made no repair;
+- an exact request for `valid` returned `PARTIAL`, oriented the valid run, retained the invalid-run diagnostic, and did not continue or mutate workflow state.
+
+This proves that entry corruption is isolated during inventory while exact selected-run validation remains fail closed. A separate binding fixture likewise preserved `current-run` while projecting `stale-run` in `repository_blocked_runs`; a fresh host request for `stale-run` stopped on its unavailable binding and offered the unblocked current run separately.
 
 ## Fresh Copilot host — manual continuation
 
@@ -49,4 +60,6 @@ A prior attempt removed `disable-model-invocation: true` from internal skills to
 ## Known limits
 
 - Exact-ticket execution and completed-work authority remain future boundaries; no execution state is invented.
+- Frontier-tier Gazetteer staffing is advisory and configuration-driven. This change adds no cross-host model router or self-escalation mechanism; the actual worker remains host/roster policy.
+- `AUTO_CONTINUE` is invocation-local. It is not persisted in Atlas V1 and is never inferred from `governance: autonomous`.
 - Host calibration is dated to the stated Copilot version and isolated install. Other hosts require their own runbook result.

@@ -17,8 +17,18 @@ import atlas_repository
 REPORT_VERSION = 1
 
 
-def gap(code: str, problem: str, resume_action: str) -> dict[str, str]:
-    return {"code": code, "problem": problem, "resume_action": resume_action}
+def gap(
+    code: str,
+    problem: str,
+    resume_action: str,
+    **context: str,
+) -> dict[str, str]:
+    return {
+        "code": code,
+        "problem": problem,
+        "resume_action": resume_action,
+        **context,
+    }
 
 
 def _planning_root(config: Mapping[str, Any], cwd: Path) -> Path:
@@ -159,9 +169,19 @@ def inventory(cwd: Path) -> dict[str, Any]:
         }
     root = _planning_root(config, cwd)
     _, bindings = atlas_repository.load_bindings()
-    current_repository_identity = atlas_repository.repository_identity_for_location(cwd, bindings)
+    repository_location = atlas_repository.repository_identity_for_location(cwd, bindings)
+    current_repository_identity = repository_location.identity
     runs: list[dict[str, Any]] = []
-    gaps: list[dict[str, str]] = []
+    gaps: list[dict[str, str]] = [
+        gap(
+            item.code,
+            item.problem,
+            item.resume_action,
+            repository=item.repository,
+        )
+        for item in repository_location.gaps
+        if item.repository is not None
+    ]
     for child in sorted(root.iterdir(), key=lambda path: path.name):
         if not child.is_dir() or child.is_symlink() or not (child / "run.yaml").is_file():
             continue
@@ -173,12 +193,18 @@ def inventory(cwd: Path) -> dict[str, Any]:
                     "invalid_run",
                     f"{child.name}: {exc}",
                     "restore the accepted run.yaml bytes or start a corrected new run",
+                    run=child.name,
                 )
             )
+    unavailable_repositories = {
+        item["repository"]
+        for item in gaps
+        if item.get("code") == "binding_unavailable" and "repository" in item
+    }
     return {
         "version": REPORT_VERSION,
         "command": "inventory",
-        "verdict": "BLOCKED" if gaps else "PASS",
+        "verdict": "PARTIAL" if gaps else "PASS",
         "config_path": str(config_path),
         "planning_root": str(root),
         "current_repository_identity": current_repository_identity,
@@ -187,6 +213,11 @@ def inventory(cwd: Path) -> dict[str, Any]:
             for row in runs
             if current_repository_identity is not None
             and current_repository_identity in row["repositories"]
+        ],
+        "repository_blocked_runs": [
+            row["run"]
+            for row in runs
+            if unavailable_repositories.intersection(row["repositories"])
         ],
         "runs": runs,
         "gaps": gaps,
@@ -218,6 +249,25 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "repository_relevant_runs": [],
                 "runs": [],
                 "gaps": [gap(exc.code, exc.problem, exc.resume_action)],
+            }
+        except (atlas_control.ControlError, OSError) as exc:
+            config_path = atlas_repository.selected_config_path()
+            report = {
+                "version": REPORT_VERSION,
+                "command": "inventory",
+                "verdict": "BLOCKED",
+                "config_path": str(config_path) if config_path is not None else None,
+                "planning_root": None,
+                "current_repository_identity": None,
+                "repository_relevant_runs": [],
+                "runs": [],
+                "gaps": [
+                    gap(
+                        "inventory_unavailable",
+                        str(exc),
+                        "repair the configured planning root before continuing",
+                    )
+                ],
             }
         print(json.dumps(report, sort_keys=True))
         return 1 if report["verdict"] == "BLOCKED" else 0

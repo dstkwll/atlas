@@ -85,6 +85,14 @@ class RepositoryBlocked(RuntimeError):
 
 
 @dataclass(frozen=True)
+class RepositoryLocation:
+    """Current repository identity plus diagnostics for unrelated bindings."""
+
+    identity: Optional[str]
+    gaps: tuple[Gap, ...]
+
+
+@dataclass(frozen=True)
 class Verification:
     run: str
     config_path: Optional[Path]
@@ -192,8 +200,8 @@ def load_bindings() -> tuple[Optional[Path], Mapping[str, str]]:
 def repository_identity_for_location(
     location: Path,
     bindings: Mapping[str, str],
-) -> Optional[str]:
-    """Return the one configured stable identity whose Git root contains location."""
+) -> RepositoryLocation:
+    """Resolve current identity without letting unrelated stale bindings poison inventory."""
 
     try:
         root_raw = _git_text(
@@ -204,20 +212,32 @@ def repository_identity_for_location(
             resume_action="open a configured repository",
         )
     except RepositoryBlocked:
-        return None
+        return RepositoryLocation(None, ())
     root = Path(root_raw).resolve(strict=True)
-    matches = [
-        identity
-        for identity, raw_source in bindings.items()
-        if _canonical_source(raw_source, identity) == root
-    ]
+    matches: list[str] = []
+    gaps: list[Gap] = []
+    for identity, raw_source in bindings.items():
+        try:
+            source = _canonical_source(raw_source, identity)
+        except RepositoryBlocked as exc:
+            gaps.append(
+                Gap(
+                    code="binding_unavailable",
+                    repository=identity,
+                    problem=exc.problem,
+                    resume_action=exc.resume_action,
+                )
+            )
+            continue
+        if source == root:
+            matches.append(identity)
     if len(matches) > 1:
         raise RepositoryBlocked(
             "ambiguous_binding",
             "multiple repository identities bind the current Git root",
             "keep one stable identity for this repository source",
         )
-    return matches[0] if matches else None
+    return RepositoryLocation(matches[0] if matches else None, tuple(gaps))
 
 
 def _git_environment() -> dict[str, str]:
