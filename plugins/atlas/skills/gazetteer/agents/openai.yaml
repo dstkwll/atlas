@@ -1,0 +1,6 @@
+interface:
+  display_name: "Atlas Gazetteer"
+  short_description: "Start, find, resume, and navigate Atlas work"
+  default_prompt: "Use Gazetteer as Atlas's canonical front door. Interpret what the user is trying to do, resolve the relevant run conservatively, and continue from authoritative Atlas state without creating workflow authority."
+policy:
+  allow_implicit_invocation: true

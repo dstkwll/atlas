@@ -149,6 +149,12 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         "readme": skills.parent / "README.md",
         "plugin-manifest": skills.parent / "plugin.json",
         "codex-plugin-manifest": skills.parent / ".codex-plugin" / "plugin.json",
+        "agents-marketplace": skills.parent.parent.parent / ".agents" / "plugins" / "marketplace.json",
+        "github-marketplace": skills.parent.parent.parent / ".github" / "plugin" / "marketplace.json",
+        "gazetteer": skills / "gazetteer" / "SKILL.md",
+        "gazetteer-agent": skills / "gazetteer" / "agents" / "openai.yaml",
+        "internal-owner-loading": skills.parent / "references" / "internal-owner-loading.md",
+        "gazetteer-helper": skills.parent / "tools" / "atlas_gazetteer.py",
         "start": skills / "start-run" / "SKILL.md",
         "start-agent": skills / "start-run" / "agents" / "openai.yaml",
         "run-file": skills / "start-run" / "references" / "run-file.md",
@@ -195,20 +201,32 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         else:
             texts[name] = path.read_text(encoding="utf-8")
 
-    required_plugin_description_clauses = ("Stage 0", "System", "Program Design", "Stage 5", "ticket graphs")
+    required_plugin_description_clauses = (
+        "Gazetteer", "Stage 0", "System", "Program Design", "Stage 5", "ticket graphs"
+    )
     try:
         plugin_manifest = json.loads(texts.get("plugin-manifest", ""))
         codex_plugin_manifest = json.loads(texts.get("codex-plugin-manifest", ""))
-    except json.JSONDecodeError as exc:
+        agents_marketplace = json.loads(texts.get("agents-marketplace", ""))
+        github_marketplace = json.loads(texts.get("github-marketplace", ""))
+        agents_atlas = next(
+            item for item in agents_marketplace.get("plugins", []) if item.get("name") == "atlas"
+        )
+        github_atlas = next(
+            item for item in github_marketplace.get("plugins", []) if item.get("name") == "atlas"
+        )
+    except (json.JSONDecodeError, StopIteration, AttributeError) as exc:
         findings.append(("cross", f"Atlas plugin manifests are unreadable: {exc}"))
     else:
         descriptions = (
             plugin_manifest.get("description"),
             codex_plugin_manifest.get("description"),
+            agents_atlas.get("description"),
+            github_atlas.get("description"),
         )
         if (
             not all(isinstance(item, str) for item in descriptions)
-            or descriptions[0] != descriptions[1]
+            or len(set(descriptions)) != 1
             or any(clause not in descriptions[0] for clause in required_plugin_description_clauses)
         ):
             findings.append(("cross", "Atlas plugin manifest descriptions do not expose the current Stage 0-5 surface"))
@@ -216,11 +234,48 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
     required = {
         "readme": [
             "First-party Stage 0–5 skills",
+            "## Start here",
+            "Gazetteer is Atlas's canonical entry point",
+            "## Internal/direct skills",
             "| `setup-atlas` | Configure the planning root and verify an installed host. |",
             "| `start-run` | Accept immutable Stage 0 `run.yaml`, initialize control, or resume from authoritative state. |",
             "| `program-design` | Produce the exact Stage 4 candidate, record readiness, and continue the internal control handoff. |",
             "| `compile-tickets` | Compile and hand off the exact Stage 5 ticket graph candidate. |",
             "stops at `READY_FOR_EXECUTION`",
+        ],
+        "gazetteer": [
+            "name: gazetteer", "canonical user-facing entry point", "atlas_gazetteer.py",
+            "NEW_GOAL", "CONTINUE", "INSPECT", "ACT_ON_NAMED_WORK", "PROVIDE_JUDGMENT",
+            "Semantic similarity may rank or suggest candidates; it never silently binds",
+            "Prefer the host's safe nested skill invocation mechanism",
+            "load the exact installed sibling `SKILL.md` as the current owner procedure",
+            "calibrated procedure-load fallback",
+            "Every existing run enters `atlas:start-run` first",
+            "Gazetteer never invokes Discovery or a downstream producer directly",
+            "Never tell a normal user to invoke `setup-atlas` or `start-run`",
+            "offer one natural-language continue affordance through Gazetteer",
+            "Status and orientation are read-only", "INTERACTIVE", "AUTO_CONTINUE",
+            "owner retains the conversation", "does not interject between co-design or Discovery questions",
+            "Do not encode `next_skill`", "Continuation is never acceptance or approval",
+            "READY_FOR_EXECUTION",
+            "no first-party execution owner exists", "Never hard-code a provider or model name",
+        ],
+        "gazetteer-agent": [
+            'display_name: "Atlas Gazetteer"',
+            "authoritative Atlas state",
+            "allow_implicit_invocation: true",
+        ],
+        "internal-owner-loading": [
+            "Atlas internal owners remain non-implicit",
+            "Prefer the host's safe nested skill invocation mechanism",
+            "calibrated procedure-load fallback",
+            "never derives a stage",
+        ],
+        "gazetteer-helper": [
+            "def inventory", "def _summarize_run", "def _accepted_boundaries",
+            "def _accepted_graph", 'sub.add_parser("inventory"',
+            "verified_state", "verified_planning_state", "load_machine_config", "NOT_CONFIGURED",
+            "ticket_ids", "candidate_sha256",
         ],
         "setup-agent": [
             'short_description: "Configure or verify Atlas on this machine"',
@@ -229,6 +284,9 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         "start": [
             "description: Create or resume an Atlas run", "run.yaml", "control.json",
             "initialize", "AGENT_REVIEW", "HUMAN", "AUTO",
+            "disable-model-invocation: true",
+            "Prefer the host's safe nested skill invocation mechanism",
+            "load the exact installed sibling `SKILL.md` as the current owner procedure",
             "atlas_planning.py", "planning-control.json", ".atlas-planning.lock",
         ],
         "start-agent": [
@@ -259,7 +317,8 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "verify_system_design_board", "30-system-design.html",
         ],
         "repository": [
-            "def load_bindings", "def probe_source", "def bind_repository", "def verify_run",
+            "def selected_config_path", "def load_machine_config", "def load_bindings",
+            "def repository_identity_for_location", "def probe_source", "def bind_repository", "def verify_run",
             "def list_tree", "def search_tree", "def read_tree_path",
             'sub.add_parser(\n        "probe-source"', 'sub.add_parser("verify"', 'sub.add_parser("list"',
             'sub.add_parser("search"', 'sub.add_parser("read"',
@@ -382,13 +441,13 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
     ):
         findings.append(("cross", "setup: incomplete D-081 binding commissioning contract"))
 
-    calibration_five_clis = (
-        "Invoke exactly these five packaged CLIs with `--help` using that same recorded interpreter: "
+    calibration_six_clis = (
+        "Invoke exactly all six packaged CLIs with `--help` using that same recorded interpreter: "
         "`tools/atlas_control.py`, `tools/atlas_planning.py`, `tools/atlas_repository.py`, "
-        "`tools/render_prd.py`, and `tools/render_system_design.py`."
+        "`tools/atlas_gazetteer.py`, `tools/render_prd.py`, and `tools/render_system_design.py`."
     )
-    if calibration_five_clis not in texts.get("installed-host-calibration", ""):
-        findings.append(("cross", "installed-host-calibration: missing five packaged CLIs with the recorded interpreter"))
+    if calibration_six_clis not in texts.get("installed-host-calibration", ""):
+        findings.append(("cross", "installed-host-calibration: missing six packaged CLIs with the recorded interpreter"))
 
     readme_program_contract = (
         "First-party Stage 0–5 skills",
@@ -729,7 +788,7 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         findings.append(("cross", "start: missing complete Stage 3-5 producer route and execution-boundary stop"))
 
     start_continuation_contract = (
-        "This is a bounded continuation loop, not one-shot dispatch",
+        "For `AUTO_CONTINUE`, use the existing bounded continuation loop, not one-shot dispatch",
         "After an invoked producer and its internal control handoff return, run `ensure` again and re-read validated `planning-control.json`",
         "The only legal downstream continuation after `system_design` is `program_design` or `tickets`; after `program_design` it is `tickets`; after pending `tickets` it is `READY_FOR_EXECUTION`",
         "Invoke at most three downstream producers during one `start-run` invocation",
@@ -1108,6 +1167,7 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "Propose candidate shapes", "never manufacture a recommendation",
             "cite the evidence that resolved it", "Give the fresh reader only `10-decisions.md`",
             "Nothing important exists only in the conversation", "third parent of this file",
+            "return to the invoking continuation owner",
         ],
         "decision-record": ["justified recommendation or explicitly says that none is supportable"],
         "start": [
@@ -1126,18 +1186,23 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "reject --run", "--reason", "third parent of this file",
             "already names `system_design`, `program_design`, or `tickets`",
             "do not rerun Product Closure", "After a successful Product Closure transition",
+            "Return the freshly validated phase/status to the invoking continuation owner",
+            "Do not invoke a downstream producer from `control-run`",
             "re-read `planning-control.json`", "discovery never starts execution",
         ],
         "setup": [
             "atomic contract-plus-code commits", "third parent of this file",
-            "<atlas-plugin-root>/requirements.txt", "references/installed-host-calibration.md",
+            "<atlas-plugin-root>/requirements.txt", "tools/atlas_gazetteer.py",
+            "references/installed-host-calibration.md",
         ],
         "installed-host-calibration": [
             "installation bytes", "deterministic runtime readiness", "host recognition",
             "skill discovery", "procedure completion",
             "cross-skill handoff", "dated calibration", "PASS/FAIL/UNVERIFIED",
+            "Gazetteer alone", "allow_implicit_invocation: true",
+            "every internal/direct sibling", "retain `false`",
             "session.skills_loaded", "tools/atlas_planning.py",
-            "tools/atlas_repository.py",
+            "tools/atlas_repository.py", "tools/atlas_gazetteer.py",
             "using that same launcher",
             "Without this run plus oracle, procedure completion is `UNVERIFIED`",
             "without changing a byte-equality PASS",

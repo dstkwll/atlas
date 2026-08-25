@@ -123,7 +123,7 @@ def legacy_config_path() -> Path:
     return Path.home() / ".atlas" / "config.yaml"
 
 
-def _selected_config_path() -> Optional[Path]:
+def selected_config_path() -> Optional[Path]:
     native = native_config_path()
     if native.exists() or native.is_symlink():
         return native
@@ -133,10 +133,10 @@ def _selected_config_path() -> Optional[Path]:
     return None
 
 
-def load_bindings() -> tuple[Optional[Path], Mapping[str, str]]:
-    """Load the native config, or the legacy config only when native is absent."""
+def load_machine_config() -> tuple[Optional[Path], Mapping[str, Any]]:
+    """Load the selected native/legacy machine config as one validated map."""
 
-    path = _selected_config_path()
+    path = selected_config_path()
     if path is None:
         return None, {}
     try:
@@ -151,6 +151,15 @@ def load_bindings() -> tuple[Optional[Path], Mapping[str, str]]:
         raise RepositoryBlocked(
             "invalid_config", "machine config must be a map", f"repair {path}"
         )
+    return path, data
+
+
+def load_bindings() -> tuple[Optional[Path], Mapping[str, str]]:
+    """Load the native bindings, or legacy bindings only when native is absent."""
+
+    path, data = load_machine_config()
+    if path is None:
+        return None, {}
     repositories = data.get("repositories")
     if not isinstance(repositories, dict) or set(repositories) != {"bindings"}:
         raise RepositoryBlocked(
@@ -178,6 +187,37 @@ def load_bindings() -> tuple[Optional[Path], Mapping[str, str]]:
             f"repair repositories.bindings in {path}",
         )
     return path, bindings
+
+
+def repository_identity_for_location(
+    location: Path,
+    bindings: Mapping[str, str],
+) -> Optional[str]:
+    """Return the one configured stable identity whose Git root contains location."""
+
+    try:
+        root_raw = _git_text(
+            ("rev-parse", "--show-toplevel"),
+            source=location,
+            code="repository_unavailable",
+            problem="current location is not inside a readable Git repository",
+            resume_action="open a configured repository",
+        )
+    except RepositoryBlocked:
+        return None
+    root = Path(root_raw).resolve(strict=True)
+    matches = [
+        identity
+        for identity, raw_source in bindings.items()
+        if _canonical_source(raw_source, identity) == root
+    ]
+    if len(matches) > 1:
+        raise RepositoryBlocked(
+            "ambiguous_binding",
+            "multiple repository identities bind the current Git root",
+            "keep one stable identity for this repository source",
+        )
+    return matches[0] if matches else None
 
 
 def _git_environment() -> dict[str, str]:
@@ -416,7 +456,7 @@ def verify_run(run_dir: Path) -> Verification:
     try:
         config_path, bindings = load_bindings()
     except RepositoryBlocked as exc:
-        config_path = _selected_config_path()
+        config_path = selected_config_path()
         bindings = {}
         config_error = exc
 

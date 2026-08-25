@@ -12,7 +12,7 @@ Resolve the installed root from the loaded `setup-atlas/SKILL.md`; do not infer 
 
 ## 2. Verify installation bytes
 
-Enumerate every real `skills/*/SKILL.md`. Require each sibling `agents/openai.yaml`, and verify every manifest retains `policy.allow_implicit_invocation: false`. Require the packaged controllers/renderers named by the installed skills.
+Enumerate every real `skills/*/SKILL.md`. Require each sibling `agents/openai.yaml`. Require that `disable-model-invocation: true` is present on every internal/direct sibling so those skills resist accidental model invocation. Independently require Gazetteer alone to set `policy.allow_implicit_invocation: true`; require every internal/direct sibling to retain `false`, so Gazetteer remains the only implicit entry. For a host that excludes non-implicit siblings from nested invocation, verify the exact installed-procedure fallback in `references/internal-owner-loading.md` instead of broadening internal metadata. Require the packaged controllers/renderers named by the installed skills.
 
 When commissioning from a source checkout, compare the source plugin and installed plugin recursively while excluding generated caches only:
 
@@ -24,7 +24,7 @@ Any source/install difference blocks a current-source claim. Reinstall or update
 
 ## 3. Verify deterministic dependencies
 
-Run the dependency probe from `setup-atlas/SKILL.md` and record the exact Python launcher/interpreter path that passed it. Invoke exactly these five packaged CLIs with `--help` using that same recorded interpreter: `tools/atlas_control.py`, `tools/atlas_planning.py`, `tools/atlas_repository.py`, `tools/render_prd.py`, and `tools/render_system_design.py`. Use each installed absolute path, using that same launcher rather than a temporary interpreter. A missing dependency or CLI is installation failure, not an optional degradation; success under a different temporary interpreter does not prove the configured/default host launcher is ready.
+Run the dependency probe from `setup-atlas/SKILL.md` and record the exact Python launcher/interpreter path that passed it. Invoke exactly all six packaged CLIs with `--help` using that same recorded interpreter: `tools/atlas_control.py`, `tools/atlas_planning.py`, `tools/atlas_repository.py`, `tools/atlas_gazetteer.py`, `tools/render_prd.py`, and `tools/render_system_design.py`. Use each installed absolute path, using that same launcher rather than a temporary interpreter. A missing dependency or CLI is installation failure, not an optional degradation; success under a different temporary interpreter does not prove the configured/default host launcher is ready.
 
 ## 4. Verify host recognition and skill discovery
 

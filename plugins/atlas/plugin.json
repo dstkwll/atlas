@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "atlas",
-  "description": "Atlas pipeline skills: machine setup, Stage 0 intake and control, discovery, System and Program Design, and accepted Stage 5 ticket graphs.",
+  "description": "Atlas Gazetteer front door over Stage 0 intake, discovery, System and Program Design, and accepted Stage 5 ticket graphs.",
   "version": "0.1.0",
   "keywords": [
     "skills",

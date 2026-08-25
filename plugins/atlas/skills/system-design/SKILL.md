@@ -71,7 +71,7 @@ A structured `BLOCKED` result is expected control output. Follow every resume ac
 
 ## 5. Continue the same workflow
 
-After `PASS`, keep the exact Markdown and, for co-design, current HTML unchanged. Perform an exact named internal handoff to `atlas:control-planning` without asking the user to issue a second command. Pass the same `<run-directory>` and stage `system_design`; do not consume approval in this producer.
+After `PASS`, keep the exact Markdown and, for co-design, current HTML unchanged. Perform an exact named internal handoff to `atlas:control-planning` without asking the user to issue a second command. Load that exact owner under [`../../references/internal-owner-loading.md`](../../references/internal-owner-loading.md). Pass the same `<run-directory>` and stage `system_design`; do not consume approval in this producer.
 
 ## Standing rules
 

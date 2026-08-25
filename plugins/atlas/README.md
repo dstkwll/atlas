@@ -2,6 +2,21 @@
 
 First-party Stage 0–5 skills implementing the Atlas architecture through exact accepted ticket-graph authority. `architecture/` remains authoritative; report conflicts rather than silently reconciling them. The neighboring `incubator` plugin remains reference material and is not a workflow owner.
 
+## Start here
+
+**Gazetteer is Atlas's canonical entry point.**
+
+Give Gazetteer a new engineering goal, ask it to continue existing Atlas work, or ask where a run stands. Gazetteer resolves the relevant run conservatively, rereads authoritative state, and enters the existing owner without creating workflow authority.
+
+```text
+/atlas:gazetteer Add cancellation support to queued jobs
+/atlas:gazetteer continue
+/atlas:gazetteer what's next?
+/atlas:gazetteer where are we on cancellation?
+```
+
+Use natural prose. Gazetteer hides skill plumbing, not meaningful engineering phases, and stops for ambiguity, required human judgment, real blockers, completion, or an unimplemented lifecycle boundary.
+
 ## Implemented flow
 
 ```text
@@ -24,6 +39,10 @@ start-run freezes run.yaml and initializes control.json
   → atlas_planning.py records exact graph acceptance and stops at `READY_FOR_EXECUTION`
 ```
 
+## Internal/direct skills
+
+The following remain available for diagnosis, testing, and advanced direct entry. Normal users should not need to invoke them.
+
 | Skill | Responsibility |
 |---|---|
 | `setup-atlas` | Configure the planning root and verify an installed host. |
@@ -36,7 +55,7 @@ start-run freezes run.yaml and initializes control.json
 | `compile-tickets` | Compile and hand off the exact Stage 5 ticket graph candidate. |
 | `control-planning` | Check one explicit Stage 3–5 candidate, consume its frozen authority matrix, assemble exact evidence, and invoke one deterministic planning transition. |
 
-Enter a normal workflow through `atlas:start-run`; implemented downstream owners route and hand off internally. A direct `atlas:<skill>` invocation is reserved for bounded entry, testing, or diagnosis.
+Gazetteer is the normal workflow entry. It invokes `atlas:start-run` and other existing owners internally from validated state. A direct `atlas:<skill>` invocation is reserved for bounded entry, testing, or diagnosis.
 
 ## Planning authority
 
