@@ -115,7 +115,11 @@ as a third independent axis rather than treating co-design as authority.
 
 ### D-012 — PR creation belongs inside the factory; merge initially does not
 
-**Decision:** Push and create a draft PR after final automated gates. Human remains merge authority.
+**Refined by:** D-086 defines delivery per repository slice; there is no aggregate cross-repository
+branch or PR.
+
+**Decision:** Each repository slice receives its own branch and draft PR after its final automated
+gates. Human remains merge authority for each repository-scoped PR.
 
 **Why:** PR packaging is mechanical; final maintainability/product judgment still benefits from HITL.
 
@@ -197,11 +201,12 @@ Do not overfit before trying real projects.
 
 ---
 
-### OQ-005 — Parallel ticket execution
+### OQ-005 — Parallel ticket execution — **DEFERRED FOR V1 BY D-086**
 
-Likely defer initially.
+V1 admits at most one active ticket across the entire accepted planning graph. Parallel admission is
+deferred, not an execution-policy choice within V1.
 
-Need confidence around:
+A future promotion decision would still need evidence about:
 
 - true independence
 - merge conflicts
@@ -209,7 +214,7 @@ Need confidence around:
 - validator interference
 - reviewer context
 
-Sequential execution is safer for V1.
+Until that reviewed promotion, sequential global admission is mandatory.
 
 ---
 
@@ -262,7 +267,8 @@ Still intentionally open:
 
 - the downstream controller's exact storage and implementation mechanics;
 - ticket sizing, graph partitioning, and tracer policy;
-- execution-runtime mechanics within the already-fixed `local_worktree` V1 baseline;
+- execution-runtime implementation details beyond D-086's fixed repo/run workspace,
+  one-global-active-ticket, closed-state, bound-evidence, cleanup, and ownership boundaries;
 - any future second runtime that earns revisiting that baseline and the fixed Stage 5 boundary.
 
 Autonomy can increase without merging acceptance authority into execution or changing artifact

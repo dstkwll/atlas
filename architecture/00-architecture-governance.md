@@ -2,7 +2,7 @@
 
 **Version introduced:** v0.4
 
-**Snapshot date:** 2026-08-22
+**Snapshot date:** 2026-08-25
 
 **Purpose:** Preserve architectural integrity as the project evolves across long conversations, different agents/sessions, external reference reviews, and Git-backed implementation.
 

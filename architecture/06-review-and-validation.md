@@ -137,6 +137,7 @@ Preferred conceptual schema:
 
 ```json
 {
+  "candidate_tree_identity": "<canonical identity>",
   "decision": "accept | reject",
   "findings": [
     {
@@ -151,7 +152,9 @@ Preferred conceptual schema:
 }
 ```
 
-Deterministic orchestration should consume this structured output.
+Deterministic orchestration should consume this structured output. Every ticket-review envelope binds
+the same canonical candidate-tree identity as the deterministic validator receipts. A missing or
+mismatched identity stales the review and cannot authorize commit.
 
 ---
 
@@ -386,11 +389,17 @@ configured policy continue to govern authority.
 
 ## Whole-feature review
 
-Ticket-level correctness is insufficient.
+Within a repository-scoped factory run, “whole-feature” means the complete repository feature slice,
+not the entire cross-repository planning effort. Ticket-level correctness is insufficient for that
+slice, but a passing slice review is still only local evidence; the trusted supervisor determines
+global readiness from every required repository slice and external/dependency condition.
 
-After all tickets, review against the applicable accepted upstream sources: the product contract when
-selected, System Design when selected, Program Design when selected, and the frozen Stage 0 binding
-on a direct path.
+After all tickets in that repository slice, bind the review to the exact integrated
+accepted-commit-chain tip/tree, then review against the applicable accepted upstream sources: the
+product contract when selected, System Design
+when selected, Program Design when selected, and the frozen Stage 0 binding on a direct path. Any
+later HEAD/tree change stales the whole-feature review; a historical verdict cannot authorize
+promotion of different bytes.
 
 1. full applicable-contract compliance
 2. architecture drift across combined change

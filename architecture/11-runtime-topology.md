@@ -88,24 +88,55 @@ is known stale.
 For V1, the preferred workcell is deliberately boring:
 
 ```text
-local Git worktree
+one persistent local execution worktree per repository-scoped factory run
 +
 small factory process
 +
 exact accepted graph packet
 ```
 
-The worktree provides isolation from the developer's primary checkout while avoiding remote-runtime, lifecycle, credential, and recovery complexity before those problems exist.
+A multi-repository planning effort creates one independent repository-scoped run/workspace for each
+target repository. The accepted cross-repository graph and trusted supervisor gate readiness across
+those runs; each runtime record, write scope, worktree, and accepted chain remains local to its target
+repository.
 
-The design should avoid unnecessarily embedding provider-specific vocabulary into domain contracts, but **V1 should not implement a generalized runtime/provider interface solely because future providers are imaginable**.
+The physical worktree persists across the repository's serial tickets; the logical ticket workcell
+remains per-ticket. Each ticket still has its own activation, bounded worker attempt, proof, fresh
+review, repair, final currency check, and deterministic acceptance commit. In V1, only one ticket is
+active across all repository-scoped runs bound to that accepted graph. The trusted supervisor selects
+it in global canonical order, and the selected ticket enters only the workspace named by its target
+repository. Every other repository record remains inactive and cannot independently admit work.
+Before each ticket, the supervisor proves `HEAD` equals the expected accepted-chain tip and reconciles
+cleanliness/ownership. Failed, blocked, abandoned, interrupted, or reviewer-mutated work is restored,
+reconciled, or deliberately retained for diagnosis before another ticket can start.
+
+Each target repository has its own workspace and accepted chain. Cross-repository readiness and
+external delivery conditions remain global trusted-supervisor truth; no worktree owns them.
+
+The worktree provides isolation from the developer's primary checkout while avoiding remote-runtime,
+lifecycle, credential, and recovery complexity before those problems exist. Before destructive
+cleanup, required execution evidence is harvested durably outside the workspace. If the worktree is
+the only remaining source of required evidence and harvest fails, retain it and surface a lifecycle
+blocker rather than converting destruction into apparent completion.
+
+The design should avoid unnecessarily embedding provider-specific vocabulary into domain contracts,
+but **V1 should not implement a generalized runtime/provider interface solely because future
+providers are imaginable**.
 
 > **Features pay for seams. A real second runtime earns the provider abstraction.**
+
+The physical worktree/session/command plumbing may be implemented directly or, only after the bounded
+proof-of-fit, through a thin Sandcastle adapter. Either choice remains replaceable plumbing beneath
+this topology; no Sandcastle type or lifecycle fact becomes engineering truth.
 
 ---
 
 ## Future runtime path — documented, not required
 
-If a real need emerges for containers, local VMs, remote VMs, or hosted ephemeral sandboxes, use Warren/Inkwell as implementation references and derive the common contract from the two real implementations.
+If a real need emerges for containers, local VMs, remote VMs, or hosted ephemeral sandboxes, use
+Sandcastle runtime providers as a substrate candidate and Inkwell as the authority/credential/harvest
+topology donor; Warren remains implementation-reference history. Derive any common Atlas contract
+from two real implementations, not from provider catalogs.
 
 Potential future lifecycle concepts include:
 
@@ -118,7 +149,9 @@ finalize
 terminate
 ```
 
-These are **design hypotheses/reference vocabulary**, not V1 interface requirements.
+These are **design hypotheses/reference vocabulary**, not V1 interface requirements. The broader
+promotion triggers are preserved in unnumbered `v2-horizon.md`; that file is non-authoritative and
+excluded from canonical monolith generation.
 
 A future second runtime should trigger:
 
@@ -140,7 +173,9 @@ exact accepted ticket-graph binding
     ↓
 preflight verifies graph currency, applicable upstream sources, and repository baseline
     ↓
-select ready ticket from that graph
+trusted supervisor selects the first globally ready ticket in canonical order
+    ↓
+routes it only to the repository-scoped run/workspace named by that ticket
     ↓
 deterministic ticket factory
     ↓

@@ -2,7 +2,7 @@
 
 **Purpose:** Preserve not only what the design currently says, but **how and why it changed**. This is intended to protect the project from recency bias, repeated rediscovery, and future agents mistaking superseded ideas for current commitments.
 
-**Snapshot date:** 2026-08-21
+**Snapshot date:** 2026-08-25
 
 ---
 
@@ -209,9 +209,12 @@ Do not create tests for speculative abstraction boundaries; when a real seam exi
 
 V1 can use ordered local JSONL events. Remote cursor reconciliation belongs to future distributed execution.
 
-#### `finalize → salvage → terminate` — **FUTURE EPHEMERAL-RUNTIME INVARIANT**
+#### Full `finalize → salvage → terminate` lifecycle — **FUTURE EPHEMERAL-RUNTIME MECHANISM; EVIDENCE-BEFORE-CLEANUP REFINED BY L-025**
 
-Critical if ephemeral workspaces can disappear; unnecessary ceremony around a durable local worktree.
+The full credential/revocation/destruction lifecycle remains future work for ephemeral runtimes.
+L-025/D-086 promotes only the cheaper invariant now: even a durable local worktree must harvest
+required evidence before destructive cleanup, because V1 may remove that worktree and otherwise erase
+its only execution facts.
 
 #### Preview environments — **FUTURE REVIEW UX**
 
@@ -422,14 +425,16 @@ Everything else must earn its way in.
 
 # 6. Future ideas to retain in comments/docs without implementing now
 
-Keep these searchable so implementation teams know prior art exists:
+Keep these searchable so implementation teams know prior art exists. The V1 evidence-before-cleanup
+invariant is accepted; only the full ephemeral credential-revocation/salvage/termination mechanism
+remains future:
 
 - container/VM/hosted workcells;
 - formal runtime-provider contract;
 - provider capability registry;
 - isolated best-of-N;
 - remote resumable event cursors;
-- salvage-before-destroy;
+- full ephemeral `finalize → salvage → terminate` lifecycle;
 - live preview review surfaces;
 - machine-self-describing `factory prime` command;
 - staged multi-PR delivery;
@@ -976,3 +981,37 @@ Stage 5 follows behavior paths across every boundary they require, not a checkli
 The first frontier targets important risky seams, and each non-enabling ticket is outcome-bearing and
 independently verifiable. Standalone enabling work must name its imminent vertical consumer and prove
 it cannot safely be inlined; imagined future reuse does not earn a foundation seam.
+
+---
+
+## L-025 — Mature donor machinery predicts failures; it does not pre-authorize its solutions
+
+### Evidence reviewed
+
+Sandcastle, Working Skill Repo, SSSF, and Inkwell independently cover runtime problems Atlas is about
+to encounter: workspace/session lifecycle, supervisor ownership, proof and blocker evidence, repair,
+cleanup, isolation, and long-running recovery. The risk was importing each donor's mature control
+machinery merely because it already exists.
+
+### Reconciliation
+
+Most donor findings confirmed accepted Atlas architecture. The few V1 gaps were obligations an
+implementer would otherwise have to guess: one coherent repo/run accepted-chain workspace with
+per-ticket logical workcells; one active ticket across the accepted planning graph and one small
+closed runtime authority per target repository; sufficiently bound wait/proof evidence; contained
+helper-agent behavior without delegation of Atlas ownership; exact integrated-tree promotion;
+evidence harvest before destructive cleanup; and explicit implementation-versus-delivery separation.
+
+The evidence-before-cleanup invariant moved from future-only wording into V1 because Atlas already
+creates and may remove local worktrees. Only the invariant moved; disposable-environment machinery
+did not. Conversely, Working Skill Repo's goal/proof governors, resource scheduler, project graph,
+and oscillation system, plus Inkwell's VMs/credentials and Sandcastle's planners/merge agents, remain
+deferred or rejected.
+
+### Standing result
+
+Use SSSF as the ticket-workcell protocol donor, Working Skill Repo as the supervisor-behavior donor,
+Sandcastle only as a bounded execution-substrate proof-of-fit candidate, and Inkwell as the future
+strong-isolation topology donor. A dependency can run machinery; it never receives Atlas authority.
+Preserve future hypotheses with explicit triggers in unnumbered `v2-horizon.md` rather than turning
+them into V1 requirements or a roadmap.
