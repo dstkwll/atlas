@@ -450,58 +450,75 @@ Possible terminal states:
 
 ## Stage 8 — Feature runner
 
-The feature runner owns dependency traversal.
+The feature runner owns global dependency traversal across the accepted planning graph and dispatches
+work into the repository-scoped run/workspace named by each ticket. Repository-scoped runs execute
+that work; they do not select or admit it.
 
 Pseudo-flow:
 
 ```text
 load exact accepted ticket-graph version/hash and verify its accepted upstream/baseline bindings
-while unblocked tickets exist:
-    select next ticket
-    run TicketFactory(ticket)
+load authoritative per-ticket state from every repository record plus current external evidence
+reconstruct prerequisite satisfaction and the only legal next action after restart
+while nonterminal tickets remain:
+    if no ticket is active:
+        derive readiness across the entire accepted planning graph
+        admit at most one active ticket across the entire accepted planning graph
+        select the first currently ready ticket in global canonical order
+        dispatch it only to the repository-scoped run/workspace named by that ticket
+
+    run TicketFactory(active_ticket)
 
     if ACCEPTED:
-        mark complete
+        persist accepted or terminal completion plus its associated accepted commit/tree and evidence binding
         continue
 
     if DESIGN_BLOCKED:
+        persist terminal evidence
         stop and escalate upstream
 
     if FAILED:
+        persist terminal evidence
         stop and report
 ```
 
-Parallel execution may be introduced later when tickets are truly independent and policy allows it.
+A repository-scoped run cannot select, admit, or execute a ticket targeting another repository.
+Parallel admission remains deferred in V1; any future parallel policy must be promoted explicitly.
 
 ---
 
 ## Stage 9 — Whole-feature validation and review
 
-After all tickets are complete, review against the applicable accepted upstream sources: the product
-contract when selected, System Design when selected, Program Design when selected, and the frozen
-Stage 0 binding on a direct path. Then run:
+After all tickets in one repository slice are accepted, bind validation and review to that slice's
+exact integrated accepted-commit-chain tip/tree. Review against the applicable accepted upstream
+sources: the product contract when selected, System Design when selected, Program Design when
+selected, and the frozen Stage 0 binding on a direct path. Then run:
 
-- full build/test/lint suite
+- full build/test/lint suite for that repository slice
 - integration/system tests
 - architecture/scope checks
-- whole-branch applicable-contract compliance review
-- whole-branch architecture/program-design drift review
+- repository-slice applicable-contract compliance review
+- repository-slice architecture/program-design drift review
 - maintainability/standards review
 - conditional ops/security/migration/UI review
 
-This catches interactions that cannot be judged at individual ticket scope.
+This catches interactions that cannot be judged at individual ticket scope. Passing Stage 9 proves
+only that repository slice. No repository slice declares the planning effort globally ready; the
+trusted supervisor evaluates global readiness from every required repository slice and
+external/dependency condition in the accepted graph.
 
 ---
 
 ## Stage 10 — Package and create draft PR
 
-The system should deterministically assemble evidence from the run:
+For each repository slice that passes Stage 9, the system deterministically assembles evidence from
+that repository-scoped run:
 
 - source planning bundle
 - approved design versions
-- completed tickets
+- completed tickets for the slice
 - commits per ticket
-- validation results
+- validation results bound to the exact integrated tip/tree
 - automated reviewer outcomes
 - repairs performed
 - design amendments
@@ -509,20 +526,20 @@ The system should deterministically assemble evidence from the run:
 
 Then:
 
-- push branch
-- create draft PR
+- push that repository's branch
+- create one draft PR for that repository slice
 - attach or summarize evidence
 
-This is a mechanical packaging step and belongs inside the factory.
+This is a mechanical repository-slice packaging step and belongs inside the factory. There is no
+single cross-repository branch or PR, and packaging a slice does not establish global readiness.
 
 ---
 
 ## Stage 11 — Human PR review
 
-Initial final authority:
+Initial final authority for each repository-scoped draft PR:
 
 > Human.
 
-The factory should make the human review unusually high leverage by presenting a polished implementation plus provenance and validation evidence.
-
-Merge remains a human action initially.
+The factory should make each human review unusually high leverage by presenting a polished repository
+slice plus provenance and validation evidence. Merge remains a human action initially.

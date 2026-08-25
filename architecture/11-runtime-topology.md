@@ -102,11 +102,13 @@ repository.
 
 The physical worktree persists across the repository's serial tickets; the logical ticket workcell
 remains per-ticket. Each ticket still has its own activation, bounded worker attempt, proof, fresh
-review, repair, final currency check, and deterministic acceptance commit. Only one ticket is active
-in a repository-scoped V1 run. Before each ticket, the supervisor proves `HEAD` equals the expected
-accepted-chain tip and reconciles cleanliness/ownership. Failed, blocked, abandoned, interrupted, or
-reviewer-mutated work is restored, reconciled, or deliberately retained for diagnosis before another
-ticket can start.
+review, repair, final currency check, and deterministic acceptance commit. In V1, only one ticket is
+active across all repository-scoped runs bound to that accepted graph. The trusted supervisor selects
+it in global canonical order, and the selected ticket enters only the workspace named by its target
+repository. Every other repository record remains inactive and cannot independently admit work.
+Before each ticket, the supervisor proves `HEAD` equals the expected accepted-chain tip and reconciles
+cleanliness/ownership. Failed, blocked, abandoned, interrupted, or reviewer-mutated work is restored,
+reconciled, or deliberately retained for diagnosis before another ticket can start.
 
 Each target repository has its own workspace and accepted chain. Cross-repository readiness and
 external delivery conditions remain global trusted-supervisor truth; no worktree owns them.
@@ -171,7 +173,9 @@ exact accepted ticket-graph binding
     ↓
 preflight verifies graph currency, applicable upstream sources, and repository baseline
     ↓
-select ready ticket from that graph
+trusted supervisor selects the first globally ready ticket in canonical order
+    ↓
+routes it only to the repository-scoped run/workspace named by that ticket
     ↓
 deterministic ticket factory
     ↓

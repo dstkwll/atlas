@@ -133,6 +133,31 @@ def known_stage_five_contract_regressions(text):
     return [literal for literal in stale_literals if literal in normalized_text]
 
 
+def v014_execution_contract_contradictions(text):
+    """Return bounded affirmative contradictions to D-086's V1 execution rules."""
+    normalized_text = " ".join(text.split()).lower()
+    patterns = (
+        (
+            "per-repository-active-ticket",
+            r"(?:one active ticket per (?:target )?repository(?:-scoped run)?|"
+            r"(?:each|every) (?:target )?repository-scoped (?:run|record).{0,80}"
+            r"(?:may|can|will) (?:admit|run|keep|have).{0,40}(?:an?|one) active ticket)",
+        ),
+        (
+            "foreign-repository-admission",
+            r"repository-scoped (?:run|record).{0,100}(?:may|can|will|is allowed to) "
+            r"(?:select|admit|accept|execute).{0,100}(?:foreign-repository|another repository|other repository)",
+        ),
+        (
+            "event-derived-completion",
+            r"(?:events?|events\.jsonl|event stream|last accepted commit/tree).{0,160}"
+            r"(?:sufficient to|authoritative for|determine|infer|prove|replace|substitute for).{0,120}"
+            r"(?:accepted|terminal|completion|prerequisite|next legal action)",
+        ),
+    )
+    return [name for name, pattern in patterns if re.search(pattern, normalized_text)]
+
+
 class PairedDesignArchitectureTests(unittest.TestCase):
     def test_v014_d086_is_current_and_prior_repair_boundaries_remain(self):
         root_readme = (ROOT / "README.md").read_text(encoding="utf-8")
@@ -747,7 +772,6 @@ class PairedDesignArchitectureTests(unittest.TestCase):
         self.assertRegex(state, r"accepted graph.{0,120}cross-repository readiness.{0,120}planning/supervisor truth")
         self.assertRegex(architecture_index, r"planning effort may span multiple target repositories.{0,180}accepted cross-repository ticket graph.{0,220}one independent repository-scoped workspace.{0,180}per target repository")
         self.assertRegex(topology, r"logical ticket workcell.{0,80}per-ticket")
-        self.assertRegex(combined, r"only one ticket.{0,80}active.{0,120}repository-scoped v1")
         self.assertRegex(runtime, r"run\.json.{0,120}machine-canonical")
         self.assertRegex(runtime, r"events\.jsonl.{0,120}(?:not|never).{0,80}(?:transition|state).{0,80}authority")
         self.assertRegex(runtime, r"condition identity.{0,200}observable satisfaction rule.{0,200}resume/recheck action")
@@ -770,6 +794,7 @@ class PairedDesignArchitectureTests(unittest.TestCase):
         self.assertRegex(review, r"exact integrated accepted-commit-chain tip/tree.{0,220}later head/tree change.{0,100}stale")
         self.assertRegex(combined, r"evidence.{0,80}before.{0,80}(?:destructive )?cleanup")
         self.assertRegex(topology, r"before destructive cleanup.{0,160}required execution evidence.{0,120}harvest")
+        self.assertIn("if harvest fails, retain the only remaining source and surface a lifecycle blocker", decisions)
         self.assertRegex(trust, r"same supervisor-selected worker attempt.{0,220}same workspace.{0,180}authority envelope")
         self.assertRegex(trust, r"(?:helper|child) agents?.{0,220}(?:no atlas identity|cannot own or accept)")
         self.assertRegex(v02, r"feature worktree vs ticket worktree.{0,220}resolved/refined.{0,120}v0\.14.{0,80}d-086")
@@ -814,6 +839,127 @@ class PairedDesignArchitectureTests(unittest.TestCase):
         self.assertNotIn("# atlas v2 horizon", monolith)
         canonical_names = {path.name for path in ARCH.glob("[0-9][0-9]-*.md")}
         self.assertNotIn("v2-horizon.md", canonical_names)
+
+    def test_v014_rejects_affirmative_execution_contract_contradictions(self):
+        owners = "\n".join(
+            read(name)
+            for name in (
+                "02-workflow.md",
+                "05-execution-factory.md",
+                "08-state-and-governance.md",
+                "11-runtime-topology.md",
+                "13-runtime-protocol.md",
+                "16-learnings-and-course-corrections.md",
+                "29-v0.14-decisions.md",
+                "README.md",
+            )
+        )
+        self.assertEqual([], v014_execution_contract_contradictions(owners))
+
+        forbidden = {
+            "per-repository-active-ticket":
+                "Each repository-scoped run may admit one active ticket concurrently.",
+            "foreign-repository-admission":
+                "A repository-scoped run may execute a ticket targeting another repository.",
+            "event-derived-completion":
+                "Events and the last accepted commit/tree are sufficient to infer ticket completion and prerequisites.",
+        }
+        for expected, statement in forbidden.items():
+            self.assertIn(expected, v014_execution_contract_contradictions(statement))
+
+        benign = " ".join((
+            "A repository-scoped run cannot execute a ticket targeting another repository.",
+            "Events and the last accepted commit/tree are not substitutes for authoritative ticket completion.",
+            "Parallel admission remains deferred.",
+        ))
+        self.assertEqual([], v014_execution_contract_contradictions(benign))
+
+    def test_v014_workflow_routes_global_admission_and_repository_slice_promotion(self):
+        workflow = normalized("02-workflow.md").lower()
+        decisions = normalized("10-decisions-and-open-questions.md").lower()
+
+        for clause in (
+            "at most one active ticket across the entire accepted planning graph",
+            "select the first currently ready ticket in global canonical order",
+            "dispatch it only to the repository-scoped run/workspace named by that ticket",
+            "persist accepted or terminal completion plus its associated accepted commit/tree and evidence binding",
+            "parallel admission remains deferred in v1",
+            "after all tickets in one repository slice are accepted",
+            "exact integrated accepted-commit-chain tip/tree",
+            "repository-slice applicable-contract compliance review",
+            "one draft pr for that repository slice",
+            "no repository slice declares the planning effort globally ready",
+        ):
+            self.assertIn(clause, workflow)
+
+        self.assertNotIn("after all tickets are complete", workflow)
+        self.assertNotIn("whole-branch", workflow)
+        self.assertIn("oq-005 — parallel ticket execution — **deferred for v1 by d-086**", decisions)
+        self.assertIn("each repository slice receives its own branch and draft pr", decisions)
+
+    def test_v014_global_admission_is_single_and_repository_safe(self):
+        decisions = normalized("29-v0.14-decisions.md").lower()
+        execution = normalized("05-execution-factory.md").lower()
+        state = normalized("08-state-and-governance.md").lower()
+        topology = normalized("11-runtime-topology.md").lower()
+        runtime = normalized("13-runtime-protocol.md").lower()
+        learnings = normalized("16-learnings-and-course-corrections.md").lower()
+
+        for clause in (
+            "trusted supervisor admits at most one active ticket across the entire accepted planning graph",
+            "selects the first currently ready ticket in global canonical order",
+            "dispatches it only to the repository-scoped run/workspace named by that ticket",
+            "parallel admission remains deferred",
+        ):
+            self.assertIn(clause, decisions)
+
+        for clause in (
+            "at most one active ticket across the entire accepted planning graph",
+            "first currently ready ticket in global canonical order",
+            "dispatch it only to the repository-scoped run/workspace named by that ticket",
+            "a repository-scoped run cannot select, admit, or execute a ticket targeting another repository",
+        ):
+            self.assertIn(clause, execution)
+
+        self.assertIn("only the trusted supervisor may admit the graph's active ticket", state)
+        self.assertIn("a repository record may mark active only a ticket whose target repository matches that record", state)
+        self.assertIn("only one ticket is active across all repository-scoped runs bound to that accepted graph", topology)
+        self.assertIn("the selected ticket enters only the workspace named by its target repository", topology)
+        self.assertIn("across all repository-scoped records bound to one accepted graph, at most one ticket is active", runtime)
+        self.assertIn("a repository-scoped record cannot select, admit, or execute a foreign-repository ticket", runtime)
+        self.assertIn("one active ticket across the accepted planning graph", learnings)
+
+    def test_v014_restart_state_preserves_authoritative_prerequisite_truth(self):
+        decisions = normalized("29-v0.14-decisions.md").lower()
+        state = normalized("08-state-and-governance.md").lower()
+        runtime = normalized("13-runtime-protocol.md").lower()
+
+        for text in (decisions, state, runtime):
+            self.assertIn("authoritative state for every ticket assigned to that repository", text)
+            self.assertIn("accepted or terminal completion", text)
+            self.assertIn("associated accepted commit/tree and evidence binding", text)
+            self.assertIn("reconstruct prerequisite satisfaction", text)
+            self.assertIn("determine the only legal next action after restart", text)
+
+        self.assertIn(
+            "events and the last accepted commit/tree are not substitutes for authoritative ticket completion",
+            runtime,
+        )
+        self.assertIn(
+            "git reality is reconciled on restart but does not replace machine-canonical dependency completion",
+            state,
+        )
+
+    def test_v2_horizon_is_trigger_routed_not_default_context(self):
+        instructions = normalized("AGENTS.md").lower().replace("`", "")
+        index = normalized("README.md").lower().replace("`", "")
+
+        for text in (instructions, index):
+            self.assertIn("v2-horizon.md is not default context", text)
+            self.assertIn("matching named area or trigger", text)
+            self.assertIn("promotion review", text)
+            self.assertIn("reading the horizon never authorizes implementation", text)
+            self.assertIn("explicit reviewed change", text)
 
     def test_resolved_open_questions_no_longer_read_as_open(self):
         questions = normalized("10-decisions-and-open-questions.md")

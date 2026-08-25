@@ -237,22 +237,23 @@ Responsibilities:
 
 - load the exact accepted ticket graph
 - derive readiness from all accepted ticket and external conditions
-- maintain one repository-scoped workspace at the expected accepted-commit-chain tip
-- admit at most one active ticket in a repository-scoped V1 run
-- select the first ready ticket in canonical graph order
+- admit at most one active ticket across the entire accepted planning graph
+- select the first currently ready ticket in global canonical order
+- dispatch it only to the repository-scoped run/workspace named by that ticket
+- maintain that target repository's workspace at the expected accepted-commit-chain tip
+- enforce that a repository-scoped run cannot select, admit, or execute a ticket targeting another
+  repository
 - invoke ticket factory
-- persist ticket state and an evidence-bearing external/human wait record
+- persist per-ticket authoritative state and an evidence-bearing external/human wait record
 - on explicit `continue`/`resume`, reload and revalidate rather than grant readiness
 - bind runtime-produced values only after evidence satisfies the accepted condition
 - durably harvest required evidence before destructive cleanup
 - stop on terminal/escalation conditions
 - enforce policy checkpoints
-- optionally parallelize later
 
 Dependencies remain real prerequisites; canonical order is a separate tie-break among ready tickets.
 V1 does not poll CI, registries, deployment systems, or human processes. A manual wake followed by
-revalidation is the complete initial external-wait behavior. Parallelism should be conservative
-initially.
+revalidation is the complete initial external-wait behavior. Parallel admission remains deferred.
 
 ---
 

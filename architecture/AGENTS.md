@@ -10,5 +10,9 @@ This contract layers architecture-specific rules on top of the repository-root `
 - Edit numbered canonical architecture documents before regenerating `architecture/rolling-monolith.md`.
 - Update decisions, history, and learnings when the governance protocol requires it.
 - Report contradictions among canonical architecture sources instead of silently reconciling them.
+- `v2-horizon.md` is not default context. Read it only when the current task names a matching named
+  area or trigger, or requests a promotion review.
+- Reading the horizon never authorizes implementation; promotion requires an explicit reviewed
+  `CHANGE` against the then-current canonical architecture.
 - After architecture changes, run `python3 tools/check_architecture.py` and report its result.
 - Inherit the root contract's branch, grounding-evidence, validation-evidence, draft-PR, and merge-authority rules.

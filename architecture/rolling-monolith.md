@@ -1006,58 +1006,75 @@ Possible terminal states:
 
 ## Stage 8 — Feature runner
 
-The feature runner owns dependency traversal.
+The feature runner owns global dependency traversal across the accepted planning graph and dispatches
+work into the repository-scoped run/workspace named by each ticket. Repository-scoped runs execute
+that work; they do not select or admit it.
 
 Pseudo-flow:
 
 ```text
 load exact accepted ticket-graph version/hash and verify its accepted upstream/baseline bindings
-while unblocked tickets exist:
-    select next ticket
-    run TicketFactory(ticket)
+load authoritative per-ticket state from every repository record plus current external evidence
+reconstruct prerequisite satisfaction and the only legal next action after restart
+while nonterminal tickets remain:
+    if no ticket is active:
+        derive readiness across the entire accepted planning graph
+        admit at most one active ticket across the entire accepted planning graph
+        select the first currently ready ticket in global canonical order
+        dispatch it only to the repository-scoped run/workspace named by that ticket
+
+    run TicketFactory(active_ticket)
 
     if ACCEPTED:
-        mark complete
+        persist accepted or terminal completion plus its associated accepted commit/tree and evidence binding
         continue
 
     if DESIGN_BLOCKED:
+        persist terminal evidence
         stop and escalate upstream
 
     if FAILED:
+        persist terminal evidence
         stop and report
 ```
 
-Parallel execution may be introduced later when tickets are truly independent and policy allows it.
+A repository-scoped run cannot select, admit, or execute a ticket targeting another repository.
+Parallel admission remains deferred in V1; any future parallel policy must be promoted explicitly.
 
 ---
 
 ## Stage 9 — Whole-feature validation and review
 
-After all tickets are complete, review against the applicable accepted upstream sources: the product
-contract when selected, System Design when selected, Program Design when selected, and the frozen
-Stage 0 binding on a direct path. Then run:
+After all tickets in one repository slice are accepted, bind validation and review to that slice's
+exact integrated accepted-commit-chain tip/tree. Review against the applicable accepted upstream
+sources: the product contract when selected, System Design when selected, Program Design when
+selected, and the frozen Stage 0 binding on a direct path. Then run:
 
-- full build/test/lint suite
+- full build/test/lint suite for that repository slice
 - integration/system tests
 - architecture/scope checks
-- whole-branch applicable-contract compliance review
-- whole-branch architecture/program-design drift review
+- repository-slice applicable-contract compliance review
+- repository-slice architecture/program-design drift review
 - maintainability/standards review
 - conditional ops/security/migration/UI review
 
-This catches interactions that cannot be judged at individual ticket scope.
+This catches interactions that cannot be judged at individual ticket scope. Passing Stage 9 proves
+only that repository slice. No repository slice declares the planning effort globally ready; the
+trusted supervisor evaluates global readiness from every required repository slice and
+external/dependency condition in the accepted graph.
 
 ---
 
 ## Stage 10 — Package and create draft PR
 
-The system should deterministically assemble evidence from the run:
+For each repository slice that passes Stage 9, the system deterministically assembles evidence from
+that repository-scoped run:
 
 - source planning bundle
 - approved design versions
-- completed tickets
+- completed tickets for the slice
 - commits per ticket
-- validation results
+- validation results bound to the exact integrated tip/tree
 - automated reviewer outcomes
 - repairs performed
 - design amendments
@@ -1065,23 +1082,23 @@ The system should deterministically assemble evidence from the run:
 
 Then:
 
-- push branch
-- create draft PR
+- push that repository's branch
+- create one draft PR for that repository slice
 - attach or summarize evidence
 
-This is a mechanical packaging step and belongs inside the factory.
+This is a mechanical repository-slice packaging step and belongs inside the factory. There is no
+single cross-repository branch or PR, and packaging a slice does not establish global readiness.
 
 ---
 
 ## Stage 11 — Human PR review
 
-Initial final authority:
+Initial final authority for each repository-scoped draft PR:
 
 > Human.
 
-The factory should make the human review unusually high leverage by presenting a polished implementation plus provenance and validation evidence.
-
-Merge remains a human action initially.
+The factory should make each human review unusually high leverage by presenting a polished repository
+slice plus provenance and validation evidence. Merge remains a human action initially.
 
 ---
 
@@ -2252,22 +2269,23 @@ Responsibilities:
 
 - load the exact accepted ticket graph
 - derive readiness from all accepted ticket and external conditions
-- maintain one repository-scoped workspace at the expected accepted-commit-chain tip
-- admit at most one active ticket in a repository-scoped V1 run
-- select the first ready ticket in canonical graph order
+- admit at most one active ticket across the entire accepted planning graph
+- select the first currently ready ticket in global canonical order
+- dispatch it only to the repository-scoped run/workspace named by that ticket
+- maintain that target repository's workspace at the expected accepted-commit-chain tip
+- enforce that a repository-scoped run cannot select, admit, or execute a ticket targeting another
+  repository
 - invoke ticket factory
-- persist ticket state and an evidence-bearing external/human wait record
+- persist per-ticket authoritative state and an evidence-bearing external/human wait record
 - on explicit `continue`/`resume`, reload and revalidate rather than grant readiness
 - bind runtime-produced values only after evidence satisfies the accepted condition
 - durably harvest required evidence before destructive cleanup
 - stop on terminal/escalation conditions
 - enforce policy checkpoints
-- optionally parallelize later
 
 Dependencies remain real prerequisites; canonical order is a separate tie-break among ready tickets.
 V1 does not poll CI, registries, deployment systems, or human processes. A manual wake followed by
-revalidation is the complete initial external-wait behavior. Parallelism should be conservative
-initially.
+revalidation is the complete initial external-wait behavior. Parallel admission remains deferred.
 
 ---
 
@@ -3054,10 +3072,19 @@ The deterministic runner owns transition legality.
 Each repository-scoped factory run has one small closed authority record, owned by the trusted
 supervisor and defined concretely by Program Design. A multi-repository planning effort therefore has
 one independent execution record per target repository, while its accepted graph and cross-repository
-readiness remain planning/supervisor truth. Each execution record admits at most one active ticket.
-Workers and observational events report evidence; neither can transition ticket/run state. The
-record is separate from the Stage 3–5 planning controller and cannot mutate accepted planning truth.
-See `13-runtime-protocol.md` for the minimum restart/evidence contract without a frozen schema.
+readiness remain planning/supervisor truth.
+
+Only the trusted supervisor may admit the graph's active ticket. A repository record may mark active
+only a ticket whose target repository matches that record; records cannot independently select or
+admit work. Across the entire accepted planning graph, at most one ticket is active in V1.
+
+Each record preserves authoritative state for every ticket assigned to that repository, including
+accepted or terminal completion, the associated accepted commit/tree and evidence binding where
+applicable, and enough information to reconstruct prerequisite satisfaction and determine the only
+legal next action after restart. Workers and observational events report evidence; neither can
+transition ticket/run state. The record is separate from the Stage 3–5 planning controller and cannot
+mutate accepted planning truth. See `13-runtime-protocol.md` for the minimum restart/evidence contract
+without a frozen schema.
 
 `ACCEPTED`/local implementation completion is not delivery completion. PR review, CI, package or
 deployment publication, and dependent-repository readiness remain separate observable conditions.
@@ -3278,6 +3305,10 @@ On restart:
 4. verify accepted commits still exist;
 5. determine next legal transition;
 6. never rely solely on conversational/model memory.
+
+Git reality is reconciled on restart but does not replace machine-canonical dependency completion.
+The trusted supervisor reconstructs readiness from the accepted graph, authoritative per-ticket state
+across repository records, and current external-condition evidence.
 
 Destructive cleanup is legal only after required execution evidence is durably harvested. A failed
 harvest retains the only remaining workspace/session source and records a lifecycle blocker; absence
@@ -3721,7 +3752,11 @@ as a third independent axis rather than treating co-design as authority.
 
 ### D-012 — PR creation belongs inside the factory; merge initially does not
 
-**Decision:** Push and create a draft PR after final automated gates. Human remains merge authority.
+**Refined by:** D-086 defines delivery per repository slice; there is no aggregate cross-repository
+branch or PR.
+
+**Decision:** Each repository slice receives its own branch and draft PR after its final automated
+gates. Human remains merge authority for each repository-scoped PR.
 
 **Why:** PR packaging is mechanical; final maintainability/product judgment still benefits from HITL.
 
@@ -3803,11 +3838,12 @@ Do not overfit before trying real projects.
 
 ---
 
-### OQ-005 — Parallel ticket execution
+### OQ-005 — Parallel ticket execution — **DEFERRED FOR V1 BY D-086**
 
-Likely defer initially.
+V1 admits at most one active ticket across the entire accepted planning graph. Parallel admission is
+deferred, not an execution-policy choice within V1.
 
-Need confidence around:
+A future promotion decision would still need evidence about:
 
 - true independence
 - merge conflicts
@@ -3815,7 +3851,7 @@ Need confidence around:
 - validator interference
 - reviewer context
 
-Sequential execution is safer for V1.
+Until that reviewed promotion, sequential global admission is mandatory.
 
 ---
 
@@ -3868,8 +3904,8 @@ Still intentionally open:
 
 - the downstream controller's exact storage and implementation mechanics;
 - ticket sizing, graph partitioning, and tracer policy;
-- execution-runtime implementation details beyond D-086's fixed repo/run workspace, one-active-ticket,
-  closed-state, bound-evidence, cleanup, and ownership boundaries;
+- execution-runtime implementation details beyond D-086's fixed repo/run workspace,
+  one-global-active-ticket, closed-state, bound-evidence, cleanup, and ownership boundaries;
 - any future second runtime that earns revisiting that baseline and the fixed Stage 5 boundary.
 
 Autonomy can increase without merging acceptance authority into execution or changing artifact
@@ -4025,11 +4061,13 @@ repository.
 
 The physical worktree persists across the repository's serial tickets; the logical ticket workcell
 remains per-ticket. Each ticket still has its own activation, bounded worker attempt, proof, fresh
-review, repair, final currency check, and deterministic acceptance commit. Only one ticket is active
-in a repository-scoped V1 run. Before each ticket, the supervisor proves `HEAD` equals the expected
-accepted-chain tip and reconciles cleanliness/ownership. Failed, blocked, abandoned, interrupted, or
-reviewer-mutated work is restored, reconciled, or deliberately retained for diagnosis before another
-ticket can start.
+review, repair, final currency check, and deterministic acceptance commit. In V1, only one ticket is
+active across all repository-scoped runs bound to that accepted graph. The trusted supervisor selects
+it in global canonical order, and the selected ticket enters only the workspace named by its target
+repository. Every other repository record remains inactive and cannot independently admit work.
+Before each ticket, the supervisor proves `HEAD` equals the expected accepted-chain tip and reconciles
+cleanliness/ownership. Failed, blocked, abandoned, interrupted, or reviewer-mutated work is restored,
+reconciled, or deliberately retained for diagnosis before another ticket can start.
 
 Each target repository has its own workspace and accepted chain. Cross-repository readiness and
 external delivery conditions remain global trusted-supervisor truth; no worktree owns them.
@@ -4094,7 +4132,9 @@ exact accepted ticket-graph binding
     ↓
 preflight verifies graph currency, applicable upstream sources, and repository baseline
     ↓
-select ready ticket from that graph
+trusted supervisor selects the first globally ready ticket in canonical order
+    ↓
+routes it only to the repository-scoped run/workspace named by that ticket
     ↓
 deterministic ticket factory
     ↓
@@ -4395,17 +4435,28 @@ repository identity + frozen baseline
 expected accepted-chain head
 canonical candidate-tree identity for the active attempt
 active ticket or none
-ticket state + bounded attempt counters
+authoritative state for every ticket assigned to that repository
+accepted or terminal completion + associated accepted commit/tree and evidence binding
+bounded attempt counters
 wait/block reason
 resolved worker identity
 builder session handle when the substrate exposes one
 evidence/envelope references
-last accepted commit/tree
 ```
 
-Only one ticket may be active in a repository-scoped V1 run. Do not add a queue, lease scheduler,
-event-sourced workflow database, generalized WIP system, or disposable-environment fields before a
-runtime exists that consumes them.
+Across all repository-scoped records bound to one accepted graph, at most one ticket is active. The
+trusted supervisor selects the first currently ready ticket in global canonical order and records it
+as active only in the repository-scoped run named by that ticket. A repository-scoped record cannot
+select, admit, or execute a foreign-repository ticket. Parallel admission remains deferred.
+
+On restart, the trusted supervisor combines the accepted graph, authoritative state for every ticket
+assigned to each repository, and current external-condition evidence to reconstruct prerequisite
+satisfaction and determine the only legal next action after restart. Events and the last accepted
+commit/tree are not substitutes for authoritative ticket completion; Git reality is reconciled as
+currency/evidence rather than promoted into workflow authority.
+
+Do not add a queue, lease scheduler, event-sourced workflow database, generalized WIP system, or
+disposable-environment fields before a runtime exists that consumes them.
 
 A generated `<planning-root>/<feature>/00-state.md` may remain useful as a projection, but it is not
 authoritative for attempt counts, active ownership, retry state, or exact state transitions.
@@ -4678,7 +4729,7 @@ These are preserved as reference ideas, not implementation commitments.
 
 **Purpose:** Preserve the implementation provenance behind the architecture so that implementation can begin from known, working or at least concrete upstream patterns rather than re-inventing every mechanism from a blank page.
 
-**Snapshot date:** 2026-08-20
+**Snapshot date:** 2026-08-25
 
 This is not a dependency list and it is not an instruction to wholesale-fork any repository. It is a **subsystem donor map**: which source demonstrates a useful mechanism, what we intend to reuse or adapt, what concrete files should be re-read before implementation, and which parts of the upstream design we explicitly do **not** want.
 
@@ -6606,10 +6657,10 @@ machinery merely because it already exists.
 
 Most donor findings confirmed accepted Atlas architecture. The few V1 gaps were obligations an
 implementer would otherwise have to guess: one coherent repo/run accepted-chain workspace with
-per-ticket logical workcells; one active ticket and small closed runtime authority; sufficiently
-bound wait/proof evidence; contained helper-agent behavior without delegation of Atlas ownership;
-exact integrated-tree promotion; evidence harvest before destructive cleanup; and explicit
-implementation-versus-delivery separation.
+per-ticket logical workcells; one active ticket across the accepted planning graph and one small
+closed runtime authority per target repository; sufficiently bound wait/proof evidence; contained
+helper-agent behavior without delegation of Atlas ownership; exact integrated-tree promotion;
+evidence harvest before destructive cleanup; and explicit implementation-versus-delivery separation.
 
 The evidence-before-cleanup invariant moved from future-only wording into V1 because Atlas already
 creates and may remove local worktrees. Only the invariant moved; disposable-environment machinery
@@ -8595,21 +8646,29 @@ Each such run has one coherent accepted-commit chain, realized in one persistent
 worktree. The physical workspace may persist across tickets; the logical workcell, activation, proof,
 review, repair, and acceptance boundary remains per-ticket. Before every ticket and immediately before
 every deterministic commit, Atlas verifies the exact accepted graph, applicable upstream bindings,
-frozen baseline, expected accepted-chain tip, worktree state, and ownership. Only one ticket is active
-in a repository-scoped V1 run. Failed, blocked, abandoned, interrupted, or reviewer-mutated work is
-restored, reconciled, or deliberately retained before another ticket may start. Separate repositories
-retain independent runs, workspaces, runtime records, and chains. Cross-repository dependency and
-readiness remain trusted-supervisor truth over the accepted graph; no repository-scoped execution run
-widens its write authority.
+frozen baseline, expected accepted-chain tip, worktree state, and ownership. Failed, blocked,
+abandoned, interrupted, or reviewer-mutated work is restored, reconciled, or deliberately retained
+before another ticket may start. Separate repositories retain independent runs, workspaces, runtime
+records, and chains. Cross-repository dependency and readiness remain trusted-supervisor truth over
+the accepted graph; no repository-scoped execution run widens its write authority.
+
+In V1, the trusted supervisor admits at most one active ticket across the entire accepted planning
+graph, selects the first currently ready ticket in global canonical order, and dispatches it only to
+the repository-scoped run/workspace named by that ticket. Repository-scoped execution records do not
+independently select or admit tickets and cannot accept a ticket targeting another repository.
+Parallel admission remains deferred.
 
 ### Small closed runtime authority
 
 Repository-scoped execution has one small machine-canonical runtime record sufficient for restart,
 revalidation, bounded attempts, and legal next-action selection. Its exact schema remains Program
-Design, but it must bind the run, accepted graph, repository/baseline, expected accepted-chain head,
-active ticket or none, ticket state and bounded attempts, wait/block reason, resolved worker,
-recoverable session locator where available, evidence/envelope references, and last accepted
-commit/tree. Authority-bearing updates are closed-schema and atomic or provide equivalent
+Design, but it must preserve authoritative state for every ticket assigned to that repository,
+including accepted or terminal completion, the associated accepted commit/tree and evidence binding
+where applicable, and enough information to reconstruct prerequisite satisfaction and determine the
+only legal next action after restart. It also binds the run, accepted graph, repository/baseline,
+expected accepted-chain head, active ticket or none, bounded attempt counters, wait/block reason,
+resolved worker, recoverable session locator where available, and evidence/envelope references.
+Authority-bearing updates are closed-schema and atomic or provide equivalent
 no-intermediate-contradiction semantics. An append-only event stream may support observation; it is
 not transition authority. V1 adds no queue, lease scheduler, event-sourced workflow database,
 generalized WIP system, or second controller.
@@ -8719,5 +8778,5 @@ runtime, or Sandcastle-specific field in accepted planning truth.
 
 ## v0.14 north star
 
-> **One coherent accepted chain and one active ticket per repository-scoped factory run; evidence before
-> transition or destruction; and no donor authority hidden inside the runtime.**
+> **One coherent accepted chain per repository-scoped factory run, one active ticket across the accepted
+> graph, evidence before transition or destruction, and no donor authority hidden inside the runtime.**

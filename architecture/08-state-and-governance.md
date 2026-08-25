@@ -81,10 +81,19 @@ The deterministic runner owns transition legality.
 Each repository-scoped factory run has one small closed authority record, owned by the trusted
 supervisor and defined concretely by Program Design. A multi-repository planning effort therefore has
 one independent execution record per target repository, while its accepted graph and cross-repository
-readiness remain planning/supervisor truth. Each execution record admits at most one active ticket.
-Workers and observational events report evidence; neither can transition ticket/run state. The
-record is separate from the Stage 3–5 planning controller and cannot mutate accepted planning truth.
-See `13-runtime-protocol.md` for the minimum restart/evidence contract without a frozen schema.
+readiness remain planning/supervisor truth.
+
+Only the trusted supervisor may admit the graph's active ticket. A repository record may mark active
+only a ticket whose target repository matches that record; records cannot independently select or
+admit work. Across the entire accepted planning graph, at most one ticket is active in V1.
+
+Each record preserves authoritative state for every ticket assigned to that repository, including
+accepted or terminal completion, the associated accepted commit/tree and evidence binding where
+applicable, and enough information to reconstruct prerequisite satisfaction and determine the only
+legal next action after restart. Workers and observational events report evidence; neither can
+transition ticket/run state. The record is separate from the Stage 3–5 planning controller and cannot
+mutate accepted planning truth. See `13-runtime-protocol.md` for the minimum restart/evidence contract
+without a frozen schema.
 
 `ACCEPTED`/local implementation completion is not delivery completion. PR review, CI, package or
 deployment publication, and dependent-repository readiness remain separate observable conditions.
@@ -305,6 +314,10 @@ On restart:
 4. verify accepted commits still exist;
 5. determine next legal transition;
 6. never rely solely on conversational/model memory.
+
+Git reality is reconciled on restart but does not replace machine-canonical dependency completion.
+The trusted supervisor reconstructs readiness from the accepted graph, authoritative per-ticket state
+across repository records, and current external-condition evidence.
 
 Destructive cleanup is legal only after required execution evidence is durably harvested. A failed
 harvest retains the only remaining workspace/session source and records a lifecycle blocker; absence

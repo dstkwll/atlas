@@ -997,10 +997,10 @@ machinery merely because it already exists.
 
 Most donor findings confirmed accepted Atlas architecture. The few V1 gaps were obligations an
 implementer would otherwise have to guess: one coherent repo/run accepted-chain workspace with
-per-ticket logical workcells; one active ticket and small closed runtime authority; sufficiently
-bound wait/proof evidence; contained helper-agent behavior without delegation of Atlas ownership;
-exact integrated-tree promotion; evidence harvest before destructive cleanup; and explicit
-implementation-versus-delivery separation.
+per-ticket logical workcells; one active ticket across the accepted planning graph and one small
+closed runtime authority per target repository; sufficiently bound wait/proof evidence; contained
+helper-agent behavior without delegation of Atlas ownership; exact integrated-tree promotion;
+evidence harvest before destructive cleanup; and explicit implementation-versus-delivery separation.
 
 The evidence-before-cleanup invariant moved from future-only wording into V1 because Atlas already
 creates and may remove local worktrees. Only the invariant moved; disposable-environment machinery

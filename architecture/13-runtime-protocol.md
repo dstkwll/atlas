@@ -98,17 +98,28 @@ repository identity + frozen baseline
 expected accepted-chain head
 canonical candidate-tree identity for the active attempt
 active ticket or none
-ticket state + bounded attempt counters
+authoritative state for every ticket assigned to that repository
+accepted or terminal completion + associated accepted commit/tree and evidence binding
+bounded attempt counters
 wait/block reason
 resolved worker identity
 builder session handle when the substrate exposes one
 evidence/envelope references
-last accepted commit/tree
 ```
 
-Only one ticket may be active in a repository-scoped V1 run. Do not add a queue, lease scheduler,
-event-sourced workflow database, generalized WIP system, or disposable-environment fields before a
-runtime exists that consumes them.
+Across all repository-scoped records bound to one accepted graph, at most one ticket is active. The
+trusted supervisor selects the first currently ready ticket in global canonical order and records it
+as active only in the repository-scoped run named by that ticket. A repository-scoped record cannot
+select, admit, or execute a foreign-repository ticket. Parallel admission remains deferred.
+
+On restart, the trusted supervisor combines the accepted graph, authoritative state for every ticket
+assigned to each repository, and current external-condition evidence to reconstruct prerequisite
+satisfaction and determine the only legal next action after restart. Events and the last accepted
+commit/tree are not substitutes for authoritative ticket completion; Git reality is reconciled as
+currency/evidence rather than promoted into workflow authority.
+
+Do not add a queue, lease scheduler, event-sourced workflow database, generalized WIP system, or
+disposable-environment fields before a runtime exists that consumes them.
 
 A generated `<planning-root>/<feature>/00-state.md` may remain useful as a projection, but it is not
 authoritative for attempt counts, active ownership, retry state, or exact state transitions.
