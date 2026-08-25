@@ -23,6 +23,12 @@ Sandcastle remains a proof-of-fit substrate candidate, not a dependency or autho
 or trigger, or requests a promotion review. Reading the horizon never authorizes implementation;
 promotion requires an explicit reviewed `CHANGE` against the then-current canonical architecture.
 
+Matching areas include proof reuse, response-required presentation, parallel scheduling or resource
+claims, repository-orientation memory, cross-run goals, oscillation or no-progress detection, strong
+isolation or a second runtime, disposable-environment state, best-of-N, environment-local
+coordination, and reviewer-topology simplification. A named area routes the agent to the horizon's
+trigger test; it does not establish that the trigger has occurred.
+
 ## Change discipline
 
 For material changes:

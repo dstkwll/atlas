@@ -5435,6 +5435,66 @@ do not install or copy the donor's mature control system.
 
 ---
 
+# 15. Cole Medin — Build Dark Factory skill
+
+- Repository: https://github.com/coleam00/skills
+- Skill: `.claude/skills/build-dark-factory`
+- Inspected commit: `ecef6ffd4caa0b23a8c79601c1215b1e2908ac72`
+- License verified at that commit: **MIT** (`LICENSE` blob
+  `6f95664bacd7867d2a46fab92ead7f39edcf0c21`)
+
+## Why it matters
+
+Build Dark Factory is an opinionated unattended-factory installer. Its useful Atlas contribution is
+not its runner or authority model, but concrete proof-hardening and rollout techniques for testing
+the factory machinery itself. Those techniques reinforce existing Atlas validation obligations and
+do not earn a new subsystem or horizon item.
+
+## Borrow map
+
+| Facet | Action | Maturity | How it maps to our design |
+|---|---|---|---|
+| Positive markers and executed-check counts | **ADAPT** | **IMPLEMENTATION_REFERENCE** | Require affirmative evidence that each mandatory check actually ran; zero, skipped, missing, or summary-only evidence cannot pass. |
+| Mutation and historical-defect tests of the factory machinery | **ADAPT** | **IMPLEMENTATION_REFERENCE** | Negative-test controller, validator, transition, recovery, evidence, and cleanup behavior against load-bearing regressions. |
+| Validator criteria from the trusted/base side | **CONCEPT** | **ACCEPTED_PRINCIPLE** | Candidate-authored bytes cannot weaken the rules used to judge that candidate; Atlas retains its existing authority and binding model. |
+| Builder-hidden holdouts | **REFERENCE** | **DEFERRED** | Revisit only if optimization against known checks becomes observed or unattended semantic merge authority is intentionally considered. |
+| One complete manual lap before unattended operation | **CONCEPT** | **IMPLEMENTATION_REFERENCE** | Calibrate the real end-to-end factory and its stop/recovery paths before any future autonomy increase. |
+| Human-maintained threshold/ratchet changes | **CONCEPT** | **IMPLEMENTATION_REFERENCE** | Measured slack must not silently weaken proof, and an agent cannot tune the threshold that grants its own authority. |
+| Generic copied runner, GitHub issue/label state, autonomy ladder, deploy loop, and universal auto-merge destination | **REJECT** | **REJECTED** | Conflict with Atlas artifact authority, trusted-supervisor state, explicit HITL policy, sequential V1, and features-pay-for-seams discipline. |
+
+## Concrete upstream areas to re-read
+
+- `SKILL.md` and `references/validation-harness.md`
+- `scripts/factory_doctor.py`, `_test_factory_doctor.py`, and `_test_runner.py`
+- `templates/FACTORY_RULES.md`
+- `templates/runner/factory/gate.sh`, `guard.py`, and `merge.sh`
+- `templates/harness/ci.py` and `e2e.py`
+
+## Audit caution
+
+At the pinned commit, the `factory_doctor` mutation/quiet suite passed `22/22` locally. The runner
+suite passed `54/56`; the two failures exposed ambient `main`-branch assumptions and do not support a
+portability claim. `_test_audit_runner.py` could not run without editing because it hard-codes the
+author's Windows checkout path. These results support mining bounded techniques, not treating the
+copied runner as a proven Atlas substrate.
+
+## Explicitly do not import
+
+- **REJECT:** GitHub issues, labels, or generated workflow state as Atlas engineering truth.
+- **REJECT:** a runtime planning node that chooses unspecified product values or creates follow-on
+  accepted truth.
+- **REJECT:** the claim that safety comes from removing human checkpoints.
+- **REJECT:** one ordinal autonomy ladder with universal auto-merge as its destination.
+- **REJECT:** the fixed dispatcher, generic copied runner, deploy loop, and accumulated state
+  vocabulary.
+
+## Likely implementation role
+
+**Secondary reference for validation-harness hardening and rollout calibration.** It is not an Atlas
+runner, execution substrate, dependency, controller, or new horizon seam.
+
+---
+
 # Cross-source implementation map
 
 This is the most useful implementation-time view: **for each subsystem we plan to build, where should the engineer look first?**
@@ -5452,7 +5512,7 @@ This is the most useful implementation-time view: **for each subsystem we plan t
 | Stage admission | Our workflow/gate contracts | Autoprompt `apply` as a contrast case | Required pre-existing artifacts pass ordinary acceptance; unselected boundaries are `NOT_REQUIRED` |
 | Ticket execution protocol | SSSF | Superpowers SDD | Adapt SSSF phase discipline around the accepted Atlas ticket contract; no runtime planner. |
 | Execution substrate | Sandcastle proof-of-fit | Superpowers worktrees, Inkwell future topology | Spike local `noSandbox()` behind a thin Atlas adapter; remain dependency-free if it does not reduce code/risk. |
-| Deterministic validators | SSSF | Sandcastle `sandbox.exec()`, Superpowers verification, PlanF3 validation concept | Atlas owns validator meaning/receipts; substrate only executes commands. |
+| Deterministic validators | SSSF | Sandcastle `sandbox.exec()`, Superpowers verification, PlanF3 validation concept, Build Dark Factory positive-marker and factory-mutation techniques | Atlas owns validator meaning/receipts; substrate only executes commands. |
 | Validator baseline preflight | Ringer | — | Adapt early; catch broken checks before worker attempts. |
 | Contract review | Pocock code-review + Superpowers spec review | SSSF reviewer phase | New bounded reviewer role. |
 | Design/quality review | Pocock + Superpowers | Groundwork ops-review conditional | New bounded reviewer role. |
@@ -5617,6 +5677,7 @@ upstreams:
 | SSSF | **High** for inner factory protocol | High |
 | Sandcastle | **SPIKE only** as runtime substrate; not yet a dependency | **High** for worktree/session/exec mechanics |
 | Working Skill Repo | Low as a wholesale code/system baseline | **High** for trusted-supervisor behavioral patterns |
+| Build Dark Factory | Low as a runner or code baseline | Medium–High for validation-harness hardening and rollout techniques |
 | Inkwell | **High** for future isolation topology / supervisor examples | High |
 | Pocock skills | **High** for pre-implementation skill starting points | High |
 | Superpowers | Medium–High for execution/review mechanics | High |
