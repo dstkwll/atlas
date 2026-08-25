@@ -78,8 +78,10 @@ The deterministic runner owns transition legality.
 
 ### V1 repository-scoped execution authority
 
-Each `(Atlas run, repository)` execution chain has one small closed authority record, owned by the
-trusted supervisor and defined concretely by Program Design. It admits at most one active ticket.
+Each repository-scoped factory run has one small closed authority record, owned by the trusted
+supervisor and defined concretely by Program Design. A multi-repository planning effort therefore has
+one independent execution record per target repository, while its accepted graph and cross-repository
+readiness remain planning/supervisor truth. Each execution record admits at most one active ticket.
 Workers and observational events report evidence; neither can transition ticket/run state. The
 record is separate from the Stage 3–5 planning controller and cannot mutate accepted planning truth.
 See `13-runtime-protocol.md` for the minimum restart/evidence contract without a frozen schema.

@@ -88,12 +88,17 @@ is known stale.
 For V1, the preferred workcell is deliberately boring:
 
 ```text
-one persistent local execution worktree per (Atlas run, repository) accepted-commit chain
+one persistent local execution worktree per repository-scoped factory run
 +
 small factory process
 +
 exact accepted graph packet
 ```
+
+A multi-repository planning effort creates one independent repository-scoped run/workspace for each
+target repository. The accepted cross-repository graph and trusted supervisor gate readiness across
+those runs; each runtime record, write scope, worktree, and accepted chain remains local to its target
+repository.
 
 The physical worktree persists across the repository's serial tickets; the logical ticket workcell
 remains per-ticket. Each ticket still has its own activation, bounded worker attempt, proof, fresh

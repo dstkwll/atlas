@@ -7,12 +7,14 @@ The numbered documents are authoritative. `rolling-monolith.md` is generated fro
 ## Current baseline
 
 **v0.14** makes the Stage 5 → execution boundary implementable without adding execution machinery. One
-persistent repository-scoped workspace carries the accepted commit chain while logical workcells
-remain per-ticket; one small closed runtime authority admits one active ticket; waits and proof
-receipts bind observable evidence; helper agents cannot acquire Atlas ownership; exact-tree promotion
-is separate from ticket acceptance; and required evidence is harvested before destructive cleanup.
-Sandcastle remains a proof-of-fit substrate candidate, not a dependency or authority. The unnumbered
-`v2-horizon.md` preserves deferred triggers and is excluded from canonical generation.
+planning effort may span multiple target repositories under one accepted cross-repository ticket
+graph; execution instantiates one independent repository-scoped workspace, runtime record, and
+accepted chain per target repository. Logical workcells remain per-ticket; one small closed runtime
+authority admits one active ticket per repository-scoped run; waits and proof receipts bind observable
+evidence; helper agents cannot acquire Atlas ownership; repository-slice promotion is separate from
+ticket acceptance; and required evidence is harvested before destructive cleanup. Sandcastle remains
+a proof-of-fit substrate candidate, not a dependency or authority. The unnumbered `v2-horizon.md`
+preserves deferred triggers and is excluded from canonical generation.
 
 ## Change discipline
 

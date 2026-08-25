@@ -258,9 +258,13 @@ initially.
 
 ## Whole-feature factory
 
-Ticket acceptance proves one ticket into one exact deterministic commit. Feature promotion is a
-separate boundary: the exact integrated commit-chain tip/tree receives the complete configured
-promotion proof before publication. That proof includes:
+Within this repository-scoped factory, “whole-feature” means the complete repository feature slice,
+not the entire cross-repository planning effort. Ticket acceptance proves one ticket into one exact
+deterministic commit. Repository-slice promotion is a separate boundary: the exact integrated
+commit-chain tip/tree receives the complete configured promotion proof before publication.
+No repository slice can declare the planning effort globally ready; the trusted supervisor evaluates
+that fact from the accepted graph plus every required repository/external condition. The slice proof
+includes:
 
 ```text
 full deterministic validation against the exact tip/tree

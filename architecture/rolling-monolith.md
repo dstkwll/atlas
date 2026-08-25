@@ -2273,9 +2273,13 @@ initially.
 
 ## Whole-feature factory
 
-Ticket acceptance proves one ticket into one exact deterministic commit. Feature promotion is a
-separate boundary: the exact integrated commit-chain tip/tree receives the complete configured
-promotion proof before publication. That proof includes:
+Within this repository-scoped factory, “whole-feature” means the complete repository feature slice,
+not the entire cross-repository planning effort. Ticket acceptance proves one ticket into one exact
+deterministic commit. Repository-slice promotion is a separate boundary: the exact integrated
+commit-chain tip/tree receives the complete configured promotion proof before publication.
+No repository slice can declare the planning effort globally ready; the trusted supervisor evaluates
+that fact from the accepted graph plus every required repository/external condition. The slice proof
+includes:
 
 ```text
 full deterministic validation against the exact tip/tree
@@ -2710,10 +2714,14 @@ configured policy continue to govern authority.
 
 ## Whole-feature review
 
-Ticket-level correctness is insufficient.
+Within a repository-scoped factory run, “whole-feature” means the complete repository feature slice,
+not the entire cross-repository planning effort. Ticket-level correctness is insufficient for that
+slice, but a passing slice review is still only local evidence; the trusted supervisor determines
+global readiness from every required repository slice and external/dependency condition.
 
-After all tickets, bind the review to the exact integrated accepted-commit-chain tip/tree, then review
-against the applicable accepted upstream sources: the product contract when selected, System Design
+After all tickets in that repository slice, bind the review to the exact integrated
+accepted-commit-chain tip/tree, then review against the applicable accepted upstream sources: the
+product contract when selected, System Design
 when selected, Program Design when selected, and the frozen Stage 0 binding on a direct path. Any
 later HEAD/tree change stales the whole-feature review; a historical verdict cannot authorize
 promotion of different bytes.
@@ -3043,8 +3051,10 @@ The deterministic runner owns transition legality.
 
 ### V1 repository-scoped execution authority
 
-Each `(Atlas run, repository)` execution chain has one small closed authority record, owned by the
-trusted supervisor and defined concretely by Program Design. It admits at most one active ticket.
+Each repository-scoped factory run has one small closed authority record, owned by the trusted
+supervisor and defined concretely by Program Design. A multi-repository planning effort therefore has
+one independent execution record per target repository, while its accepted graph and cross-repository
+readiness remain planning/supervisor truth. Each execution record admits at most one active ticket.
 Workers and observational events report evidence; neither can transition ticket/run state. The
 record is separate from the Stage 3–5 planning controller and cannot mutate accepted planning truth.
 See `13-runtime-protocol.md` for the minimum restart/evidence contract without a frozen schema.
@@ -4001,12 +4011,17 @@ is known stale.
 For V1, the preferred workcell is deliberately boring:
 
 ```text
-one persistent local execution worktree per (Atlas run, repository) accepted-commit chain
+one persistent local execution worktree per repository-scoped factory run
 +
 small factory process
 +
 exact accepted graph packet
 ```
+
+A multi-repository planning effort creates one independent repository-scoped run/workspace for each
+target repository. The accepted cross-repository graph and trusted supervisor gate readiness across
+those runs; each runtime record, write scope, worktree, and accepted chain remains local to its target
+repository.
 
 The physical worktree persists across the repository's serial tickets; the logical ticket workcell
 remains per-ticket. Each ticket still has its own activation, bounded worker attempt, proof, fresh
@@ -8574,15 +8589,18 @@ Sandcastle proof-of-fit before the execution kernel chooses its substrate.
 
 ## D-086 — One coherent execution workspace, closed runtime authority, and bound proof
 
-Each repository in one Atlas run has one coherent accepted-commit chain. V1 realizes that chain in
-one persistent local execution worktree per `(Atlas run, repository)`. The physical workspace may
-persist across tickets; the logical workcell, activation, proof, review, repair, and acceptance
-boundary remains per-ticket. Before every ticket and immediately before every deterministic commit,
-Atlas verifies the exact accepted graph, applicable upstream bindings, frozen baseline, expected
-accepted-chain tip, worktree state, and ownership. Only one ticket is active in a repository-scoped
-V1 run. Failed, blocked, abandoned, interrupted, or reviewer-mutated work is restored, reconciled, or
-deliberately retained before another ticket may start. Separate repositories retain independent
-workspaces and chains under global supervisor readiness.
+One Atlas planning effort may name multiple target repositories and owns one accepted cross-repository
+ticket graph. Execution instantiates one repository-scoped factory run for each target repository.
+Each such run has one coherent accepted-commit chain, realized in one persistent local execution
+worktree. The physical workspace may persist across tickets; the logical workcell, activation, proof,
+review, repair, and acceptance boundary remains per-ticket. Before every ticket and immediately before
+every deterministic commit, Atlas verifies the exact accepted graph, applicable upstream bindings,
+frozen baseline, expected accepted-chain tip, worktree state, and ownership. Only one ticket is active
+in a repository-scoped V1 run. Failed, blocked, abandoned, interrupted, or reviewer-mutated work is
+restored, reconciled, or deliberately retained before another ticket may start. Separate repositories
+retain independent runs, workspaces, runtime records, and chains. Cross-repository dependency and
+readiness remain trusted-supervisor truth over the accepted graph; no repository-scoped execution run
+widens its write authority.
 
 ### Small closed runtime authority
 
@@ -8631,10 +8649,14 @@ invalidation engine, or environment-equivalence system.
 
 ### Ticket acceptance, feature promotion, cleanup, and delivery
 
-Ticket acceptance binds one proven ticket to one exact accepted commit. Feature promotion is a
-separate boundary: the exact integrated accepted-commit-chain tip/tree receives full deterministic
-proof and configured whole-feature semantic review before publication. Any later HEAD/tree change
-stales that promotion proof.
+Ticket acceptance binds one proven ticket to one exact accepted commit. Within one repository-scoped
+factory run, “feature promotion” and “whole-feature review” mean promotion and review of that
+repository feature slice at its exact integrated accepted-commit-chain tip/tree. That slice receives
+full deterministic proof and configured semantic review before publication; any later HEAD/tree change
+stales its promotion proof. There is no single cross-repository tree, branch, PR, or atomic promotion.
+The planning effort becomes globally ready only when the trusted supervisor has accepted evidence for
+every required repository slice and external/dependency condition in the accepted graph; no one local
+slice can claim that global fact.
 
 Before a local worktree—or a future sandbox/session containing the only execution facts—is removed,
 Atlas durably harvests required commit/tree identity, worker/reviewer envelopes, validator outcomes,
@@ -8697,5 +8719,5 @@ runtime, or Sandcastle-specific field in accepted planning truth.
 
 ## v0.14 north star
 
-> **One coherent accepted chain, one active ticket, evidence before transition or destruction, and no
-> donor authority hidden inside the runtime.**
+> **One coherent accepted chain and one active ticket per repository-scoped factory run; evidence before
+> transition or destruction; and no donor authority hidden inside the runtime.**
