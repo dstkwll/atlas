@@ -77,6 +77,38 @@ class SkillSeamHardeningTests(unittest.TestCase):
             shutil.copy2(ROOT / relative, target)
         return plugin / "skills"
 
+    def test_design_skills_require_feature_paid_seams_and_bounded_proof(self):
+        plugin = ROOT / "plugins" / "atlas"
+        contracts = {
+            plugin / "skills" / "system-design" / "SKILL.md": (
+                "Features pay for seams",
+                "named accepted behavior, authority boundary, or independently changing responsibility",
+                "Delete speculative seams",
+                "system-design: missing seam contract",
+            ),
+            plugin / "skills" / "program-design" / "SKILL.md": (
+                "Bounded proof",
+                "accepted behavior classes, invariants, authority boundaries, and canonical transitions",
+                "Do not multiply tests across prose variants",
+                "Every test seam must map to an accepted requirement, a necessary invariant or authority boundary implied by accepted design, or a reachable failure class",
+                "program-design: missing seam contract",
+            ),
+        }
+        for path, (*clauses, finding_text) in contracts.items():
+            text = path.read_text(encoding="utf-8")
+            for clause in clauses:
+                self.assertIn(clause, text)
+                with self.subTest(skill=path.parent.name, clause=clause), tempfile.TemporaryDirectory() as td:
+                    skills = self.copy_plugin(Path(td))
+                    target = skills / path.relative_to(plugin / "skills")
+                    mutated = target.read_text(encoding="utf-8")
+                    target.write_text(
+                        mutated.replace(clause, "[removed design discipline]", 1),
+                        encoding="utf-8",
+                    )
+                    findings = SEAMS.cross_skill_contracts(skills)
+                    self.assertTrue(any(finding_text in message for _, message in findings), findings)
+
     def test_d081_new_intake_records_full_canonical_commit_oid(self):
         plugin = ROOT / "plugins" / "atlas"
         start_path = plugin / "skills" / "start-run" / "SKILL.md"
