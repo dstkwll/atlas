@@ -6,12 +6,13 @@ The numbered documents are authoritative. `rolling-monolith.md` is generated fro
 
 ## Current baseline
 
-**v0.13** makes D-080's one accepted ticket graph execution-complete. Dependencies preserve real
-prerequisite meaning while canonical order carries D-084's risk preference among ready tickets;
-external readiness needs observable evidence, and `resume` only wakes revalidation. The trusted
-supervisor deterministically derives a non-authoritative worker brief from accepted bindings and
-current validated evidence, without an execution-time planner. D-085 adds no graph/brief/runtime
-schema, second acceptance layer, monitoring machinery, or execution implementation.
+**v0.14** makes the Stage 5 → execution boundary implementable without adding execution machinery. One
+persistent repository-scoped workspace carries the accepted commit chain while logical workcells
+remain per-ticket; one small closed runtime authority admits one active ticket; waits and proof
+receipts bind observable evidence; helper agents cannot acquire Atlas ownership; exact-tree promotion
+is separate from ticket acceptance; and required evidence is harvested before destructive cleanup.
+Sandcastle remains a proof-of-fit substrate candidate, not a dependency or authority. The unnumbered
+`v2-horizon.md` preserves deferred triggers and is excluded from canonical generation.
 
 ## Change discipline
 

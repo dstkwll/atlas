@@ -262,7 +262,8 @@ Still intentionally open:
 
 - the downstream controller's exact storage and implementation mechanics;
 - ticket sizing, graph partitioning, and tracer policy;
-- execution-runtime mechanics within the already-fixed `local_worktree` V1 baseline;
+- execution-runtime implementation details beyond D-086's fixed repo/run workspace, one-active-ticket,
+  closed-state, bound-evidence, cleanup, and ownership boundaries;
 - any future second runtime that earns revisiting that baseline and the fixed Stage 5 boundary.
 
 Autonomy can increase without merging acceptance authority into execution or changing artifact

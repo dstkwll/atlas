@@ -134,7 +134,7 @@ def known_stage_five_contract_regressions(text):
 
 
 class PairedDesignArchitectureTests(unittest.TestCase):
-    def test_v013_d085_is_current_and_prior_repair_boundaries_remain(self):
+    def test_v014_d086_is_current_and_prior_repair_boundaries_remain(self):
         root_readme = (ROOT / "README.md").read_text(encoding="utf-8")
         architecture_readme = read("README.md")
         v08_decisions = read("23-v0.8-decisions.md")
@@ -143,15 +143,18 @@ class PairedDesignArchitectureTests(unittest.TestCase):
         v11_path = ARCH / "26-v0.11-decisions.md"
         v12_path = ARCH / "27-v0.12-decisions.md"
         v13_path = ARCH / "28-v0.13-decisions.md"
+        v14_path = ARCH / "29-v0.14-decisions.md"
 
         self.assertTrue(v10_path.exists(), "v0.10/D-082 decision record is absent")
         self.assertTrue(v11_path.exists(), "v0.11/D-083 decision record is absent")
         self.assertTrue(v12_path.exists(), "v0.12/D-084 decision record is absent")
         self.assertTrue(v13_path.exists(), "v0.13/D-085 decision record is absent")
+        self.assertTrue(v14_path.exists(), "v0.14/D-086 decision record is absent")
         v10_decisions = normalized("25-v0.10-decisions.md")
         v11_decisions = normalized("26-v0.11-decisions.md")
         v12_decisions = normalized("27-v0.12-decisions.md")
         v13_decisions = normalized("28-v0.13-decisions.md")
+        v14_decisions = normalized("29-v0.14-decisions.md")
         workflow = normalized("02-workflow.md")
         artifacts = normalized("03-artifact-model.md")
         control = normalized("04-control-plane.md")
@@ -164,9 +167,11 @@ class PairedDesignArchitectureTests(unittest.TestCase):
         combined = " ".join((v10_decisions, workflow, artifacts, control, review, state, runtime))
         stage5 = " ".join((v12_decisions, v13_decisions, workflow, artifacts, execution, review))
 
-        self.assertIn("architecture/28-v0.13-decisions.md", root_readme)
-        self.assertIn("**v0.13**", root_readme)
-        self.assertIn("**v0.13**", architecture_readme)
+        self.assertIn("architecture/29-v0.14-decisions.md", root_readme)
+        self.assertIn("**v0.14**", root_readme)
+        self.assertIn("**v0.14**", architecture_readme)
+        self.assertIn("D-086", v14_decisions)
+        self.assertIn("v0.14 north star", v14_decisions.lower())
         self.assertIn("D-085", v13_decisions)
         self.assertIn("v0.13 north star", v13_decisions.lower())
         self.assertRegex(v13_decisions, r"D-080's one accepted ticket graph execution-complete")
@@ -543,7 +548,7 @@ class PairedDesignArchitectureTests(unittest.TestCase):
         self.assertNotRegex(direct_runtime, r"approved ticket\s+↓\s+deterministic ticket factory")
         self.assertRegex(
             questions,
-            r"fixed `local_worktree` v1 baseline.{0,180}execution-runtime mechanics|execution-runtime mechanics.{0,180}fixed `local_worktree` v1 baseline",
+            r"execution-runtime implementation details.{0,220}d-086's fixed repo/run workspace",
         )
         trivial_live_contract = " ".join((decisions, workflow, config, runtime, questions, borrow_map))
         self.assertEqual([], known_stage_five_contract_regressions(trivial_live_contract))
@@ -704,6 +709,99 @@ class PairedDesignArchitectureTests(unittest.TestCase):
         self.assertIn("the product contract when selected", stage_nine)
         self.assertIn("applicable accepted upstream sources", whole_feature_review)
         self.assertIn("the product contract when selected", whole_feature_review)
+
+    def test_v014_execution_reconciliation_is_bounded_and_horizon_is_noncanonical(self):
+        decision_path = ARCH / "29-v0.14-decisions.md"
+        horizon_path = ARCH / "v2-horizon.md"
+        self.assertTrue(decision_path.is_file(), "v0.14/D-086 decision record is absent")
+        self.assertTrue(horizon_path.is_file(), "the non-authoritative V2 horizon is absent")
+
+        decisions = normalized("29-v0.14-decisions.md").lower()
+        v02 = normalized("14-v0.2-decisions.md").lower()
+        execution = normalized("05-execution-factory.md").lower()
+        review = normalized("06-review-and-validation.md").lower()
+        state = normalized("08-state-and-governance.md").lower()
+        topology = normalized("11-runtime-topology.md").lower()
+        trust = normalized("12-capabilities-and-trust.md").lower()
+        runtime = normalized("13-runtime-protocol.md").lower()
+        borrow_map = normalized("15-reference-implementation-borrow-map.md").lower()
+        borrow_raw = read("15-reference-implementation-borrow-map.md").lower()
+        warren = borrow_raw.split("# 10. jaymin west — warren", 1)[1].split("# 11.", 1)[0]
+        sandcastle = borrow_raw.split("# 13. matt pocock — sandcastle", 1)[1].split("# 14. irtechie", 1)[0]
+        sandcastle_proof = sandcastle.split("## proof-of-fit boundary", 1)[1].split("## likely implementation role", 1)[0]
+        working_skill_repo = borrow_raw.split("# 14. irtechie — working skill repo", 1)[1].split("# cross-source", 1)[0]
+        roles = normalized("17-agent-roles-rosters-and-model-policy.md").lower()
+        horizon = normalized("v2-horizon.md").lower()
+        monolith = normalized("rolling-monolith.md").lower()
+        combined = " ".join((decisions, execution, state, topology, trust, runtime, roles))
+        runtime_reviewer_example = runtime.split("## example reviewer envelope", 1)[1].split("## planning control state", 1)[0]
+        review_schema = review.split("## reviewer output should be structured", 1)[1].split("## reviewer write policy", 1)[0]
+
+        self.assertIn("d-086", decisions)
+        self.assertRegex(decisions, r"no new controller.{0,120}planner.{0,120}scheduler.{0,120}provider")
+        self.assertRegex(topology, r"one persistent local execution worktree.{0,180}atlas run.{0,100}repository.{0,180}accepted-commit chain")
+        self.assertRegex(topology, r"logical ticket workcell.{0,80}per-ticket")
+        self.assertRegex(combined, r"only one ticket.{0,80}active.{0,120}repository-scoped v1")
+        self.assertRegex(runtime, r"run\.json.{0,120}machine-canonical")
+        self.assertRegex(runtime, r"events\.jsonl.{0,120}(?:not|never).{0,80}(?:transition|state).{0,80}authority")
+        self.assertRegex(runtime, r"condition identity.{0,200}observable satisfaction rule.{0,200}resume/recheck action")
+        self.assertRegex(runtime, r"run/ticket/graph.{0,180}(?:head|tree).{0,180}validator semantics")
+        self.assertRegex(runtime, r"expected accepted-chain head.{0,220}canonical candidate-tree identity")
+        self.assertRegex(execution, r"canonical candidate-tree identity.{0,220}validators?.{0,220}review")
+        self.assertRegex(review, r"ticket-review envelope.{0,180}same canonical candidate-tree identity")
+        self.assertIn("candidate_tree_identity", runtime_reviewer_example)
+        self.assertIn("candidate_tree_identity", review_schema)
+        self.assertRegex(execution, r"immediately before any commit.{0,400}to-be-committed tree.{0,200}canonical candidate-tree identity")
+        self.assertRegex(execution, r"candidate-tree mismatch.{0,180}stale.{0,180}rerun")
+        self.assertRegex(execution, r"exact integrated commit-chain tip/tree.{0,180}promotion")
+        self.assertRegex(execution, r"later (?:tree|head).{0,80}change.{0,100}stale")
+        self.assertRegex(review, r"exact integrated accepted-commit-chain tip/tree.{0,220}later head/tree change.{0,100}stale")
+        self.assertRegex(combined, r"evidence.{0,80}before.{0,80}(?:destructive )?cleanup")
+        self.assertRegex(topology, r"before destructive cleanup.{0,160}required execution evidence.{0,120}harvest")
+        self.assertRegex(trust, r"same supervisor-selected worker attempt.{0,220}same workspace.{0,180}authority envelope")
+        self.assertRegex(trust, r"(?:helper|child) agents?.{0,220}(?:no atlas identity|cannot own or accept)")
+        self.assertRegex(v02, r"feature worktree vs ticket worktree.{0,220}resolved/refined.{0,120}v0\.14.{0,80}d-086")
+        self.assertRegex(v02, r"exact local rollback/protection mechanics remain open.{0,80}item 3")
+        self.assertRegex(" ".join(warren.split()), r"v1 evidence-before-cleanup invariant.{0,120}deferred full ephemeral")
+        self.assertIn("e99f832f26dc9d245c019a9ddd19fa5dee792427", sandcastle)
+        self.assertRegex(" ".join(sandcastle.split()), r"license verified.{0,80}mit")
+        implementation_rows = [
+            line for line in sandcastle.splitlines()
+            if "implementation_reference" in line or "implementation reference" in line
+        ]
+        self.assertEqual(5, len(implementation_rows))
+        for row in implementation_rows:
+            self.assertIn("adapt / spike", row)
+        self.assertIn("sandcastle is not yet an atlas dependency", sandcastle)
+        self.assertEqual(12, len(re.findall(r"(?m)^\d+\.", sandcastle_proof)))
+        for scenario in (
+            "exact-baseline worktree acquisition",
+            "builder invocation from a deterministic atlas brief",
+            "schema-valid result",
+            "deterministic validator execution in the same environment",
+            "same-builder-context repair",
+            "fresh findings-only reviewer invocation",
+            "reviewer mutation detection/restoration",
+            "stale graph/upstream/head prevents commit",
+            "atlas performs the clean-path deterministic commit",
+            "outer-process restart can reacquire legal state and supported session context",
+            "timeout/abort/log/evidence extraction behavior",
+            "without persisting sandcastle types as engineering truth",
+        ):
+            self.assertIn(scenario, sandcastle_proof)
+        self.assertIn("91a1b2f206dc5a6304c913df62426996b61603a1", working_skill_repo)
+        self.assertRegex(" ".join(working_skill_repo.split()), r"license verified.{0,80}mit")
+        self.assertRegex(combined, r"implementation completion.{0,180}(?:not|separate).{0,120}delivery completion|implementation completion.{0,220}delivery completion.{0,120}separate")
+        learnings = normalized("16-learnings-and-course-corrections.md").lower()
+        self.assertIn("l-025", learnings)
+        self.assertRegex(learnings, r"evidence-before-cleanup.{0,180}v1.{0,220}(?:worktree|local)")
+        self.assertRegex(learnings, r"v1 evidence-before-cleanup.{0,180}accepted.{0,220}full ephemeral.{0,180}future")
+
+        self.assertIn("status: non-authoritative horizon", horizon)
+        self.assertIn("not part of the numbered canonical architecture", horizon)
+        self.assertNotIn("# atlas v2 horizon", monolith)
+        canonical_names = {path.name for path in ARCH.glob("[0-9][0-9]-*.md")}
+        self.assertNotIn("v2-horizon.md", canonical_names)
 
     def test_resolved_open_questions_no_longer_read_as_open(self):
         questions = normalized("10-decisions-and-open-questions.md")

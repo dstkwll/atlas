@@ -30,6 +30,7 @@ Phase-to-phase communication should use typed, schema-validated envelopes.
 {
   "ticket": "async-jobs-03",
   "phase": "contract_review",
+  "candidate_tree_identity": "<canonical identity>",
   "verdict": "reject",
   "findings": [
     {
@@ -82,11 +83,90 @@ Suggested runtime layout:
       logs/
 ```
 
-A generated `<planning-root>/<feature>/00-state.md` may remain useful as a projection, but it is not authoritative for attempt counts, active ownership, retry state, or exact state transitions.
+`run.json` (or its Program Design equivalent) is the machine-canonical repository-scoped execution
+record. `events.jsonl` may preserve ordered observation/telemetry, but it is not transition or state
+authority. Authority-bearing updates use a closed schema and atomic replacement, or another minimal
+mechanism with equivalent no-intermediate-contradiction semantics. This rule does not freeze an exact
+file/schema/module design.
+
+The conceptual V1 minimum is only what restart and revalidation require:
+
+```text
+run identity
+accepted graph version/hash
+repository identity + frozen baseline
+expected accepted-chain head
+canonical candidate-tree identity for the active attempt
+active ticket or none
+ticket state + bounded attempt counters
+wait/block reason
+resolved worker identity
+builder session handle when the substrate exposes one
+evidence/envelope references
+last accepted commit/tree
+```
+
+Only one ticket may be active in a repository-scoped V1 run. Do not add a queue, lease scheduler,
+event-sourced workflow database, generalized WIP system, or disposable-environment fields before a
+runtime exists that consumes them.
+
+A generated `<planning-root>/<feature>/00-state.md` may remain useful as a projection, but it is not
+authoritative for attempt counts, active ownership, retry state, or exact state transitions.
 
 `control.json` does not replace this execution protocol. Once compiled work executes, each
-repository-scoped factory run owns its `run.json`, events, envelopes, evidence, and logs under
+repository-scoped factory run owns its runtime record, events, envelopes, evidence, and logs under
 that repository's `.factory/runs/` directory.
+
+## Evidence-bearing waits and blockers
+
+A blocker is a claim about the world. `continue` or `resume` wakes revalidation; it never satisfies
+the claim. A durable wait/block record carries or references:
+
+```text
+condition identity
+observable satisfaction rule
+last check + observed result
+relevant artifact/external reference
+checked-at time where meaningful
+resume/recheck action
+```
+
+The owner stores enough evidence to rerun the cheapest accepted check. V1 adds no sensor registry,
+background polling, webhook, daemon, or event bus.
+
+## Deterministic proof receipts
+
+A proof receipt must be sufficiently bound to answer:
+
+```text
+which run/ticket/graph and expected accepted-chain HEAD were checked?
+which canonical candidate-tree identity supplied the exact bytes under validation?
+what validator semantics ran?
+what baseline expectation applied when declared?
+what happened and what evidence was produced?
+```
+
+Before ticket gates begin, deterministic code derives one canonical candidate-tree identity from the
+exact bytes proposed for commit, including every admitted tracked and untracked path. Program Design
+may choose the Git/index mechanism; architecture fixes only the identity/equality obligation. Every
+validator and ticket reviewer binds that same identity. Any candidate-byte change stales those gates
+and requires a new identity plus rerun.
+
+Preserve an exact command or stable validator-definition identity, verdict/result, and
+output/artifact references. Preserve environment and worker identity only where proof meaning depends
+on them. V1 reruns checks; it does not add proof reuse, invalidation hashing, proof caching, or an
+environment-equivalence subsystem.
+
+## Evidence harvest and completion layers
+
+Before destructive cleanup removes the only remaining source of execution facts, durably harvest the
+required commit/tree identity, worker/reviewer envelopes, validator outcomes, blockers and
+`DESIGN_BLOCKED` evidence, required logs/artifacts, runtime-produced bindings, and supported recovery
+locator. If harvest fails, retain the source and record a lifecycle blocker.
+
+Local implementation completion, PR/CI/package/deployment readiness, and downstream repository
+readiness are separate facts. A local accepted commit cannot manufacture an external fact or satisfy
+a downstream readiness condition.
 
 ## Runtime state vs engineering truth
 

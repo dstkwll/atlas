@@ -443,7 +443,7 @@ Warren is the strongest reference in the set for **production-ish control-plane/
 | Capability flags + registry | **REFERENCE** | **DEFERRED** | Valuable only once multiple real providers have behavioral differences. |
 | Falsification test + boundary lint when cutting a seam | **ADAPT** | **ACCEPTED_PRINCIPLE, TRIGGERED** | Required Definition of Done when a real swappable seam is created. |
 | Monotonic/resumable event streams | **REFERENCE** | **DEFERRED** | V1 can use ordered local JSONL; revisit for distributed/remote recovery. |
-| `finalize` before `terminate`, salvage on failure | **CONCEPT** | **DEFERRED** | Future invariant for ephemeral workspaces where teardown can destroy unrecovered commits. |
+| Evidence before destructive cleanup; full `finalize → salvage → terminate` lifecycle | **ADAPT invariant / REFERENCE mechanism** | **V1 evidence-before-cleanup invariant / DEFERRED full ephemeral lifecycle** | V1 durably harvests required evidence before removing any local worktree holding the only execution facts. The full credential revocation, salvage, and termination protocol is deferred until a disposable runtime earns it. |
 | Preview environments | **REFERENCE** | **DEFERRED** | Potential future HITL review surface, especially UI changes. |
 | Machine-first/self-describing CLI (`prime` pattern) | **REFERENCE** | **DEFERRED** | Revisit if agent ergonomics/doc drift become a real problem. |
 | Reviewer/constitution findings compiled into gates | **CONCEPT** | **ACCEPTED_PRINCIPLE** | Reviewer-to-validator ratchet: stop spending tokens on recurring deterministic failures. |
@@ -594,6 +594,120 @@ selection, and final mission closure. **Not a runtime base and not the semantic-
 
 ---
 
+# 13. Matt Pocock — Sandcastle
+
+- Repository: https://github.com/mattpocock/sandcastle
+- Inspected commit: `e99f832f26dc9d245c019a9ddd19fa5dee792427` (package `0.12.0`)
+- License verified at that commit: **MIT** (`LICENSE` blob `f1dd2c09108dde1a5f56097cee8461b3ea834499`)
+
+## Why it matters
+
+Sandcastle is a candidate execution substrate, not Atlas architecture. It has concrete worktree,
+sandbox, harness, session, typed-output, command-execution, timeout/abort, and logging machinery that
+may let Atlas avoid rebuilding undifferentiated runtime plumbing. Atlas remains above it as the sole
+owner of graph readiness, ticket selection, runtime legality, proof meaning, acceptance, and
+publication.
+
+## Borrow map
+
+| Facet | Action | Maturity | How it maps to our design |
+|---|---|---|---|
+| Worktree/sandbox lifecycle and local `noSandbox()` | **ADAPT / SPIKE** | **IMPLEMENTATION_REFERENCE** | Test one exact-baseline repo/run workspace behind an Atlas-owned adapter. |
+| Harness invocation and session capture/resume | **ADAPT / SPIKE** | **IMPLEMENTATION_REFERENCE** | Candidate plumbing for same-builder repair; capability differences stay runtime evidence. |
+| `sandbox.exec()` deterministic command execution | **ADAPT / SPIKE** | **IMPLEMENTATION_REFERENCE** | Candidate transport for Atlas-owned validators in the same environment; Sandcastle never interprets proof. |
+| Typed/structured output | **ADAPT / SPIKE** | **IMPLEMENTATION_REFERENCE** | Transport for schema-valid worker/reviewer envelopes, never transition authority. |
+| Timeout, abort, lifecycle, logs/streaming | **ADAPT / SPIKE** | **IMPLEMENTATION_REFERENCE** | Candidate operational plumbing and evidence inputs. |
+| Docker/remote providers | **REFERENCE** | **DEFERRED** | Revisit only after a real isolation/runtime requirement; no V1 provider framework. |
+| Planner, issue/dependency inference, agent commits/acceptance, editable reviewers, merger templates | **REJECT** | **REJECTED** | Conflict with Stage 5 truth, Atlas commit/review authority, and sequential V1. |
+
+## Concrete upstream areas to re-read before the spike
+
+- `src/run.ts`, `src/Orchestrator.ts`, `src/SandboxLifecycle.ts`, `src/SandboxProvider.ts`
+- `docs/adr/0003-reuse-worktree-by-default.md`
+- `docs/adr/0007-worktree-locking.md`
+- `docs/adr/0010-structured-output.md`
+- `.out-of-scope/multi-repo-sandbox.md`
+- planner/reviewer/merger templates only as explicit contrast cases
+
+## Proof-of-fit boundary
+
+Pin the exact spike revision and test one accepted Atlas ticket on the exact baseline, starting with
+local `noSandbox()`. Prove all twelve scenarios:
+
+1. exact-baseline worktree acquisition and Atlas-independent currency verification;
+2. one builder invocation from a deterministic Atlas brief;
+3. uncommitted builder output and schema-valid result;
+4. deterministic validator execution in the same environment;
+5. deliberate validator failure followed by same-builder-context repair;
+6. fresh findings-only reviewer invocation;
+7. reviewer mutation detection/restoration;
+8. stale graph/upstream/HEAD prevents commit;
+9. Atlas performs the clean-path deterministic commit;
+10. outer-process restart can reacquire legal state and supported session context;
+11. timeout/abort/log/evidence extraction behavior;
+12. translation into Atlas envelopes without persisting Sandcastle types as engineering truth.
+
+Return exactly one: `ADOPT THIN ADAPTER`, `REJECT DEPENDENCY FOR V1`, or `SPIKE INCONCLUSIVE` with one
+smallest follow-up. No generalized provider abstraction is permitted regardless of outcome.
+
+## Likely implementation role
+
+**Candidate substrate beneath the Atlas workcell.** SSSF remains the protocol donor; Atlas remains the
+authority. Sandcastle is not yet an Atlas dependency.
+
+---
+
+# 14. Irtechie — Working Skill Repo
+
+- Repository: https://github.com/Irtechie/working-skill-repo
+- Inspected commit: `91a1b2f206dc5a6304c913df62426996b61603a1`
+- License verified at that commit: **MIT** (`LICENSE` blob `85376e3b572111df07cfba166d4fefb442d77b17`)
+
+## Why it matters
+
+Working Skill Repo is the strongest reviewed behavioral donor for the trusted supervisor around an
+Atlas ticket workcell. Its mature mechanisms predict real work-ownership, waiting, proof, restart,
+and delivery failures. They are a catalog of earned responses, not a package or taxonomy to copy
+into V1.
+
+## Borrow map
+
+| Facet | Action | Maturity | How it maps to our design |
+|---|---|---|---|
+| Supervisor-selected work and one active ownership | **ADAPT** | **ACCEPTED_PRINCIPLE** | Reinforces one active ticket and deterministic supervisor ownership. |
+| Blocker as world claim + observable recheck | **ADAPT** | **ACCEPTED_PRINCIPLE** | V1 wait records carry condition/evidence/recheck action; `continue` only wakes revalidation. |
+| Bound proof receipts | **ADAPT** | **ACCEPTED_PRINCIPLE** | Preserve validator/tree/input identity sufficient for trustworthy rerun evidence. |
+| Persistent workstream/worktree integration head | **ADAPT** | **ACCEPTED_PRINCIPLE** | Supports one coherent repo/run accepted-commit chain with per-ticket logical workcells. |
+| Exact integrated-tree promotion proof | **ADAPT** | **ACCEPTED_PRINCIPLE** | Separates ticket acceptance from feature publication proof. |
+| Implementation vs PR/CI/package/downstream delivery state | **ADAPT** | **ACCEPTED_PRINCIPLE** | External reality remains separate evidence, not local failure or implied readiness. |
+| Response-required presentation | **REFERENCE** | **DEFERRED** | Preserve as a triggered horizon option; owner state remains authoritative. |
+| Proof governor/reuse, resource scheduler, WIP/leases, project graph, goal governor, oscillation detection | **REFERENCE** | **DEFERRED** | Revisit only after the named V2 triggers; do not import mature machinery preemptively. |
+| Large skill taxonomy as product UX | **REJECT** | **REJECTED** | Conflicts with Gazetteer as the user-facing front door. |
+
+## Concrete upstream areas to re-read when a trigger fires
+
+- `.github/skills/kb-start/SKILL.md`, `kb-plan/SKILL.md`, `kb-work/SKILL.md`
+- `.github/skills/kb-work/references/execution-prompt.md` and `worktree-isolation.md`
+- `.github/skills/kb-review/SKILL.md`, `kb-finalize/SKILL.md`
+- `.github/skills/kb-goal/SKILL.md`, `kb-gate/SKILL.md`, `kb-map/SKILL.md`, `kb-complete/SKILL.md`
+- `.github/skills/kb-start/scripts/work_queue.ps1`
+- `cmd/kbcheck/proof_governor.go`, `internal/graphrouting/*`, `cmd/kbbrief/*`
+
+## Explicitly do not import now
+
+- **REJECT:** its skill catalog as Atlas's user or architecture model.
+- **DEFER:** proof reuse/governor, project graph, resource scheduling, leases/WIP, durable goal
+  governance, and oscillation machinery until observed Atlas failures earn each seam.
+- **REJECT:** any mechanism that grants worker output, issue state, or presentation packets Atlas
+  lifecycle authority.
+
+## Likely implementation role
+
+**Primary behavioral reference for the trusted supervisor.** Borrow the bounded V1 invariants above;
+do not install or copy the donor's mature control system.
+
+---
+
 # Cross-source implementation map
 
 This is the most useful implementation-time view: **for each subsystem we plan to build, where should the engineer look first?**
@@ -609,72 +723,83 @@ This is the most useful implementation-time view: **for each subsystem we plan t
 | Program design | HumanLayer WSFF | Maciej gist, Pocock architecture principles | New skill using concepts |
 | Vertical ticket compiler | Pocock `to-tickets` | HumanLayer vertical slices | Fork/adapt heavily |
 | Stage admission | Our workflow/gate contracts | Autoprompt `apply` as a contrast case | Required pre-existing artifacts pass ordinary acceptance; unselected boundaries are `NOT_REQUIRED` |
-| Ticket execution engine | SSSF | Superpowers SDD | Adapt SSSF runtime around our ticket contract |
-| Deterministic validators | SSSF | Superpowers verification, PlanF3 validation concept | Reuse pattern, repo-specific commands |
-| Validator baseline preflight | Ringer | — | Adapt early; catch broken checks before worker attempts |
-| Contract review | Pocock code-review + Superpowers spec review | SSSF reviewer phase | New bounded reviewer role |
-| Design/quality review | Pocock + Superpowers | Groundwork ops-review conditional | New bounded reviewer roles |
-| Runtime envelopes | SSSF / Inkwell | — | Reuse schema pattern, define our types |
-| Compact worker handoffs | Our accepted artifact bindings | Autoprompt pointer envelopes | Revisit at Stage 5/7; pointers never become authority themselves |
-| Machine run state | Masterplan | Warren, Inkwell run_record, SSSF tracing | JSON/JSONL V1; single authoritative controller |
-| Resume/recovery | Masterplan | Warren failure/recovery records, Inkwell lifecycle state | Defer advanced recovery; adapt deterministic next-action logic when needed |
-| Workcell runtime | Superpowers worktrees | Inkwell; Warren RuntimeProvider when a second runtime appears | **Local worktree V1. No generalized provider seam yet.** |
-| Repository/role boundaries | SSSF + Inkwell | Warren/tool/OS capability patterns | V1 mechanically verifies important boundaries; strengthen preventively only where justified |
-| Supervisor/controller lifecycle | Inkwell | Warren + Masterplan state mechanics | Keep logical authority boundary; V1 can be one local controller process |
-| Credential boundary | Inkwell | — | Reuse principle strictly |
-| Harvest/publish | Inkwell harvest | Superpowers branch finishing | Supervisor-only draft PR path |
-| Fan-out / best-of-N | Inkwell | Superpowers parallel agents | **Deferred future policy**; no V1 implementation |
-| Observability | Masterplan events.jsonl | SSSF/Inkwell trace, Warren event model | Start simple ordered JSONL; preserve upgrade path |
+| Ticket execution protocol | SSSF | Superpowers SDD | Adapt SSSF phase discipline around the accepted Atlas ticket contract; no runtime planner. |
+| Execution substrate | Sandcastle proof-of-fit | Superpowers worktrees, Inkwell future topology | Spike local `noSandbox()` behind a thin Atlas adapter; remain dependency-free if it does not reduce code/risk. |
+| Deterministic validators | SSSF | Sandcastle `sandbox.exec()`, Superpowers verification, PlanF3 validation concept | Atlas owns validator meaning/receipts; substrate only executes commands. |
+| Validator baseline preflight | Ringer | — | Adapt early; catch broken checks before worker attempts. |
+| Contract review | Pocock code-review + Superpowers spec review | SSSF reviewer phase | New bounded reviewer role. |
+| Design/quality review | Pocock + Superpowers | Groundwork ops-review conditional | New bounded reviewer role. |
+| Runtime envelopes | SSSF | Sandcastle typed output, Inkwell | Define Atlas schemas; transport never becomes authority. |
+| Compact worker handoffs | Our accepted artifact bindings | Autoprompt pointer envelopes | Deterministic projection; pointers never become authority. |
+| Machine run state | Our D-086 contract | Working Skill Repo, Masterplan, Inkwell run record | Small closed authority record; observational JSONL is not transition truth. |
+| Resume/recovery | Working Skill Repo behavioral patterns | Sandcastle sessions, Masterplan, Inkwell | One active ticket, legal-next-action recovery, same-builder resume where proven. |
+| Repository/role boundaries | SSSF + Inkwell | Working Skill Repo, Warren/tool/OS capability patterns | V1 verifies important boundaries; helpers remain inside one Atlas attempt. |
+| Supervisor/controller lifecycle | Our design | Working Skill Repo, Inkwell + Masterplan state mechanics | One deterministic supervisor; no donor controller is imported. |
+| Blocker/wait evidence | Our D-085/D-086 contracts | Working Skill Repo | World-claim record plus explicit wake-and-revalidate; no polling. |
+| Credential boundary | Inkwell | Sandcastle future providers | Reuse principle strictly; no V1 credential broker. |
+| Evidence harvest/publish | Inkwell harvest | Working Skill Repo completion layers, Superpowers branch finishing | Evidence before destructive cleanup; supervisor-only draft PR path. |
+| Fan-out / best-of-N | Inkwell | Sandcastle parallel examples | **Deferred future policy**; no V1 implementation. |
+| Observability | Masterplan events.jsonl | SSSF/Sandcastle/Inkwell trace, Warren event model | Ordered JSONL may observe; closed runtime record remains authority. |
 
 ---
 
 # Recommended implementation baseline strategy
 
-## Do not begin from a blank repository if avoidable
+## Prove the substrate before choosing it
 
-A reasonable first technical spike should compare two starting points:
+After this architecture reconciliation and before execution-factory implementation, run one bounded
+Sandcastle proof-of-fit. The spike is not a dependency adoption and may not redesign Atlas. It uses
+one accepted ticket, exact graph/baseline, one repository-scoped workspace, and Atlas-owned
+preflight/proof/review/commit semantics.
 
-### Option A — SSSF-centered runtime
+The decision is closed:
 
-1. Clone/pin SSSF.
-2. Strip its planning methodology from the runtime boundary.
-3. Replace its plan input with an exact accepted ticket-graph packet plus the selected ticket identity;
-   a Markdown ticket alone is never execution authority.
-4. Keep/adapt phase runner, envelopes, gates, repair loops, roster, trace.
-5. Add our contract/design reviewer semantics.
-6. Run it in a local Git worktree; preserve provider-neutral vocabulary but **do not** extract a provider registry/interface yet.
+```text
+ADOPT THIN ADAPTER
+  named Sandcastle primitives materially reduce code/risk while Atlas authority stays outside
 
-**Why:** maximizes reuse of a concrete inner factory that already embodies our “code owns the loop” principle.
+REJECT DEPENDENCY FOR V1
+  wrapping/fighting the substrate costs more than direct plumbing
 
-### Option B — small custom runtime using SSSF + Masterplan/Warren as references
+SPIKE INCONCLUSIVE
+  one unresolved question + one smallest follow-up experiment
+```
 
-1. Implement a minimal deterministic phase runner ourselves.
-2. Borrow envelope/gate semantics from SSSF.
-3. Borrow simple state/event mechanics from Masterplan; borrow controller-authority/run-freezing/failure lessons from Warren without importing its platform complexity.
-4. Use a local Git worktree as the concrete V1 execution environment; extract a runtime seam only when a second real environment arrives.
-5. Add model/harness adapters only as needed.
+No outcome earns a generalized provider framework. If adopted, Sandcastle remains replaceable
+plumbing beneath an Atlas workcell. If rejected, implement only the minimum native worktree,
+harness/session, command, and lifecycle plumbing the one-ticket kernel actually requires.
 
-**Why:** may produce a much smaller system and avoid inheriting SSSF assumptions, at the cost of recreating more proven machinery.
+## Preserve the protocol regardless of substrate
 
-### Decision criterion for that spike
-
-Choose the approach that can implement this smallest credible flow with the least accidental coupling:
+The smallest credible kernel remains:
 
 ```text
 exact accepted ticket-graph version/hash + selected ticket identity
   → preflight current graph acceptance + applicable upstream bindings + frozen target baseline
   → verify expected accepted-commit chain rooted at that baseline
-  → builder
-  → deterministic test/build command
-  → contract reviewer (read-only)
-  → design/quality reviewer (read-only)
-  → bounded builder repair
-  → revalidate graph currency immediately before commit
-  → accepted local commit
-  → structured result bundle
+  → builder leaves uncommitted changes
+  → deterministic validators with bound receipts
+  → same-builder repair
+  → fresh findings-only review
+  → reviewer-mutation detection/restoration
+  → revalidate graph/upstream/HEAD immediately before commit
+  → Atlas-owned deterministic commit
+  → structured evidence/result bundle
 ```
 
-If adapting SSSF requires fighting its assumptions more than implementing this kernel directly, use SSSF as a reference rather than a base.
+SSSF supplies the protocol shape. Working Skill Repo informs supervisor behavior. Sandcastle may
+supply runtime mechanics. Inkwell preserves future strong-isolation questions. None becomes a second
+Atlas controller or source of engineering truth.
+
+## Ordered next build after the spike
+
+1. smallest closed runtime state + exact repo/run workspace;
+2. one-ticket workcell tracer;
+3. sequential trusted-supervisor loop;
+4. evidence-bearing external wait + explicit wake/revalidation;
+5. exact-tree whole-feature proof and draft PR packaging.
+
+Do not implement execution code in the architecture reconciliation PR.
 
 ---
 
@@ -716,6 +841,24 @@ upstreams:
       - harvest
       - trust_boundary
 
+  sandcastle:
+    repo: https://github.com/mattpocock/sandcastle
+    commit: e99f832f26dc9d245c019a9ddd19fa5dee792427
+    license: MIT
+    status: spike_only
+    used_for:
+      - worktree_session_exec_substrate_candidate
+
+  working_skill_repo:
+    repo: https://github.com/Irtechie/working-skill-repo
+    commit: 91a1b2f206dc5a6304c913df62426996b61603a1
+    license: MIT
+    status: concept_adaptation_reference
+    used_for:
+      - supervisor_behavior
+      - blocker_and_proof_receipts
+      - completion_layer_separation
+
   warren:
     repo: https://github.com/jayminwest/warren
     commit: <pin-at-implementation>
@@ -744,8 +887,10 @@ upstreams:
 
 | Source | Confidence as implementation baseline | Confidence as conceptual source |
 |---|---:|---:|
-| SSSF | **High** for inner factory | High |
-| Inkwell | **High** for runtime topology / supervisor examples | High |
+| SSSF | **High** for inner factory protocol | High |
+| Sandcastle | **SPIKE only** as runtime substrate; not yet a dependency | **High** for worktree/session/exec mechanics |
+| Working Skill Repo | Low as a wholesale code/system baseline | **High** for trusted-supervisor behavioral patterns |
+| Inkwell | **High** for future isolation topology / supervisor examples | High |
 | Pocock skills | **High** for pre-implementation skill starting points | High |
 | Superpowers | Medium–High for execution/review mechanics | High |
 | Masterplan | Medium–High for state/resume mechanics | High |
@@ -770,9 +915,11 @@ It combines:
 - **Pocock's decision-discovery and vertical-ticket discipline**,
 - **HumanLayer's abstraction hierarchy and front-loaded human judgment**,
 - **Superpowers' isolated execution/review discipline**,
-- **SSSF's deterministic agent-plus-code factory kernel**,
+- **SSSF's deterministic agent-plus-code ticket-workcell protocol**,
+- **Working Skill Repo's supervisor-ownership, blocker, proof-receipt, and completion-layer patterns**,
+- **Sandcastle's execution-substrate machinery as a bounded proof-of-fit candidate**,
 - **Masterplan's durable state/resume mechanics**,
-- **Inkwell's supervisor/workcell/trust boundary**,
+- **Inkwell's future strong-isolation supervisor/workcell/trust boundary**,
 - **Warren's seam discipline, event trust, configuration freezing, and production-runtime failure history**,
 - **Ringer's role/task-shape telemetry, model identity taxonomy, and evidence-informed staffing feedback loop**,
 - **Autoprompt's compact handoffs, evidence-preserving repair, and execution-framework prior art**,

@@ -84,12 +84,16 @@ roles:
 
 A role package should not contain model-specific prompting quirks unless a real need later earns that mechanism.
 
-Every model invocation is staffed by its **role and task shape**, never by a skill name or skill
-identity. A skill may orchestrate multiple model invocations with multiple task shapes—for example,
+Every Atlas-dispatched model invocation is staffed by its **role and task shape**, never by a skill
+name or skill identity. A skill may orchestrate multiple Atlas-dispatched model invocations with
 cheap factual lookup, frontier synthesis, and an independent semantic review—and the roster may staff
 each differently without coupling the reusable procedure to one worker tier. An in-skill action only
 affects staffing when it is exposed as a stable task shape; arbitrary action-level routing would
 explode the taxonomy and is not part of V1.
+
+Authority-contained helper agents used internally by one harness do not become Atlas role packages,
+worker attempts, or roster routes. They remain inside the already-resolved worker attempt and must
+satisfy the containment contract in `12-capabilities-and-trust.md`.
 
 ---
 

@@ -36,6 +36,24 @@ The local worktree receives the source/planning baseline required for the run an
 
 If/when execution moves into an isolated/ephemeral runtime, prefer scoped short-lived credentials and keep powerful durable credentials outside that environment.
 
+### Worker ownership and contained harness helpers
+
+The trusted supervisor resolves the ticket, exact accepted bindings, workspace, worker configuration,
+budget, deterministic brief, validator/review contract, and attempt policy before invocation. The
+selected worker may implement, explore within its workspace, repair, and report `DESIGN_BLOCKED`
+evidence. It cannot choose or replace the ticket, alter Atlas phase/owner, reroute staffing, change
+accepted dependency/design truth, weaken validation/governance, mutate Atlas planning/runtime
+authority, delegate Atlas ownership, commit/push/publish, or declare acceptance.
+
+A coding harness may use helper agents only as implementation-local mechanics inside the same
+supervisor-selected worker attempt, with the same workspace, tool permissions, budget, accepted
+brief, and authority envelope. Helper agents receive no Atlas identity, cannot own or accept the
+ticket, cannot select a new route or worker, and cannot expand permissions. If the host cannot prove
+those containment properties, helper delegation is disabled for V1. The boundary forbids delegation
+of Atlas ownership, not bounded parallel reasoning inside one already-authorized attempt. Any
+separately Atlas-addressable role or coordinator is a distinct trusted-supervisor dispatch under the
+ordinary staffing and authority contracts, never an internal helper.
+
 ---
 
 ## Builder write boundary
@@ -114,6 +132,15 @@ HUMAN
 
 In a purely local V1 implementation, supervisor and workcell may be processes on the same machine. The distinction is about **authority**, not necessarily physical deployment.
 
+## Evidence before lifecycle cleanup
+
+The workcell/worker cannot turn cleanup into completion or erase the only evidence the supervisor
+needs to decide outcome. Before removing a worktree—or later destroying a sandbox/session—the
+trusted supervisor verifies that required commit/tree identity, envelopes, validator/reviewer
+outcomes, blockers, logs/artifacts, runtime bindings, and supported recovery locator are durable
+outside the source being removed. A failed harvest retains that source and creates a lifecycle
+blocker. Policy may authorize automatic cleanup only after this evidence boundary passes.
+
 ---
 
 ## Factory self-modification
@@ -135,4 +162,5 @@ If the workcell becomes an isolated VM/container, consider:
 - budget/resource caps;
 - provider-native secret isolation.
 
-These are **future hardening paths**, not reasons to delay a local verified-boundary V1.
+These are **future hardening paths**, not reasons to delay a local verified-boundary V1. Their
+promotion triggers and falsification conditions live in non-authoritative `v2-horizon.md`.

@@ -102,10 +102,18 @@ The executor may:
 
 It may not:
 
-- silently amend approved upstream contracts
-- declare its own work accepted
-- bypass mandatory validators
-- mutate authoritative workflow state directly
+- select or replace the supervisor-selected ticket;
+- change Atlas phase/owner, roster policy, accepted dependency truth, governance, or validation policy;
+- delegate ticket ownership or Atlas authority;
+- introduce an execution-time planner/controller;
+- silently amend approved upstream contracts;
+- declare its own work accepted;
+- bypass mandatory validators;
+- mutate authoritative planning/runtime state directly;
+- commit, push, publish, or merge.
+
+A harness's internal helper agents, when any, remain inside the selected worker attempt under the
+containment contract in `12-capabilities-and-trust.md`; they do not relax this executor contract.
 
 ---
 
@@ -125,7 +133,12 @@ Examples:
 - browser assertions where automatable
 - touched-file scope checks
 
-Result should be structured and stored.
+Result should be structured and stored. Before validators run, deterministic code fixes the canonical
+candidate-tree identity for the exact proposed bytes. Validator receipts and every required ticket
+review bind that same identity together with the run/ticket/graph, expected accepted-chain HEAD,
+validator semantics, applicable baseline expectation, verdict, and evidence as defined in
+`13-runtime-protocol.md`. A passing command or review detached from those identities cannot authorize
+a ticket or feature transition.
 
 ---
 
@@ -189,12 +202,15 @@ The feature runner stops and escalates to the design-control loop.
 Commit should be performed by deterministic code after all required ticket gates pass.
 
 Immediately before any commit, deterministic code revalidates the exact accepted ticket-graph
-binding, its applicable accepted upstream sources, the run manifest's frozen target baseline, and the
-expected accepted-commit chain against the current downstream planning acceptance. If the graph is
-stale, a binding mismatches, or worktree HEAD is not the expected chain tip, there must be no commit:
-the ticket enters `DESIGN_BLOCKED`, the worktree/evidence is retained for diagnosis,
-and the feature runner escalates upstream. This second currency check closes the interval between
-ticket preflight and commit without giving execution authority to mutate planning acceptance.
+binding, its applicable accepted upstream sources, the run manifest's frozen target baseline, the
+expected accepted-commit chain against current downstream planning acceptance, and exact equality
+between the to-be-committed tree and the canonical candidate-tree identity bound by every passing
+ticket gate. If the graph is stale, a binding mismatches, or worktree HEAD is not the expected chain
+tip, there must be no commit: the ticket enters `DESIGN_BLOCKED`, the worktree/evidence is retained
+for diagnosis, and the feature runner escalates upstream. A candidate-tree mismatch instead stales
+validator/reviewer evidence and reruns the ticket gates on a newly fixed candidate identity; it cannot
+commit unreviewed bytes. These checks close the intervals between ticket preflight, proof, review,
+and commit without giving execution authority to mutate planning acceptance.
 
 Benefits:
 
@@ -221,11 +237,14 @@ Responsibilities:
 
 - load the exact accepted ticket graph
 - derive readiness from all accepted ticket and external conditions
+- maintain one repository-scoped workspace at the expected accepted-commit-chain tip
+- admit at most one active ticket in a repository-scoped V1 run
 - select the first ready ticket in canonical graph order
 - invoke ticket factory
-- persist ticket state and any external/human wait reason
+- persist ticket state and an evidence-bearing external/human wait record
 - on explicit `continue`/`resume`, reload and revalidate rather than grant readiness
 - bind runtime-produced values only after evidence satisfies the accepted condition
+- durably harvest required evidence before destructive cleanup
 - stop on terminal/escalation conditions
 - enforce policy checkpoints
 - optionally parallelize later
@@ -239,22 +258,31 @@ initially.
 
 ## Whole-feature factory
 
-After all tickets are accepted:
+Ticket acceptance proves one ticket into one exact deterministic commit. Feature promotion is a
+separate boundary: the exact integrated commit-chain tip/tree receives the complete configured
+promotion proof before publication. That proof includes:
 
 ```text
-full deterministic validation
+full deterministic validation against the exact tip/tree
 → whole-feature contract review
 → architecture/program-design drift review
 → standards/maintainability review
 → conditional specialty reviews
-→ package run evidence
+→ package run evidence bound to that tip/tree
 → push branch
 → create draft PR
 ```
 
+Any later HEAD/tree change stales the promotion proof. Historical validation cannot authorize
+publication of a different tree.
+
 ---
 
 ## PR creation
+
+PR creation begins delivery packaging; it does not retroactively redefine implementation completion.
+An accepted local commit proves no PR review, CI, package publication, deployment, or downstream
+repository condition. Those remain separate evidence-bearing facts under the supervisor.
 
 PR creation belongs inside the factory because it is primarily packaging and state transition.
 

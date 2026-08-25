@@ -2,7 +2,7 @@
 
 **Version introduced:** v0.4
 
-**Snapshot date:** 2026-08-22
+**Snapshot date:** 2026-08-25
 
 **Purpose:** Preserve architectural integrity as the project evolves across long conversations, different agents/sessions, external reference reviews, and Git-backed implementation.
 
@@ -2117,10 +2117,18 @@ The executor may:
 
 It may not:
 
-- silently amend approved upstream contracts
-- declare its own work accepted
-- bypass mandatory validators
-- mutate authoritative workflow state directly
+- select or replace the supervisor-selected ticket;
+- change Atlas phase/owner, roster policy, accepted dependency truth, governance, or validation policy;
+- delegate ticket ownership or Atlas authority;
+- introduce an execution-time planner/controller;
+- silently amend approved upstream contracts;
+- declare its own work accepted;
+- bypass mandatory validators;
+- mutate authoritative planning/runtime state directly;
+- commit, push, publish, or merge.
+
+A harness's internal helper agents, when any, remain inside the selected worker attempt under the
+containment contract in `12-capabilities-and-trust.md`; they do not relax this executor contract.
 
 ---
 
@@ -2140,7 +2148,12 @@ Examples:
 - browser assertions where automatable
 - touched-file scope checks
 
-Result should be structured and stored.
+Result should be structured and stored. Before validators run, deterministic code fixes the canonical
+candidate-tree identity for the exact proposed bytes. Validator receipts and every required ticket
+review bind that same identity together with the run/ticket/graph, expected accepted-chain HEAD,
+validator semantics, applicable baseline expectation, verdict, and evidence as defined in
+`13-runtime-protocol.md`. A passing command or review detached from those identities cannot authorize
+a ticket or feature transition.
 
 ---
 
@@ -2204,12 +2217,15 @@ The feature runner stops and escalates to the design-control loop.
 Commit should be performed by deterministic code after all required ticket gates pass.
 
 Immediately before any commit, deterministic code revalidates the exact accepted ticket-graph
-binding, its applicable accepted upstream sources, the run manifest's frozen target baseline, and the
-expected accepted-commit chain against the current downstream planning acceptance. If the graph is
-stale, a binding mismatches, or worktree HEAD is not the expected chain tip, there must be no commit:
-the ticket enters `DESIGN_BLOCKED`, the worktree/evidence is retained for diagnosis,
-and the feature runner escalates upstream. This second currency check closes the interval between
-ticket preflight and commit without giving execution authority to mutate planning acceptance.
+binding, its applicable accepted upstream sources, the run manifest's frozen target baseline, the
+expected accepted-commit chain against current downstream planning acceptance, and exact equality
+between the to-be-committed tree and the canonical candidate-tree identity bound by every passing
+ticket gate. If the graph is stale, a binding mismatches, or worktree HEAD is not the expected chain
+tip, there must be no commit: the ticket enters `DESIGN_BLOCKED`, the worktree/evidence is retained
+for diagnosis, and the feature runner escalates upstream. A candidate-tree mismatch instead stales
+validator/reviewer evidence and reruns the ticket gates on a newly fixed candidate identity; it cannot
+commit unreviewed bytes. These checks close the intervals between ticket preflight, proof, review,
+and commit without giving execution authority to mutate planning acceptance.
 
 Benefits:
 
@@ -2236,11 +2252,14 @@ Responsibilities:
 
 - load the exact accepted ticket graph
 - derive readiness from all accepted ticket and external conditions
+- maintain one repository-scoped workspace at the expected accepted-commit-chain tip
+- admit at most one active ticket in a repository-scoped V1 run
 - select the first ready ticket in canonical graph order
 - invoke ticket factory
-- persist ticket state and any external/human wait reason
+- persist ticket state and an evidence-bearing external/human wait record
 - on explicit `continue`/`resume`, reload and revalidate rather than grant readiness
 - bind runtime-produced values only after evidence satisfies the accepted condition
+- durably harvest required evidence before destructive cleanup
 - stop on terminal/escalation conditions
 - enforce policy checkpoints
 - optionally parallelize later
@@ -2254,22 +2273,31 @@ initially.
 
 ## Whole-feature factory
 
-After all tickets are accepted:
+Ticket acceptance proves one ticket into one exact deterministic commit. Feature promotion is a
+separate boundary: the exact integrated commit-chain tip/tree receives the complete configured
+promotion proof before publication. That proof includes:
 
 ```text
-full deterministic validation
+full deterministic validation against the exact tip/tree
 → whole-feature contract review
 → architecture/program-design drift review
 → standards/maintainability review
 → conditional specialty reviews
-→ package run evidence
+→ package run evidence bound to that tip/tree
 → push branch
 → create draft PR
 ```
 
+Any later HEAD/tree change stales the promotion proof. Historical validation cannot authorize
+publication of a different tree.
+
 ---
 
 ## PR creation
+
+PR creation begins delivery packaging; it does not retroactively redefine implementation completion.
+An accepted local commit proves no PR review, CI, package publication, deployment, or downstream
+repository condition. Those remain separate evidence-bearing facts under the supervisor.
 
 PR creation belongs inside the factory because it is primarily packaging and state transition.
 
@@ -2430,6 +2458,7 @@ Preferred conceptual schema:
 
 ```json
 {
+  "candidate_tree_identity": "<canonical identity>",
   "decision": "accept | reject",
   "findings": [
     {
@@ -2444,7 +2473,9 @@ Preferred conceptual schema:
 }
 ```
 
-Deterministic orchestration should consume this structured output.
+Deterministic orchestration should consume this structured output. Every ticket-review envelope binds
+the same canonical candidate-tree identity as the deterministic validator receipts. A missing or
+mismatched identity stales the review and cannot authorize commit.
 
 ---
 
@@ -2681,9 +2712,11 @@ configured policy continue to govern authority.
 
 Ticket-level correctness is insufficient.
 
-After all tickets, review against the applicable accepted upstream sources: the product contract when
-selected, System Design when selected, Program Design when selected, and the frozen Stage 0 binding
-on a direct path.
+After all tickets, bind the review to the exact integrated accepted-commit-chain tip/tree, then review
+against the applicable accepted upstream sources: the product contract when selected, System Design
+when selected, Program Design when selected, and the frozen Stage 0 binding on a direct path. Any
+later HEAD/tree change stales the whole-feature review; a historical verdict cannot authorize
+promotion of different bytes.
 
 1. full applicable-contract compliance
 2. architecture drift across combined change
@@ -3008,6 +3041,17 @@ FAILED
 
 The deterministic runner owns transition legality.
 
+### V1 repository-scoped execution authority
+
+Each `(Atlas run, repository)` execution chain has one small closed authority record, owned by the
+trusted supervisor and defined concretely by Program Design. It admits at most one active ticket.
+Workers and observational events report evidence; neither can transition ticket/run state. The
+record is separate from the Stage 3–5 planning controller and cannot mutate accepted planning truth.
+See `13-runtime-protocol.md` for the minimum restart/evidence contract without a frozen schema.
+
+`ACCEPTED`/local implementation completion is not delivery completion. PR review, CI, package or
+deployment publication, and dependent-repository readiness remain separate observable conditions.
+
 ---
 
 ## Gate states
@@ -3224,6 +3268,10 @@ On restart:
 4. verify accepted commits still exist;
 5. determine next legal transition;
 6. never rely solely on conversational/model memory.
+
+Destructive cleanup is legal only after required execution evidence is durably harvested. A failed
+harvest retains the only remaining workspace/session source and records a lifecycle blocker; absence
+of that source never stands in for completion.
 
 This is one of the strongest reasons to keep artifacts/state on disk.
 
@@ -3810,7 +3858,8 @@ Still intentionally open:
 
 - the downstream controller's exact storage and implementation mechanics;
 - ticket sizing, graph partitioning, and tracer policy;
-- execution-runtime mechanics within the already-fixed `local_worktree` V1 baseline;
+- execution-runtime implementation details beyond D-086's fixed repo/run workspace, one-active-ticket,
+  closed-state, bound-evidence, cleanup, and ownership boundaries;
 - any future second runtime that earns revisiting that baseline and the fixed Stage 5 boundary.
 
 Autonomy can increase without merging acceptance authority into execution or changing artifact
@@ -3952,24 +4001,48 @@ is known stale.
 For V1, the preferred workcell is deliberately boring:
 
 ```text
-local Git worktree
+one persistent local execution worktree per (Atlas run, repository) accepted-commit chain
 +
 small factory process
 +
 exact accepted graph packet
 ```
 
-The worktree provides isolation from the developer's primary checkout while avoiding remote-runtime, lifecycle, credential, and recovery complexity before those problems exist.
+The physical worktree persists across the repository's serial tickets; the logical ticket workcell
+remains per-ticket. Each ticket still has its own activation, bounded worker attempt, proof, fresh
+review, repair, final currency check, and deterministic acceptance commit. Only one ticket is active
+in a repository-scoped V1 run. Before each ticket, the supervisor proves `HEAD` equals the expected
+accepted-chain tip and reconciles cleanliness/ownership. Failed, blocked, abandoned, interrupted, or
+reviewer-mutated work is restored, reconciled, or deliberately retained for diagnosis before another
+ticket can start.
 
-The design should avoid unnecessarily embedding provider-specific vocabulary into domain contracts, but **V1 should not implement a generalized runtime/provider interface solely because future providers are imaginable**.
+Each target repository has its own workspace and accepted chain. Cross-repository readiness and
+external delivery conditions remain global trusted-supervisor truth; no worktree owns them.
+
+The worktree provides isolation from the developer's primary checkout while avoiding remote-runtime,
+lifecycle, credential, and recovery complexity before those problems exist. Before destructive
+cleanup, required execution evidence is harvested durably outside the workspace. If the worktree is
+the only remaining source of required evidence and harvest fails, retain it and surface a lifecycle
+blocker rather than converting destruction into apparent completion.
+
+The design should avoid unnecessarily embedding provider-specific vocabulary into domain contracts,
+but **V1 should not implement a generalized runtime/provider interface solely because future
+providers are imaginable**.
 
 > **Features pay for seams. A real second runtime earns the provider abstraction.**
+
+The physical worktree/session/command plumbing may be implemented directly or, only after the bounded
+proof-of-fit, through a thin Sandcastle adapter. Either choice remains replaceable plumbing beneath
+this topology; no Sandcastle type or lifecycle fact becomes engineering truth.
 
 ---
 
 ## Future runtime path — documented, not required
 
-If a real need emerges for containers, local VMs, remote VMs, or hosted ephemeral sandboxes, use Warren/Inkwell as implementation references and derive the common contract from the two real implementations.
+If a real need emerges for containers, local VMs, remote VMs, or hosted ephemeral sandboxes, use
+Sandcastle runtime providers as a substrate candidate and Inkwell as the authority/credential/harvest
+topology donor; Warren remains implementation-reference history. Derive any common Atlas contract
+from two real implementations, not from provider catalogs.
 
 Potential future lifecycle concepts include:
 
@@ -3982,7 +4055,9 @@ finalize
 terminate
 ```
 
-These are **design hypotheses/reference vocabulary**, not V1 interface requirements.
+These are **design hypotheses/reference vocabulary**, not V1 interface requirements. The broader
+promotion triggers are preserved in unnumbered `v2-horizon.md`; that file is non-authoritative and
+excluded from canonical monolith generation.
 
 A future second runtime should trigger:
 
@@ -4074,6 +4149,24 @@ The local worktree receives the source/planning baseline required for the run an
 
 If/when execution moves into an isolated/ephemeral runtime, prefer scoped short-lived credentials and keep powerful durable credentials outside that environment.
 
+### Worker ownership and contained harness helpers
+
+The trusted supervisor resolves the ticket, exact accepted bindings, workspace, worker configuration,
+budget, deterministic brief, validator/review contract, and attempt policy before invocation. The
+selected worker may implement, explore within its workspace, repair, and report `DESIGN_BLOCKED`
+evidence. It cannot choose or replace the ticket, alter Atlas phase/owner, reroute staffing, change
+accepted dependency/design truth, weaken validation/governance, mutate Atlas planning/runtime
+authority, delegate Atlas ownership, commit/push/publish, or declare acceptance.
+
+A coding harness may use helper agents only as implementation-local mechanics inside the same
+supervisor-selected worker attempt, with the same workspace, tool permissions, budget, accepted
+brief, and authority envelope. Helper agents receive no Atlas identity, cannot own or accept the
+ticket, cannot select a new route or worker, and cannot expand permissions. If the host cannot prove
+those containment properties, helper delegation is disabled for V1. The boundary forbids delegation
+of Atlas ownership, not bounded parallel reasoning inside one already-authorized attempt. Any
+separately Atlas-addressable role or coordinator is a distinct trusted-supervisor dispatch under the
+ordinary staffing and authority contracts, never an internal helper.
+
 ---
 
 ## Builder write boundary
@@ -4152,6 +4245,15 @@ HUMAN
 
 In a purely local V1 implementation, supervisor and workcell may be processes on the same machine. The distinction is about **authority**, not necessarily physical deployment.
 
+## Evidence before lifecycle cleanup
+
+The workcell/worker cannot turn cleanup into completion or erase the only evidence the supervisor
+needs to decide outcome. Before removing a worktree—or later destroying a sandbox/session—the
+trusted supervisor verifies that required commit/tree identity, envelopes, validator/reviewer
+outcomes, blockers, logs/artifacts, runtime bindings, and supported recovery locator are durable
+outside the source being removed. A failed harvest retains that source and creates a lifecycle
+blocker. Policy may authorize automatic cleanup only after this evidence boundary passes.
+
 ---
 
 ## Factory self-modification
@@ -4173,7 +4275,8 @@ If the workcell becomes an isolated VM/container, consider:
 - budget/resource caps;
 - provider-native secret isolation.
 
-These are **future hardening paths**, not reasons to delay a local verified-boundary V1.
+These are **future hardening paths**, not reasons to delay a local verified-boundary V1. Their
+promotion triggers and falsification conditions live in non-authoritative `v2-horizon.md`.
 
 ---
 
@@ -4209,6 +4312,7 @@ Phase-to-phase communication should use typed, schema-validated envelopes.
 {
   "ticket": "async-jobs-03",
   "phase": "contract_review",
+  "candidate_tree_identity": "<canonical identity>",
   "verdict": "reject",
   "findings": [
     {
@@ -4261,11 +4365,90 @@ Suggested runtime layout:
       logs/
 ```
 
-A generated `<planning-root>/<feature>/00-state.md` may remain useful as a projection, but it is not authoritative for attempt counts, active ownership, retry state, or exact state transitions.
+`run.json` (or its Program Design equivalent) is the machine-canonical repository-scoped execution
+record. `events.jsonl` may preserve ordered observation/telemetry, but it is not transition or state
+authority. Authority-bearing updates use a closed schema and atomic replacement, or another minimal
+mechanism with equivalent no-intermediate-contradiction semantics. This rule does not freeze an exact
+file/schema/module design.
+
+The conceptual V1 minimum is only what restart and revalidation require:
+
+```text
+run identity
+accepted graph version/hash
+repository identity + frozen baseline
+expected accepted-chain head
+canonical candidate-tree identity for the active attempt
+active ticket or none
+ticket state + bounded attempt counters
+wait/block reason
+resolved worker identity
+builder session handle when the substrate exposes one
+evidence/envelope references
+last accepted commit/tree
+```
+
+Only one ticket may be active in a repository-scoped V1 run. Do not add a queue, lease scheduler,
+event-sourced workflow database, generalized WIP system, or disposable-environment fields before a
+runtime exists that consumes them.
+
+A generated `<planning-root>/<feature>/00-state.md` may remain useful as a projection, but it is not
+authoritative for attempt counts, active ownership, retry state, or exact state transitions.
 
 `control.json` does not replace this execution protocol. Once compiled work executes, each
-repository-scoped factory run owns its `run.json`, events, envelopes, evidence, and logs under
+repository-scoped factory run owns its runtime record, events, envelopes, evidence, and logs under
 that repository's `.factory/runs/` directory.
+
+## Evidence-bearing waits and blockers
+
+A blocker is a claim about the world. `continue` or `resume` wakes revalidation; it never satisfies
+the claim. A durable wait/block record carries or references:
+
+```text
+condition identity
+observable satisfaction rule
+last check + observed result
+relevant artifact/external reference
+checked-at time where meaningful
+resume/recheck action
+```
+
+The owner stores enough evidence to rerun the cheapest accepted check. V1 adds no sensor registry,
+background polling, webhook, daemon, or event bus.
+
+## Deterministic proof receipts
+
+A proof receipt must be sufficiently bound to answer:
+
+```text
+which run/ticket/graph and expected accepted-chain HEAD were checked?
+which canonical candidate-tree identity supplied the exact bytes under validation?
+what validator semantics ran?
+what baseline expectation applied when declared?
+what happened and what evidence was produced?
+```
+
+Before ticket gates begin, deterministic code derives one canonical candidate-tree identity from the
+exact bytes proposed for commit, including every admitted tracked and untracked path. Program Design
+may choose the Git/index mechanism; architecture fixes only the identity/equality obligation. Every
+validator and ticket reviewer binds that same identity. Any candidate-byte change stales those gates
+and requires a new identity plus rerun.
+
+Preserve an exact command or stable validator-definition identity, verdict/result, and
+output/artifact references. Preserve environment and worker identity only where proof meaning depends
+on them. V1 reruns checks; it does not add proof reuse, invalidation hashing, proof caching, or an
+environment-equivalence subsystem.
+
+## Evidence harvest and completion layers
+
+Before destructive cleanup removes the only remaining source of execution facts, durably harvest the
+required commit/tree identity, worker/reviewer envelopes, validator outcomes, blockers and
+`DESIGN_BLOCKED` evidence, required logs/artifacts, runtime-produced bindings, and supported recovery
+locator. If harvest fails, retain the source and record a lifecycle blocker.
+
+Local implementation completion, PR/CI/package/deployment readiness, and downstream repository
+readiness are separate facts. A local accepted commit cannot manufacture an external fact or satisfy
+a downstream readiness condition.
 
 ## Runtime state vs engineering truth
 
@@ -4458,7 +4641,10 @@ These are preserved as reference ideas, not implementation commitments.
 2. Minimal typed-envelope schemas for builder, validators, reviews, `DESIGN_BLOCKED`, and final result bundles.
 3. Exact local-worktree protection/rollback mechanism for V1.
 4. Ticket sizing and the point at which a ticket should be split before execution.
-5. Feature worktree vs ticket worktree once real usage provides evidence.
+5. Feature worktree vs ticket worktree once real usage provides evidence — **resolved/refined in
+   v0.14 (D-086):** one persistent local execution worktree carries each `(Atlas run, repository)`
+   accepted-commit chain; logical ticket workcells remain per-ticket. Exact local rollback/protection
+   mechanics remain open under item 3.
 6. Exact semantics of `HUMAN_IF_CHANGED` and what constitutes a meaningful change —
    **resolved/refined for System Design in v0.7 (D-075):** exact baseline/candidate bindings,
    stage-specific material dimensions, independent evidence-bearing classification, deterministic
@@ -4918,7 +5104,7 @@ Warren is the strongest reference in the set for **production-ish control-plane/
 | Capability flags + registry | **REFERENCE** | **DEFERRED** | Valuable only once multiple real providers have behavioral differences. |
 | Falsification test + boundary lint when cutting a seam | **ADAPT** | **ACCEPTED_PRINCIPLE, TRIGGERED** | Required Definition of Done when a real swappable seam is created. |
 | Monotonic/resumable event streams | **REFERENCE** | **DEFERRED** | V1 can use ordered local JSONL; revisit for distributed/remote recovery. |
-| `finalize` before `terminate`, salvage on failure | **CONCEPT** | **DEFERRED** | Future invariant for ephemeral workspaces where teardown can destroy unrecovered commits. |
+| Evidence before destructive cleanup; full `finalize → salvage → terminate` lifecycle | **ADAPT invariant / REFERENCE mechanism** | **V1 evidence-before-cleanup invariant / DEFERRED full ephemeral lifecycle** | V1 durably harvests required evidence before removing any local worktree holding the only execution facts. The full credential revocation, salvage, and termination protocol is deferred until a disposable runtime earns it. |
 | Preview environments | **REFERENCE** | **DEFERRED** | Potential future HITL review surface, especially UI changes. |
 | Machine-first/self-describing CLI (`prime` pattern) | **REFERENCE** | **DEFERRED** | Revisit if agent ergonomics/doc drift become a real problem. |
 | Reviewer/constitution findings compiled into gates | **CONCEPT** | **ACCEPTED_PRINCIPLE** | Reviewer-to-validator ratchet: stop spending tokens on recurring deterministic failures. |
@@ -5069,6 +5255,120 @@ selection, and final mission closure. **Not a runtime base and not the semantic-
 
 ---
 
+# 13. Matt Pocock — Sandcastle
+
+- Repository: https://github.com/mattpocock/sandcastle
+- Inspected commit: `e99f832f26dc9d245c019a9ddd19fa5dee792427` (package `0.12.0`)
+- License verified at that commit: **MIT** (`LICENSE` blob `f1dd2c09108dde1a5f56097cee8461b3ea834499`)
+
+## Why it matters
+
+Sandcastle is a candidate execution substrate, not Atlas architecture. It has concrete worktree,
+sandbox, harness, session, typed-output, command-execution, timeout/abort, and logging machinery that
+may let Atlas avoid rebuilding undifferentiated runtime plumbing. Atlas remains above it as the sole
+owner of graph readiness, ticket selection, runtime legality, proof meaning, acceptance, and
+publication.
+
+## Borrow map
+
+| Facet | Action | Maturity | How it maps to our design |
+|---|---|---|---|
+| Worktree/sandbox lifecycle and local `noSandbox()` | **ADAPT / SPIKE** | **IMPLEMENTATION_REFERENCE** | Test one exact-baseline repo/run workspace behind an Atlas-owned adapter. |
+| Harness invocation and session capture/resume | **ADAPT / SPIKE** | **IMPLEMENTATION_REFERENCE** | Candidate plumbing for same-builder repair; capability differences stay runtime evidence. |
+| `sandbox.exec()` deterministic command execution | **ADAPT / SPIKE** | **IMPLEMENTATION_REFERENCE** | Candidate transport for Atlas-owned validators in the same environment; Sandcastle never interprets proof. |
+| Typed/structured output | **ADAPT / SPIKE** | **IMPLEMENTATION_REFERENCE** | Transport for schema-valid worker/reviewer envelopes, never transition authority. |
+| Timeout, abort, lifecycle, logs/streaming | **ADAPT / SPIKE** | **IMPLEMENTATION_REFERENCE** | Candidate operational plumbing and evidence inputs. |
+| Docker/remote providers | **REFERENCE** | **DEFERRED** | Revisit only after a real isolation/runtime requirement; no V1 provider framework. |
+| Planner, issue/dependency inference, agent commits/acceptance, editable reviewers, merger templates | **REJECT** | **REJECTED** | Conflict with Stage 5 truth, Atlas commit/review authority, and sequential V1. |
+
+## Concrete upstream areas to re-read before the spike
+
+- `src/run.ts`, `src/Orchestrator.ts`, `src/SandboxLifecycle.ts`, `src/SandboxProvider.ts`
+- `docs/adr/0003-reuse-worktree-by-default.md`
+- `docs/adr/0007-worktree-locking.md`
+- `docs/adr/0010-structured-output.md`
+- `.out-of-scope/multi-repo-sandbox.md`
+- planner/reviewer/merger templates only as explicit contrast cases
+
+## Proof-of-fit boundary
+
+Pin the exact spike revision and test one accepted Atlas ticket on the exact baseline, starting with
+local `noSandbox()`. Prove all twelve scenarios:
+
+1. exact-baseline worktree acquisition and Atlas-independent currency verification;
+2. one builder invocation from a deterministic Atlas brief;
+3. uncommitted builder output and schema-valid result;
+4. deterministic validator execution in the same environment;
+5. deliberate validator failure followed by same-builder-context repair;
+6. fresh findings-only reviewer invocation;
+7. reviewer mutation detection/restoration;
+8. stale graph/upstream/HEAD prevents commit;
+9. Atlas performs the clean-path deterministic commit;
+10. outer-process restart can reacquire legal state and supported session context;
+11. timeout/abort/log/evidence extraction behavior;
+12. translation into Atlas envelopes without persisting Sandcastle types as engineering truth.
+
+Return exactly one: `ADOPT THIN ADAPTER`, `REJECT DEPENDENCY FOR V1`, or `SPIKE INCONCLUSIVE` with one
+smallest follow-up. No generalized provider abstraction is permitted regardless of outcome.
+
+## Likely implementation role
+
+**Candidate substrate beneath the Atlas workcell.** SSSF remains the protocol donor; Atlas remains the
+authority. Sandcastle is not yet an Atlas dependency.
+
+---
+
+# 14. Irtechie — Working Skill Repo
+
+- Repository: https://github.com/Irtechie/working-skill-repo
+- Inspected commit: `91a1b2f206dc5a6304c913df62426996b61603a1`
+- License verified at that commit: **MIT** (`LICENSE` blob `85376e3b572111df07cfba166d4fefb442d77b17`)
+
+## Why it matters
+
+Working Skill Repo is the strongest reviewed behavioral donor for the trusted supervisor around an
+Atlas ticket workcell. Its mature mechanisms predict real work-ownership, waiting, proof, restart,
+and delivery failures. They are a catalog of earned responses, not a package or taxonomy to copy
+into V1.
+
+## Borrow map
+
+| Facet | Action | Maturity | How it maps to our design |
+|---|---|---|---|
+| Supervisor-selected work and one active ownership | **ADAPT** | **ACCEPTED_PRINCIPLE** | Reinforces one active ticket and deterministic supervisor ownership. |
+| Blocker as world claim + observable recheck | **ADAPT** | **ACCEPTED_PRINCIPLE** | V1 wait records carry condition/evidence/recheck action; `continue` only wakes revalidation. |
+| Bound proof receipts | **ADAPT** | **ACCEPTED_PRINCIPLE** | Preserve validator/tree/input identity sufficient for trustworthy rerun evidence. |
+| Persistent workstream/worktree integration head | **ADAPT** | **ACCEPTED_PRINCIPLE** | Supports one coherent repo/run accepted-commit chain with per-ticket logical workcells. |
+| Exact integrated-tree promotion proof | **ADAPT** | **ACCEPTED_PRINCIPLE** | Separates ticket acceptance from feature publication proof. |
+| Implementation vs PR/CI/package/downstream delivery state | **ADAPT** | **ACCEPTED_PRINCIPLE** | External reality remains separate evidence, not local failure or implied readiness. |
+| Response-required presentation | **REFERENCE** | **DEFERRED** | Preserve as a triggered horizon option; owner state remains authoritative. |
+| Proof governor/reuse, resource scheduler, WIP/leases, project graph, goal governor, oscillation detection | **REFERENCE** | **DEFERRED** | Revisit only after the named V2 triggers; do not import mature machinery preemptively. |
+| Large skill taxonomy as product UX | **REJECT** | **REJECTED** | Conflicts with Gazetteer as the user-facing front door. |
+
+## Concrete upstream areas to re-read when a trigger fires
+
+- `.github/skills/kb-start/SKILL.md`, `kb-plan/SKILL.md`, `kb-work/SKILL.md`
+- `.github/skills/kb-work/references/execution-prompt.md` and `worktree-isolation.md`
+- `.github/skills/kb-review/SKILL.md`, `kb-finalize/SKILL.md`
+- `.github/skills/kb-goal/SKILL.md`, `kb-gate/SKILL.md`, `kb-map/SKILL.md`, `kb-complete/SKILL.md`
+- `.github/skills/kb-start/scripts/work_queue.ps1`
+- `cmd/kbcheck/proof_governor.go`, `internal/graphrouting/*`, `cmd/kbbrief/*`
+
+## Explicitly do not import now
+
+- **REJECT:** its skill catalog as Atlas's user or architecture model.
+- **DEFER:** proof reuse/governor, project graph, resource scheduling, leases/WIP, durable goal
+  governance, and oscillation machinery until observed Atlas failures earn each seam.
+- **REJECT:** any mechanism that grants worker output, issue state, or presentation packets Atlas
+  lifecycle authority.
+
+## Likely implementation role
+
+**Primary behavioral reference for the trusted supervisor.** Borrow the bounded V1 invariants above;
+do not install or copy the donor's mature control system.
+
+---
+
 # Cross-source implementation map
 
 This is the most useful implementation-time view: **for each subsystem we plan to build, where should the engineer look first?**
@@ -5084,72 +5384,83 @@ This is the most useful implementation-time view: **for each subsystem we plan t
 | Program design | HumanLayer WSFF | Maciej gist, Pocock architecture principles | New skill using concepts |
 | Vertical ticket compiler | Pocock `to-tickets` | HumanLayer vertical slices | Fork/adapt heavily |
 | Stage admission | Our workflow/gate contracts | Autoprompt `apply` as a contrast case | Required pre-existing artifacts pass ordinary acceptance; unselected boundaries are `NOT_REQUIRED` |
-| Ticket execution engine | SSSF | Superpowers SDD | Adapt SSSF runtime around our ticket contract |
-| Deterministic validators | SSSF | Superpowers verification, PlanF3 validation concept | Reuse pattern, repo-specific commands |
-| Validator baseline preflight | Ringer | — | Adapt early; catch broken checks before worker attempts |
-| Contract review | Pocock code-review + Superpowers spec review | SSSF reviewer phase | New bounded reviewer role |
-| Design/quality review | Pocock + Superpowers | Groundwork ops-review conditional | New bounded reviewer roles |
-| Runtime envelopes | SSSF / Inkwell | — | Reuse schema pattern, define our types |
-| Compact worker handoffs | Our accepted artifact bindings | Autoprompt pointer envelopes | Revisit at Stage 5/7; pointers never become authority themselves |
-| Machine run state | Masterplan | Warren, Inkwell run_record, SSSF tracing | JSON/JSONL V1; single authoritative controller |
-| Resume/recovery | Masterplan | Warren failure/recovery records, Inkwell lifecycle state | Defer advanced recovery; adapt deterministic next-action logic when needed |
-| Workcell runtime | Superpowers worktrees | Inkwell; Warren RuntimeProvider when a second runtime appears | **Local worktree V1. No generalized provider seam yet.** |
-| Repository/role boundaries | SSSF + Inkwell | Warren/tool/OS capability patterns | V1 mechanically verifies important boundaries; strengthen preventively only where justified |
-| Supervisor/controller lifecycle | Inkwell | Warren + Masterplan state mechanics | Keep logical authority boundary; V1 can be one local controller process |
-| Credential boundary | Inkwell | — | Reuse principle strictly |
-| Harvest/publish | Inkwell harvest | Superpowers branch finishing | Supervisor-only draft PR path |
-| Fan-out / best-of-N | Inkwell | Superpowers parallel agents | **Deferred future policy**; no V1 implementation |
-| Observability | Masterplan events.jsonl | SSSF/Inkwell trace, Warren event model | Start simple ordered JSONL; preserve upgrade path |
+| Ticket execution protocol | SSSF | Superpowers SDD | Adapt SSSF phase discipline around the accepted Atlas ticket contract; no runtime planner. |
+| Execution substrate | Sandcastle proof-of-fit | Superpowers worktrees, Inkwell future topology | Spike local `noSandbox()` behind a thin Atlas adapter; remain dependency-free if it does not reduce code/risk. |
+| Deterministic validators | SSSF | Sandcastle `sandbox.exec()`, Superpowers verification, PlanF3 validation concept | Atlas owns validator meaning/receipts; substrate only executes commands. |
+| Validator baseline preflight | Ringer | — | Adapt early; catch broken checks before worker attempts. |
+| Contract review | Pocock code-review + Superpowers spec review | SSSF reviewer phase | New bounded reviewer role. |
+| Design/quality review | Pocock + Superpowers | Groundwork ops-review conditional | New bounded reviewer role. |
+| Runtime envelopes | SSSF | Sandcastle typed output, Inkwell | Define Atlas schemas; transport never becomes authority. |
+| Compact worker handoffs | Our accepted artifact bindings | Autoprompt pointer envelopes | Deterministic projection; pointers never become authority. |
+| Machine run state | Our D-086 contract | Working Skill Repo, Masterplan, Inkwell run record | Small closed authority record; observational JSONL is not transition truth. |
+| Resume/recovery | Working Skill Repo behavioral patterns | Sandcastle sessions, Masterplan, Inkwell | One active ticket, legal-next-action recovery, same-builder resume where proven. |
+| Repository/role boundaries | SSSF + Inkwell | Working Skill Repo, Warren/tool/OS capability patterns | V1 verifies important boundaries; helpers remain inside one Atlas attempt. |
+| Supervisor/controller lifecycle | Our design | Working Skill Repo, Inkwell + Masterplan state mechanics | One deterministic supervisor; no donor controller is imported. |
+| Blocker/wait evidence | Our D-085/D-086 contracts | Working Skill Repo | World-claim record plus explicit wake-and-revalidate; no polling. |
+| Credential boundary | Inkwell | Sandcastle future providers | Reuse principle strictly; no V1 credential broker. |
+| Evidence harvest/publish | Inkwell harvest | Working Skill Repo completion layers, Superpowers branch finishing | Evidence before destructive cleanup; supervisor-only draft PR path. |
+| Fan-out / best-of-N | Inkwell | Sandcastle parallel examples | **Deferred future policy**; no V1 implementation. |
+| Observability | Masterplan events.jsonl | SSSF/Sandcastle/Inkwell trace, Warren event model | Ordered JSONL may observe; closed runtime record remains authority. |
 
 ---
 
 # Recommended implementation baseline strategy
 
-## Do not begin from a blank repository if avoidable
+## Prove the substrate before choosing it
 
-A reasonable first technical spike should compare two starting points:
+After this architecture reconciliation and before execution-factory implementation, run one bounded
+Sandcastle proof-of-fit. The spike is not a dependency adoption and may not redesign Atlas. It uses
+one accepted ticket, exact graph/baseline, one repository-scoped workspace, and Atlas-owned
+preflight/proof/review/commit semantics.
 
-### Option A — SSSF-centered runtime
+The decision is closed:
 
-1. Clone/pin SSSF.
-2. Strip its planning methodology from the runtime boundary.
-3. Replace its plan input with an exact accepted ticket-graph packet plus the selected ticket identity;
-   a Markdown ticket alone is never execution authority.
-4. Keep/adapt phase runner, envelopes, gates, repair loops, roster, trace.
-5. Add our contract/design reviewer semantics.
-6. Run it in a local Git worktree; preserve provider-neutral vocabulary but **do not** extract a provider registry/interface yet.
+```text
+ADOPT THIN ADAPTER
+  named Sandcastle primitives materially reduce code/risk while Atlas authority stays outside
 
-**Why:** maximizes reuse of a concrete inner factory that already embodies our “code owns the loop” principle.
+REJECT DEPENDENCY FOR V1
+  wrapping/fighting the substrate costs more than direct plumbing
 
-### Option B — small custom runtime using SSSF + Masterplan/Warren as references
+SPIKE INCONCLUSIVE
+  one unresolved question + one smallest follow-up experiment
+```
 
-1. Implement a minimal deterministic phase runner ourselves.
-2. Borrow envelope/gate semantics from SSSF.
-3. Borrow simple state/event mechanics from Masterplan; borrow controller-authority/run-freezing/failure lessons from Warren without importing its platform complexity.
-4. Use a local Git worktree as the concrete V1 execution environment; extract a runtime seam only when a second real environment arrives.
-5. Add model/harness adapters only as needed.
+No outcome earns a generalized provider framework. If adopted, Sandcastle remains replaceable
+plumbing beneath an Atlas workcell. If rejected, implement only the minimum native worktree,
+harness/session, command, and lifecycle plumbing the one-ticket kernel actually requires.
 
-**Why:** may produce a much smaller system and avoid inheriting SSSF assumptions, at the cost of recreating more proven machinery.
+## Preserve the protocol regardless of substrate
 
-### Decision criterion for that spike
-
-Choose the approach that can implement this smallest credible flow with the least accidental coupling:
+The smallest credible kernel remains:
 
 ```text
 exact accepted ticket-graph version/hash + selected ticket identity
   → preflight current graph acceptance + applicable upstream bindings + frozen target baseline
   → verify expected accepted-commit chain rooted at that baseline
-  → builder
-  → deterministic test/build command
-  → contract reviewer (read-only)
-  → design/quality reviewer (read-only)
-  → bounded builder repair
-  → revalidate graph currency immediately before commit
-  → accepted local commit
-  → structured result bundle
+  → builder leaves uncommitted changes
+  → deterministic validators with bound receipts
+  → same-builder repair
+  → fresh findings-only review
+  → reviewer-mutation detection/restoration
+  → revalidate graph/upstream/HEAD immediately before commit
+  → Atlas-owned deterministic commit
+  → structured evidence/result bundle
 ```
 
-If adapting SSSF requires fighting its assumptions more than implementing this kernel directly, use SSSF as a reference rather than a base.
+SSSF supplies the protocol shape. Working Skill Repo informs supervisor behavior. Sandcastle may
+supply runtime mechanics. Inkwell preserves future strong-isolation questions. None becomes a second
+Atlas controller or source of engineering truth.
+
+## Ordered next build after the spike
+
+1. smallest closed runtime state + exact repo/run workspace;
+2. one-ticket workcell tracer;
+3. sequential trusted-supervisor loop;
+4. evidence-bearing external wait + explicit wake/revalidation;
+5. exact-tree whole-feature proof and draft PR packaging.
+
+Do not implement execution code in the architecture reconciliation PR.
 
 ---
 
@@ -5191,6 +5502,24 @@ upstreams:
       - harvest
       - trust_boundary
 
+  sandcastle:
+    repo: https://github.com/mattpocock/sandcastle
+    commit: e99f832f26dc9d245c019a9ddd19fa5dee792427
+    license: MIT
+    status: spike_only
+    used_for:
+      - worktree_session_exec_substrate_candidate
+
+  working_skill_repo:
+    repo: https://github.com/Irtechie/working-skill-repo
+    commit: 91a1b2f206dc5a6304c913df62426996b61603a1
+    license: MIT
+    status: concept_adaptation_reference
+    used_for:
+      - supervisor_behavior
+      - blocker_and_proof_receipts
+      - completion_layer_separation
+
   warren:
     repo: https://github.com/jayminwest/warren
     commit: <pin-at-implementation>
@@ -5219,8 +5548,10 @@ upstreams:
 
 | Source | Confidence as implementation baseline | Confidence as conceptual source |
 |---|---:|---:|
-| SSSF | **High** for inner factory | High |
-| Inkwell | **High** for runtime topology / supervisor examples | High |
+| SSSF | **High** for inner factory protocol | High |
+| Sandcastle | **SPIKE only** as runtime substrate; not yet a dependency | **High** for worktree/session/exec mechanics |
+| Working Skill Repo | Low as a wholesale code/system baseline | **High** for trusted-supervisor behavioral patterns |
+| Inkwell | **High** for future isolation topology / supervisor examples | High |
 | Pocock skills | **High** for pre-implementation skill starting points | High |
 | Superpowers | Medium–High for execution/review mechanics | High |
 | Masterplan | Medium–High for state/resume mechanics | High |
@@ -5245,9 +5576,11 @@ It combines:
 - **Pocock's decision-discovery and vertical-ticket discipline**,
 - **HumanLayer's abstraction hierarchy and front-loaded human judgment**,
 - **Superpowers' isolated execution/review discipline**,
-- **SSSF's deterministic agent-plus-code factory kernel**,
+- **SSSF's deterministic agent-plus-code ticket-workcell protocol**,
+- **Working Skill Repo's supervisor-ownership, blocker, proof-receipt, and completion-layer patterns**,
+- **Sandcastle's execution-substrate machinery as a bounded proof-of-fit candidate**,
 - **Masterplan's durable state/resume mechanics**,
-- **Inkwell's supervisor/workcell/trust boundary**,
+- **Inkwell's future strong-isolation supervisor/workcell/trust boundary**,
 - **Warren's seam discipline, event trust, configuration freezing, and production-runtime failure history**,
 - **Ringer's role/task-shape telemetry, model identity taxonomy, and evidence-informed staffing feedback loop**,
 - **Autoprompt's compact handoffs, evidence-preserving repair, and execution-framework prior art**,
@@ -5263,7 +5596,7 @@ The implementation goal is therefore not “build another SSSF” or “install 
 
 **Purpose:** Preserve not only what the design currently says, but **how and why it changed**. This is intended to protect the project from recency bias, repeated rediscovery, and future agents mistaking superseded ideas for current commitments.
 
-**Snapshot date:** 2026-08-21
+**Snapshot date:** 2026-08-25
 
 ---
 
@@ -5470,9 +5803,12 @@ Do not create tests for speculative abstraction boundaries; when a real seam exi
 
 V1 can use ordered local JSONL events. Remote cursor reconciliation belongs to future distributed execution.
 
-#### `finalize → salvage → terminate` — **FUTURE EPHEMERAL-RUNTIME INVARIANT**
+#### Full `finalize → salvage → terminate` lifecycle — **FUTURE EPHEMERAL-RUNTIME MECHANISM; EVIDENCE-BEFORE-CLEANUP REFINED BY L-025**
 
-Critical if ephemeral workspaces can disappear; unnecessary ceremony around a durable local worktree.
+The full credential/revocation/destruction lifecycle remains future work for ephemeral runtimes.
+L-025/D-086 promotes only the cheaper invariant now: even a durable local worktree must harvest
+required evidence before destructive cleanup, because V1 may remove that worktree and otherwise erase
+its only execution facts.
 
 #### Preview environments — **FUTURE REVIEW UX**
 
@@ -5683,14 +6019,16 @@ Everything else must earn its way in.
 
 # 6. Future ideas to retain in comments/docs without implementing now
 
-Keep these searchable so implementation teams know prior art exists:
+Keep these searchable so implementation teams know prior art exists. The V1 evidence-before-cleanup
+invariant is accepted; only the full ephemeral credential-revocation/salvage/termination mechanism
+remains future:
 
 - container/VM/hosted workcells;
 - formal runtime-provider contract;
 - provider capability registry;
 - isolated best-of-N;
 - remote resumable event cursors;
-- salvage-before-destroy;
+- full ephemeral `finalize → salvage → terminate` lifecycle;
 - live preview review surfaces;
 - machine-self-describing `factory prime` command;
 - staged multi-PR delivery;
@@ -6240,6 +6578,40 @@ it cannot safely be inlined; imagined future reuse does not earn a foundation se
 
 ---
 
+## L-025 — Mature donor machinery predicts failures; it does not pre-authorize its solutions
+
+### Evidence reviewed
+
+Sandcastle, Working Skill Repo, SSSF, and Inkwell independently cover runtime problems Atlas is about
+to encounter: workspace/session lifecycle, supervisor ownership, proof and blocker evidence, repair,
+cleanup, isolation, and long-running recovery. The risk was importing each donor's mature control
+machinery merely because it already exists.
+
+### Reconciliation
+
+Most donor findings confirmed accepted Atlas architecture. The few V1 gaps were obligations an
+implementer would otherwise have to guess: one coherent repo/run accepted-chain workspace with
+per-ticket logical workcells; one active ticket and small closed runtime authority; sufficiently
+bound wait/proof evidence; contained helper-agent behavior without delegation of Atlas ownership;
+exact integrated-tree promotion; evidence harvest before destructive cleanup; and explicit
+implementation-versus-delivery separation.
+
+The evidence-before-cleanup invariant moved from future-only wording into V1 because Atlas already
+creates and may remove local worktrees. Only the invariant moved; disposable-environment machinery
+did not. Conversely, Working Skill Repo's goal/proof governors, resource scheduler, project graph,
+and oscillation system, plus Inkwell's VMs/credentials and Sandcastle's planners/merge agents, remain
+deferred or rejected.
+
+### Standing result
+
+Use SSSF as the ticket-workcell protocol donor, Working Skill Repo as the supervisor-behavior donor,
+Sandcastle only as a bounded execution-substrate proof-of-fit candidate, and Inkwell as the future
+strong-isolation topology donor. A dependency can run machinery; it never receives Atlas authority.
+Preserve future hypotheses with explicit triggers in unnumbered `v2-horizon.md` rather than turning
+them into V1 requirements or a roadmap.
+
+---
+
 # 17 — Agent Roles, Rosters, Model Policy, and Outcome Telemetry
 
 **Added in:** v0.3  
@@ -6326,12 +6698,16 @@ roles:
 
 A role package should not contain model-specific prompting quirks unless a real need later earns that mechanism.
 
-Every model invocation is staffed by its **role and task shape**, never by a skill name or skill
-identity. A skill may orchestrate multiple model invocations with multiple task shapes—for example,
+Every Atlas-dispatched model invocation is staffed by its **role and task shape**, never by a skill
+name or skill identity. A skill may orchestrate multiple Atlas-dispatched model invocations with
 cheap factual lookup, frontier synthesis, and an independent semantic review—and the roster may staff
 each differently without coupling the reusable procedure to one worker tier. An in-skill action only
 affects staffing when it is exposed as a stable task shape; arbitrary action-level routing would
 explode the taxonomy and is not part of V1.
+
+Authority-contained helper agents used internally by one harness do not become Atlas role packages,
+worker attempts, or roster routes. They remain inside the already-resolved worker attempt and must
+satisfy the containment contract in `12-capabilities-and-trust.md`.
 
 ---
 
@@ -8184,3 +8560,142 @@ before a builder attempt when the accepted graph's readiness or proof contract i
 ## v0.13 north star
 
 > **One graph, truthful readiness, deterministic handoff, no hidden replanning.**
+
+---
+
+# 29 — v0.14 Decisions
+
+v0.14 reconciles the accepted Stage 5 → execution boundary against the Sandcastle, Working Skill
+Repo, SSSF, and Inkwell evidence. The donors mostly confirm Atlas. The accepted delta fixes only the
+few V1 execution facts an implementer would otherwise have to guess, then requires a bounded
+Sandcastle proof-of-fit before the execution kernel chooses its substrate.
+
+---
+
+## D-086 — One coherent execution workspace, closed runtime authority, and bound proof
+
+Each repository in one Atlas run has one coherent accepted-commit chain. V1 realizes that chain in
+one persistent local execution worktree per `(Atlas run, repository)`. The physical workspace may
+persist across tickets; the logical workcell, activation, proof, review, repair, and acceptance
+boundary remains per-ticket. Before every ticket and immediately before every deterministic commit,
+Atlas verifies the exact accepted graph, applicable upstream bindings, frozen baseline, expected
+accepted-chain tip, worktree state, and ownership. Only one ticket is active in a repository-scoped
+V1 run. Failed, blocked, abandoned, interrupted, or reviewer-mutated work is restored, reconciled, or
+deliberately retained before another ticket may start. Separate repositories retain independent
+workspaces and chains under global supervisor readiness.
+
+### Small closed runtime authority
+
+Repository-scoped execution has one small machine-canonical runtime record sufficient for restart,
+revalidation, bounded attempts, and legal next-action selection. Its exact schema remains Program
+Design, but it must bind the run, accepted graph, repository/baseline, expected accepted-chain head,
+active ticket or none, ticket state and bounded attempts, wait/block reason, resolved worker,
+recoverable session locator where available, evidence/envelope references, and last accepted
+commit/tree. Authority-bearing updates are closed-schema and atomic or provide equivalent
+no-intermediate-contradiction semantics. An append-only event stream may support observation; it is
+not transition authority. V1 adds no queue, lease scheduler, event-sourced workflow database,
+generalized WIP system, or second controller.
+
+### Worker ownership and contained helper agents
+
+The trusted supervisor resolves the selected ticket, exact graph/upstream bindings, workspace,
+staffing/runtime configuration, deterministic brief, validators/review contract, and bounded attempt
+policy before dispatch. A worker may implement, inspect, repair, and report `DESIGN_BLOCKED`
+evidence inside that envelope. It cannot select or replace the ticket, change Atlas phase/owner,
+roster policy, accepted dependency truth, governance, validation policy, or planning/runtime
+authority; delegate Atlas ownership; introduce an execution-time planner/controller; commit, push,
+publish; or declare acceptance.
+
+A coding harness may internally use helper agents only inside the same supervisor-selected worker
+attempt and inherited workspace, permissions, budget, accepted brief, and authority envelope. A
+helper receives no Atlas identity, owns no ticket or acceptance, selects no new route/worker, and
+cannot expand permissions. If the host cannot establish those containment properties, helper
+delegation is disabled for V1. The rule forbids delegation of Atlas ownership, not bounded
+implementation-local parallel reasoning.
+
+### Evidence-bearing waits and bound proof receipts
+
+A wait or blocker is a claim about the world. Its durable record identifies the condition, observable
+satisfaction rule, last check/result, relevant artifact or external reference, checked-at time where
+meaningful, and resume/recheck action. `continue` wakes revalidation; it never satisfies the claim.
+V1 adds no sensor registry, background poller, webhook, or event bus.
+
+A deterministic proof receipt is sufficiently bound to identify the run/ticket/graph, expected
+accepted-chain HEAD, canonical candidate-tree identity for the exact proposed bytes, validator
+semantics, declared baseline expectation where applicable, observed result, and produced evidence.
+Every ticket reviewer binds the same candidate identity, and deterministic commit requires exact
+equality with the to-be-committed tree; candidate-byte drift stales and reruns the gates. Command or
+stable validator-definition identity, artifact/output references, and environment/worker identity are
+retained only where proof meaning depends on them. V1 reruns checks; it adds no proof cache,
+invalidation engine, or environment-equivalence system.
+
+### Ticket acceptance, feature promotion, cleanup, and delivery
+
+Ticket acceptance binds one proven ticket to one exact accepted commit. Feature promotion is a
+separate boundary: the exact integrated accepted-commit-chain tip/tree receives full deterministic
+proof and configured whole-feature semantic review before publication. Any later HEAD/tree change
+stales that promotion proof.
+
+Before a local worktree—or a future sandbox/session containing the only execution facts—is removed,
+Atlas durably harvests required commit/tree identity, worker/reviewer envelopes, validator outcomes,
+blockers and `DESIGN_BLOCKED` evidence, required logs/artifacts, runtime-produced downstream
+bindings, and any supported recovery locator. If harvest fails, retain the only remaining source and
+surface a lifecycle blocker. Automatic cleanup remains legal after durable harvest and policy
+approval; D-086 does not add disposable-runtime machinery.
+
+Local implementation completion, PR/CI/package/deployment readiness, and downstream repository
+readiness remain separate facts. An accepted local commit proves no external condition and cannot
+make a dependent repository ready without the accepted observable evidence.
+
+### Donor and spike disposition
+
+- **Sandcastle:** pinned implementation-reference `SPIKE` for worktree/sandbox lifecycle, agent
+  invocation, session resume, typed output, deterministic command execution, timeout/abort, and logs.
+  Reject its runtime planner, issue/dependency authority, agent-owned commits/acceptance, mutable
+  reviewers, merge-agent behavior, and routine V1 parallelism.
+- **Working Skill Repo:** concept/adaptation reference for supervisor ownership, blocker-as-world-
+  claim, bound proof receipts, one-active-work semantics, exact-tree promotion, and
+  implementation-versus-delivery separation. Defer its goal/proof governors, project graph,
+  resource scheduler, and oscillation machinery.
+- **SSSF:** remains the strongest inner-workcell protocol donor; its planner does not survive Stage 5.
+- **Inkwell:** remains the future strong-isolation/topology donor; V1 does not add VMs, disposable
+  credentials, or best-of-N.
+
+After this architecture change, run one bounded Sandcastle proof-of-fit against one accepted Atlas
+ticket and exact baseline, starting with local `noSandbox()`. The spike may recommend only `ADOPT
+THIN ADAPTER`, `REJECT DEPENDENCY FOR V1`, or `SPIKE INCONCLUSIVE` with one smallest follow-up. It
+cannot ratify Sandcastle types or authority into Atlas.
+
+### Horizon and explicit non-goals
+
+`architecture/v2-horizon.md` preserves deferred hypotheses and their promotion triggers. It is
+unnumbered, non-authoritative, excluded from `rolling-monolith.md`, and neither a roadmap nor a V1
+requirement. Every horizon item requires a fresh reviewed promotion decision against then-current
+canonical architecture.
+
+D-086 adds no new controller, planner, scheduler, or provider framework. It adds no execution code,
+execution-time planner, generalized runtime/provider abstraction, background polling, event bus,
+parallel scheduler, lease/resource system, merge agent, proof reuse engine, reviewer swarm,
+autonomous staffing promotion, goal governor, project-memory graph, credential broker, Docker/VM
+runtime, or Sandcastle-specific field in accepted planning truth.
+
+### Rejected alternatives
+
+- **One disposable physical worktree per ticket as an invariant:** rejected because the accepted
+  commit chain is the durable workspace unit; per-ticket logic does not require per-ticket physical
+  teardown.
+- **Universal ban on all harness helper agents:** rejected because it confuses Atlas ownership with
+  authority-contained implementation mechanics.
+- **Agent completion or a successful substrate run as acceptance:** rejected because only Atlas
+  deterministic proof/review/state authority can grant the transition.
+- **Destroy first, infer completion from absence:** rejected because cleanup cannot erase the only
+  evidence needed to establish outcome or diagnose failure.
+- **Implement every mature donor mechanism before first execution:** rejected because features pay
+  for seams.
+
+---
+
+## v0.14 north star
+
+> **One coherent accepted chain, one active ticket, evidence before transition or destruction, and no
+> donor authority hidden inside the runtime.**
