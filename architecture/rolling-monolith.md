@@ -752,6 +752,15 @@ recommendation and its strongest counterargument; and assign a stable label. The
 or zoom in. Accepted conversational choices are written into canonical `30-system-design.md`;
 conversation alone never has artifact or acceptance authority.
 
+For each material choice, present a decision packet rather than prose alone: a concise comparison
+matrix using the same criteria for every option, plus the minimum useful visual that exposes the
+decision-relevant structure. Select the fitting view from topology/component, sequence or data flow,
+schema/protocol, state/lifecycle, and failure/recovery; pair it with a plain-language explanation of
+the trade-offs, operational consequences, and failure modes it changes. If no visual adds
+decision-relevant clarity, state why no visual adds clarity rather than creating decoration.
+Decision-time visuals are ephemeral,
+non-authoritative aids until the settled choice is written into canonical Markdown.
+
 Co-design also requires `30-system-design.html`, a deterministic, self-contained visual board bound
 to the exact Markdown source path/hash and renderer version. It contains precise architecture views,
 not decorative generative imagery: current/proposed topology, seam/ownership map,
@@ -6739,6 +6748,26 @@ them into V1 requirements or a roadmap.
 
 ---
 
+## L-026 — Visual decision support must clarify a choice, not decorate a design
+
+### Evidence reviewed
+
+During real co-design use, prose-only alternatives made structural differences, comparable
+trade-offs, and failure behavior harder to evaluate than the underlying decision required. The
+existing deterministic board helped inspect the accumulated candidate after choices were written,
+but did not require decision-time comparison before the user chose.
+
+### Standing result
+
+For each material co-design choice, present one decision packet: a comparison matrix across common
+criteria, the minimum useful topology, sequence/data-flow, schema/protocol, state/lifecycle, or
+failure/recovery visual, and a plain-language explanation of trade-offs, operational consequences,
+and failure modes. When no visual improves the decision, state why and keep the packet textual.
+These aids remain ephemeral and non-authoritative until the settled choice is written into canonical
+System Design Markdown; visual output never grants approval.
+
+---
+
 # 17 — Agent Roles, Rosters, Model Policy, and Outcome Telemetry
 
 **Added in:** v0.3  
@@ -7908,6 +7937,15 @@ In co-design, chat is the primary interactive control surface. Work one system s
 time with a plain question, two or three concrete alternatives, a recommendation and its strongest
 counterargument, and a stable label. The user can redirect or zoom in. Accepted conversational
 choices are written into canonical Markdown; chat alone is never authority.
+
+For each material choice, present a decision packet rather than prose alone: a concise comparison
+matrix using the same criteria for every option, plus the minimum useful visual that exposes the
+decision-relevant structure. Select the fitting view from topology/component, sequence or data flow,
+schema/protocol, state/lifecycle, and failure/recovery; pair it with a plain-language explanation of
+the trade-offs, operational consequences, and failure modes it changes. If no visual adds
+decision-relevant clarity, state why no visual adds clarity rather than creating decoration.
+Decision-time visuals are ephemeral,
+non-authoritative aids until the settled choice is written into canonical Markdown.
 
 ---
 

@@ -196,6 +196,15 @@ recommendation and its strongest counterargument; and assign a stable label. The
 or zoom in. Accepted conversational choices are written into canonical `30-system-design.md`;
 conversation alone never has artifact or acceptance authority.
 
+For each material choice, present a decision packet rather than prose alone: a concise comparison
+matrix using the same criteria for every option, plus the minimum useful visual that exposes the
+decision-relevant structure. Select the fitting view from topology/component, sequence or data flow,
+schema/protocol, state/lifecycle, and failure/recovery; pair it with a plain-language explanation of
+the trade-offs, operational consequences, and failure modes it changes. If no visual adds
+decision-relevant clarity, state why no visual adds clarity rather than creating decoration.
+Decision-time visuals are ephemeral,
+non-authoritative aids until the settled choice is written into canonical Markdown.
+
 Co-design also requires `30-system-design.html`, a deterministic, self-contained visual board bound
 to the exact Markdown source path/hash and renderer version. It contains precise architecture views,
 not decorative generative imagery: current/proposed topology, seam/ownership map,
