@@ -330,6 +330,7 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "Delete speculative seams",
             "co_design", "Slice 2", "references/system-design-file.md", "references/system-design-board.md",
             "gate_ready: true", "render_system_design.py", ".30-system-design.next.md",
+            "mobile projection contract", "mechanically verified but unreadable board is not complete decision evidence",
             "atlas:control-planning", "without asking the user to issue a second command",
         ],
         "system-design-template": [
@@ -379,6 +380,10 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         "system-design-board": [
             "30-system-design.md", "30-system-design.html", "Inapplicable:",
             "non-authoritative", "no independent acceptance hash",
+            "## Mobile projection contract", "white-space: pre",
+            "Mermaid is not a runtime dependency or implied capability",
+            "document.documentElement.scrollWidth <= innerWidth",
+            "390×844", "at least `44px` high", "both light and dark schemes",
         ],
         "control-planning": [
             "disable-model-invocation: true", "third parent of this file", "never routes",

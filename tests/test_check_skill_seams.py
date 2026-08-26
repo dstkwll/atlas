@@ -151,6 +151,40 @@ class SkillSeamHardeningTests(unittest.TestCase):
                     findings = SEAMS.cross_skill_contracts(skills)
                     self.assertTrue(any(finding_text in message for _, message in findings), findings)
 
+    def test_system_design_mobile_projection_contract_drift_is_detected(self):
+        # This is only a literal seam-drift guard. Fresh-agent execution of the
+        # procedure is separate acceptance evidence required by AGENTS.md.
+        plugin = ROOT / "plugins" / "atlas"
+        contracts = {
+            plugin / "skills" / "system-design" / "SKILL.md": (
+                "mobile projection contract",
+                "mechanically verified but unreadable board is not complete decision evidence",
+            ),
+            plugin / "skills" / "system-design" / "references" / "system-design-board.md": (
+                "## Mobile projection contract",
+                "white-space: pre",
+                "Mermaid is not a runtime dependency or implied capability",
+                "document.documentElement.scrollWidth <= innerWidth",
+                "390×844",
+                "at least `44px` high",
+                "both light and dark schemes",
+            ),
+        }
+        for path, clauses in contracts.items():
+            text = path.read_text(encoding="utf-8")
+            for clause in clauses:
+                self.assertIn(clause, text)
+                with self.subTest(path=path.name, clause=clause), tempfile.TemporaryDirectory() as td:
+                    skills = self.copy_plugin(Path(td))
+                    target = skills / path.relative_to(plugin / "skills")
+                    mutated = target.read_text(encoding="utf-8")
+                    target.write_text(mutated.replace(clause, "[removed mobile board contract]", 1), encoding="utf-8")
+                    findings = SEAMS.cross_skill_contracts(skills)
+                    self.assertTrue(
+                        any("system-design" in message and "missing seam contract" in message for _, message in findings),
+                        findings,
+                    )
+
     def test_d081_new_intake_records_full_canonical_commit_oid(self):
         plugin = ROOT / "plugins" / "atlas"
         start_path = plugin / "skills" / "start-run" / "SKILL.md"

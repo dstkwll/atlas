@@ -111,10 +111,10 @@ class RenderSystemDesignTests(unittest.TestCase):
             self.assertIn("duplicate metadata attribute", malformed_attribute.stderr)
 
             self.assertEqual(run_render("render", "--run", run).returncode, 0)
-            marker = '<meta name="atlas-renderer-version" content="1.0.0">'
+            marker = '<meta name="atlas-renderer-version" content="2.0.0">'
             text = html.read_text(encoding="utf-8")
             self.assertIn(marker, text)
-            html.write_text(text.replace(marker, marker.replace("1.0.0", "unknown"), 1), encoding="utf-8")
+            html.write_text(text.replace(marker, marker.replace("2.0.0", "unknown"), 1), encoding="utf-8")
             malformed = run_render("verify", "--run", run)
             self.assertNotEqual(malformed.returncode, 0)
             self.assertIn("atlas-renderer-version", malformed.stderr)
@@ -299,6 +299,104 @@ class RenderSystemDesignTests(unittest.TestCase):
             )
             self.assertNotEqual(symlinked_draft.returncode, 0)
             self.assertIn("symlink", symlinked_draft.stderr.lower())
+
+    def test_board_renders_tables_as_mobile_stacked_records(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            write_system_design(run, {
+                "Current system": (
+                    "| Choice | Owner | Failure mode |\n"
+                    "|---|---|---|\n"
+                    "| Ticket packet | Compiler | Missing context |\n"
+                    "| Runtime packet | Supervisor | Stale binding |"
+                )
+            })
+
+            rendered = run_render("render", "--run", run)
+
+            self.assertEqual(rendered.returncode, 0, rendered.stderr)
+            html = (run / "30-system-design.html").read_text(encoding="utf-8")
+            self.assertIn('<div class="table-scroll" role="region" aria-label="Comparison table">', html)
+            self.assertIn("<table>", html)
+            self.assertIn('<td data-label="Choice">', html)
+            self.assertIn('<td data-label="Failure mode">', html)
+            self.assertIn("@media (max-width:48rem)", html)
+            self.assertIn("td::before", html)
+            self.assertNotIn("| Choice | Owner | Failure mode |", html)
+
+    def test_board_preserves_text_diagram_geometry_on_mobile(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            diagram = (
+                "```text\n"
+                "accepted ticket       supervisor       workcell\n"
+                "      |                    |                |\n"
+                "      +------------------->|--------------->|\n"
+                "```"
+            )
+            write_system_design(run, {"Proposed system": diagram})
+
+            rendered = run_render("render", "--run", run)
+
+            self.assertEqual(rendered.returncode, 0, rendered.stderr)
+            html = (run / "30-system-design.html").read_text(encoding="utf-8")
+            self.assertIn('<figure class="diagram"', html)
+            self.assertIn('<div class="diagram-scroll" role="region" aria-label="Text diagram" tabindex="0">', html)
+            self.assertIn("accepted ticket       supervisor       workcell", html)
+            self.assertIn("white-space:pre", html)
+            self.assertIn("overflow-x:auto", html)
+            self.assertNotIn("white-space:pre-wrap", html)
+            self.assertIn("grid-template-columns:minmax(0,1fr)", html)
+
+    def test_board_header_uses_document_title_and_touch_sized_navigation(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            write_system_design(run)
+
+            rendered = run_render("render", "--run", run)
+
+            self.assertEqual(rendered.returncode, 0, rendered.stderr)
+            html = (run / "30-system-design.html").read_text(encoding="utf-8")
+            self.assertIn("<title>System design — Demo</title>", html)
+            self.assertIn("min-height:44px", html)
+            self.assertIn("display:inline-flex", html)
+            self.assertIn("align-items:center", html)
+
+    def test_scroll_regions_are_named_and_mobile_table_is_not_a_noop_tab_stop(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            write_system_design(run, {
+                "Current system": "| Choice | Owner |\n|---|---|\n| Packet | Compiler |",
+                "Proposed system": "```text\nsource -> target\n```",
+                "Failure and recovery": "```yaml\nverdict: blocked\n```",
+            })
+
+            rendered = run_render("render", "--run", run)
+
+            self.assertEqual(rendered.returncode, 0, rendered.stderr)
+            html = (run / "30-system-design.html").read_text(encoding="utf-8")
+            self.assertIn('<div class="table-scroll" role="region" aria-label="Comparison table">', html)
+            self.assertNotIn('class="table-scroll" role="region" tabindex="0"', html)
+            self.assertIn('class="diagram-scroll" role="region" aria-label="Text diagram" tabindex="0"', html)
+            self.assertIn('class="code-scroll" role="region" aria-label="Code block" tabindex="0"', html)
+
+    def test_mermaid_fence_is_labeled_source_fallback_without_runtime_rendering(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            write_system_design(run, {
+                "Proposed system": "```mermaid\nflowchart TD\n  A --> B\n```"
+            })
+
+            rendered = run_render("render", "--run", run)
+
+            self.assertEqual(rendered.returncode, 0, rendered.stderr)
+            html = (run / "30-system-design.html").read_text(encoding="utf-8")
+            self.assertIn('<figure class="diagram">', html)
+            self.assertIn('aria-label="Mermaid source"', html)
+            self.assertIn('class="language-mermaid"', html)
+            self.assertIn("Mermaid source — not rendered.", html)
+            self.assertNotIn("<script", html.lower())
+            self.assertNotIn("<svg", html.lower())
 
 
 if __name__ == "__main__":

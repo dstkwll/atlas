@@ -57,6 +57,8 @@ python3 "<atlas-plugin-root>/tools/render_system_design.py" render --run "<run-d
 python3 "<atlas-plugin-root>/tools/render_system_design.py" verify --run "<run-directory>"
 ```
 
+Before presenting the board as a decision surface, apply the mobile projection contract in [`references/system-design-board.md`](references/system-design-board.md): exercise the real current board at phone and desktop widths, prove no page-level horizontal overflow, and visually inspect the header, one non-trivial table, and one diagram. A mechanically verified but unreadable board is not complete decision evidence. When browser rendering is unavailable, state that limitation and use a verified phone-first decision image for chat rather than claiming the HTML is mobile-ready.
+
 The board must remain self-contained, metadata-bound, non-authoritative, and complete across every stable view. Put an explicit inapplicability reason in the matching Markdown section when a view does not apply. Do not generate decorative images or accept HTML bytes independently.
 
 ## 4. Record readiness and check mechanics
