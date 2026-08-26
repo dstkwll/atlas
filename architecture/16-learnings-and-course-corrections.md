@@ -1041,3 +1041,23 @@ fallback exists. Missing declared material is a packaging/preflight blocker. Mis
 judgment is `DESIGN_BLOCKED`. Repository facts within granted inspection authority remain
 discoverable without becoming undeclared planning truth. No execution runtime or planning-run
 migration is introduced by this correction.
+
+---
+
+## L-027 — Visual decision support must clarify a choice, not decorate a design
+
+### Evidence reviewed
+
+During real co-design use, prose-only alternatives made structural differences, comparable
+trade-offs, and failure behavior harder to evaluate than the underlying decision required. The
+existing deterministic board helped inspect the accumulated candidate after choices were written,
+but did not require decision-time comparison before the user chose.
+
+### Standing result
+
+For each material co-design choice, present one decision packet: a comparison matrix across common
+criteria, the minimum useful topology, sequence/data-flow, schema/protocol, state/lifecycle, or
+failure/recovery visual, and a plain-language explanation of trade-offs, operational consequences,
+and failure modes. When no visual improves the decision, state why and keep the packet textual.
+These aids remain ephemeral and non-authoritative until the settled choice is written into canonical
+System Design Markdown; visual output never grants approval.

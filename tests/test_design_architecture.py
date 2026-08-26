@@ -544,6 +544,20 @@ class PairedDesignArchitectureTests(unittest.TestCase):
         for view in ("topology", "ownership", "schema", "failure", "rejected alternatives"):
             self.assertIn(view, artifact)
 
+    def test_codesign_material_choices_require_visual_decision_support(self):
+        for name in ("02-workflow.md", "22-v0.7-decisions.md"):
+            text = normalized(name).lower()
+            with self.subTest(name=name):
+                self.assertIn("decision packet rather than prose alone", text)
+                self.assertIn("comparison matrix", text)
+                self.assertIn("minimum useful visual", text)
+                for visual in ("topology", "sequence", "data flow", "schema", "state", "failure"):
+                    self.assertIn(visual, text)
+                self.assertIn("plain-language explanation", text)
+                self.assertIn("operational consequences", text)
+                self.assertRegex(text, r"(?:no visual|visual adds no).{0,120}(?:state|explain).{0,120}why")
+                self.assertRegex(text, r"ephemeral|non-authoritative")
+
     def test_stage_three_and_four_have_one_decision_ownership_rule(self):
         workflow = normalized("02-workflow.md")
 

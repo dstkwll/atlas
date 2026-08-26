@@ -44,6 +44,16 @@ Inspect the current system and applicable source, draft all sections, cold-read 
 
 Chat is the interactive control surface. Work on one system seam or decision at a time. Ask one plain question; present two or three concrete alternatives; give a recommendation and its strongest counterargument; assign the matching stable label from [`references/system-design-board.md`](references/system-design-board.md). The user may redirect or zoom in. Write each settled choice into Markdown; conversation alone is neither artifact nor approval.
 
+For each material choice, present a decision packet rather than prose alone. Include a concise
+comparison matrix using the same criteria for every option and the minimum useful visual for the
+decision: topology/component, sequence or data flow, schema/protocol, state/lifecycle, or
+failure/recovery. Use a chat-native table, text/Mermaid diagram, or host-rendered visual as the
+surface supports, and pair it with a plain-language explanation of the trade-offs, operational
+consequences, and failure modes it changes. If no visual adds decision-relevant clarity, state why
+no visual adds decision-relevant clarity rather than generating decoration. Treat every
+decision-time visual as ephemeral and non-authoritative; only the settled Markdown records the
+choice.
+
 For every settled alternative set, mark exactly one selected option with `(selected)` in its option label; retain the other options as decision evidence without that marker. A recommendation is provisional: recommended is not a terminal decision state. Keep `### Decision map` as the first subsection of `Proposed system`, with one compact row per settled choice and the columns `Decision`, `Selected route`, `Adoption or disposition`, and `Implementation consequence`. Update that map whenever a choice settles, including choices whose detailed alternatives live in later required sections. The map summarizes commitments; it does not replace their reasoning, diagrams, counterarguments, or rejected controls. Before readiness, an open group may have no selected marker; a gate-ready board fails closed unless every alternative set has exactly one.
 
 Never edit canonical `30-system-design.md` directly in co-design. Stage the complete replacement at `<run>/.30-system-design.next.md`, then run:
