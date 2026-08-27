@@ -222,10 +222,14 @@ def option_status(
     return "alternative"
 
 
+def normalize_decision_name(text: str) -> str:
+    cleaned = text.strip().replace("-", " ")
+    return cleaned[:1].upper() + cleaned[1:]
+
+
 def clean_decision_name(text: str) -> str:
     cleaned = re.sub(r"\s+(alternatives|decision)$", "", text.strip(), flags=re.IGNORECASE)
-    cleaned = cleaned.replace("-", " ")
-    return cleaned[:1].upper() + cleaned[1:]
+    return normalize_decision_name(cleaned)
 
 
 def clean_option_name(text: str) -> str:
@@ -245,7 +249,7 @@ def decision_groups(markdown: str, parser) -> tuple[list[DecisionGroup], set[str
         if token.type in {"heading_open", "paragraph_open"} and tokens[index + 1].type == "inline"
     ]
     settled_names = {
-        clean_decision_name(match.group(1)).casefold()
+        normalize_decision_name(match.group(1)).casefold()
         for text in block_texts
         if (match := re.match(r"^Settled\s+([^:]+):", text, re.IGNORECASE))
     }
@@ -457,7 +461,7 @@ def render_bytes(markdown_bytes: bytes) -> bytes:
             for name, selection, _ in decisions
         ]
         actual_rows = [
-            (clean_decision_name(name).casefold(), clean_option_name(selection).casefold())
+            (normalize_decision_name(name).casefold(), clean_option_name(selection).casefold())
             for name, selection, _, _ in rows
         ]
         if actual_rows != expected_rows:

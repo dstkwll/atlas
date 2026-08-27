@@ -426,8 +426,8 @@ class RenderSystemDesignTests(unittest.TestCase):
                     "Recommendation is still open."
                 ),
                 "Authoritative data ownership": (
-                    "**Settled state ownership:** use one repository record.\n\n"
-                    "### State-ownership alternatives\n\n"
+                    "**Settled cache decision:** use one bounded cache.\n\n"
+                    "### Cache decision alternatives\n\n"
                     "**Option 1 — shared route (recommended)**\n\n"
                     "Settled route.\n\n"
                     "**Option 2 — global database**"
@@ -439,7 +439,7 @@ class RenderSystemDesignTests(unittest.TestCase):
             self.assertEqual(rendered.returncode, 0, rendered.stderr)
             html = (run / "30-system-design.html").read_text(encoding="utf-8")
             self.assertEqual(html.count('data-decision-status="selected"'), 1)
-            self.assertIn("State ownership", html)
+            self.assertIn("Cache decision", html)
             self.assertNotIn('<p class="decision-name">Runtime</p>', html)
             self.assertIn('<p class="decision-option decision-option--alternative"><span class="decision-status">Not selected</span><strong>Option 1 — shared route (recommended)</strong></p>', html)
             self.assertIn('<p class="decision-option decision-option--selected"><span class="decision-status">Selected</span><strong>Option 1 — shared route (recommended)</strong></p>', html)
