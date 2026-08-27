@@ -23,6 +23,12 @@ source_binding:
 
 ## Proposed system
 
+### Decision map
+
+| Decision | Selected route | Adoption or disposition | Implementation consequence |
+|---|---|---|---|
+| <decision name> | <Option N — selected route (selected)> | <retained/adapted/wrapped/replaced/deferred> | <what callers, peers, operators, or later design now do> |
+
 <proposed topology and system-observable commitments>
 
 ## Responsibilities and seams

@@ -20,6 +20,16 @@ Each matching Markdown section contains substantive commitments or an explicit r
 
 The HTML embeds the exact run-relative source path `30-system-design.md`, its SHA-256, and renderer version. It uses inline CSS only, contains no external assets or decorative image generation, and receives no independent acceptance hash. Chat snapshots are ephemeral.
 
+## Decision visibility contract
+
+The canonical `Proposed system` begins with `### Decision map`. Its compact rows name the decision, the selected route, what was retained/adapted/wrapped/replaced/deferred, and the implementation consequence. Every settled option group has exactly one option labelled `(selected)`; `(chosen)` remains a legacy synonym for accepted existing artifacts. A plain recommendation is not a selection. For backward compatibility only, the renderer may treat `(recommended)` as selected when the same named decision also has an explicit `Settled ...:` statement.
+
+The rendered board places **Decisions at a glance** above the detailed views, copied only from explicit selected markers. It labels the selected option **Selected** and every other option **Not selected** while preserving all alternatives as visible decision evidence. Status text is real HTML content, not CSS-generated content, so assistive technology and text-only readers receive the same distinction. Selection, recommendation, and rejection must not share the same visual treatment. The summary never invents a route from prose or approval state, and it never replaces the canonical Decision map's adoption/disposition and implementation-consequence detail.
+
+Selection is scoped by decision identity and option number, never by repeated option text. Later Option-number elaborations inside the same decision inherit that decision's selected route; identical wording in another decision remains independent. Option-looking text inside fenced code never participates in decision extraction. A gate-ready board fails rendering when a settled alternative set has zero or multiple selected markers. Before `gate_ready`, zero selected markers represent an open decision, while multiple markers remain contradictory and fail. A gate-ready candidate using canonical `(selected)` markers must have the Decision map as the first `Proposed system` subsection, and its rows must exactly match every selected decision route; legacy accepted `(chosen)` artifacts remain renderable without retroactive source mutation.
+
+Visual acceptance includes the decision state: at phone width inspect the Decisions at a glance summary, one Selected option, and one Not selected option. A reader must be able to identify the chosen route before reading the full comparison, then trace it to the detailed rationale.
+
 ## Mobile projection contract
 
 The board is a **Decide / Learn** surface, not a dashboard. It remains one readable content column at desktop and phone widths; stable-view navigation may wrap, but cards never compete in a narrow auto-fit grid.

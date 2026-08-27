@@ -159,6 +159,14 @@ class SkillSeamHardeningTests(unittest.TestCase):
             plugin / "skills" / "system-design" / "SKILL.md": (
                 "mobile projection contract",
                 "mechanically verified but unreadable board is not complete decision evidence",
+                "exactly one selected option",
+                "### Decision map",
+                "recommended is not a terminal decision state",
+            ),
+            plugin / "skills" / "system-design" / "references" / "system-design-file.md": (
+                "### Decision map",
+                "| Decision | Selected route | Adoption or disposition | Implementation consequence |",
+                "(selected)",
             ),
             plugin / "skills" / "system-design" / "references" / "system-design-board.md": (
                 "## Mobile projection contract",
@@ -168,6 +176,15 @@ class SkillSeamHardeningTests(unittest.TestCase):
                 "390×844",
                 "at least `44px` high",
                 "both light and dark schemes",
+                "## Decision visibility contract",
+                "places **Decisions at a glance** above the detailed views",
+                "labels the selected option **Selected** and every other option **Not selected**",
+                "Selection is scoped by decision identity and option number, never by repeated option text",
+                "A gate-ready board fails rendering when a settled alternative set has zero or multiple selected markers",
+                "Later Option-number elaborations inside the same decision inherit that decision's selected route",
+                "Status text is real HTML content, not CSS-generated content",
+                "Option-looking text inside fenced code never participates in decision extraction",
+                "A gate-ready candidate using canonical `(selected)` markers must have the Decision map as the first `Proposed system` subsection",
             ),
         }
         for path, clauses in contracts.items():

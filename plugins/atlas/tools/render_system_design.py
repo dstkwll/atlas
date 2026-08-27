@@ -11,13 +11,18 @@ import tempfile
 from html import escape
 from html.parser import HTMLParser
 from pathlib import Path
+from typing import TypedDict
 from urllib.parse import urlparse
 
 
 SOURCE_FILE = "30-system-design.md"
 OUTPUT_FILE = "30-system-design.html"
-RENDERER_VERSION = "2.0.0"
+RENDERER_VERSION = "2.1.0"
 SAFE_SCHEMES = {"http", "https", "mailto"}
+OPTION_PATTERN = re.compile(
+    r"^Option\s+(\d+)\s+—\s+.+?(?:\s+\((chosen|selected|recommended)\))?$",
+    re.IGNORECASE,
+)
 REQUIRED_VIEWS = (
     ("current-topology", "Current topology", ("Current system",)),
     ("proposed-topology", "Proposed topology", ("Proposed system",)),
@@ -37,6 +42,13 @@ REQUIRED_VIEWS = (
     ("open-decisions", "Open decisions", ("Open decisions",)),
     ("rejected-alternatives", "Rejected alternatives", ("Rejected alternatives",)),
 )
+
+
+class DecisionGroup(TypedDict):
+    name: str
+    options: list[tuple[str, str, str]]
+
+
 STYLE = """
 :root{color-scheme:light;--bg:#f4f6fa;--surface:#fff;--surface-soft:#f8fafc;--text:#172033;--muted:#5d6b82;--line:#d8e0ec;--accent:#165dce;--accent-soft:#eaf2ff;--code:#101827;--code-text:#e7eef9;--font:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace}
 *{box-sizing:border-box}
@@ -47,6 +59,20 @@ main{width:min(100%,68rem);margin:0 auto;padding:clamp(1rem,4vw,3rem)}
 .eyebrow{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.12em;margin:0 0 .45rem;text-transform:uppercase}
 .board-header h1{font-size:clamp(2rem,7vw,3.5rem);letter-spacing:-.045em;line-height:1.04;margin:0}
 .lede{color:var(--muted);font-size:clamp(1rem,2.8vw,1.15rem);margin:.8rem 0 1.1rem;max-width:60ch}
+.decision-map{background:var(--surface);border:2px solid var(--accent);border-radius:1rem;margin:0 0 1rem;padding:clamp(1rem,3.5vw,1.6rem)}
+.decision-map h2{font-size:clamp(1.35rem,4.5vw,1.85rem);letter-spacing:-.025em;line-height:1.15;margin:0}
+.decision-map-lede{color:var(--muted);margin:.35rem 0 1rem}
+.decision-grid{display:grid;gap:.7rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,19rem),1fr))}
+.decision-card{background:var(--accent-soft);border-left:.3rem solid var(--accent);border-radius:.65rem;padding:.75rem .85rem}
+.decision-card p{margin:0}
+.decision-name{color:var(--muted);font-size:.7rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.decision-selection{font-weight:750;margin-top:.15rem!important}
+.decision-option{border-radius:.55rem;padding:.65rem .75rem!important}
+.decision-status{display:block;font-size:.68rem;font-weight:850;letter-spacing:.08em;margin-bottom:.18rem;text-transform:uppercase}
+.decision-option--selected{background:var(--accent-soft);border-left:.3rem solid var(--accent);color:var(--text)!important}
+.decision-option--selected .decision-status{color:var(--accent)}
+.decision-option--alternative{background:var(--surface-soft);border-left:.3rem solid var(--line);color:var(--muted)!important}
+.decision-option--alternative .decision-status{color:var(--muted)}
 .board-nav{display:flex;flex-wrap:wrap;gap:.45rem}
 .board-nav a{align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:999px;color:var(--text);display:inline-flex;font-size:.8rem;font-weight:650;min-height:44px;padding:.4rem .75rem;text-decoration:none}
 .board-nav a:focus-visible,.board-nav a:hover{border-color:var(--accent);outline:2px solid var(--accent-soft);outline-offset:2px}
@@ -177,6 +203,135 @@ def inline_text(token) -> str:
     return "".join(parts).strip()
 
 
+def option_status(
+    text: str,
+    decision_name: str,
+    selected_numbers: dict[str, str],
+    settled_names: set[str],
+) -> str | None:
+    match = OPTION_PATTERN.match(text.strip())
+    if not match:
+        return None
+    number, marker = match.group(1), (match.group(2) or "").lower()
+    if marker in {"chosen", "selected"}:
+        return "selected"
+    if marker == "recommended" and decision_name.casefold() in settled_names:
+        return "selected"
+    if decision_name and selected_numbers.get(decision_name.casefold()) == number:
+        return "selected"
+    return "alternative"
+
+
+def clean_decision_name(text: str) -> str:
+    cleaned = re.sub(r"\s+(alternatives|decision)$", "", text.strip(), flags=re.IGNORECASE)
+    cleaned = cleaned.replace("-", " ")
+    return cleaned[:1].upper() + cleaned[1:]
+
+
+def clean_option_name(text: str) -> str:
+    return re.sub(
+        r"\s+\((chosen|selected|recommended)\)\s*$",
+        "",
+        text.strip(),
+        flags=re.IGNORECASE,
+    )
+
+
+def decision_groups(markdown: str, parser) -> tuple[list[DecisionGroup], set[str]]:
+    tokens = parser.parse(markdown)
+    block_texts = [
+        inline_text(tokens[index + 1])
+        for index, token in enumerate(tokens[:-1])
+        if token.type in {"heading_open", "paragraph_open"} and tokens[index + 1].type == "inline"
+    ]
+    settled_names = {
+        clean_decision_name(match.group(1)).casefold()
+        for text in block_texts
+        if (match := re.match(r"^Settled\s+([^:]+):", text, re.IGNORECASE))
+    }
+    groups: list[DecisionGroup] = []
+    current_group: DecisionGroup | None = None
+    for index, token in enumerate(tokens[:-1]):
+        if token.type == "heading_open" and token.tag == "h2":
+            current_group = None
+            continue
+        if token.type == "heading_open" and token.tag == "h3" and tokens[index + 1].type == "inline":
+            candidate = inline_text(tokens[index + 1])
+            if not OPTION_PATTERN.match(candidate):
+                if re.search(r"\s+(alternatives|decision)$", candidate, re.IGNORECASE):
+                    current_group = {"name": clean_decision_name(candidate), "options": []}
+                    groups.append(current_group)
+                continue
+        elif token.type == "paragraph_open" and tokens[index + 1].type == "inline":
+            candidate = inline_text(tokens[index + 1])
+        else:
+            continue
+        match = OPTION_PATTERN.match(candidate)
+        if match and current_group is not None:
+            current_group["options"].append((candidate, match.group(1), (match.group(2) or "").lower()))
+    return groups, settled_names
+
+
+def selected_decisions(markdown: str, parser) -> list[tuple[str, str, str]]:
+    groups, settled_names = decision_groups(markdown, parser)
+    gate_ready = bool(re.search(r"(?m)^gate_ready:\s*true\s*$", markdown))
+    decisions: list[tuple[str, str, str]] = []
+    for group in groups:
+        name = str(group["name"])
+        options = group["options"]
+        selected = [
+            option for option in options
+            if option[2] in {"chosen", "selected"}
+            or (option[2] == "recommended" and name.casefold() in settled_names)
+        ]
+        if len(selected) > 1 or (gate_ready and options and len(selected) != 1):
+            raise SystemExit(
+                f"render_system_design: decision `{name}` must have exactly one selected option; "
+                f"found {len(selected)}"
+            )
+        if selected:
+            candidate, number, _ = selected[0]
+            decisions.append((name, clean_option_name(candidate), number))
+    return decisions
+
+
+def decision_map_rows(proposed_system: str, parser) -> list[tuple[str, str, str, str]]:
+    tokens = parser.parse(proposed_system)
+    headings = [
+        index for index, token in enumerate(tokens[:-1])
+        if token.type == "heading_open" and token.tag == "h3" and tokens[index + 1].type == "inline"
+    ]
+    if not headings or inline_text(tokens[headings[0] + 1]) != "Decision map":
+        raise SystemExit(
+            "render_system_design: Decision map must be the first subsection of Proposed system"
+        )
+    end = headings[1] if len(headings) > 1 else len(tokens)
+    table_starts = [
+        index for index in range(headings[0] + 1, end)
+        if tokens[index].type == "table_open"
+    ]
+    if len(table_starts) != 1:
+        raise SystemExit("render_system_design: Decision map table is missing or ambiguous")
+    rows: list[tuple[str, str, str, str]] = []
+    current: list[str] | None = None
+    for index in range(table_starts[0] + 1, end):
+        token = tokens[index]
+        if token.type == "tr_open":
+            current = []
+        elif token.type in {"th_open", "td_open"} and current is not None:
+            value = inline_text(tokens[index + 1]) if index + 1 < len(tokens) else ""
+            current.append(value)
+        elif token.type == "tr_close" and current is not None:
+            if len(current) != 4 or any(not value for value in current):
+                raise SystemExit("render_system_design: Decision map rows must contain four non-empty cells")
+            rows.append((current[0], current[1], current[2], current[3]))
+            current = None
+    expected = ("Decision", "Selected route", "Adoption or disposition", "Implementation consequence")
+    if len(rows) < 2 or rows[0] != expected:
+        raise SystemExit("render_system_design: Decision map header is missing or malformed")
+    return rows[1:]
+
+
 def table_headers(tokens, table_index: int) -> list[str]:
     headers = []
     index = table_index + 1
@@ -250,11 +405,32 @@ def markdown_renderer():
             f"<pre><code{class_name}>{code}</code></pre></div>\n"
         )
 
+    def render_option_open(renderer, tokens, index, options, env):
+        text = inline_text(tokens[index + 1]) if index + 1 < len(tokens) else ""
+        if tokens[index].tag == "h3" and not OPTION_PATTERN.match(text):
+            if re.search(r"\s+(alternatives|decision)$", text, re.IGNORECASE):
+                env["decision_name"] = clean_decision_name(text)
+        status = option_status(
+            text,
+            env.get("decision_name", ""),
+            env.get("selected_numbers", {}),
+            env.get("settled_names", set()),
+        )
+        if status:
+            tokens[index].attrJoin("class", f"decision-option decision-option--{status}")
+        opening = renderer.renderToken(tokens, index, options, env)
+        if not status:
+            return opening
+        label = "Selected" if status == "selected" else "Not selected"
+        return opening + f'<span class="decision-status">{label}</span>'
+
     parser.add_render_rule("image", render_image)
     parser.add_render_rule("table_open", render_table_open)
     parser.add_render_rule("table_close", render_table_close)
     parser.add_render_rule("td_open", render_table_cell_open)
     parser.add_render_rule("fence", render_fence)
+    parser.add_render_rule("paragraph_open", render_option_open)
+    parser.add_render_rule("heading_open", render_option_open)
     return parser
 
 
@@ -266,6 +442,28 @@ def render_bytes(markdown_bytes: bytes) -> bytes:
         raise SystemExit("render_system_design: markdown is not valid UTF-8") from exc
     sections = markdown_sections(markdown)
     parser = markdown_renderer()
+    decisions = selected_decisions(markdown, parser)
+    groups, settled_names = decision_groups(markdown, parser)
+    selected_numbers = {name.casefold(): number for name, _, number in decisions}
+    has_canonical_selected_marker = any(
+        option[2] == "selected"
+        for group in groups
+        for option in group["options"]
+    )
+    if re.search(r"(?m)^gate_ready:\s*true\s*$", markdown) and has_canonical_selected_marker:
+        rows = decision_map_rows(sections.get("Proposed system", ""), parser)
+        expected_rows = [
+            (name.casefold(), clean_option_name(selection).casefold())
+            for name, selection, _ in decisions
+        ]
+        actual_rows = [
+            (clean_decision_name(name).casefold(), clean_option_name(selection).casefold())
+            for name, selection, _, _ in rows
+        ]
+        if actual_rows != expected_rows:
+            raise SystemExit(
+                "render_system_design: Decision map must exactly match every selected decision route"
+            )
     cards = []
     for label, title, source_sections in REQUIRED_VIEWS:
         missing = [name for name in source_sections if not sections.get(name, "").strip()]
@@ -278,7 +476,8 @@ def render_bytes(markdown_bytes: bytes) -> bytes:
         for section_name in source_sections:
             subtitle = f"<h3>{escape(section_name)}</h3>" if len(source_sections) > 1 else ""
             content.append(
-                f'{subtitle}<div class="content">{parser.render(sections[section_name])}</div>'
+                f'{subtitle}<div class="content">'
+                f'{parser.render(sections[section_name], {"selected_numbers": selected_numbers, "settled_names": settled_names})}</div>'
             )
         cards.append(
             f'<section class="view" id="view-{label}" data-atlas-view="{label}">'
@@ -291,6 +490,20 @@ def render_bytes(markdown_bytes: bytes) -> bytes:
         f'<a href="#view-{label}">{escape(title)}</a>'
         for label, title, _ in REQUIRED_VIEWS
     )
+    decision_map = ""
+    if decisions:
+        decision_cards = "".join(
+            '<article class="decision-card" data-decision-status="selected">'
+            f'<p class="decision-name">{escape(name)}</p>'
+            f'<p class="decision-selection">{escape(selection)}</p></article>'
+            for name, selection, _ in decisions
+        )
+        decision_map = (
+            '<section class="decision-map" aria-labelledby="decision-map-title">'
+            '<h2 id="decision-map-title">Decisions at a glance</h2>'
+            '<p class="decision-map-lede">These routes are selected. Full alternatives remain below as decision evidence.</p>'
+            f'<div class="decision-grid">{decision_cards}</div></section>\n'
+        )
     html = (
         "<!doctype html>\n<html lang=\"en\">\n<head>\n"
         "  <meta charset=\"utf-8\">\n"
@@ -308,6 +521,7 @@ def render_bytes(markdown_bytes: bytes) -> bytes:
         'The Markdown remains authoritative.</p>'
         f'<nav class="board-nav" aria-label="System Design views">{navigation}</nav>'
         "</header>\n"
+        f"{decision_map}"
         f"<div class=\"board\">\n{board}\n</div>\n"
         "</main>\n</body>\n</html>\n"
     )
