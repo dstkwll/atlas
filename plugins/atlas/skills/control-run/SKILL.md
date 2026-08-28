@@ -41,7 +41,7 @@ Discovery's Product Definition Approval boundary permits only:
 - `HUMAN`: after mechanical PASS, present the candidate at the exact user-facing approval surface:
   - stage label: `Product Definition Approval`
   - action: `Approve the product definition`
-  - helper: `Confirm the PRD and recorded decisions are complete enough to begin System Design.`
+  - helper: `Confirm the PRD and recorded decisions are complete enough to proceed to the next selected planning stage.`
   Obtain explicit human approval only through that surface.
 - `AGENT_REVIEW`: after mechanical PASS, dispatch a fresh read-only semantic reviewer with [`references/boundary-review.md`](references/boundary-review.md). Require decisions-first read order, no repair authority, and exhaustive gaps. Persist its exact envelope as `reviews/product_closure-v<version>.json`. V1 adds no reviewer identity, signature, or authentication service: freshness and read order are procedural requirements, while the controller proves only the envelope schema plus current run/version/hash binding. Never synthesize the envelope in the producer context.
 

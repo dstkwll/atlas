@@ -14,7 +14,7 @@ if str(TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(TOOLS_DIR))
 STAGE_LABEL = "Product Definition Approval"
 ACTION_TEXT = "Approve the product definition"
-HELPER_TEXT = "Confirm the PRD and recorded decisions are complete enough to begin System Design."
+HELPER_TEXT = "Confirm the PRD and recorded decisions are complete enough to proceed to the next selected planning stage."
 HISTORICAL_LABEL = "Product " "Closure"
 TERMINOLOGY_NOTE_PATH = Path("architecture/README.md")
 TERMINOLOGY_NOTE = (

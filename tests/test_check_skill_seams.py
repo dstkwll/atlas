@@ -89,7 +89,7 @@ class SkillSeamHardeningTests(unittest.TestCase):
                 "context:",
                 "purpose:",
                 "Execution context",
-                "Version 1 remains valid historical planning but is not factory-executable",
+                "Version 1 is retained as raw historical evidence only and is not loadable or factory-executable",
             ),
             plugin / "skills" / "control-planning" / "SKILL.md": (
                 "validates and materializes only the accepted context declarations plus current execution facts",

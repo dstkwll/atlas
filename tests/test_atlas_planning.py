@@ -981,6 +981,17 @@ class AtlasPlanningTests(unittest.TestCase):
             )
             self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
 
+    def test_markdown_h2_extraction_ignores_fences_raw_html_and_comments(self):
+        body = (
+            "## Real section\n\nReal content.\n\n"
+            "```markdown\n## Fenced section\n```\n\n"
+            "<div>\n## HTML section\n</div>\n\n"
+            "<!--\n## Comment section\n-->\n"
+        )
+
+        self.assertEqual(PLANNING.markdown_h2_headings(body), ("Real section",))
+        self.assertEqual(PLANNING.ticket_execution_context_lines(body), ())
+
     def test_ticket_graph_v1_is_historical_not_factory_executable(self):
         with tempfile.TemporaryDirectory() as td:
             run = Path(td)
@@ -999,7 +1010,9 @@ class AtlasPlanningTests(unittest.TestCase):
             self.assertTrue(
                 any(
                     "version 1" in item["problem"]
-                    and "not factory-executable" in item["problem"]
+                    and "raw historical evidence" in item["problem"]
+                    and "not loadable" in item["problem"]
+                    and "factory-executable" in item["problem"]
                     and "version 2" in item["resume_action"]
                     for item in report["gaps"]
                 ),
@@ -1008,6 +1021,70 @@ class AtlasPlanningTests(unittest.TestCase):
             self.assertNotIn("Traceback", checked.stderr)
             self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
             self.assertEqual(manifest_path.read_bytes(), candidate_before)
+
+    def test_genuine_accepted_v1_run_is_classified_as_raw_history_without_mutation(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            _, _, manifest_path = initialize_trivial_ticket_candidate(run)
+            review_path = write_ticket_review(run, policy="AGENT_REVIEW")
+            accepted = planning_cli(
+                "advance", "--run", run, "--stage", "tickets",
+                "--review", "reviews/ticket-graph-v1.json", "--date", "2026-08-24",
+            )
+            self.assertEqual(accepted.returncode, 0, accepted.stderr)
+
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            ticket_path = run / manifest["tickets"][0]["path"]
+            ticket, _ = PLANNING.read_frontmatter(ticket_path)
+            sources = ticket.pop("context")["sources"]
+            ticket["references"] = [
+                {"kind": source["kind"], "sections": source["sections"]}
+                for source in sources
+            ]
+            body = (
+                f"# {ticket['id']}\n\n"
+                "## What becomes true\n\n"
+                f"{ticket['outcomes'][0]['promise']}\n\n"
+                "## Acceptance\n\n"
+                + "\n".join(f"- {item}" for item in ticket["outcomes"][0]["acceptance"])
+                + "\n\n## Relevant design\n\n"
+                + "\n".join(f"- `{item['kind']}`" for item in ticket["references"])
+                + "\n"
+            )
+            write_markdown(ticket_path, ticket, body)
+            manifest["version"] = 1
+            manifest["tickets"][0]["sha256"] = sha256(ticket_path)
+            manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+
+            review = json.loads(review_path.read_text(encoding="utf-8"))
+            review["candidate_version"] = 1
+            review["candidate_sha256"] = sha256(manifest_path)
+            review_path.write_text(json.dumps(review, indent=2) + "\n", encoding="utf-8")
+
+            planning_path = run / "planning-control.json"
+            planning = json.loads(planning_path.read_text(encoding="utf-8"))
+            planning["acceptances"]["tickets"].update({
+                "candidate_version": 1,
+                "candidate_sha256": sha256(manifest_path),
+                "review_sha256": sha256(review_path),
+                "repository_baselines": manifest["repository_baselines"],
+            })
+            planning_path.write_text(json.dumps(planning, indent=2) + "\n", encoding="utf-8")
+            before = {
+                path: path.read_bytes()
+                for path in (planning_path, manifest_path, ticket_path, review_path)
+            }
+
+            with self.assertRaisesRegex(
+                PLANNING.ControlError,
+                "ticket-graph v1 acceptance retained as raw historical evidence only",
+            ):
+                PLANNING.load_planning_control(run)
+
+            self.assertEqual(
+                {path: path.read_bytes() for path in before},
+                before,
+            )
 
     def test_ticket_graph_v2_context_requires_exact_sources_and_nonempty_purpose(self):
         mutations = {

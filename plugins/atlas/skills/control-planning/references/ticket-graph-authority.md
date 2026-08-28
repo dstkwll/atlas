@@ -32,7 +32,7 @@
 
 Rules:
 
-- Top-level fields are exact. Envelope `version` is integer `1`; `candidate_version` is integer `2`. Run, stage, configured policy, graph version/SHA-256, exact applicable source bindings, and repository baselines must match the current mechanically valid candidate. Candidate version 1 is historical planning and is not factory-executable; there is no converter, projection, or fallback.
+- Top-level fields are exact. Envelope `version` is integer `1`; `candidate_version` is integer `2`. Run, stage, configured policy, graph version/SHA-256, exact applicable source bindings, and repository baselines must match the current mechanically valid candidate. Candidate version 1 is raw historical evidence only and is not loadable or factory-executable; there is no converter, projection, or fallback.
 - `policy` records configured `AGENT_REVIEW` or `HUMAN`. Ticket-graph acceptance has no `CONDITIONAL` branch in V1.
 - The seven dimension identifiers above occur exactly once. Each row has exact `dimension`, `result`, and nonempty `evidence`. `result` is `PASS`, `BLOCKED`, or `DESIGN_BLOCKED`.
 - Envelope verdict is only `PASS` or `BLOCKED`: all rows PASS gives PASS; any other row gives BLOCKED. Gaps exactly cover non-PASS dimensions.

@@ -251,13 +251,34 @@ def contains_machine_local_path(value: Any) -> bool:
     return False
 
 
-def program_design_headings(body: str) -> tuple[str, ...]:
+def markdown_h2_sections(body: str) -> tuple[tuple[str, tuple[str, ...]], ...]:
+    lines = body.splitlines()
     tokens = MarkdownIt("commonmark").parse(body)
-    return tuple(
-        tokens[index + 1].content
+    headings = [
+        (tokens[index + 1].content, token.map)
         for index, token in enumerate(tokens[:-1])
-        if token.type == "heading_open" and token.tag == "h2"
-    )
+        if token.type == "heading_open"
+        and token.tag == "h2"
+        and tokens[index + 1].type == "inline"
+        and token.map is not None
+    ]
+    sections = []
+    for index, (name, line_map) in enumerate(headings):
+        start = line_map[1]
+        end = headings[index + 1][1][0] if index + 1 < len(headings) else len(lines)
+        sections.append((
+            name,
+            tuple(line.strip() for line in lines[start:end] if line.strip()),
+        ))
+    return tuple(sections)
+
+
+def markdown_h2_headings(body: str) -> tuple[str, ...]:
+    return tuple(name for name, _ in markdown_h2_sections(body))
+
+
+def program_design_headings(body: str) -> tuple[str, ...]:
+    return markdown_h2_headings(body)
 
 
 def expected_ticket_execution_context_lines(sources: list[dict[str, Any]]) -> tuple[str, ...]:
@@ -277,11 +298,12 @@ def expected_ticket_execution_context_lines(sources: list[dict[str, Any]]) -> tu
 
 
 def ticket_execution_context_lines(body: str) -> tuple[str, ...]:
-    marker = "## Execution context"
-    if marker not in body:
-        return ()
-    section = body.split(marker, 1)[1]
-    return tuple(line.strip() for line in section.splitlines() if line.strip())
+    matches = [
+        lines
+        for name, lines in markdown_h2_sections(body)
+        if name == "Execution context"
+    ]
+    return matches[0] if len(matches) == 1 else ()
 
 
 def validate_semantic_review(review: Any) -> None:
@@ -1311,6 +1333,11 @@ def validate_ticket_graph_acceptance(
     effective: dict[str, Any],
     record: Any,
 ) -> None:
+    if isinstance(record, dict) and record.get("candidate_version") == 1:
+        raise ControlError(
+            "planning-control.json contains a ticket-graph v1 acceptance retained as raw historical evidence only; "
+            "it is not loadable or factory-executable and must not be converted in place"
+        )
     if not isinstance(record, dict) or set(record) != PLANNING_ACCEPTANCE_FIELDS:
         raise ControlError("planning-control.json ticket-graph acceptance is malformed")
     try:
@@ -2241,7 +2268,7 @@ def system_design_report(
             "copy the intake opened date",
         ))
 
-    headings = tuple(re.findall(r"(?m)^## ([^\n]+?)\s*$", body))
+    headings = markdown_h2_headings(body)
     if headings != SYSTEM_DESIGN_SECTIONS:
         gaps.append(gap(
             SYSTEM_DESIGN_FILE,
@@ -2597,7 +2624,7 @@ def ticket_graph_report(
         report["candidate_version"] = candidate_version
     if type(candidate_version) is not int or candidate_version != CURRENT_TICKET_GRAPH_VERSION:
         problem = (
-            "graph version 1 is historical planning and is not factory-executable"
+            "graph version 1 is raw historical evidence only and is not loadable or factory-executable"
             if candidate_version == 1
             else f"graph version must equal integer {CURRENT_TICKET_GRAPH_VERSION}"
         )
@@ -2675,7 +2702,7 @@ def ticket_graph_report(
             ))
             source_sections[source_kind] = set()
         else:
-            source_sections[source_kind] = set(re.findall(r"(?m)^## ([^\n]+?)\s*$", source_body))
+            source_sections[source_kind] = set(markdown_h2_headings(source_body))
     repositories = {item["repository"] for item in effective["repos"]}
     for entry in entries:
         if not isinstance(entry, dict) or set(entry) != TICKET_GRAPH_ENTRY_FIELDS:
@@ -2720,7 +2747,7 @@ def ticket_graph_report(
             gaps.append(gap(expected_path, "ticket repository is not a frozen target", "tickets", "use one exact frozen repository identity"))
         if type(frontmatter.get("tracer")) is not bool:
             gaps.append(gap(expected_path, "ticket tracer must be boolean", "tickets", "record explicit tracer identity"))
-        headings = tuple(re.findall(r"(?m)^## ([^\n]+?)\s*$", body))
+        headings = markdown_h2_headings(body)
         if headings != ("What becomes true", "Acceptance", "Execution context"):
             gaps.append(gap(expected_path, "ticket body does not match the exact human-readable shape", "tickets", "restore What becomes true, Acceptance, and Execution context"))
 

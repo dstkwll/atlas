@@ -65,7 +65,7 @@ storage representation, schema, or module/CLI decomposition.
 The downstream planning controller ends at Stage 5. It hands execution an exact accepted version-2
 ticket-graph version/hash whose tickets carry compiler-selected `context.sources`; it owns no Stage 6+
 execution worktree, active-ticket, execution-attempt, retry, execution-repair, validation, commit,
-branch, or event state. Version 1 is historical planning and is not factory-executable. D-082's
+branch, or event state. Version 1 is raw historical evidence only and is not loadable or factory-executable. D-082's
 bounded Stage 3→4 planning-repair episode and producer-attempt budget remain pre-execution planning
 control, not execution state. No separate compilation controller exists.
 

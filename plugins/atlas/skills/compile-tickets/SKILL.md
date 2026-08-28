@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Compile tickets
 
-Compile the exact Stage 5 candidate. This is decomposition and proof planning under accepted design, not another design stage and not execution. D-084 governs vertical ticket semantics; D-085 governs execution-complete readiness and deterministic proof; D-087 fixes the current candidate and ticket-context contract. Ticket-graph manifest version is exact integer `2`; version 1 is historical planning and is not factory-executable.
+Compile the exact Stage 5 candidate. This is decomposition and proof planning under accepted design, not another design stage and not execution. D-084 governs vertical ticket semantics; D-085 governs execution-complete readiness and deterministic proof; D-087 fixes the current candidate and ticket-context contract. Ticket-graph manifest version is exact integer `2`; version 1 is raw historical evidence only and is not loadable or factory-executable.
 
 Resolve `<atlas-plugin-root>` from this installed skill before invoking a packaged tool: it is the third parent of this file (`SKILL.md` → `compile-tickets/` → `skills/` → plugin root). Use that absolute path; never rely on the caller's working directory.
 

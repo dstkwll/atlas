@@ -452,7 +452,7 @@ graph version and SHA-256, its applicable accepted upstream sources, and the fro
 target repository. This is an acceptance of the complete graph, not permission for each ticket to
 self-approve. Any bound upstream acceptance or baseline change makes the graph stale. The artifact
 model fixes the current representation: `50-ticket-graph.json` has exact integer version `2` and
-indexes exact ticket bytes. Version 1 is historical planning and is not factory-executable. The
+indexes exact ticket bytes. Version 1 is raw historical evidence only and is not loadable or factory-executable. The
 review evidence remains `reviews/ticket-graph-v1.json`, envelope version 1, with
 `candidate_version: 2`.
 

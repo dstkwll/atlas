@@ -368,7 +368,7 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             '"version": 2', '"preferred_order"', '"tracer_ticket"', '"source_bindings"', "exactly one",
             "blocked_by:", "context:", "sources:", "purpose:", "external_prerequisites:", "validators:", "outcomes:",
             "What becomes true", "Acceptance", "Execution context",
-            "Version 1 remains valid historical planning but is not factory-executable",
+            "Version 1 is retained as raw historical evidence only and is not loadable or factory-executable",
         ],
         "compile-tickets-agent": [
             'display_name: "Atlas Ticket Graph Compiler"',
@@ -433,7 +433,7 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "purpose:",
             "Execution context",
             "exactly one ordered canonical line per `context.sources` entry",
-            "Version 1 remains valid historical planning but is not factory-executable",
+            "Version 1 is retained as raw historical evidence only and is not loadable or factory-executable",
         ),
         "control-planning": (
             "validates and materializes only the accepted context declarations plus current execution facts",

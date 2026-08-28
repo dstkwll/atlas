@@ -49,7 +49,7 @@ EXIT_BOUNDARY = {"discovery": "product_closure"}
 PRODUCT_DEFINITION_STAGE_LABEL = "Product Definition Approval"
 PRODUCT_DEFINITION_ACTION = "Approve the product definition"
 PRODUCT_DEFINITION_HELPER = (
-    "Confirm the PRD and recorded decisions are complete enough to begin System Design."
+    "Confirm the PRD and recorded decisions are complete enough to proceed to the next selected planning stage."
 )
 CANDIDATE_FIELDS = {
     "discovery": {

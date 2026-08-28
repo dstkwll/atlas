@@ -351,8 +351,8 @@ acceptance; it is not a second authority source. Any field or JSON-type mismatch
 ## Ticket-graph compilation boundary
 
 Stage 5's compiler is a producer, not its own judge, and owns semantic context selection for each
-ticket. A current candidate's manifest version is exact integer `2`; version 1 is historical planning
-and is not factory-executable. A fresh read-only ticket-graph judge evaluates the exact complete graph
+ticket. A current candidate's manifest version is exact integer `2`; version 1 is raw historical evidence
+only and is not loadable or factory-executable. A fresh read-only ticket-graph judge evaluates the exact complete graph
 and returns `PASS` or `BLOCKED` with all gaps. It establishes applicability before requiring an
 upstream artifact and never writes a missing ticket, context declaration, edge, validation contract,
 or acceptance to satisfy its own finding.

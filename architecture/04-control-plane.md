@@ -341,8 +341,8 @@ execution compiler proposes complete version-2 ticket graph with compiler-select
   → execution preflight verifies the accepted binding, context declarations, and currency
 ```
 
-The current ticket-graph manifest version is exact integer `2`; version 1 is historical planning and
-is not factory-executable. The Stage 5 compiler owns semantic context selection. Every ticket declares
+The current ticket-graph manifest version is exact integer `2`; version 1 is raw historical evidence
+only and is not loadable or factory-executable. The Stage 5 compiler owns semantic context selection. Every ticket declares
 each applicable selected-path source kind exactly once, with empty Stage 0 sections, unique existing
 semantic H2s, and a nonempty purpose. The Stage 5 judge examines semantic completeness, verticality,
 dependency completeness, validation contracts, repository targeting, and exact context declarations.

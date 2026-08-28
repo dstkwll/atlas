@@ -66,7 +66,7 @@ Deterministic checks should include as appropriate:
 
 Preflight verifies and consumes the accepted ticket-graph binding and declarations. It does not
 create, record, convert, project, or manufacture graph acceptance or semantic context, and it does not
-silently recompile a stale graph. Version 1 is historical planning and is not factory-executable. A
+silently recompile a stale graph. Version 1 is raw historical evidence only and is not loadable or factory-executable. A
 missing, stale, or mismatched binding fails closed before any ticket becomes active. The frozen baseline is the run's
 immutable starting point, not a requirement that worktree HEAD remain equal to it after accepted
 ticket commits; the expected accepted-commit chain supplies that later currency check. A graph whose

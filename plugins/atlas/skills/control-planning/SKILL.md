@@ -20,7 +20,7 @@ For `system_design`, require frozen participation `agent_led` or `co_design` and
 
 For `program_design`, require the configured `AGENT_REVIEW` or `HUMAN` authority exactly as defined in [`references/program-design-authority.md`](references/program-design-authority.md). Program Design has no participation, `AUTO`, or `HUMAN_IF_CHANGED` branch. If any frozen policy is incomplete, aliased, or contradictory, stop; no configured path falls back to another.
 
-For `tickets`, require the current exact integer version-2 manifest and configured `AGENT_REVIEW` or `HUMAN` exactly as defined in [`references/ticket-graph-authority.md`](references/ticket-graph-authority.md). Tickets has no participation, `AUTO`, `CONDITIONAL`, or `HUMAN_IF_CHANGED` branch. Version 1 is historical planning and is not factory-executable; do not convert, project, or fall back to it.
+For `tickets`, require the current exact integer version-2 manifest and configured `AGENT_REVIEW` or `HUMAN` exactly as defined in [`references/ticket-graph-authority.md`](references/ticket-graph-authority.md). Tickets has no participation, `AUTO`, `CONDITIONAL`, or `HUMAN_IF_CHANGED` branch. Version 1 is raw historical evidence only and is not loadable or factory-executable; do not convert, project, or fall back to it.
 
 If files, fields, phase, policy, or frozen participation contradict one another, report the exact mismatch and stop. Never repair state, candidate bytes, board bytes, source bindings, or intake.
 

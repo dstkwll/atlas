@@ -1,6 +1,6 @@
 # Ticket graph candidate
 
-Stage 5 writes one canonical `50-ticket-graph.json` plus one Markdown file per ticket under `tickets/`. Ticket bytes are hashed into the manifest; the manifest SHA-256 is the complete candidate identity recorded by planning control. The current candidate manifest has exact integer version `2`. Version 1 remains valid historical planning but is not factory-executable; Atlas provides no converter, projection, or fallback.
+Stage 5 writes one canonical `50-ticket-graph.json` plus one Markdown file per ticket under `tickets/`. Ticket bytes are hashed into the manifest; the manifest SHA-256 is the complete candidate identity recorded by planning control. The current candidate manifest has exact integer version `2`. Version 1 is retained as raw historical evidence only and is not loadable or factory-executable; Atlas provides no converter, projection, or fallback.
 
 ## Manifest
 

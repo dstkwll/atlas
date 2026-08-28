@@ -19,5 +19,7 @@ Atlas is the canonical home for the agentic software-factory architecture being 
 
 The current architecture baseline is **v0.15**. D-087 fixes current ticket-graph candidates at exact
 integer version 2 and makes Stage 5 responsible for semantic context selection; execution only
-validates/materializes accepted declarations plus current runtime facts. Version 1 remains historical
-planning and is not factory-executable.
+validates/materializes accepted declarations plus current runtime facts. Version 1 is retained as raw
+historical evidence only and is not loadable or factory-executable. D-088 names Discovery's current
+user-facing exit boundary Product Definition Approval while preserving `product_closure` machine/API
+compatibility identifiers.

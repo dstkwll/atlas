@@ -147,7 +147,7 @@ For a HUMAN gate, present this exact user-facing copy:
 
 - stage label: `Product Definition Approval`
 - action: `Approve the product definition`
-- helper: `Confirm the PRD and recorded decisions are complete enough to begin System Design.`
+- helper: `Confirm the PRD and recorded decisions are complete enough to proceed to the next selected planning stage.`
 
 Discovery owns both `10-decisions.md` and `20-prd.md` continuously; v0.6 removes the separate
 specification translation producer. Product Definition Approval is discovery's single exit boundary,
@@ -389,8 +389,8 @@ Outputs:
 Stage 5 is the final pre-execution planning boundary. The compiler proposes the complete ticket
 graph; it does not accept its own output. A read-only ticket-graph judge evaluates verticality,
 dependency completeness, validation contracts, repository targeting, and semantic context
-completeness. The current manifest version is exact integer `2`; version 1 is historical planning and
-is not factory-executable. There is no converter, projection, or fallback.
+completeness. The current manifest version is exact integer `2`; version 1 is raw historical evidence
+only and is not loadable or factory-executable. There is no converter, projection, or fallback.
 The configured `tickets` authority decides whether the downstream planning controller may record
 acceptance. That controller records the exact graph version/SHA-256, every applicable accepted
 upstream binding, and each target repository baseline.

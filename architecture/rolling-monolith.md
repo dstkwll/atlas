@@ -703,7 +703,7 @@ For a HUMAN gate, present this exact user-facing copy:
 
 - stage label: `Product Definition Approval`
 - action: `Approve the product definition`
-- helper: `Confirm the PRD and recorded decisions are complete enough to begin System Design.`
+- helper: `Confirm the PRD and recorded decisions are complete enough to proceed to the next selected planning stage.`
 
 Discovery owns both `10-decisions.md` and `20-prd.md` continuously; v0.6 removes the separate
 specification translation producer. Product Definition Approval is discovery's single exit boundary,
@@ -945,8 +945,8 @@ Outputs:
 Stage 5 is the final pre-execution planning boundary. The compiler proposes the complete ticket
 graph; it does not accept its own output. A read-only ticket-graph judge evaluates verticality,
 dependency completeness, validation contracts, repository targeting, and semantic context
-completeness. The current manifest version is exact integer `2`; version 1 is historical planning and
-is not factory-executable. There is no converter, projection, or fallback.
+completeness. The current manifest version is exact integer `2`; version 1 is raw historical evidence
+only and is not loadable or factory-executable. There is no converter, projection, or fallback.
 The configured `tickets` authority decides whether the downstream planning controller may record
 acceptance. That controller records the exact graph version/SHA-256, every applicable accepted
 upstream binding, and each target repository baseline.
@@ -1573,7 +1573,7 @@ graph version and SHA-256, its applicable accepted upstream sources, and the fro
 target repository. This is an acceptance of the complete graph, not permission for each ticket to
 self-approve. Any bound upstream acceptance or baseline change makes the graph stale. The artifact
 model fixes the current representation: `50-ticket-graph.json` has exact integer version `2` and
-indexes exact ticket bytes. Version 1 is historical planning and is not factory-executable. The
+indexes exact ticket bytes. Version 1 is raw historical evidence only and is not loadable or factory-executable. The
 review evidence remains `reviews/ticket-graph-v1.json`, envelope version 1, with
 `candidate_version: 2`.
 
@@ -2023,8 +2023,8 @@ execution compiler proposes complete version-2 ticket graph with compiler-select
   → execution preflight verifies the accepted binding, context declarations, and currency
 ```
 
-The current ticket-graph manifest version is exact integer `2`; version 1 is historical planning and
-is not factory-executable. The Stage 5 compiler owns semantic context selection. Every ticket declares
+The current ticket-graph manifest version is exact integer `2`; version 1 is raw historical evidence
+only and is not loadable or factory-executable. The Stage 5 compiler owns semantic context selection. Every ticket declares
 each applicable selected-path source kind exactly once, with empty Stage 0 sections, unique existing
 semantic H2s, and a nonempty purpose. The Stage 5 judge examines semantic completeness, verticality,
 dependency completeness, validation contracts, repository targeting, and exact context declarations.
@@ -2147,7 +2147,7 @@ Deterministic checks should include as appropriate:
 
 Preflight verifies and consumes the accepted ticket-graph binding and declarations. It does not
 create, record, convert, project, or manufacture graph acceptance or semantic context, and it does not
-silently recompile a stale graph. Version 1 is historical planning and is not factory-executable. A
+silently recompile a stale graph. Version 1 is raw historical evidence only and is not loadable or factory-executable. A
 missing, stale, or mismatched binding fails closed before any ticket becomes active. The frozen baseline is the run's
 immutable starting point, not a requirement that worktree HEAD remain equal to it after accepted
 ticket commits; the expected accepted-commit chain supplies that later currency check. A graph whose
@@ -2751,8 +2751,8 @@ acceptance; it is not a second authority source. Any field or JSON-type mismatch
 ## Ticket-graph compilation boundary
 
 Stage 5's compiler is a producer, not its own judge, and owns semantic context selection for each
-ticket. A current candidate's manifest version is exact integer `2`; version 1 is historical planning
-and is not factory-executable. A fresh read-only ticket-graph judge evaluates the exact complete graph
+ticket. A current candidate's manifest version is exact integer `2`; version 1 is raw historical evidence
+only and is not loadable or factory-executable. A fresh read-only ticket-graph judge evaluates the exact complete graph
 and returns `PASS` or `BLOCKED` with all gaps. It establishes applicability before requiring an
 upstream artifact and never writes a missing ticket, context declaration, edge, validation contract,
 or acceptance to satisfy its own finding.
@@ -4475,7 +4475,7 @@ storage representation, schema, or module/CLI decomposition.
 The downstream planning controller ends at Stage 5. It hands execution an exact accepted version-2
 ticket-graph version/hash whose tickets carry compiler-selected `context.sources`; it owns no Stage 6+
 execution worktree, active-ticket, execution-attempt, retry, execution-repair, validation, commit,
-branch, or event state. Version 1 is historical planning and is not factory-executable. D-082's
+branch, or event state. Version 1 is raw historical evidence only and is not loadable or factory-executable. D-082's
 bounded Stage 3→4 planning-repair episode and producer-attempt budget remain pre-execution planning
 control, not execution state. No separate compilation controller exists.
 
@@ -6842,7 +6842,7 @@ supervisor only validates/materializes the accepted declaration plus current run
 
 ### Standing result
 
-Version 1 remains historical planning and is not factory-executable; no compatibility projection or
+Version 1 is raw historical evidence only and is not loadable or factory-executable; no compatibility projection or
 fallback exists. Missing declared material is a packaging/preflight blocker. Missing accepted
 judgment is `DESIGN_BLOCKED`. Repository facts within granted inspection authority remain
 discoverable without becoming undeclared planning truth. No execution runtime or planning-run
@@ -7940,6 +7940,10 @@ production, but selected discovery still subjects it to product closure. Any bou
 the selected workflow is conceptually `NOT_REQUIRED` and creates no mutable gate entry; D-067 does
 not make discovery mandatory.
 
+**Refined by D-088:** current user-facing surfaces call this boundary **Product Definition
+Approval** while preserving `product_closure` as the machine/API compatibility identifier. This
+historical decision body retains its original vocabulary.
+
 ---
 
 ## D-068 — Product closure accepts `20-prd.md`, and `derived_from` binds exact decision provenance
@@ -8970,7 +8974,7 @@ runtime, or Sandcastle-specific field in accepted planning truth.
 
 # 30 — v0.15 Decisions
 
-v0.15 makes D-085's planning-to-execution handoff concrete without implementing the execution runtime. It fixes the current ticket-graph candidate at version 2. Stage 5 owns semantic context selection; the later supervisor does not.
+v0.15 makes D-085's planning-to-execution handoff concrete without implementing the execution runtime and records the current user-facing name of Discovery's exit approval. It fixes the current ticket-graph candidate at version 2. Stage 5 owns semantic context selection; the later supervisor does not.
 
 ---
 
@@ -8982,7 +8986,7 @@ The accepted ticket graph must contain enough selected semantic context for a wo
 
 ### Current candidate contract
 
-The current ticket-graph manifest version is exact integer `2`. Version 1 remains historical planning and is not factory-executable. Atlas supplies no converter, automatic projection, compatibility fallback, or dual-read path from v1 to v2.
+The current ticket-graph manifest version is exact integer `2`. Version 1 is retained as raw historical evidence only and is not loadable or factory-executable. Atlas supplies no converter, automatic projection, compatibility fallback, or dual-read path from v1 to v2.
 
 Each ticket replaces top-level `references` with exact:
 
@@ -9019,11 +9023,44 @@ Missing declared material is a packaging/preflight blocker. Missing accepted jud
 - Preserve D-086 workspace, admission, proof, and promotion semantics.
 - Preserve the review-envelope path/schema version while binding candidate version 2.
 - Do not implement execution runtime, worker briefs, worktrees, attempt state, publication, or planning-run migration.
-- Existing v1 planning artifacts remain historical evidence only and cannot enter the current factory path.
+- Existing v1 planning artifacts remain raw historical evidence only; the current controller does not load them, and they cannot enter the current factory path.
 
 ### Consequences
 
 A current Stage 5 producer must emit v2 directly. Mechanical validation rejects malformed context, missing/duplicate applicable source kinds, synthetic Stage 0 sections, duplicate or nonexistent semantic H2s, empty purposes, legacy `references`, and any candidate version other than exact integer 2. Review and acceptance remain separate from compilation, and runtime remains downstream of accepted planning.
+
+### Status
+
+**ACCEPTED — governed CHANGE.**
+
+---
+
+## D-088 — Product Definition Approval is the user-facing Discovery exit boundary
+
+### Decision
+
+The current user-facing stage label is **Product Definition Approval**. Its action is **Approve the
+product definition** and its helper is **Confirm the PRD and recorded decisions are complete enough
+to proceed to the next selected planning stage.** The helper names the selected planning path rather
+than assuming System Design is present.
+
+### Compatibility boundary
+
+This is a terminology correction, not a schema migration. Existing machine/API identifiers remain
+`product_closure`, including source kinds, stages, serialized fields, and
+`reviews/product_closure-v<version>.json`. Those identifiers are compatibility aliases for the
+Discovery exit approval and are not user-facing vocabulary.
+
+Historical decision bodies and provenance retain the wording they used when recorded. Current
+architecture, skills, CLI surfaces, and generated guidance use Product Definition Approval. A later
+machine-identifier migration requires its own governed compatibility decision; this change does not
+silently create one.
+
+### Consequences
+
+The boundary's owner, candidate, authority, and lifecycle semantics do not change. Discovery still
+owns the living decision ledger and PRD, and approval still means that the product definition is
+complete enough for the next selected planning stage. Existing accepted artifacts remain immutable.
 
 ### Status
 

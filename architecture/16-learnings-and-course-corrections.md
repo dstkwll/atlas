@@ -1036,7 +1036,7 @@ supervisor only validates/materializes the accepted declaration plus current run
 
 ### Standing result
 
-Version 1 remains historical planning and is not factory-executable; no compatibility projection or
+Version 1 is raw historical evidence only and is not loadable or factory-executable; no compatibility projection or
 fallback exists. Missing declared material is a packaging/preflight blocker. Missing accepted
 judgment is `DESIGN_BLOCKED`. Repository facts within granted inspection authority remain
 discoverable without becoming undeclared planning truth. No execution runtime or planning-run
