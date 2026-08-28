@@ -202,6 +202,90 @@ class SkillSeamHardeningTests(unittest.TestCase):
                         findings,
                     )
 
+    def test_material_decision_framing_contract_drift_is_detected(self):
+        plugin = ROOT / "plugins" / "atlas"
+        contracts = {
+            plugin / "skills" / "system-design" / "SKILL.md": (
+                "Begin every material decision packet",
+                "every preview of the exact decision or next question",
+                "simplified technical English",
+                "exact decision or next question",
+                "why it matters now",
+                "fixed constraints",
+                "not yet decided",
+                "same evaluation criteria and trade-off axes",
+                "what each option optimizes",
+                "genuine choices or rejected controls",
+                "synthesize the resulting consequence",
+                "do not manufacture a preference picker",
+                "one combined context-plus-diagram phone-first packet",
+                "separate context and topology visuals",
+            ),
+            plugin / "skills" / "system-design" / "references" / "system-design-board.md": (
+                "## Decision packet framing contract",
+                "simplified technical English",
+                "one combined context-plus-diagram phone-first packet",
+                "do not manufacture a preference picker",
+            ),
+        }
+        for path, clauses in contracts.items():
+            text = path.read_text(encoding="utf-8")
+            for clause in clauses:
+                self.assertIn(clause, text)
+                with self.subTest(path=path.name, clause=clause), tempfile.TemporaryDirectory() as td:
+                    skills = self.copy_plugin(Path(td))
+                    target = skills / path.relative_to(plugin / "skills")
+                    mutated = target.read_text(encoding="utf-8")
+                    target.write_text(
+                        mutated.replace(clause, "[removed decision framing contract]"),
+                        encoding="utf-8",
+                    )
+                    findings = SEAMS.cross_skill_contracts(skills)
+                    self.assertTrue(
+                        any("system-design" in message and "missing seam contract" in message for _, message in findings),
+                        findings,
+                    )
+
+    def test_agent_led_canonical_alternative_evidence_contract_drift_is_detected(self):
+        plugin = ROOT / "plugins" / "atlas"
+        contracts = {
+            plugin / "skills" / "system-design" / "SKILL.md": (
+                "When agent-led analysis presents materially different alternatives",
+                "persist equivalent decision evidence",
+                "use the framing above for every retained option",
+                "within the existing twelve required sections",
+                "selected route in the Decision map",
+                "alternatives and reasoning in the owning section",
+                "does not require HTML solely for this evidence rule",
+            ),
+            plugin / "skills" / "system-design" / "references" / "system-design-file.md": (
+                "Agent-led material alternative evidence",
+                "same criteria and trade-off axes",
+                "what each option optimizes",
+                "genuine choice or rejected control",
+                "owning existing section",
+                "No additional top-level section",
+                "HTML is not implied solely by this evidence rule",
+            ),
+        }
+        for path, clauses in contracts.items():
+            text = path.read_text(encoding="utf-8")
+            for clause in clauses:
+                self.assertIn(clause, text)
+                with self.subTest(path=path.name, clause=clause), tempfile.TemporaryDirectory() as td:
+                    skills = self.copy_plugin(Path(td))
+                    target = skills / path.relative_to(plugin / "skills")
+                    mutated = target.read_text(encoding="utf-8")
+                    target.write_text(
+                        mutated.replace(clause, "[removed agent-led evidence contract]"),
+                        encoding="utf-8",
+                    )
+                    findings = SEAMS.cross_skill_contracts(skills)
+                    self.assertTrue(
+                        any("system-design" in message and "missing seam contract" in message for _, message in findings),
+                        findings,
+                    )
+
     def test_d081_new_intake_records_full_canonical_commit_oid(self):
         plugin = ROOT / "plugins" / "atlas"
         start_path = plugin / "skills" / "start-run" / "SKILL.md"

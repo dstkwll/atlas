@@ -36,9 +36,22 @@ Use [`references/system-design-file.md`](references/system-design-file.md) as th
 
 Write from the reliance horizon: changing a Stage 3 choice requires a caller, peer, or operator to adjust or changes an accepted guarantee. **Features pay for seams:** introduce or retain a system seam only when a named accepted behavior, authority boundary, or independently changing responsibility requires it. Delete speculative seams; anticipated reuse, aesthetic symmetry, and hypothetical flexibility do not pay for one. Cover all twelve required sections. Keep file placement, language signatures, internal calls, locking mechanics, migration order, and test seams in Program Design.
 
+Begin every material decision packet and every preview of the exact decision or next question in
+simplified technical English. State:
+- the exact decision or next question and why it matters now;
+- fixed constraints and what is not yet decided;
+- the same evaluation criteria and trade-off axes;
+- what each option optimizes; and
+- whether options are genuine choices or rejected controls retained only as evidence.
+When constraints determine the answer, synthesize the resulting consequence; do not manufacture a preference picker.
+Prefer one combined context-plus-diagram phone-first packet. Do not split it into separate context and topology visuals.
+
 ### `agent_led`
 
 Inspect the current system and applicable source, draft all sections, cold-read the candidate, and repair producer-owned gaps. Write canonical `30-system-design.md` as in Slice 1. Do not require or create HTML.
+When agent-led analysis presents materially different alternatives, persist equivalent decision evidence in canonical Markdown; use the framing above for every retained option.
+Keep it within the existing twelve required sections: record the selected route in the Decision map and retain the alternatives and reasoning in the owning section.
+Applying this contract to `agent_led` does not require HTML solely for this evidence rule.
 
 ### `co_design`
 

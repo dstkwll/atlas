@@ -558,6 +558,38 @@ class PairedDesignArchitectureTests(unittest.TestCase):
                 self.assertRegex(text, r"(?:no visual|visual adds no).{0,120}(?:state|explain).{0,120}why")
                 self.assertRegex(text, r"ephemeral|non-authoritative")
 
+    def test_material_decisions_and_question_previews_start_with_complete_phone_first_framing(self):
+        for name in ("02-workflow.md", "22-v0.7-decisions.md"):
+            text = normalized(name).lower()
+            with self.subTest(name=name):
+                self.assertIn("begin every material decision packet", text)
+                self.assertIn("every preview of the exact decision or next question", text)
+                self.assertIn("simplified technical english", text)
+                self.assertIn("exact decision or next question", text)
+                self.assertIn("why it matters now", text)
+                self.assertIn("fixed constraints", text)
+                self.assertIn("not yet decided", text)
+                self.assertIn("same evaluation criteria and trade-off axes", text)
+                self.assertIn("what each option optimizes", text)
+                self.assertIn("genuine choices or rejected controls", text)
+                self.assertRegex(text, r"constraints determine.{0,120}synthesize.{0,120}consequence")
+                self.assertRegex(text, r"(?:do not|rather than).{0,100}(?:manufacture|invent).{0,80}preference")
+                self.assertIn("one combined context-plus-diagram phone-first packet", text)
+                self.assertIn("separate context and topology visuals", text)
+
+    def test_agent_led_preserves_material_alternative_evidence_in_canonical_markdown_without_html(self):
+        for name in ("02-workflow.md", "22-v0.7-decisions.md"):
+            text = normalized(name).lower()
+            with self.subTest(name=name):
+                self.assertIn("agent_led", text)
+                self.assertIn("materially different alternatives", text)
+                self.assertIn("equivalent decision evidence", text)
+                self.assertIn("canonical `30-system-design.md`", text)
+                self.assertIn("existing twelve required sections", text)
+                self.assertIn("decision map", text)
+                self.assertRegex(text, r"does not.{0,100}require.{0,100}`30-system-design.html`")
+                self.assertIn("solely for this evidence rule", text)
+
     def test_stage_three_and_four_have_one_decision_ownership_rule(self):
         workflow = normalized("02-workflow.md")
 

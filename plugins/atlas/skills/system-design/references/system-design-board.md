@@ -20,9 +20,20 @@ Each matching Markdown section contains substantive commitments or an explicit r
 
 The HTML embeds the exact run-relative source path `30-system-design.md`, its SHA-256, and renderer version. It uses inline CSS only, contains no external assets or decorative image generation, and receives no independent acceptance hash. Chat snapshots are ephemeral.
 
+## Decision packet framing contract
+
+Every material decision packet and every preview of the exact decision or next question begins in
+simplified technical English. It states why the decision matters now, fixed constraints, what is not
+yet decided, common evaluation criteria and trade-off axes, what each option optimizes, and whether
+options are genuine choices or rejected controls. When constraints determine the answer, synthesize
+the consequence; do not manufacture a preference picker.
+
+Prefer one combined context-plus-diagram phone-first packet. Do not split it into separate context and topology visuals.
+The reader should not have to reconcile multiple narrow surfaces before deciding.
+
 ## Decision visibility contract
 
-The canonical `Proposed system` begins with `### Decision map`. Its compact rows name the decision, the selected route, what was retained/adapted/wrapped/replaced/deferred, and the implementation consequence. Every settled option group has exactly one option labelled `(selected)`; `(chosen)` remains a legacy synonym for accepted existing artifacts. A plain recommendation is not a selection. For backward compatibility only, the renderer may treat `(recommended)` as selected when the same named decision also has an explicit `Settled ...:` statement.
+The canonical `Proposed system` begins with `### Decision map`. Its compact rows name the decision, the selected route, what was retained/adapted/wrapped/replaced/deferred, and the implementation consequence. Any H3 subsection in canonical Markdown other than the Decision map whose body contains `Option <number>` entries is a decision group; extraction does not depend on a special heading suffix such as `alternatives` or `decision`. Every settled option group has exactly one option labelled `(selected)`; `(chosen)` remains a legacy synonym for accepted existing artifacts. A plain recommendation is not a selection. For backward compatibility only, the renderer may treat `(recommended)` as selected when the same named decision also has an explicit `Settled ...:` statement.
 
 The rendered board places **Decisions at a glance** above the detailed views, copied only from explicit selected markers. It labels the selected option **Selected** and every other option **Not selected** while preserving all alternatives as visible decision evidence. Status text is real HTML content, not CSS-generated content, so assistive technology and text-only readers receive the same distinction. Selection, recommendation, and rejection must not share the same visual treatment. The summary never invents a route from prose or approval state, and it never replaces the canonical Decision map's adoption/disposition and implementation-consequence detail.
 

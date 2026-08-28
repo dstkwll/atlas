@@ -72,6 +72,13 @@ source_binding:
 <remaining non-blocking decisions, or None.>
 ```
 
+### Agent-led material alternative evidence
+
+When agent-led analysis presents materially different alternatives, the Decision map records the
+selected route and the owning existing section retains the alternatives and reasoning. For every
+option, use the same criteria and trade-off axes, state what each option optimizes, and identify it as
+a genuine choice or rejected control. No additional top-level section is introduced. HTML is not implied solely by this evidence rule.
+
 Direct Stage 0 source shape:
 
 ```yaml

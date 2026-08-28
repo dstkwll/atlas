@@ -1061,3 +1061,16 @@ failure/recovery visual, and a plain-language explanation of trade-offs, operati
 and failure modes. When no visual improves the decision, state why and keep the packet textual.
 These aids remain ephemeral and non-authoritative until the settled choice is written into canonical
 System Design Markdown; visual output never grants approval.
+
+A comparison was still hard to use when its context, topology, and question arrived as separate phone
+surfaces or when fixed constraints were disguised as selectable preferences. Every material packet and
+next-question preview now begins in simplified technical English with the exact decision, current
+importance, fixed and unresolved constraints, common criteria/trade-off axes, option optimizations,
+and the distinction between genuine choices and rejected controls. When the constraints already decide
+the result, synthesize that consequence rather than manufacturing a picker. Prefer one combined
+context-plus-diagram phone-first packet.
+
+Agent-led drafting also lost rationale when materially different alternatives appeared in analysis but
+only the winner reached the artifact. `agent_led` now preserves equivalent decision evidence in the
+Decision map and owning section of canonical System Design Markdown. It adds no thirteenth section and
+requires no HTML solely for this evidence rule.

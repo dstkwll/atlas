@@ -228,7 +228,7 @@ def normalize_decision_name(text: str) -> str:
 
 
 def clean_decision_name(text: str) -> str:
-    cleaned = re.sub(r"\s+(alternatives|decision)$", "", text.strip(), flags=re.IGNORECASE)
+    cleaned = re.sub(r"\s+(alternatives|decision|options)$", "", text.strip(), flags=re.IGNORECASE)
     return normalize_decision_name(cleaned)
 
 
@@ -262,9 +262,11 @@ def decision_groups(markdown: str, parser) -> tuple[list[DecisionGroup], set[str
         if token.type == "heading_open" and token.tag == "h3" and tokens[index + 1].type == "inline":
             candidate = inline_text(tokens[index + 1])
             if not OPTION_PATTERN.match(candidate):
-                if re.search(r"\s+(alternatives|decision)$", candidate, re.IGNORECASE):
-                    current_group = {"name": clean_decision_name(candidate), "options": []}
-                    groups.append(current_group)
+                current_group = None
+                if candidate.casefold() == "decision map":
+                    continue
+                current_group = {"name": clean_decision_name(candidate), "options": []}
+                groups.append(current_group)
                 continue
         elif token.type == "paragraph_open" and tokens[index + 1].type == "inline":
             candidate = inline_text(tokens[index + 1])
@@ -412,7 +414,9 @@ def markdown_renderer():
     def render_option_open(renderer, tokens, index, options, env):
         text = inline_text(tokens[index + 1]) if index + 1 < len(tokens) else ""
         if tokens[index].tag == "h3" and not OPTION_PATTERN.match(text):
-            if re.search(r"\s+(alternatives|decision)$", text, re.IGNORECASE):
+            if text.casefold() == "decision map":
+                env.pop("decision_name", None)
+            else:
                 env["decision_name"] = clean_decision_name(text)
         status = option_status(
             text,

@@ -444,6 +444,46 @@ class RenderSystemDesignTests(unittest.TestCase):
             self.assertIn('<p class="decision-option decision-option--alternative"><span class="decision-status">Not selected</span><strong>Option 1 — shared route (recommended)</strong></p>', html)
             self.assertIn('<p class="decision-option decision-option--selected"><span class="decision-status">Selected</span><strong>Option 1 — shared route (recommended)</strong></p>', html)
 
+    def test_selected_option_number_does_not_bleed_across_h3_decision_groups(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            write_system_design(run, {
+                "Proposed system": (
+                    "### Runtime alternatives\n\n"
+                    "**Option 1 — route A (selected)**\n\n"
+                    "**Option 2 — route B**\n\n"
+                    "### Notes\n\n"
+                    "**Option 1 — document the operational caveat**"
+                )
+            }, gate_ready=False)
+
+            rendered = run_render("render", "--run", run)
+
+            self.assertEqual(rendered.returncode, 0, rendered.stderr)
+            html = (run / "30-system-design.html").read_text(encoding="utf-8")
+            self.assertEqual(html.count('<span class="decision-status">Selected</span>'), 1)
+            self.assertIn(
+                '<span class="decision-status">Not selected</span><strong>Option 1 — document the operational caveat</strong>',
+                html,
+            )
+
+    def test_gate_ready_board_does_not_let_options_heading_bypass_decision_map(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            write_system_design(run, {
+                "Proposed system": (
+                    "### Runtime options\n\n"
+                    "**Option 1 — route A (selected)**\n\n"
+                    "Selected route.\n\n"
+                    "**Option 2 — route B**"
+                )
+            }, gate_ready=True)
+
+            rendered = run_render("render", "--run", run)
+
+            self.assertNotEqual(rendered.returncode, 0)
+            self.assertIn("Decision map", rendered.stderr)
+
     def test_gate_ready_board_rejects_missing_or_duplicate_selected_routes(self):
         cases = {
             "missing": (
