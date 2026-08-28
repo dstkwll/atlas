@@ -1041,3 +1041,42 @@ fallback exists. Missing declared material is a packaging/preflight blocker. Mis
 judgment is `DESIGN_BLOCKED`. Repository facts within granted inspection authority remain
 discoverable without becoming undeclared planning truth. No execution runtime or planning-run
 migration is introduced by this correction.
+
+---
+
+## L-027 — Visual decision support must clarify a choice, not decorate a design
+
+### Evidence reviewed
+
+During real co-design use, prose-only alternatives made structural differences, comparable
+trade-offs, and failure behavior harder to evaluate than the underlying decision required. The
+existing deterministic board helped inspect the accumulated candidate after choices were written,
+but did not require decision-time comparison before the user chose.
+
+### Standing result
+
+For each material co-design choice, present one decision packet: a comparison matrix across common
+criteria, the minimum useful topology, sequence/data-flow, schema/protocol, state/lifecycle, or
+failure/recovery visual, and a plain-language explanation of trade-offs, operational consequences,
+and failure modes. When no visual improves the decision, state why and keep the packet textual.
+These aids remain ephemeral and non-authoritative until the settled choice is written into canonical
+System Design Markdown; visual output never grants approval.
+
+A comparison was still hard to use when its context, topology, and question arrived as separate phone
+surfaces or when fixed constraints were disguised as selectable preferences. Every material packet and
+next-question preview now begins in simplified technical English with the exact decision, current
+importance, fixed and unresolved constraints, common criteria/trade-off axes, option optimizations,
+and the distinction between genuine choices and rejected controls. When the constraints already decide
+the result, synthesize that consequence rather than manufacturing a picker. Prefer one combined
+context-plus-diagram phone-first packet.
+
+Agent-led drafting also lost rationale when materially different alternatives appeared in analysis but
+only the winner reached the artifact. `agent_led` now preserves equivalent decision evidence in the
+Decision map and owning section of canonical System Design Markdown. It adds no thirteenth section and
+requires no HTML solely for this evidence rule.
+
+Adversarial review then showed that whole-document readiness regexes and permissive option extraction
+could let body examples alter `gate_ready`, hide matrix-only decisions, duplicate option identity, or
+reuse legacy markers for new candidates. Current rendering parses the frontmatter Boolean once,
+requires unique standalone option labels and decision identities, treats matrices as support, and
+limits legacy markers to exact previously accepted candidate bytes.

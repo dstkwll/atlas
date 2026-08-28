@@ -36,13 +36,30 @@ Use [`references/system-design-file.md`](references/system-design-file.md) as th
 
 Write from the reliance horizon: changing a Stage 3 choice requires a caller, peer, or operator to adjust or changes an accepted guarantee. **Features pay for seams:** introduce or retain a system seam only when a named accepted behavior, authority boundary, or independently changing responsibility requires it. Delete speculative seams; anticipated reuse, aesthetic symmetry, and hypothetical flexibility do not pay for one. Cover all twelve required sections. Keep file placement, language signatures, internal calls, locking mechanics, migration order, and test seams in Program Design.
 
+Begin every material decision packet and every preview of the exact decision or next question in simplified technical English.
+State the exact decision or next question and why it matters now, fixed constraints, what is not yet decided, and the same evaluation criteria and trade-off axes.
+State what each option optimizes and whether options are genuine choices or rejected controls retained only as evidence.
+When constraints determine the answer, synthesize the resulting consequence; do not manufacture a preference picker. Prefer one combined context-plus-diagram phone-first packet, not separate context and topology visuals.
+
 ### `agent_led`
 
-Inspect the current system and applicable source, draft all sections, cold-read the candidate, and repair producer-owned gaps. Write canonical `30-system-design.md` as in Slice 1. Do not require or create HTML.
+Inspect the current system and applicable source, draft all sections, cold-read the candidate, and repair producer-owned gaps. Write canonical `30-system-design.md`; do not require or create HTML.
+When agent-led analysis presents materially different alternatives, persist equivalent decision evidence in canonical Markdown; use the framing above for every retained option, keep it within the existing twelve required sections, record the selected route in the Decision map, and retain alternatives and reasoning in the owning section. This does not require HTML solely for this evidence rule.
 
 ### `co_design`
 
 Chat is the interactive control surface. Work on one system seam or decision at a time. Ask one plain question; present two or three concrete alternatives; give a recommendation and its strongest counterargument; assign the matching stable label from [`references/system-design-board.md`](references/system-design-board.md). The user may redirect or zoom in. Write each settled choice into Markdown; conversation alone is neither artifact nor approval.
+
+For each material choice, present a decision packet rather than prose alone: a same-criteria comparison matrix plus the minimum useful visual—topology/component, sequence or data flow, schema/protocol, state/lifecycle, or failure/recovery.
+Use a chat-native table, text/Mermaid diagram, or host-rendered visual as supported, with a plain-language explanation of trade-offs, operational consequences, and failure modes.
+If no visual adds decision-relevant clarity, state why no visual adds decision-relevant clarity rather than generating decoration. Decision-time visuals are ephemeral and non-authoritative; only settled Markdown records the choice.
+
+For every settled set, write one standalone `Option <number> — ...` label per route beneath its owning H3 and exactly one selected option marked `(selected)`; retain the others as evidence. Comparison matrices mirror those standalone option numbers.
+Decision identities are unique after normalization, and option numbers are unique within each decision. A recommendation is provisional, not a terminal decision state.
+Current writes use `(selected)` only; legacy markers require exact candidate bytes already bound to a prior System Design acceptance.
+Keep `### Decision map` first in `Proposed system`, with `Decision`, `Selected route`, `Relationship / disposition`, and `Implementation consequence`; relationship/disposition is concise free-form text, not a donor-specific enum.
+Update the map whenever a choice settles, including choices detailed in later sections. It summarizes commitments but does not replace reasoning, diagrams, counterarguments, or rejected controls.
+Before readiness, an open group may have no selected marker; a gate-ready board fails closed unless every alternative set has exactly one.
 
 Never edit canonical `30-system-design.md` directly in co-design. Stage the complete replacement at `<run>/.30-system-design.next.md`, then run:
 
@@ -56,6 +73,8 @@ python3 "<atlas-plugin-root>/tools/render_system_design.py" write --run "<run-di
 python3 "<atlas-plugin-root>/tools/render_system_design.py" render --run "<run-directory>"
 python3 "<atlas-plugin-root>/tools/render_system_design.py" verify --run "<run-directory>"
 ```
+
+Before presenting the board as a decision surface, apply the mobile projection contract in [`references/system-design-board.md`](references/system-design-board.md): exercise the real current board at phone and desktop widths, prove no page-level horizontal overflow, and visually inspect the header, one non-trivial table, and one diagram. A mechanically verified but unreadable board is not complete decision evidence. When browser rendering is unavailable, state that limitation and use a verified phone-first decision image for chat rather than claiming the HTML is mobile-ready.
 
 The board must remain self-contained, metadata-bound, non-authoritative, and complete across every stable view. Put an explicit inapplicability reason in the matching Markdown section when a view does not apply. Do not generate decorative images or accept HTML bytes independently.
 

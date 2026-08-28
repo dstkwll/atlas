@@ -267,6 +267,30 @@ class PairedDesignArchitectureTests(unittest.TestCase):
         self.assertRegex(runtime, r"(?i)no second graph.{0,120}packet acceptance.{0,160}runtime planner")
         self.assertRegex(borrow_map, r"(?i)supervisor gap filling.{0,120}REJECT")
 
+    def test_v016_records_current_system_design_decision_without_rewriting_d071(self):
+        root_readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        architecture_readme = read("README.md")
+        decision = normalized("31-v0.16-decisions.md")
+        historical = read("22-v0.7-decisions.md")
+        learnings = read("16-learnings-and-course-corrections.md")
+        skill = (ROOT / "plugins" / "atlas" / "skills" / "system-design" / "SKILL.md").read_text(encoding="utf-8")
+        board = (ROOT / "plugins" / "atlas" / "skills" / "system-design" / "references" / "system-design-board.md").read_text(encoding="utf-8")
+        renderer = (ROOT / "plugins" / "atlas" / "tools" / "render_system_design.py").read_text(encoding="utf-8")
+
+        self.assertIn("architecture/31-v0.16-decisions.md", root_readme)
+        self.assertIn("**v0.16**", root_readme)
+        self.assertIn("**v0.16**", architecture_readme)
+        self.assertIn("D-089", decision)
+        self.assertIn("Relationship / disposition", decision)
+        self.assertIn("standalone `Option <number> — ...` label", skill)
+        self.assertIn("frontmatter Boolean", board)
+        self.assertIn("Refined by D-089", historical)
+        self.assertNotIn("For each material choice, present a decision packet", historical)
+        self.assertIn("## L-026 — A pointer-only ticket", learnings)
+        self.assertIn("## L-027 — Visual decision support", learnings)
+        self.assertIn("yaml.safe_load", renderer)
+        self.assertNotIn('re.search(r"(?m)^gate_ready:', renderer)
+
     def test_v015_artifact_example_execution_context_matches_declared_sections(self):
         artifact_model = read("03-artifact-model.md")
         example = artifact_model.split("Exact version-2 frontmatter:", 1)[1].split("## `reviews/`", 1)[0]
@@ -543,6 +567,52 @@ class PairedDesignArchitectureTests(unittest.TestCase):
         self.assertIn("renderer version", artifact)
         for view in ("topology", "ownership", "schema", "failure", "rejected alternatives"):
             self.assertIn(view, artifact)
+
+    def test_codesign_material_choices_require_visual_decision_support(self):
+        for name in ("02-workflow.md", "31-v0.16-decisions.md"):
+            text = normalized(name).lower()
+            with self.subTest(name=name):
+                self.assertIn("decision packet rather than prose alone", text)
+                self.assertIn("comparison matrix", text)
+                self.assertIn("minimum useful visual", text)
+                for visual in ("topology", "sequence", "data flow", "schema", "state", "failure"):
+                    self.assertIn(visual, text)
+                self.assertIn("plain-language explanation", text)
+                self.assertIn("operational consequences", text)
+                self.assertRegex(text, r"(?:no visual|visual adds no).{0,120}(?:state|explain).{0,120}why")
+                self.assertRegex(text, r"ephemeral|non-authoritative")
+
+    def test_material_decisions_and_question_previews_start_with_complete_phone_first_framing(self):
+        for name in ("02-workflow.md", "31-v0.16-decisions.md"):
+            text = normalized(name).lower()
+            with self.subTest(name=name):
+                self.assertIn("begin every material decision packet", text)
+                self.assertIn("every preview of the exact decision or next question", text)
+                self.assertIn("simplified technical english", text)
+                self.assertIn("exact decision or next question", text)
+                self.assertIn("why it matters now", text)
+                self.assertIn("fixed constraints", text)
+                self.assertIn("not yet decided", text)
+                self.assertIn("same evaluation criteria and trade-off axes", text)
+                self.assertIn("what each option optimizes", text)
+                self.assertIn("genuine choices or rejected controls", text)
+                self.assertRegex(text, r"constraints determine.{0,120}synthesize.{0,120}consequence")
+                self.assertRegex(text, r"(?:do not|rather than).{0,100}(?:manufacture|invent).{0,80}preference")
+                self.assertIn("one combined context-plus-diagram phone-first packet", text)
+                self.assertIn("separate context and topology visuals", text)
+
+    def test_agent_led_preserves_material_alternative_evidence_in_canonical_markdown_without_html(self):
+        for name in ("02-workflow.md", "31-v0.16-decisions.md"):
+            text = normalized(name).lower()
+            with self.subTest(name=name):
+                self.assertIn("agent_led", text)
+                self.assertIn("materially different alternatives", text)
+                self.assertIn("equivalent decision evidence", text)
+                self.assertIn("canonical `30-system-design.md`", text)
+                self.assertIn("existing twelve required sections", text)
+                self.assertIn("decision map", text)
+                self.assertRegex(text, r"does not.{0,100}require.{0,100}`30-system-design.html`")
+                self.assertIn("solely for this evidence rule", text)
 
     def test_stage_three_and_four_have_one_decision_ownership_rule(self):
         workflow = normalized("02-workflow.md")

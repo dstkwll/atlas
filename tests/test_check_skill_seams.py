@@ -151,6 +151,147 @@ class SkillSeamHardeningTests(unittest.TestCase):
                     findings = SEAMS.cross_skill_contracts(skills)
                     self.assertTrue(any(finding_text in message for _, message in findings), findings)
 
+    def test_system_design_mobile_projection_contract_drift_is_detected(self):
+        # This is only a literal seam-drift guard. Fresh-agent execution of the
+        # procedure is separate acceptance evidence required by AGENTS.md.
+        plugin = ROOT / "plugins" / "atlas"
+        contracts = {
+            plugin / "skills" / "system-design" / "SKILL.md": (
+                "mobile projection contract",
+                "mechanically verified but unreadable board is not complete decision evidence",
+                "exactly one selected option",
+                "### Decision map",
+                "A recommendation is provisional, not a terminal decision state",
+                "standalone `Option <number> — ...` label",
+                "Relationship / disposition",
+            ),
+            plugin / "skills" / "system-design" / "references" / "system-design-file.md": (
+                "### Decision map",
+                "| Decision | Selected route | Relationship / disposition | Implementation consequence |",
+                "(selected)",
+            ),
+            plugin / "skills" / "system-design" / "references" / "system-design-board.md": (
+                "## Mobile projection contract",
+                "white-space: pre",
+                "Mermaid is not a runtime dependency or implied capability",
+                "document.documentElement.scrollWidth <= innerWidth",
+                "390×844",
+                "at least `44px` high",
+                "both light and dark schemes",
+                "## Decision visibility contract",
+                "places **Decisions at a glance** above the detailed views",
+                "labels the selected option **Selected** and every other option **Not selected**",
+                "Selection is scoped by decision identity and option number, never by repeated option text",
+                "The renderer reads `gate_ready` once as a frontmatter Boolean",
+                "Comparison matrices are supporting detail and never replace those standalone labels",
+                "Decision identities are unique after normalization",
+                "option numbers are unique within each decision",
+                "Later Option-number elaborations inside the same decision inherit that decision's selected route",
+                "Status text is real HTML content, not CSS-generated content",
+                "Option-looking text inside fenced code never participates in decision extraction",
+                "A gate-ready current candidate must use canonical `(selected)` markers",
+                "Exact previously accepted `(chosen)` artifacts remain renderable",
+            ),
+        }
+        for path, clauses in contracts.items():
+            text = path.read_text(encoding="utf-8")
+            for clause in clauses:
+                self.assertIn(clause, text)
+                with self.subTest(path=path.name, clause=clause), tempfile.TemporaryDirectory() as td:
+                    skills = self.copy_plugin(Path(td))
+                    target = skills / path.relative_to(plugin / "skills")
+                    mutated = target.read_text(encoding="utf-8")
+                    target.write_text(mutated.replace(clause, "[removed mobile board contract]", 1), encoding="utf-8")
+                    findings = SEAMS.cross_skill_contracts(skills)
+                    self.assertTrue(
+                        any("system-design" in message and "missing seam contract" in message for _, message in findings),
+                        findings,
+                    )
+
+    def test_material_decision_framing_contract_drift_is_detected(self):
+        plugin = ROOT / "plugins" / "atlas"
+        contracts = {
+            plugin / "skills" / "system-design" / "SKILL.md": (
+                "Begin every material decision packet",
+                "every preview of the exact decision or next question",
+                "simplified technical English",
+                "exact decision or next question",
+                "why it matters now",
+                "fixed constraints",
+                "not yet decided",
+                "same evaluation criteria and trade-off axes",
+                "what each option optimizes",
+                "genuine choices or rejected controls",
+                "synthesize the resulting consequence",
+                "do not manufacture a preference picker",
+                "one combined context-plus-diagram phone-first packet",
+                "separate context and topology visuals",
+            ),
+            plugin / "skills" / "system-design" / "references" / "system-design-board.md": (
+                "## Decision packet framing contract",
+                "simplified technical English",
+                "one combined context-plus-diagram phone-first packet",
+                "do not manufacture a preference picker",
+            ),
+        }
+        for path, clauses in contracts.items():
+            text = path.read_text(encoding="utf-8")
+            for clause in clauses:
+                self.assertIn(clause, text)
+                with self.subTest(path=path.name, clause=clause), tempfile.TemporaryDirectory() as td:
+                    skills = self.copy_plugin(Path(td))
+                    target = skills / path.relative_to(plugin / "skills")
+                    mutated = target.read_text(encoding="utf-8")
+                    target.write_text(
+                        mutated.replace(clause, "[removed decision framing contract]"),
+                        encoding="utf-8",
+                    )
+                    findings = SEAMS.cross_skill_contracts(skills)
+                    self.assertTrue(
+                        any("system-design" in message and "missing seam contract" in message for _, message in findings),
+                        findings,
+                    )
+
+    def test_agent_led_canonical_alternative_evidence_contract_drift_is_detected(self):
+        plugin = ROOT / "plugins" / "atlas"
+        contracts = {
+            plugin / "skills" / "system-design" / "SKILL.md": (
+                "When agent-led analysis presents materially different alternatives",
+                "persist equivalent decision evidence",
+                "use the framing above for every retained option",
+                "within the existing twelve required sections",
+                "selected route in the Decision map",
+                "alternatives and reasoning in the owning section",
+                "does not require HTML solely for this evidence rule",
+            ),
+            plugin / "skills" / "system-design" / "references" / "system-design-file.md": (
+                "Agent-led material alternative evidence",
+                "same criteria and trade-off axes",
+                "what each option optimizes",
+                "genuine choice or rejected control",
+                "owning existing section",
+                "No additional top-level section",
+                "HTML is not implied solely by this evidence rule",
+            ),
+        }
+        for path, clauses in contracts.items():
+            text = path.read_text(encoding="utf-8")
+            for clause in clauses:
+                self.assertIn(clause, text)
+                with self.subTest(path=path.name, clause=clause), tempfile.TemporaryDirectory() as td:
+                    skills = self.copy_plugin(Path(td))
+                    target = skills / path.relative_to(plugin / "skills")
+                    mutated = target.read_text(encoding="utf-8")
+                    target.write_text(
+                        mutated.replace(clause, "[removed agent-led evidence contract]"),
+                        encoding="utf-8",
+                    )
+                    findings = SEAMS.cross_skill_contracts(skills)
+                    self.assertTrue(
+                        any("system-design" in message and "missing seam contract" in message for _, message in findings),
+                        findings,
+                    )
+
     def test_d081_new_intake_records_full_canonical_commit_oid(self):
         plugin = ROOT / "plugins" / "atlas"
         start_path = plugin / "skills" / "start-run" / "SKILL.md"
@@ -1402,6 +1543,15 @@ class SkillSeamHardeningTests(unittest.TestCase):
         self.assertIn("one system seam or decision at a time", system)
         self.assertIn("two or three concrete alternatives", system)
         self.assertIn("strongest counterargument", system)
+        normalized_system = " ".join(system.split())
+        self.assertIn("decision packet rather than prose alone", normalized_system)
+        self.assertIn("comparison matrix", normalized_system)
+        self.assertIn("minimum useful visual", normalized_system)
+        for visual in ("topology", "sequence", "data flow", "schema", "state", "failure"):
+            self.assertIn(visual, normalized_system)
+        self.assertIn("plain-language explanation", normalized_system)
+        self.assertIn("operational consequences", normalized_system)
+        self.assertIn("state why no visual adds decision-relevant clarity", normalized_system)
         self.assertIn("exact named internal handoff to `atlas:control-planning`", system)
         self.assertIn("agent_led", control)
         self.assertIn("co_design", control)

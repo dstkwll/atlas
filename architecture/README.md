@@ -6,6 +6,10 @@ The numbered documents are authoritative. `rolling-monolith.md` is generated fro
 
 ## Current baseline
 
+**v0.16** records D-089: System Design uses explicit simplified-English framing, canonical standalone
+option labels and Decision-map identity, equivalent agent-led evidence, and verified phone/desktop
+projection without changing planning authority or adding an artifact.
+
 **v0.15** makes D-085's semantic handoff executable without adding execution machinery. The current
 ticket-graph manifest version is exact integer `2`; version 1 is retained as raw historical evidence
 only and is not loadable or factory-executable. Each ticket declares exact `context.sources` with a nonempty purpose, while Stage

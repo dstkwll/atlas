@@ -23,6 +23,12 @@ source_binding:
 
 ## Proposed system
 
+### Decision map
+
+| Decision | Selected route | Relationship / disposition | Implementation consequence |
+|---|---|---|---|
+| <decision name> | <Option N — selected route (selected)> | <concise relationship to the current system or disposition of the prior route> | <what callers, peers, operators, or later design now do> |
+
 <proposed topology and system-observable commitments>
 
 ## Responsibilities and seams
@@ -65,6 +71,13 @@ source_binding:
 
 <remaining non-blocking decisions, or None.>
 ```
+
+### Agent-led material alternative evidence
+
+When agent-led analysis presents materially different alternatives, the Decision map records the
+selected route and the owning existing section retains the alternatives and reasoning. For every
+option, use the same criteria and trade-off axes, state what each option optimizes, and identify it as
+a genuine choice or rejected control. No additional top-level section is introduced. HTML is not implied solely by this evidence rule.
 
 Direct Stage 0 source shape:
 

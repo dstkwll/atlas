@@ -202,6 +202,36 @@ recommendation and its strongest counterargument; and assign a stable label. The
 or zoom in. Accepted conversational choices are written into canonical `30-system-design.md`;
 conversation alone never has artifact or acceptance authority.
 
+For each material choice, present a decision packet rather than prose alone: a concise comparison
+matrix using the same criteria for every option, plus the minimum useful visual that exposes the
+decision-relevant structure. Select the fitting view from topology/component, sequence or data flow,
+schema/protocol, state/lifecycle, and failure/recovery; pair it with a plain-language explanation of
+the trade-offs, operational consequences, and failure modes it changes. If no visual adds
+decision-relevant clarity, state why no visual adds clarity rather than creating decoration.
+Decision-time visuals are ephemeral,
+non-authoritative aids until the settled choice is written into canonical Markdown.
+
+Begin every material decision packet, and every preview of the exact decision or next question, in
+simplified technical English. State the exact decision or next question, why it matters now, the fixed
+constraints, what is not yet decided, the same evaluation criteria and trade-off axes, what each option
+optimizes, and whether the options are genuine choices or rejected controls retained for evidence.
+When constraints determine the answer, synthesize the resulting consequence; do not manufacture a
+preference picker. Prefer one combined context-plus-diagram phone-first packet over separate context
+and topology visuals.
+
+In `agent_led`, whenever the analysis presents materially different alternatives, persist equivalent
+decision evidence in canonical `30-system-design.md`. Keep that evidence within the existing twelve
+required sections: summarize the selected route in the Decision map and retain the alternatives and
+reasoning in the owning section. This rule does not require `30-system-design.html`; HTML is not
+created solely for this evidence rule.
+
+Current decision groups use unique owning H3 identities and unique standalone `Option <number> — ...`
+labels; comparison matrices support rather than replace those labels. A settled route uses
+`(selected)`. The Decision map uses `Decision`, `Selected route`, free-form
+`Relationship / disposition`, and `Implementation consequence`. Renderer readiness comes only from
+the parsed frontmatter Boolean. Legacy markers render only for exact previously accepted candidate
+bytes.
+
 Co-design also requires `30-system-design.html`, a deterministic, self-contained visual board bound
 to the exact Markdown source path/hash and renderer version. It contains precise architecture views,
 not decorative generative imagery: current/proposed topology, seam/ownership map,
