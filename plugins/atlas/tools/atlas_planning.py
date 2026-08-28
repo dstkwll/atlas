@@ -65,6 +65,7 @@ PRODUCT_CLOSURE_FIELDS = {"version", "sha256"}
 SYSTEM_DESIGN_FILE = "30-system-design.md"
 PROGRAM_DESIGN_FILE = "40-program-design.md"
 TICKET_GRAPH_FILE = "50-ticket-graph.json"
+CURRENT_TICKET_GRAPH_VERSION = 2
 SYSTEM_DESIGN_FIELDS = {
     "run", "version", "status", "gate_ready", "participation", "opened", "source_binding",
 }
@@ -78,10 +79,11 @@ TICKET_GRAPH_FIELDS = {
 TICKET_GRAPH_ENTRY_FIELDS = {"id", "path", "sha256"}
 TICKET_FIELDS = {
     "id", "kind", "status", "repository", "blocked_by", "tracer", "enabling",
-    "references", "external_prerequisites", "validators", "outcomes", "reviews",
+    "context", "external_prerequisites", "validators", "outcomes", "reviews",
 }
 TICKET_DEPENDENCY_FIELDS = {"ticket", "establishes"}
-TICKET_REFERENCE_FIELDS = {"kind", "sections"}
+TICKET_CONTEXT_FIELDS = {"sources"}
+TICKET_CONTEXT_SOURCE_FIELDS = {"kind", "sections", "purpose"}
 TICKET_VALIDATOR_FIELDS = {"id", "command", "success"}
 TICKET_OUTCOME_FIELDS = {"id", "promise", "acceptance", "validator_ids"}
 TICKET_ENABLING_FIELDS = {"consumer", "rationale"}
@@ -249,13 +251,59 @@ def contains_machine_local_path(value: Any) -> bool:
     return False
 
 
-def program_design_headings(body: str) -> tuple[str, ...]:
+def markdown_h2_sections(body: str) -> tuple[tuple[str, tuple[str, ...]], ...]:
+    lines = body.splitlines()
     tokens = MarkdownIt("commonmark").parse(body)
-    return tuple(
-        tokens[index + 1].content
+    headings = [
+        (tokens[index + 1].content, token.map)
         for index, token in enumerate(tokens[:-1])
-        if token.type == "heading_open" and token.tag == "h2"
-    )
+        if token.type == "heading_open"
+        and token.tag == "h2"
+        and tokens[index + 1].type == "inline"
+        and token.map is not None
+    ]
+    sections = []
+    for index, (name, line_map) in enumerate(headings):
+        start = line_map[1]
+        end = headings[index + 1][1][0] if index + 1 < len(headings) else len(lines)
+        sections.append((
+            name,
+            tuple(line.strip() for line in lines[start:end] if line.strip()),
+        ))
+    return tuple(sections)
+
+
+def markdown_h2_headings(body: str) -> tuple[str, ...]:
+    return tuple(name for name, _ in markdown_h2_sections(body))
+
+
+def program_design_headings(body: str) -> tuple[str, ...]:
+    return markdown_h2_headings(body)
+
+
+def expected_ticket_execution_context_lines(sources: list[dict[str, Any]]) -> tuple[str, ...]:
+    lines = []
+    for source in sources:
+        sections = source["sections"]
+        rendered_sections = (
+            "; ".join(f"`{section}`" for section in sections)
+            if sections
+            else "none"
+        )
+        purpose = " ".join(source["purpose"].split())
+        lines.append(
+            f"- `{source['kind']}` — sections: {rendered_sections} — purpose: {purpose}"
+        )
+    return tuple(lines)
+
+
+def ticket_execution_context_lines(body: str) -> tuple[str, ...]:
+    matches = [
+        lines
+        for name, lines in markdown_h2_sections(body)
+        if name == "Execution context"
+    ]
+    return matches[0] if len(matches) == 1 else ()
 
 
 def validate_semantic_review(review: Any) -> None:
@@ -1153,7 +1201,7 @@ def expected_program_design_source(
     product = planning["stage0_anchor"].get("product_closure")
     if "discovery" in effective["stages"]:
         if not isinstance(product, dict):
-            raise ControlError("Program Design requires an accepted product-closure source")
+            raise ControlError("Program Design requires an accepted Product Definition Approval source")
         return {
             "kind": "product_closure",
             "artifact": "20-prd.md",
@@ -1178,7 +1226,7 @@ def expected_ticket_graph_sources(
     product = planning["stage0_anchor"].get("product_closure")
     if "discovery" in stages:
         if not isinstance(product, dict):
-            raise ControlError("ticket graph requires an accepted product-closure source")
+            raise ControlError("ticket graph requires an accepted Product Definition Approval source")
         sources.append({
             "kind": "product_closure",
             "artifact": "20-prd.md",
@@ -1285,6 +1333,11 @@ def validate_ticket_graph_acceptance(
     effective: dict[str, Any],
     record: Any,
 ) -> None:
+    if isinstance(record, dict) and record.get("candidate_version") == 1:
+        raise ControlError(
+            "planning-control.json contains a ticket-graph v1 acceptance retained as raw historical evidence only; "
+            "it is not loadable or factory-executable and must not be converted in place"
+        )
     if not isinstance(record, dict) or set(record) != PLANNING_ACCEPTANCE_FIELDS:
         raise ControlError("planning-control.json ticket-graph acceptance is malformed")
     try:
@@ -1295,7 +1348,7 @@ def validate_ticket_graph_acceptance(
     expected_authority = effective["gates"]["tickets"]["authority"]
     if (
         type(record.get("candidate_version")) is not int
-        or record["candidate_version"] != 1
+        or record["candidate_version"] != CURRENT_TICKET_GRAPH_VERSION
         or re.fullmatch(r"[0-9a-f]{64}", str(record.get("candidate_sha256", ""))) is None
         or record.get("authority") != expected_authority
         or record.get("review_reference") != TICKET_GRAPH_REVIEW_REFERENCE
@@ -1369,7 +1422,7 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
         or product_closure["version"] < 1
         or not re.fullmatch(r"[0-9a-f]{64}", str(product_closure.get("sha256", "")))
     ):
-        raise ControlError("planning-control.json product-closure anchor is malformed")
+        raise ControlError("planning-control.json Product Definition Approval anchor is malformed")
     _, effective = verified_state(run_dir)
     validate_run(effective)
     selected = {stage for stage in DOWNSTREAM_STAGES if stage in effective["stages"]}
@@ -1756,7 +1809,7 @@ def initialize_planning(run_dir: Path) -> str:
     if discovery_selected:
         acceptance = control.get("acceptances", {}).get("discovery")
         if not isinstance(acceptance, dict):
-            raise ControlError("selected discovery lacks accepted product-closure provenance")
+            raise ControlError("selected discovery lacks accepted Product Definition Approval provenance")
         product_closure = {
             "version": acceptance["candidate_version"],
             "sha256": acceptance["candidate_sha256"],
@@ -1792,7 +1845,7 @@ def current_stage0_anchor(run_dir: Path, control: dict[str, Any], effective: dic
     if "discovery" in effective["stages"]:
         acceptance = control.get("acceptances", {}).get("discovery")
         if not isinstance(acceptance, dict):
-            raise ControlError("selected discovery lacks accepted product-closure provenance")
+            raise ControlError("selected discovery lacks accepted Product Definition Approval provenance")
         product_closure = {
             "version": acceptance["candidate_version"],
             "sha256": acceptance["candidate_sha256"],
@@ -2215,7 +2268,7 @@ def system_design_report(
             "copy the intake opened date",
         ))
 
-    headings = tuple(re.findall(r"(?m)^## ([^\n]+?)\s*$", body))
+    headings = markdown_h2_headings(body)
     if headings != SYSTEM_DESIGN_SECTIONS:
         gaps.append(gap(
             SYSTEM_DESIGN_FILE,
@@ -2264,7 +2317,7 @@ def system_design_report(
         if not isinstance(source, dict) or set(source) != PRODUCT_SOURCE_FIELDS or source != expected:
             gaps.append(gap(
                 SYSTEM_DESIGN_FILE,
-                "source_binding does not match the exact accepted product closure",
+                "source_binding does not match the exact accepted Product Definition Approval source",
                 "system_design",
                 "bind source_binding to the accepted 20-prd.md version and sha256",
             ))
@@ -2472,7 +2525,7 @@ def program_design_report(
         ):
             gaps.append(gap(
                 PROGRAM_DESIGN_FILE,
-                "source_binding does not match the exact accepted product closure",
+                "source_binding does not match the exact accepted Product Definition Approval source",
                 "program_design",
                 "bind source_binding to the accepted 20-prd.md version and sha256",
             ))
@@ -2569,8 +2622,18 @@ def ticket_graph_report(
     candidate_version = manifest.get("version")
     if type(candidate_version) is int:
         report["candidate_version"] = candidate_version
-    if type(candidate_version) is not int or candidate_version != 1:
-        gaps.append(gap(TICKET_GRAPH_FILE, "graph version must equal integer 1", "tickets", "write graph version 1"))
+    if type(candidate_version) is not int or candidate_version != CURRENT_TICKET_GRAPH_VERSION:
+        problem = (
+            "graph version 1 is raw historical evidence only and is not loadable or factory-executable"
+            if candidate_version == 1
+            else f"graph version must equal integer {CURRENT_TICKET_GRAPH_VERSION}"
+        )
+        gaps.append(gap(
+            TICKET_GRAPH_FILE,
+            problem,
+            "tickets",
+            f"compile a current graph at version {CURRENT_TICKET_GRAPH_VERSION}",
+        ))
     if manifest.get("run") != planning["run"]:
         gaps.append(gap(TICKET_GRAPH_FILE, "graph run does not match planning-control.json", "tickets", "bind the graph to this run"))
     if manifest.get("status") != "draft":
@@ -2639,7 +2702,7 @@ def ticket_graph_report(
             ))
             source_sections[source_kind] = set()
         else:
-            source_sections[source_kind] = set(re.findall(r"(?m)^## ([^\n]+?)\s*$", source_body))
+            source_sections[source_kind] = set(markdown_h2_headings(source_body))
     repositories = {item["repository"] for item in effective["repos"]}
     for entry in entries:
         if not isinstance(entry, dict) or set(entry) != TICKET_GRAPH_ENTRY_FIELDS:
@@ -2684,9 +2747,9 @@ def ticket_graph_report(
             gaps.append(gap(expected_path, "ticket repository is not a frozen target", "tickets", "use one exact frozen repository identity"))
         if type(frontmatter.get("tracer")) is not bool:
             gaps.append(gap(expected_path, "ticket tracer must be boolean", "tickets", "record explicit tracer identity"))
-        headings = tuple(re.findall(r"(?m)^## ([^\n]+?)\s*$", body))
-        if headings != ("What becomes true", "Acceptance", "Relevant design"):
-            gaps.append(gap(expected_path, "ticket body does not match the exact human-readable shape", "tickets", "restore the three required sections"))
+        headings = markdown_h2_headings(body)
+        if headings != ("What becomes true", "Acceptance", "Execution context"):
+            gaps.append(gap(expected_path, "ticket body does not match the exact human-readable shape", "tickets", "restore What becomes true, Acceptance, and Execution context"))
 
         dependencies = frontmatter.get("blocked_by")
         if not isinstance(dependencies, list) or any(
@@ -2700,18 +2763,28 @@ def ticket_graph_report(
         elif len({item["ticket"] for item in dependencies}) != len(dependencies):
             gaps.append(gap(expected_path, "blocked_by contains duplicate prerequisites", "tickets", "deduplicate prerequisite edges"))
 
-        references = frontmatter.get("references")
-        reference_kinds = [item.get("kind") for item in references or [] if isinstance(item, dict)]
-        if (
-            not isinstance(references, list)
-            or not references
+        context = frontmatter.get("context")
+        context_sources = (
+            context.get("sources")
+            if isinstance(context, dict) and set(context) == TICKET_CONTEXT_FIELDS
+            else None
+        )
+        raw_context_kinds = [
+            item.get("kind") for item in context_sources or [] if isinstance(item, dict)
+        ]
+        context_kinds = [kind for kind in raw_context_kinds if isinstance(kind, str)]
+        context_is_valid = not (
+            not isinstance(context_sources, list)
+            or not context_sources
             or any(
                 not isinstance(item, dict)
-                or set(item) != TICKET_REFERENCE_FIELDS
+                or set(item) != TICKET_CONTEXT_SOURCE_FIELDS
                 or not nonempty_string(item.get("kind"))
                 or item.get("kind") not in source_kinds
                 or not isinstance(item.get("sections"), list)
                 or any(not nonempty_string(section) for section in item.get("sections", []))
+                or len(item.get("sections", [])) != len(set(item.get("sections", [])))
+                or not nonempty_string(item.get("purpose"))
                 or (item.get("kind") == "stage0" and item.get("sections") != [])
                 or (
                     item.get("kind") != "stage0"
@@ -2723,12 +2796,30 @@ def ticket_graph_report(
                         )
                     )
                 )
-                for item in references or []
+                for item in context_sources or []
             )
-            or len(reference_kinds) != len(set(reference_kinds))
-            or set(reference_kinds) != source_kinds
+            or len(context_kinds) != len(context_sources or [])
+            or len(context_kinds) != len(set(context_kinds))
+            or set(context_kinds) != source_kinds
+        )
+        if not context_is_valid:
+            gaps.append(gap(
+                expected_path,
+                "ticket context source declarations must exactly cover applicable sources with resolved sections and nonempty purpose",
+                "tickets",
+                "declare each applicable selected-path context source exactly once",
+            ))
+        elif (
+            isinstance(context_sources, list)
+            and ticket_execution_context_lines(body)
+            != expected_ticket_execution_context_lines(context_sources)
         ):
-            gaps.append(gap(expected_path, "ticket reference section does not resolve in every applicable accepted source", "tickets", "cite exact existing sections from every applicable source"))
+            gaps.append(gap(
+                expected_path,
+                "ticket Execution context must exactly mirror the ordered context.sources declarations",
+                "tickets",
+                "render one exact Execution context line per declared source, including its sections and purpose",
+            ))
 
         validators = frontmatter.get("validators")
         validator_ids = [item.get("id") for item in validators or [] if isinstance(item, dict)]

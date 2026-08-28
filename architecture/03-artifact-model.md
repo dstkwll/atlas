@@ -14,6 +14,7 @@
     ├── 30-system-design.md
     ├── 30-system-design.html        # required only for co_design
     ├── 40-program-design.md
+    ├── 50-ticket-graph.json         # current Stage 5 candidate manifest, exact version 2
     │
     ├── evidence/
     │   ├── current-state.md
@@ -28,6 +29,7 @@
     │   └── ...
     │
     ├── reviews/
+    │   ├── ticket-graph-v1.json     # evidence envelope; candidate_version is 2
     │   ├── ticket-01-contract.json
     │   ├── ticket-01-design.json
     │   └── final-*.json
@@ -129,10 +131,10 @@ controller replaces this one JSON file atomically. It is not execution runtime s
 not contain ticket ownership, attempts, retries, or repository-scoped factory events. Its mutable
 `gates` map contains the discovery boundary only when selected. Immutable `run.yaml` retains
 later-stage and conditional policy. When discovery is omitted, `phase` begins at the first selected
-downstream stage with no mutable gate; after product closure acceptance, `phase` may likewise name
+downstream stage with no mutable gate; after Product Definition Approval acceptance, `phase` may likewise name
 the next selected stage without creating mutable state for that stage.
 
-An accepted discovery/product-closure candidate remains in its prescribed artifact path.
+An accepted Product Definition Approval candidate remains in its prescribed artifact path.
 Acceptance records its current version and content hash in `control.json`; V1 does not create a
 second approved copy or retain a separate acceptance history. The Stage 0–2 controller provides no
 post-closure reopen. D-082 does not alter that rule: its one replacement path is owned by the
@@ -209,7 +211,7 @@ Consequences: ...
 This is not necessarily required for every small feature.
 
 `10-decisions.md` also owns a required `## PRD alignment retrospective` table. That table is the
-mechanical reconciliation surface for product closure: it is exhaustive over identifiers and
+mechanical reconciliation surface for Product Definition Approval: it is exhaustive over identifiers and
 best-effort over meaning, and the semantic reviewer judges whether its mappings and
 `NO_NORMATIVE_EFFECT` reasons are honest.
 
@@ -219,7 +221,7 @@ best-effort over meaning, and the semantic reviewer judges whether its mappings 
 
 Owns:
 
-> The living product contract discovery continuously maintains for product closure.
+> The living product contract discovery continuously maintains for Product Definition Approval.
 
 Should answer:
 
@@ -241,7 +243,7 @@ Owns:
 > A mandatory generated projection of `20-prd.md` for cold-read review.
 
 It is regenerated whenever the PRD changes and must declare the exact current Markdown source path,
-source SHA-256, and renderer version before product closure can pass. The controller verifies this
+source SHA-256, and renderer version before Product Definition Approval can pass. The controller verifies this
 metadata binding without re-rendering, so “current” does not claim byte-for-byte body recomputation
 during verification. It is never authoritative and never contributes its own acceptance hash.
 
@@ -263,12 +265,12 @@ leave its local realization to Program Design.
 Its admission/provenance applicability test reads the effective selected stages and chooses exactly
 one binding:
 
-- exact accepted `20-prd.md` version/hash when Product Closure is selected;
-- exact accepted/frozen Stage 0 intake and effective configuration when Product Closure is
+- exact accepted `20-prd.md` version/hash when Product Definition Approval is selected;
+- exact accepted/frozen Stage 0 intake and effective configuration when Product Definition Approval is
   `NOT_REQUIRED`, using `control.json.base_run_sha256`, `effective_config_hash`, and
   `effective_config_revision`.
 
-The omitted-Product-Closure branch creates no PRD or approval. A change to the bound source makes
+The omitted Product Definition Approval branch creates no PRD or approval. A change to the bound source makes
 accepted System Design stale and transitively stales any dependent Program Design in the same
 logical downstream transition.
 
@@ -332,7 +334,7 @@ It is provisional while paired drafting pressure-tests System Design. Before acc
 applicability test reads the run's actual selected stages and chooses exactly one upstream binding:
 
 - exact accepted `30-system-design.md` version/hash when System Design is selected;
-- exact accepted `20-prd.md` version/hash when System Design is `NOT_REQUIRED` and product closure
+- exact accepted `20-prd.md` version/hash when System Design is `NOT_REQUIRED` and Product Definition Approval
   is selected;
 - exact accepted/frozen Stage 0 intake and effective configuration when both upstream semantic
   boundaries are `NOT_REQUIRED`, using `control.json.base_run_sha256`, `effective_config_hash`, and
@@ -390,27 +392,41 @@ Purpose:
 
 > Agent-grabbable vertical execution contracts.
 
-Suggested frontmatter:
+Exact version-2 frontmatter:
 
 ```yaml
 ---
 id: async-jobs-02
+kind: vertical
 status: ready
+repository: stable-repository-id
 blocked_by:
-  - async-jobs-01
-risk: medium
-
-references:
-  applicable_upstream:
-    - <path-to-applicable-accepted-source>
-
-validation:
-  - dotnet test --filter JobCancellation
-  - dotnet test
-
-review:
-  contract: required
-  design: required
+  - ticket: async-jobs-01
+    establishes: The accepted queue seam exists for cancellation behavior.
+tracer: false
+enabling: null
+context:
+  sources:
+    - kind: program_design
+      sections:
+        - Call and data flow
+        - Test seams and validation plan
+      purpose: Constrain implementation to the accepted queue flow and proof seams.
+external_prerequisites: []
+validators:
+  - id: cancellation-behavior
+    command: dotnet test --filter JobCancellation
+    success: exit_zero
+outcomes:
+  - id: cancellation-behavior
+    promise: A scheduled job can be cancelled before dispatch.
+    acceptance:
+      - Cancellation succeeds for an existing pending job.
+      - Cancelled jobs are never dispatched.
+    validator_ids:
+      - cancellation-behavior
+reviews:
+  - design
 ---
 ```
 
@@ -418,11 +434,15 @@ The illustrative `status: ready` is planning prose, not execution readiness auth
 readiness is derived from the current accepted graph plus demonstrated satisfaction of every
 execution-preventing condition; editing a ticket file cannot make work runnable.
 
-The compiler replaces the placeholder with one entry for each applicable accepted source on the
-selected path. It never emits the placeholder itself. Product Closure, System Design, and Program
-Design entries appear only when those boundaries are selected. A direct Program Design path lists
-the accepted Program Design and its frozen Stage 0 binding, not nonexistent upstream artifacts. A
-`trivial` path with no semantic producer has one ticket and therefore one one-node graph; its sole
+The ticket's top-level `context` has exactly `sources`; each source has exactly `kind`, `sections`, and
+`purpose`. The compiler emits every applicable accepted selected-path source kind exactly once.
+Product Definition Approval, System Design, and Program Design entries appear only when those boundaries are
+selected. A direct Program Design path lists the accepted Program Design and its frozen Stage 0
+binding, not nonexistent upstream artifacts. Stage 0 has empty `sections`; each semantic source has
+one or more unique section names that resolve to existing H2s in the bound artifact. Every `purpose`
+is nonempty. Legacy top-level `references` is invalid and is never projected or converted.
+
+A `trivial` path with no semantic producer has one ticket and therefore one one-node graph; its sole
 planning source is the frozen Stage 0 intake/effective configuration, plus the target repository
 baseline. It neither requires nor manufactures a PRD, System Design, or Program Design artifact.
 
@@ -431,8 +451,10 @@ Before execution, the downstream planning controller records an acceptance bindi
 graph version and SHA-256, its applicable accepted upstream sources, and the frozen baseline of each
 target repository. This is an acceptance of the complete graph, not permission for each ticket to
 self-approve. Any bound upstream acceptance or baseline change makes the graph stale. The artifact
-model fixes those semantic bindings but does not yet fix whether a future implementation represents
-the graph with an index, manifest, canonical serialization, or another deterministic form.
+model fixes the current representation: `50-ticket-graph.json` has exact integer version `2` and
+indexes exact ticket bytes. Version 1 is raw historical evidence only and is not loadable or factory-executable. The
+review evidence remains `reviews/ticket-graph-v1.json`, envelope version 1, with
+`candidate_version: 2`.
 
 That same candidate preserves truthful prerequisite meaning, a preferred order distinct from edges,
 observable satisfaction conditions for any non-ticket external prerequisite, explicit proof paths
@@ -456,12 +478,16 @@ A scheduled but not-yet-executing job can be cancelled.
 - Cancelled jobs are never dispatched.
 - Cancellation is idempotent.
 
-## Relevant design
+## Execution context
 
-See `40-program-design.md#job-cancellation`.
+- `program_design` — sections: `Call and data flow`; `Test seams and validation plan` — purpose: Constrain implementation to the accepted queue flow and proof seams.
 ```
 
-Tickets should not duplicate upstream architecture/program design.
+Ticket body headings are exactly `What becomes true`, `Acceptance`, and `Execution context`.
+`Execution context` contains exactly one ordered canonical line per `context.sources` entry, carrying
+the same source kind, all declared sections (or `none` for Stage 0), and normalized purpose. Tickets
+should not duplicate upstream architecture/program design. Stage 5 owns semantic context selection;
+the supervisor validates/materializes the accepted declaration plus current runtime facts.
 
 ---
 
@@ -496,7 +522,7 @@ change. That predecessor is one canonical nested object; retained episode and la
 copies must match it exactly and grant no authority. The envelope is evidence for one active episode,
 not an acceptance or history ledger.
 
-For the discovery product-closure `AGENT_REVIEW` gate, the invoker persists the read-only judge's
+For the discovery Product Definition Approval `AGENT_REVIEW` gate, the invoker persists the read-only judge's
 structured output as `reviews/product_closure-v<version>.json`. It binds `run`; a `stage` field
 whose value is the boundary label `product_closure` and which the controller accepts only when it
 equals the report's `boundary`; candidate `version` and SHA-256, `verdict: PASS|BLOCKED`, and an

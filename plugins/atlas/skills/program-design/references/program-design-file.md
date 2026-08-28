@@ -59,7 +59,7 @@ Stage 5 receives no design question it must answer. Any unresolved choice that c
 <implementation-order constraints without ticket decomposition>
 ```
 
-Accepted Product Closure source shape:
+Accepted Product Definition Approval source shape:
 
 ```yaml
 source_binding:

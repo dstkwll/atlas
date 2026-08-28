@@ -1,6 +1,6 @@
 ---
 name: control-run
-description: Check discovery's product-closure boundary read-only, consume configured authority, and record one deterministic transition.
+description: Check discovery's Product Definition Approval boundary read-only, consume configured authority, and record one deterministic transition.
 disable-model-invocation: true
 ---
 
@@ -12,13 +12,13 @@ If the packaged tool or a required dependency is unavailable, or a command retur
 
 ## 0. Recover or continue from authoritative phase
 
-Read authoritative `control.json` before running Product Closure. When its phase already names `system_design`, `program_design`, or `tickets`, run the shared downstream handoff command exactly:
+Read authoritative `control.json` before running Product Definition Approval. When its phase already names `system_design`, `program_design`, or `tickets`, run the shared downstream handoff command exactly:
 
 ```shell
 python3 "<atlas-plugin-root>/tools/atlas_planning.py" ensure --run "<run-directory>"
 ```
 
-On success, re-read `planning-control.json`, hand off to its current owner, and do not rerun Product Closure. This is interrupted-handoff recovery, not another Stage 0–2 transition. If the phase is `discovery`, continue below and do not run `ensure`; discovery never starts execution.
+On success, re-read `planning-control.json`, hand off to its current owner, and do not rerun Product Definition Approval. This is interrupted-handoff recovery, not another Stage 0–2 transition. If the phase is `discovery`, continue below and do not run `ensure`; discovery never starts execution.
 
 ## 1. Mechanical check
 
@@ -36,9 +36,13 @@ A producer's `gate_ready: true` is necessary but never sufficient to advance.
 
 After mechanical PASS, read `run.yaml.gates.discovery.authority` and execute only that branch. `check` does not choose or return the authority.
 
-Discovery's product-closure boundary permits only:
+Discovery's Product Definition Approval boundary permits only:
 
-- `HUMAN`: after mechanical PASS, present the candidate and obtain explicit human approval.
+- `HUMAN`: after mechanical PASS, present the candidate at the exact user-facing approval surface:
+  - stage label: `Product Definition Approval`
+  - action: `Approve the product definition`
+  - helper: `Confirm the PRD and recorded decisions are complete enough to proceed to the next selected planning stage.`
+  Obtain explicit human approval only through that surface.
 - `AGENT_REVIEW`: after mechanical PASS, dispatch a fresh read-only semantic reviewer with [`references/boundary-review.md`](references/boundary-review.md). Require decisions-first read order, no repair authority, and exhaustive gaps. Persist its exact envelope as `reviews/product_closure-v<version>.json`. V1 adds no reviewer identity, signature, or authentication service: freshness and read order are procedural requirements, while the controller proves only the envelope schema plus current run/version/hash binding. Never synthesize the envelope in the producer context.
 
 `AUTO` is unavailable for this semantic boundary. Do not reinterpret it as agent approval. A future mechanical-only AUTO boundary would record `AUTO_PASSED`, never `AGENT_APPROVED`.
@@ -63,7 +67,7 @@ A BLOCKED AGENT_REVIEW envelope is evidence for repair, not an authority transit
 python3 "<atlas-plugin-root>/tools/atlas_control.py" reject --run "<run-directory>" --reason "<reason>"
 ```
 
-On success, report the exact output and re-read `control.json` before claiming the resulting state. After a successful Product Closure transition, if that re-read phase is `system_design`, `program_design`, or `tickets`, run the exact shared `ensure` command from §0 and re-read `planning-control.json`. Return the freshly validated phase/status to the invoking continuation owner. Do not invoke a downstream producer from `control-run`; `start-run` owns manual/auto continuation after Product Closure. In direct mode, report the meaningful next phase and recommend “Use Gazetteer to continue” without requiring an internal skill command. For the expected nonzero structured `BLOCKED` check outcome, report and follow every gap. On any other nonzero exit, report the exact error and never claim progression from an intended command.
+On success, report the exact output and re-read `control.json` before claiming the resulting state. After a successful Product Definition Approval transition, if that re-read phase is `system_design`, `program_design`, or `tickets`, run the exact shared `ensure` command from §0 and re-read `planning-control.json`. Return the freshly validated phase/status to the invoking continuation owner. Do not invoke a downstream producer from `control-run`; `start-run` owns manual/auto continuation after Product Definition Approval. In direct mode, report the meaningful next phase and recommend “Use Gazetteer to continue” without requiring an internal skill command. For the expected nonzero structured `BLOCKED` check outcome, report and follow every gap. On any other nonzero exit, report the exact error and never claim progression from an intended command.
 
 The controller validates run identity, candidate version/hash binding, authority, and transition legality. Acceptance replaces the current discovery binding in `control.json`; it does not mutate the candidate or create `approved/` copies or receipt files.
 

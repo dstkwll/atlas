@@ -1,6 +1,6 @@
 ---
 name: control-run
-description: Check discovery's product-closure boundary read-only, consume configured authority, and record one deterministic transition.
+description: Check discovery's Product Definition Approval boundary read-only, consume configured authority, and record one deterministic transition.
 disable-model-invocation: true
 ---
 
@@ -22,7 +22,7 @@ A producer's `gate_ready: true` is necessary but never sufficient to advance.
 
 ## 2. Consume configured authority
 
-Discovery's product-closure boundary permits only:
+Discovery's Product Definition Approval boundary permits only:
 
 - `HUMAN`: after mechanical PASS, present the candidate and obtain explicit human approval.
 - `AGENT_REVIEW`: after mechanical PASS, dispatch a fresh read-only semantic reviewer with [`references/boundary-review.md`](references/boundary-review.md). Require decisions-first read order, no repair authority, and exhaustive gaps. Persist its exact envelope as `reviews/product_closure-v<version>.json`. V1 adds no reviewer identity, signature, or authentication service: freshness and read order are procedural requirements, while the controller proves only the envelope schema plus current run/version/hash binding. Never synthesize the envelope in the producer context.

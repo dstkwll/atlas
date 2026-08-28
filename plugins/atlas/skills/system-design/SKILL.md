@@ -25,8 +25,8 @@ System Design reads the frozen value and never asks again for participation. It 
 
 Read selected stages and immutable `stage0_anchor`; choose exactly one `source_binding`. On the D-082 repair branch, copy the same exact source binding from `blocked_reason.superseded_system_design`; never reselect or change it. On the normal branch:
 
-- selected Product Closure: record `kind: product_closure`, `artifact: 20-prd.md`, and its exact accepted integer `version` and `sha256`;
-- omitted Product Closure: record `kind: stage0`, `artifact: run.yaml`, exact base `sha256`, `effective_config_hash`, and integer `effective_config_revision`.
+- selected Product Definition Approval: record `kind: product_closure`, `artifact: 20-prd.md`, and its exact accepted integer `version` and `sha256`;
+- omitted Product Definition Approval: record `kind: stage0`, `artifact: run.yaml`, exact base `sha256`, `effective_config_hash`, and integer `effective_config_revision`.
 
 The direct branch has no PRD field. If source bytes or the recorded binding disagree, stop without writing a candidate.
 
@@ -77,7 +77,7 @@ After `PASS`, keep the exact Markdown and, for co-design, current HTML unchanged
 
 - The producer never approves its artifact or writes a gate outcome.
 - `30-system-design.md` remains `status: draft` after acceptance; `gate_ready: true` is readiness only.
-- Product Closure and direct Stage 0 are exclusive source branches.
+- Product Definition Approval and direct Stage 0 are exclusive source branches.
 - Mechanical `PASS` never claims semantic quality or approval.
 - Slice 2B leaves all classification, semantic review, evidence assembly, and authority consumption in the internal control handoff; it adds no rejection, reopen, or staleness operation.
 - Nothing in conversation overrides frozen intake or deterministic planning state.

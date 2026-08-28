@@ -3,6 +3,7 @@ import copy
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -542,7 +543,11 @@ def write_ticket_graph(
             "blocked_by": [],
             "tracer": True,
             "enabling": None,
-            "references": [{"kind": "stage0", "sections": []}],
+            "context": {"sources": [{
+                "kind": "stage0",
+                "sections": [],
+                "purpose": "Ground this ticket in the frozen direct goal and effective configuration.",
+            }]},
             "external_prerequisites": [],
             "validators": [{
                 "id": "goal-recognized",
@@ -566,8 +571,10 @@ def write_ticket_graph(
             f"{ticket['outcomes'][0]['promise']}\n\n"
             "## Acceptance\n\n"
             + "\n".join(f"- {item}" for item in ticket["outcomes"][0]["acceptance"])
-            + "\n\n## Relevant design\n\n"
-            + "\n".join(f"- `{item['kind']}`" for item in ticket["references"])
+            + "\n\n## Execution context\n\n"
+            + "\n".join(
+                PLANNING.expected_ticket_execution_context_lines(ticket["context"]["sources"])
+            )
             + "\n"
         )
         write_markdown(path, ticket, body)
@@ -578,7 +585,7 @@ def write_ticket_graph(
         })
     manifest = run / "50-ticket-graph.json"
     manifest.write_text(json.dumps({
-        "version": 1,
+        "version": 2,
         "run": config["run"],
         "status": "draft",
         "gate_ready": True,
@@ -623,6 +630,51 @@ def write_ticket_review(run: Path, *, policy: str, verdict: str = "PASS") -> Pat
         },
     }, indent=2) + "\n", encoding="utf-8")
     return path
+
+
+def rewrite_ticket_graph_candidate_v2(
+    run: Path,
+    *,
+    purposes=None,
+    sections=None,
+) -> Path:
+    """Rewrite the one-ticket fixture to the governed v2 public contract."""
+    manifest_path = run / "50-ticket-graph.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    purposes = purposes or {}
+    sections = sections or {}
+    ticket_path = run / manifest["tickets"][0]["path"]
+    ticket, _ = PLANNING.read_frontmatter(ticket_path)
+    source_declarations = [
+        {
+            "kind": source["kind"],
+            "sections": sections.get(source["kind"], []),
+            "purpose": purposes.get(
+                source["kind"],
+                "Ground this ticket in the accepted selected-path source.",
+            ),
+        }
+        for source in manifest["source_bindings"]
+    ]
+    ticket.pop("references", None)
+    ticket["context"] = {"sources": source_declarations}
+    body = (
+        f"# {ticket['id']}\n\n"
+        "## What becomes true\n\n"
+        f"{ticket['outcomes'][0]['promise']}\n\n"
+        "## Acceptance\n\n"
+        + "\n".join(f"- {item}" for item in ticket["outcomes"][0]["acceptance"])
+        + "\n\n## Execution context\n\n"
+        + "\n".join(
+            PLANNING.expected_ticket_execution_context_lines(source_declarations)
+        )
+        + "\n"
+    )
+    write_markdown(ticket_path, ticket, body)
+    manifest["version"] = 2
+    manifest["tickets"][0]["sha256"] = sha256(ticket_path)
+    manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    return manifest_path
 
 
 def initialize_trivial_ticket_candidate(run: Path, *, ticket_policy=None) -> tuple[dict, dict, Path]:
@@ -816,6 +868,10 @@ class AtlasPlanningTests(unittest.TestCase):
             }
             manifest = write_ticket_graph(run, [source])
             review = write_ticket_review(run, policy="AGENT_REVIEW")
+            review_envelope = json.loads(review.read_text(encoding="utf-8"))
+            self.assertEqual(review.name, "ticket-graph-v1.json")
+            self.assertEqual(review_envelope["version"], 1)
+            self.assertEqual(review_envelope["candidate_version"], 2)
             immutable_before = {
                 path.relative_to(run).as_posix(): path.read_bytes()
                 for path in (manifest, run / "tickets" / "demo-01.md", review, run / "control.json")
@@ -840,7 +896,7 @@ class AtlasPlanningTests(unittest.TestCase):
             ))
             self.assertEqual(state["gates"]["tickets"], "AGENT_APPROVED")
             self.assertEqual(state["acceptances"]["tickets"], {
-                "candidate_version": 1,
+                "candidate_version": 2,
                 "candidate_sha256": sha256(manifest),
                 "authority": "AGENT_REVIEW",
                 "accepted": "2026-08-24",
@@ -863,6 +919,245 @@ class AtlasPlanningTests(unittest.TestCase):
             )
             self.assertNotEqual(repeated.returncode, 0)
             self.assertEqual((run / "planning-control.json").read_bytes(), before_repeat)
+
+    def test_ticket_graph_v2_context_is_current_factory_executable_contract(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            _, source, _ = initialize_trivial_ticket_candidate(run)
+            manifest = rewrite_ticket_graph_candidate_v2(
+                run,
+                purposes={
+                    "stage0": "Preserve the frozen direct-goal and effective-configuration authority.",
+                },
+            )
+
+            checked = planning_cli("check", "--run", run, "--stage", "tickets")
+
+            self.assertEqual(checked.returncode, 0, checked.stderr)
+            report = json.loads(checked.stdout)
+            self.assertEqual(report["verdict"], "PASS")
+            self.assertEqual(report["candidate_version"], 2)
+            self.assertEqual(report["source_bindings"], [source])
+            ticket, body = PLANNING.read_frontmatter(run / "tickets" / "demo-01.md")
+            self.assertNotIn("references", ticket)
+            self.assertEqual(ticket["context"], {
+                "sources": [{
+                    "kind": "stage0",
+                    "sections": [],
+                    "purpose": "Preserve the frozen direct-goal and effective-configuration authority.",
+                }],
+            })
+            self.assertEqual(
+                tuple(re.findall(r"(?m)^## ([^\n]+?)\s*$", body)),
+                ("What becomes true", "Acceptance", "Execution context"),
+            )
+            self.assertEqual(json.loads(manifest.read_text(encoding="utf-8"))["version"], 2)
+
+    def test_ticket_graph_v2_execution_context_must_mirror_frontmatter_sources(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            initialize_trivial_ticket_candidate(run)
+            manifest_path = rewrite_ticket_graph_candidate_v2(run)
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            ticket_path = run / manifest["tickets"][0]["path"]
+            ticket, body = PLANNING.read_frontmatter(ticket_path)
+            body = body.split("## Execution context", 1)[0] + (
+                "## Execution context\n\n"
+                "- `program_design` — sections: `Undeclared section` — purpose: Invent context at runtime.\n"
+            )
+            write_markdown(ticket_path, ticket, body)
+            manifest["tickets"][0]["sha256"] = sha256(ticket_path)
+            manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+            planning_before = (run / "planning-control.json").read_bytes()
+
+            checked = planning_cli("check", "--run", run, "--stage", "tickets")
+
+            self.assertEqual(checked.returncode, 1, checked.stderr)
+            report = json.loads(checked.stdout)
+            self.assertEqual(report["verdict"], "BLOCKED")
+            self.assertTrue(
+                any("Execution context must exactly mirror" in item["problem"] for item in report["gaps"]),
+                report,
+            )
+            self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
+
+    def test_markdown_h2_extraction_ignores_fences_raw_html_and_comments(self):
+        body = (
+            "## Real section\n\nReal content.\n\n"
+            "```markdown\n## Fenced section\n```\n\n"
+            "<div>\n## HTML section\n</div>\n\n"
+            "<!--\n## Comment section\n-->\n"
+        )
+
+        self.assertEqual(PLANNING.markdown_h2_headings(body), ("Real section",))
+        self.assertEqual(PLANNING.ticket_execution_context_lines(body), ())
+
+    def test_ticket_graph_v1_is_historical_not_factory_executable(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            _, _, manifest_path = initialize_trivial_ticket_candidate(run)
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["version"] = 1
+            manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+            planning_before = (run / "planning-control.json").read_bytes()
+            candidate_before = manifest_path.read_bytes()
+
+            checked = planning_cli("check", "--run", run, "--stage", "tickets")
+
+            self.assertEqual(checked.returncode, 1, checked.stderr)
+            report = json.loads(checked.stdout)
+            self.assertEqual(report["verdict"], "BLOCKED")
+            self.assertTrue(
+                any(
+                    "version 1" in item["problem"]
+                    and "raw historical evidence" in item["problem"]
+                    and "not loadable" in item["problem"]
+                    and "factory-executable" in item["problem"]
+                    and "version 2" in item["resume_action"]
+                    for item in report["gaps"]
+                ),
+                report,
+            )
+            self.assertNotIn("Traceback", checked.stderr)
+            self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
+            self.assertEqual(manifest_path.read_bytes(), candidate_before)
+
+    def test_genuine_accepted_v1_run_is_classified_as_raw_history_without_mutation(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            _, _, manifest_path = initialize_trivial_ticket_candidate(run)
+            review_path = write_ticket_review(run, policy="AGENT_REVIEW")
+            accepted = planning_cli(
+                "advance", "--run", run, "--stage", "tickets",
+                "--review", "reviews/ticket-graph-v1.json", "--date", "2026-08-24",
+            )
+            self.assertEqual(accepted.returncode, 0, accepted.stderr)
+
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            ticket_path = run / manifest["tickets"][0]["path"]
+            ticket, _ = PLANNING.read_frontmatter(ticket_path)
+            sources = ticket.pop("context")["sources"]
+            ticket["references"] = [
+                {"kind": source["kind"], "sections": source["sections"]}
+                for source in sources
+            ]
+            body = (
+                f"# {ticket['id']}\n\n"
+                "## What becomes true\n\n"
+                f"{ticket['outcomes'][0]['promise']}\n\n"
+                "## Acceptance\n\n"
+                + "\n".join(f"- {item}" for item in ticket["outcomes"][0]["acceptance"])
+                + "\n\n## Relevant design\n\n"
+                + "\n".join(f"- `{item['kind']}`" for item in ticket["references"])
+                + "\n"
+            )
+            write_markdown(ticket_path, ticket, body)
+            manifest["version"] = 1
+            manifest["tickets"][0]["sha256"] = sha256(ticket_path)
+            manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+
+            review = json.loads(review_path.read_text(encoding="utf-8"))
+            review["candidate_version"] = 1
+            review["candidate_sha256"] = sha256(manifest_path)
+            review_path.write_text(json.dumps(review, indent=2) + "\n", encoding="utf-8")
+
+            planning_path = run / "planning-control.json"
+            planning = json.loads(planning_path.read_text(encoding="utf-8"))
+            planning["acceptances"]["tickets"].update({
+                "candidate_version": 1,
+                "candidate_sha256": sha256(manifest_path),
+                "review_sha256": sha256(review_path),
+                "repository_baselines": manifest["repository_baselines"],
+            })
+            planning_path.write_text(json.dumps(planning, indent=2) + "\n", encoding="utf-8")
+            before = {
+                path: path.read_bytes()
+                for path in (planning_path, manifest_path, ticket_path, review_path)
+            }
+
+            with self.assertRaisesRegex(
+                PLANNING.ControlError,
+                "ticket-graph v1 acceptance retained as raw historical evidence only",
+            ):
+                PLANNING.load_planning_control(run)
+
+            self.assertEqual(
+                {path: path.read_bytes() for path in before},
+                before,
+            )
+
+    def test_ticket_graph_v2_context_requires_exact_sources_and_nonempty_purpose(self):
+        mutations = {
+            "empty-purpose": lambda ticket: ticket["context"]["sources"][0].update({"purpose": "  "}),
+            "non-string-purpose": lambda ticket: ticket["context"]["sources"][0].update({"purpose": {"bad": True}}),
+            "missing-purpose": lambda ticket: ticket["context"]["sources"][0].pop("purpose"),
+            "extra-source-field": lambda ticket: ticket["context"]["sources"][0].update({"artifact": "run.yaml"}),
+            "extra-context-field": lambda ticket: ticket["context"].update({"summary": "not authoritative"}),
+            "context-not-object": lambda ticket: ticket.update({"context": []}),
+            "sources-not-list": lambda ticket: ticket["context"].update({"sources": {"bad": True}}),
+            "stage0-section": lambda ticket: ticket["context"]["sources"][0].update({"sections": ["Synthetic"]}),
+            "non-string-section": lambda ticket: ticket["context"]["sources"][0].update({"sections": [{"bad": True}]}),
+            "inapplicable-source": lambda ticket: ticket["context"]["sources"][0].update({"kind": "system_design"}),
+            "missing-selected-source": lambda ticket: ticket["context"].update({"sources": []}),
+            "duplicate-selected-source": lambda ticket: ticket["context"]["sources"].append(
+                dict(ticket["context"]["sources"][0])
+            ),
+        }
+        for name, mutate in mutations.items():
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                initialize_trivial_ticket_candidate(run)
+                manifest_path = rewrite_ticket_graph_candidate_v2(run)
+                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                ticket_path = run / manifest["tickets"][0]["path"]
+                ticket, body = PLANNING.read_frontmatter(ticket_path)
+                mutate(ticket)
+                write_markdown(ticket_path, ticket, body)
+                manifest["tickets"][0]["sha256"] = sha256(ticket_path)
+                manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+                planning_before = (run / "planning-control.json").read_bytes()
+                candidate_before = ticket_path.read_bytes()
+
+                checked = planning_cli("check", "--run", run, "--stage", "tickets")
+
+                self.assertEqual(checked.returncode, 1, checked.stderr)
+                report = json.loads(checked.stdout)
+                self.assertEqual(report["verdict"], "BLOCKED")
+                self.assertTrue(
+                    any("context source" in item["problem"] for item in report["gaps"]),
+                    report,
+                )
+                self.assertNotIn("Traceback", checked.stderr)
+                self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
+                self.assertEqual(ticket_path.read_bytes(), candidate_before)
+
+    def test_ticket_graph_v2_rejects_legacy_references_without_projection_or_mutation(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            initialize_trivial_ticket_candidate(run)
+            manifest_path = run / "50-ticket-graph.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            ticket_path = run / manifest["tickets"][0]["path"]
+            ticket, body = PLANNING.read_frontmatter(ticket_path)
+            sources = ticket.pop("context")["sources"]
+            ticket["references"] = [
+                {"kind": source["kind"], "sections": source["sections"]}
+                for source in sources
+            ]
+            write_markdown(ticket_path, ticket, body.replace("Execution context", "Relevant design"))
+            manifest["tickets"][0]["sha256"] = sha256(ticket_path)
+            manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+            planning_before = (run / "planning-control.json").read_bytes()
+            candidate_before = ticket_path.read_bytes()
+
+            checked = planning_cli("check", "--run", run, "--stage", "tickets")
+
+            self.assertEqual(checked.returncode, 1, checked.stderr)
+            self.assertNotIn("Traceback", checked.stderr)
+            report = json.loads(checked.stdout)
+            self.assertTrue(any("frontmatter" in item["problem"] for item in report["gaps"]), report)
+            self.assertEqual((run / "planning-control.json").read_bytes(), planning_before)
+            self.assertEqual(ticket_path.read_bytes(), candidate_before)
 
     def test_program_design_ticket_graph_rejects_invented_source_section_then_accepts_vertical_graph(self):
         with tempfile.TemporaryDirectory() as td:
@@ -910,10 +1205,18 @@ class AtlasPlanningTests(unittest.TestCase):
                     "blocked_by": blocked_by or [],
                     "tracer": tracer,
                     "enabling": enabling,
-                    "references": [
-                        {"kind": "stage0", "sections": []},
-                        {"kind": "program_design", "sections": sections or ["Test seams and validation plan"]},
-                    ],
+                    "context": {"sources": [
+                        {
+                            "kind": "stage0",
+                            "sections": [],
+                            "purpose": "Preserve the frozen direct-path authority.",
+                        },
+                        {
+                            "kind": "program_design",
+                            "sections": sections or ["Test seams and validation plan"],
+                            "purpose": "Constrain implementation and proof to the accepted local design.",
+                        },
+                    ]},
                     "external_prerequisites": external_prerequisites or [],
                     "validators": [{
                         "id": validator_id,
@@ -979,12 +1282,34 @@ class AtlasPlanningTests(unittest.TestCase):
             invalid = planning_cli("check", "--run", run, "--stage", "tickets")
             self.assertEqual(invalid.returncode, 1, invalid.stderr)
             invalid_report = json.loads(invalid.stdout)
-            self.assertTrue(any("reference section" in item["problem"] for item in invalid_report["gaps"]))
+            self.assertTrue(any("context source" in item["problem"] for item in invalid_report["gaps"]))
             self.assertEqual((run / "planning-control.json").read_bytes(), before)
 
             shutil.rmtree(run / "tickets")
             (run / "50-ticket-graph.json").unlink()
-            tickets[1]["references"][1]["sections"] = [
+            tickets[1]["context"]["sources"][1]["sections"] = [
+                "Call and data flow",
+                "Call and data flow",
+            ]
+            write_ticket_graph(
+                run,
+                source_bindings,
+                tickets=tickets,
+                preferred_order=[
+                    "baseline-validator", "vertical-command-flow", "vertical-failure-path",
+                ],
+                tracer_ticket="vertical-command-flow",
+            )
+            duplicate = planning_cli("check", "--run", run, "--stage", "tickets")
+            self.assertEqual(duplicate.returncode, 1, duplicate.stderr)
+            self.assertTrue(
+                any("context source" in item["problem"] for item in json.loads(duplicate.stdout)["gaps"])
+            )
+            self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+            shutil.rmtree(run / "tickets")
+            (run / "50-ticket-graph.json").unlink()
+            tickets[1]["context"]["sources"][1]["sections"] = [
                 "Types and boundary signatures",
                 "Call and data flow",
                 "Test seams and validation plan",
@@ -1050,7 +1375,7 @@ class AtlasPlanningTests(unittest.TestCase):
 
     def test_ticket_graph_nested_unhashable_values_are_structured_blocked(self):
         mutations = {
-            "reference-kind": lambda ticket, manifest: ticket["references"][0].update({"kind": {"bad": True}}),
+            "context-kind": lambda ticket, manifest: ticket["context"]["sources"][0].update({"kind": {"bad": True}}),
             "validator-id": lambda ticket, manifest: ticket["validators"][0].update({"id": {"bad": True}}),
             "outcome-id": lambda ticket, manifest: ticket["outcomes"][0].update({"id": {"bad": True}}),
             "outcome-validator-id": lambda ticket, manifest: ticket["outcomes"][0].update({"validator_ids": [{"bad": True}]}),
@@ -1103,6 +1428,27 @@ class AtlasPlanningTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertNotIn("Traceback", result.stderr)
             self.assertIn("ticket-graph", result.stderr)
+            self.assertEqual((run / "planning-control.json").read_bytes(), before)
+
+    def test_ticket_graph_review_v1_envelope_rejects_candidate_version_one(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            initialize_trivial_ticket_candidate(run)
+            review = write_ticket_review(run, policy="AGENT_REVIEW")
+            envelope = json.loads(review.read_text(encoding="utf-8"))
+            self.assertEqual(envelope["version"], 1)
+            envelope["candidate_version"] = 1
+            review.write_text(json.dumps(envelope, indent=2) + "\n", encoding="utf-8")
+            before = (run / "planning-control.json").read_bytes()
+
+            result = planning_cli(
+                "advance", "--run", run, "--stage", "tickets",
+                "--review", review.relative_to(run), "--date", "2026-08-24",
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertNotIn("Traceback", result.stderr)
+            self.assertIn("ticket-graph review evidence does not match current policy, candidate, sources, or baselines", result.stderr)
             self.assertEqual((run / "planning-control.json").read_bytes(), before)
 
     def test_ticket_graph_reports_self_dependency_and_review_cannot_replace_deterministic_proof(self):
@@ -1203,10 +1549,18 @@ class AtlasPlanningTests(unittest.TestCase):
                     "blocked_by": [],
                     "tracer": True,
                     "enabling": None,
-                    "references": [
-                        {"kind": "stage0", "sections": []},
-                        {"kind": "program_design", "sections": ["Call and data flow"]},
-                    ],
+                    "context": {"sources": [
+                        {
+                            "kind": "stage0",
+                            "sections": [],
+                            "purpose": "Preserve the frozen direct-path authority.",
+                        },
+                        {
+                            "kind": "program_design",
+                            "sections": ["Call and data flow"],
+                            "purpose": "Constrain implementation to the accepted call flow.",
+                        },
+                    ]},
                     "external_prerequisites": [],
                     "validators": [{
                         "id": validator_id,
@@ -1260,7 +1614,9 @@ class AtlasPlanningTests(unittest.TestCase):
                     expected = "ticket graph"
                 elif mutation == "ticket":
                     ticket_path = run / "tickets" / "demo-01.md"
-                    ticket_path.write_bytes(ticket_path.read_bytes() + b"\nchanged accepted ticket\n")
+                    ticket, body = PLANNING.read_frontmatter(ticket_path)
+                    ticket["context"]["sources"][0]["purpose"] = "Drifted after acceptance."
+                    write_markdown(ticket_path, ticket, body)
                     expected = "ticket graph"
                 elif mutation == "review":
                     review.write_bytes(review.read_bytes() + b" \n")
@@ -1283,7 +1639,9 @@ class AtlasPlanningTests(unittest.TestCase):
             original_write = PLANNING.write_planning_control_atomic
 
             def mutate_at_write_boundary(*args, **kwargs):
-                ticket_path.write_bytes(ticket_path.read_bytes() + b"\nwrite-boundary drift\n")
+                ticket, body = PLANNING.read_frontmatter(ticket_path)
+                ticket["context"]["sources"][0]["purpose"] = "Drifted after review."
+                write_markdown(ticket_path, ticket, body)
                 return original_write(*args, **kwargs)
 
             with PLANNING.planning_lock(run):
@@ -1362,10 +1720,25 @@ class AtlasPlanningTests(unittest.TestCase):
         manifest_path = write_ticket_graph(run, sources)
         ticket_path = run / "tickets" / "demo-01.md"
         ticket, body = PLANNING.read_frontmatter(ticket_path)
-        ticket["references"] = [
-            {"kind": "system_design", "sections": ["Contracts and interfaces"]},
-            {"kind": "program_design", "sections": ["Call and data flow"]},
-        ]
+        ticket["context"] = {"sources": [
+            {
+                "kind": "system_design",
+                "sections": ["Contracts and interfaces"],
+                "purpose": "Preserve the accepted cross-module contract.",
+            },
+            {
+                "kind": "program_design",
+                "sections": ["Call and data flow"],
+                "purpose": "Constrain implementation to the accepted local call flow.",
+            },
+        ]}
+        body = body.split("## Execution context", 1)[0] + (
+            "## Execution context\n\n"
+            + "\n".join(
+                PLANNING.expected_ticket_execution_context_lines(ticket["context"]["sources"])
+            )
+            + "\n"
+        )
         write_markdown(ticket_path, ticket, body)
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         manifest["tickets"][0]["sha256"] = sha256(ticket_path)
@@ -3072,7 +3445,7 @@ class AtlasPlanningTests(unittest.TestCase):
                 report = json.loads(result.stdout)
                 self.assertEqual(report["verdict"], "PASS" if mutation is None else "BLOCKED")
                 if mutation is not None:
-                    self.assertTrue(any("product closure" in item["problem"] for item in report["gaps"]))
+                    self.assertTrue(any("Product Definition Approval" in item["problem"] for item in report["gaps"]))
 
     def test_system_design_product_path_requires_exact_accepted_prd_binding(self):
         for mutation, expected_success in ((None, True), ("wrong-hash", False)):

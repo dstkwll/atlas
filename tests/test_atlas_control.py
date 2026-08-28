@@ -333,7 +333,7 @@ def write_review(path, record, verdict="PASS", *, candidate_sha256=None):
         "artifact": "20-prd.md",
         "problem": "A consequence is unresolved",
         "resume_stage": "discovery",
-        "resume_action": "repair the PRD and rerun product closure",
+        "resume_action": "repair the PRD and rerun Product Definition Approval",
     }]
     review.write_text(json.dumps({
         "version": 1,

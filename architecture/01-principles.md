@@ -61,7 +61,7 @@ The intended progression is:
 Each stage should reduce degrees of freedom without reopening resolved upstream decisions.
 
 Decision discovery and the product contract are authored by one producer and separated by the
-product-closure boundary rather than by two stages (D-066, D-067).
+Product Definition Approval boundary rather than by two stages (D-066, D-067).
 
 The System Design / Program Design boundary is determined by **reliance horizon**, not by the
 overloaded word “module.” A system-observable commitment, or a choice that requires a caller, peer,
@@ -73,7 +73,7 @@ The two artifacts may be drafted side-by-side to pressure-test interfaces, but t
 sequential when both stages are selected: System Design is accepted first. Program Design remains
 provisional until it is bound, rechecked, and finalized against the exact upstream source selected
 by the run: accepted System Design when selected; the accepted PRD when System Design is
-`NOT_REQUIRED` but product closure is selected; or the exact frozen Stage 0 effective intake when
+`NOT_REQUIRED` but Product Definition Approval is selected; or the exact frozen Stage 0 effective intake when
 both upstream semantic boundaries are `NOT_REQUIRED`. An omitted boundary never manufactures an
 approval or a nonexistent artifact.
 

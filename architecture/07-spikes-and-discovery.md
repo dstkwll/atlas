@@ -53,7 +53,7 @@ or accepts the stage.
 
 This is one bounded challenge per Discovery run, not a council for every question. At closure, the
 existing fresh cold read independently checks again for any absent decision or wrong owner route
-revealed by the now-complete decision record and PRD. The later product-closure reviewer remains a
+revealed by the now-complete decision record and PRD. The later Product Definition Approval reviewer remains a
 separate acceptance role; neither challenge has gate authority.
 
 ---

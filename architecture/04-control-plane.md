@@ -61,12 +61,12 @@ Goal → Ticket → Implement → Validate → PR
 
 ```text
 NORMAL
-Goal → Discovery + Product Closure → Program Design → Tickets → Factory
+Goal → Discovery + Product Definition Approval → Program Design → Tickets → Factory
 ```
 
 ```text
 ARCHITECTURAL
-Goal → Discovery + Product Closure → System Design → Program Design → Tickets → Factory
+Goal → Discovery + Product Definition Approval → System Design → Program Design → Tickets → Factory
 ```
 
 ```text
@@ -202,7 +202,7 @@ Output can advance immediately once deterministic prerequisites are satisfied **
 boundary contract declares no semantic acceptance question**. A successful automatic gate is
 recorded as `AUTO_PASSED`, never `AGENT_APPROVED`.
 
-Discovery's product-closure boundary requires semantic acceptance in this revision, so its
+Discovery's Product Definition Approval boundary requires semantic acceptance in this revision, so its
 configured authority is `AGENT_REVIEW` or `HUMAN`, not `AUTO`.
 
 ### `AGENT_REVIEW`
@@ -260,14 +260,14 @@ The human becomes the decision authority rather than the primary bug finder.
 ### Boundary labels are not state keys
 
 `control.json.phase`, the `gates` map, the `acceptances` map, and every gap's resume stage remain
-keyed by the controlled producer name `discovery`. `product_closure` is the semantic label for
-discovery's exit boundary: it names the review envelope and human-facing vocabulary, and it never
-becomes a phase value, gate key, or acceptance key. This keeps stage-index coherence unchanged
-while making the boundary explicit (D-067).
+keyed by the controlled producer name `discovery`. `product_closure` is the retained machine/API
+compatibility identifier for discovery's exit boundary: it names the review envelope while the
+human-facing label is **Product Definition Approval**. It never becomes a phase value, gate key, or
+acceptance key. This keeps stage-index coherence unchanged while making the boundary explicit (D-067).
 
 ### Stage 0–2 boundary seam
 
-For discovery and its product-closure boundary, keep four responsibilities distinct:
+For discovery and its Product Definition Approval boundary, keep four responsibilities distinct:
 
 ```text
 producer completes a candidate
@@ -296,8 +296,8 @@ a generalized router.
 
 Paired drafting does not merge gates. When selected, System Design is accepted first. Program Design
 is then bound, rechecked, and finalized against the selected path's applicable source: the accepted
-System Design when selected; the accepted PRD when System Design is `NOT_REQUIRED` but product
-closure is selected; or the accepted/frozen Stage 0 intake and effective-configuration hashes when
+System Design when selected; the accepted PRD when System Design is `NOT_REQUIRED` but Product
+Definition Approval is selected; or the accepted/frozen Stage 0 intake and effective-configuration hashes when
 both upstream semantic boundaries are `NOT_REQUIRED`. The downstream judge reads the effective
 selected stages, chooses exactly one branch, and never treats `NOT_REQUIRED` as approval. Program
 Design requires independent semantic review and never raw `AUTO`; the recommended standard
@@ -334,18 +334,24 @@ resetting D-082 or exposing internal stage routing to the user.
 Stage 5 has its own boundary inside that same controller:
 
 ```text
-execution compiler proposes complete ticket graph
+execution compiler proposes complete version-2 ticket graph with compiler-selected semantic context
   → independent read-only ticket-graph judge returns PASS/BLOCKED with all gaps
   → PASS goes to the configured tickets authority; BLOCKED returns to compilation
   → downstream planning controller records exact graph/version/hash acceptance
-  → execution preflight verifies the accepted binding and currency
+  → execution preflight verifies the accepted binding, context declarations, and currency
 ```
 
-The Stage 5 judge examines verticality, dependency completeness, validation contracts, repository
-targeting, and exact applicable-upstream references. The controller binds the accepted graph to
-each applicable accepted upstream source and each target repository baseline. It does not grade the
-graph's prose. Execution preflight may reject a missing or stale acceptance, but it cannot create,
-record, or manufacture one.
+The current ticket-graph manifest version is exact integer `2`; version 1 is raw historical evidence
+only and is not loadable or factory-executable. The Stage 5 compiler owns semantic context selection. Every ticket declares
+each applicable selected-path source kind exactly once, with empty Stage 0 sections, unique existing
+semantic H2s, and a nonempty purpose. The Stage 5 judge examines semantic completeness, verticality,
+dependency completeness, validation contracts, repository targeting, and exact context declarations.
+The controller binds the accepted graph to each applicable accepted upstream source and each target
+repository baseline. It does not grade the graph's prose. Execution preflight and the supervisor may
+validate and materialize only accepted declarations plus current runtime facts; they cannot select or
+fill semantic context or manufacture acceptance. Missing declared material is a packaging/preflight
+blocker; missing accepted judgment is `DESIGN_BLOCKED`. Repository facts within inspection authority
+remain discoverable.
 
 ---
 

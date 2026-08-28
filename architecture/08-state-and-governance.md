@@ -53,7 +53,7 @@ COMPLETE
 FAILED
 ```
 
-Not every workflow depth uses every state. In v0.6, product closure is the exit boundary inside
+Not every workflow depth uses every state. In v0.6, Product Definition Approval is the exit boundary inside
 `DISCOVERY`, not a separate durable phase/state name.
 
 ---
@@ -124,7 +124,7 @@ record.
 
 `AUTO_PASSED` means a boundary explicitly declared mechanical-only and all of its
 deterministic prerequisites passed. It never means an agent reviewed the artifact. Discovery
-product closure is not a mechanical-only boundary in this revision.
+Product Definition Approval is not a mechanical-only boundary in this revision.
 
 ---
 
@@ -147,15 +147,15 @@ acceptance requires a version increment and a new gate decision. `control.json` 
 current acceptance binding for each stage (version, hash, authority, date, and review reference
 when applicable). In v0.6 that accepted product-contract candidate is `20-prd.md`, whose
 `derived_from` binding transitively names the exact decision-log version/hash it closed against.
-The current Stage 0–2 controller has no post-closure reopen command. D-082 reaches neither Product
-Closure nor direct Stage 0; any live Stage 0–2 source mismatch after acceptance fails closed rather
+The current Stage 0–2 controller has no post-approval reopen command. D-082 reaches neither Product
+Definition Approval nor direct Stage 0; any live Stage 0–2 source mismatch after acceptance fails closed rather
 than silently reopening discovery.
 
 System Design acceptance chooses exactly one admission/provenance binding from the selected path:
-the exact accepted `20-prd.md` version/hash when Product Closure is selected, or the exact
-accepted/frozen Stage 0 intake and effective configuration when Product Closure is `NOT_REQUIRED`,
+the exact accepted `20-prd.md` version/hash when Product Definition Approval is selected, or the exact
+accepted/frozen Stage 0 intake and effective configuration when Product Definition Approval is `NOT_REQUIRED`,
 bound by `control.json.base_run_sha256`, `effective_config_hash`, and
-`effective_config_revision`. Omitted Product Closure creates no PRD or approval. A change to
+`effective_config_revision`. Omitted Product Definition Approval creates no PRD or approval. A change to
 whichever source is bound to accepted System Design makes that acceptance stale; dependent Program
 Design becomes stale transitively in the same logical downstream transition.
 
@@ -165,7 +165,7 @@ Design becomes stale transitively in the same logical downstream transition.
 
 D-082 permits exactly one pending Program Design → selected accepted System Design repair/reaccept
 → pending Program Design path under the D-080 controller. This is invalidation and replacement, not
-rollback or reopen. Product Closure, direct Stage 0, accepted Program Design, Stage 5/tickets, and
+rollback or reopen. Product Definition Approval, direct Stage 0, accepted Program Design, Stage 5/tickets, and
 execution-originated repair remain outside this path.
 
 Only a current `reviews/program-design-upstream-block-v1.json` verdict of

@@ -6,6 +6,6 @@ Use this branch only when discovery proves that a repository identity or baselin
 2. Using `<atlas-plugin-root>` already resolved by the invoking Atlas skill, run `python3 "<atlas-plugin-root>/tools/atlas_control.py" mark-stale --run "<run-directory>" --reason "<persisted-finding>"`. This blocks the run and authorizes only the next intake amendment.
 3. After explicit human acceptance, write exactly the next contiguous `amendments/NNN-*.md` using `skills/start-run/references/run-amendment.md`.
 4. Run `python3 "<atlas-plugin-root>/tools/atlas_control.py" apply-amendment --run "<run-directory>"`.
-5. Resume discovery against the new effective configuration revision and rerun product closure from the cold-read sequence.
+5. Resume discovery against the new effective configuration revision and rerun Product Definition Approval from the cold-read sequence.
 
 run.yaml remains byte-for-byte unchanged. The controller stores only the accepted amendment count and resulting effective configuration hash. There is no amendment ledger, receipt, or hash chain.

@@ -10,7 +10,7 @@ Create one Stage 0 run at `<planning-root>/<feature-slug>/`. Resolve the plannin
 
 ## 1. Resolve and accept intake
 
-Inspect every affected repository and record its stable identity plus commit baseline. Classify the goal, risk, workflow, governance, execution/environment policy, roster, the selected ordered stages, every selected gate, and every run-relevant conditionally reachable route. When discovery is selected, its product-closure authority must be `AGENT_REVIEW` or `HUMAN`; reject `AUTO` for that boundary. Stage 0 acceptance freezes intake but does not pre-approve new or reused PRD material.
+Inspect every affected repository and record its stable identity plus commit baseline. Classify the goal, risk, workflow, governance, execution/environment policy, roster, the selected ordered stages, every selected gate, and every run-relevant conditionally reachable route. When discovery is selected, its Product Definition Approval authority must be `AGENT_REVIEW` or `HUMAN`; reject `AUTO` for that boundary. Stage 0 acceptance freezes intake but does not pre-approve new or reused PRD material.
 
 Use [`references/run-file.md`](references/run-file.md) for the exact `run.yaml` shape. Preview the complete file and obtain human acceptance before writing it.
 

@@ -6,16 +6,27 @@ The numbered documents are authoritative. `rolling-monolith.md` is generated fro
 
 ## Current baseline
 
-**v0.14** makes the Stage 5 → execution boundary implementable without adding execution machinery. One
-planning effort may span multiple target repositories under one accepted cross-repository ticket
-graph; execution instantiates one independent repository-scoped workspace, runtime record, and
-accepted chain per target repository. Logical workcells remain per-ticket; one small closed runtime
-authority admits at most one active ticket across the entire accepted planning graph and dispatches it
-only to the repository-scoped run/workspace named by that ticket. Waits and proof receipts bind
-observable evidence; helper agents cannot acquire Atlas ownership; repository-slice promotion is
-separate from ticket acceptance; and required evidence is harvested before destructive cleanup.
-Sandcastle remains a proof-of-fit substrate candidate, not a dependency or authority. The unnumbered
-`v2-horizon.md` preserves deferred triggers and is excluded from canonical generation.
+**v0.15** makes D-085's semantic handoff executable without adding execution machinery. The current
+ticket-graph manifest version is exact integer `2`; version 1 is retained as raw historical evidence
+only and is not loadable or factory-executable. Each ticket declares exact `context.sources` with a nonempty purpose, while Stage
+5 owns semantic context selection and the later supervisor only validates/materializes the accepted
+declaration plus current runtime facts. Missing declared material is a packaging/preflight blocker;
+missing accepted judgment is `DESIGN_BLOCKED`.
+
+### Current terminology and compatibility
+
+D-088 governs the terminology boundary. `Product Definition Approval` is the current user-facing stage label. Historical decision and provenance records retain the former user-facing label `Product Closure` unchanged. This is not an identifier migration: the serialized boundary remains `product_closure`; review files remain `reviews/product_closure-v<version>.json`; source bindings remain `kind: product_closure`; and review envelopes remain `stage: product_closure`.
+
+**v0.14**'s execution topology remains unchanged: one planning effort may span multiple target
+repositories under one accepted cross-repository ticket graph; execution instantiates one independent
+repository-scoped workspace, runtime record, and accepted chain per target repository. Logical
+workcells remain per-ticket; one small closed runtime authority admits at most one active ticket
+across the entire accepted planning graph. Waits and proof receipts bind observable evidence; helper
+agents cannot acquire Atlas ownership; repository-slice promotion is separate from ticket acceptance;
+and required evidence is harvested before destructive cleanup. v0.15 adds no execution runtime or
+planning-run mutation. Sandcastle remains a proof-of-fit substrate candidate, not a dependency or
+authority. The unnumbered `v2-horizon.md` preserves deferred triggers and is excluded from canonical
+generation.
 
 ## Deferred horizon routing
 

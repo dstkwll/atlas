@@ -1,12 +1,12 @@
 ---
 name: discovery
-description: Maintain the decision log and living PRD until discovery earns product closure.
+description: Maintain the decision log and living PRD until discovery earns Product Definition Approval.
 disable-model-invocation: true
 ---
 
 # Discovery
 
-Resolve a fuzzy goal into durable decisions and a living product contract. Discovery owns both `<run>/10-decisions.md` and `<run>/20-prd.md`; it never claims product closure itself.
+Resolve a fuzzy goal into durable decisions and a living product contract. Discovery owns both `<run>/10-decisions.md` and `<run>/20-prd.md`; it never claims Product Definition Approval itself.
 
 Resolve `<atlas-plugin-root>` from this installed skill before invoking tools: it is the third parent of this file (`SKILL.md` → `discovery/` → `skills/` → the plugin root) and must contain `tools/render_prd.py` and `tools/atlas_control.py`. Use that resolved absolute path; never assume the caller's working directory.
 
@@ -65,7 +65,7 @@ These are producer completion claims, not acceptance. The candidate contains no 
 python3 "<atlas-plugin-root>/tools/atlas_control.py" check --run "<run-directory>"
 ```
 
-A `BLOCKED` report gives exhaustive mechanical gaps and exact resume points. Repair them here. Any repair after a blocked semantic review first uses the canonical writer to install a draft with `gate_ready: false`, then reruns the whole end sequence above and asks for a fresh review. No direct PRD mutation is legal. A `PASS` means only that mechanics pass; perform the exact named internal handoff to `atlas:control-run` without asking the user to issue a second routing command. Load that exact owner under [`../../references/internal-owner-loading.md`](../../references/internal-owner-loading.md). Pass the unchanged `<run-directory>` and unchanged candidate. Product Closure applies configured `AGENT_REVIEW` or `HUMAN` semantic acceptance; Discovery neither invokes its judge nor consumes approval itself. When `control-run` returns, return to the invoking continuation owner with no downstream producer invocation of your own. A direct Discovery invocation may recommend “Use Gazetteer to continue,” but must not require Gazetteer for its producer or authority work.
+A `BLOCKED` report gives exhaustive mechanical gaps and exact resume points. Repair them here. Any repair after a blocked semantic review first uses the canonical writer to install a draft with `gate_ready: false`, then reruns the whole end sequence above and asks for a fresh review. No direct PRD mutation is legal. A `PASS` means only that mechanics pass; perform the exact named internal handoff to `atlas:control-run` without asking the user to issue a second routing command. Load that exact owner under [`../../references/internal-owner-loading.md`](../../references/internal-owner-loading.md). Pass the unchanged `<run-directory>` and unchanged candidate. Product Definition Approval applies configured `AGENT_REVIEW` or `HUMAN` semantic acceptance; Discovery neither invokes its judge nor consumes approval itself. When `control-run` returns, return to the invoking continuation owner with no downstream producer invocation of your own. A direct Discovery invocation may recommend “Use Gazetteer to continue,” but must not require Gazetteer for its producer or authority work.
 
 ## Standing rules
 

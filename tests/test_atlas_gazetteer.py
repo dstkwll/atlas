@@ -599,7 +599,7 @@ class AtlasGazetteerInventoryTest(unittest.TestCase):
         self.assertEqual(
             summary["accepted_graph"],
             {
-                "version": 1,
+                "version": 2,
                 "sha256": sha256(manifest_path),
                 "ticket_ids": ["demo-01"],
             },
@@ -722,7 +722,7 @@ class AtlasGazetteerSkillContractTest(unittest.TestCase):
             "invoke `atlas:discovery` internally",
             "Prefer the host's safe nested skill invocation mechanism",
             "load the exact installed sibling `SKILL.md` as the current owner procedure",
-            "After Discovery and its internal Product Closure handoff return, re-read authoritative `control.json`",
+            "After Discovery and its internal Product Definition Approval handoff return, re-read authoritative `control.json`",
             "invocation-local continuation posture",
             "must enter the next selected producer even when that producer's configured gate is HUMAN",
             "Never stop merely because the newly entered phase will eventually require HUMAN acceptance",

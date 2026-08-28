@@ -183,7 +183,7 @@ Observed in a real run of a non-canonical skill; recorded as L-012. The mechanis
 
 ---
 
-## Discovery product-closure boundary
+## Discovery's Product Definition Approval boundary
 
 Discovery question formation has its own bounded producer-side challenge before the first grill
 round. A fresh, read-only frontier critic independently derives candidate questions and routes from
@@ -192,11 +192,11 @@ persisted frontier. This improves the inputs to deliberation; it is not an accep
 no gate authority. The final producer cold read repeats the missing-decision and wrong-owner-route
 check against the complete decision record and PRD before `gate_ready` becomes true.
 
-The discovery exit boundary is product closure. Its judge is read-only and returns `PASS` or
+The discovery exit boundary is Product Definition Approval. Its judge is read-only and returns `PASS` or
 `BLOCKED`. A blocked result reports all material gaps found in that pass; each gap names the
 affected artifact and the exact stage and action that can resume it. `BLOCKED` returns to the
 producer without changing authoritative state. A producer-authored completion flag is evidence
-that the attempt ended, never proof that product closure passed.
+that the attempt ended, never proof that Product Definition Approval passed.
 
 **Mechanical checks:** candidate identity and version match the planning run; required decision
 identifiers and record fields are present and unique; every decision has a closed contribution
@@ -245,12 +245,12 @@ images remain projections and never receive an independent acceptance outcome.
 The required source binding follows an applicability test over the effective selected stages and
 chooses exactly one branch:
 
-1. Product Closure selected → exact accepted `20-prd.md` version/hash.
-2. Product Closure `NOT_REQUIRED` → exact accepted/frozen Stage 0 intake and effective
+1. Product Definition Approval selected → exact accepted `20-prd.md` version/hash.
+2. Product Definition Approval `NOT_REQUIRED` → exact accepted/frozen Stage 0 intake and effective
    configuration, bound by `control.json.base_run_sha256`, `effective_config_hash`, and
    `effective_config_revision`.
 
-The reviewer must not require or fabricate a PRD or approval for omitted Product Closure. A change
+The reviewer must not require or fabricate a PRD or approval for omitted Product Definition Approval. A change
 to whichever bound source makes accepted System Design stale; dependent Program Design becomes
 stale transitively in the same logical downstream transition.
 
@@ -277,12 +277,12 @@ semantic questions. It never uses raw `AUTO`. The recommended standard authority
 
 Paired drafting may produce both design candidates side-by-side, but the Program Design result is
 provisional until selected upstream acceptance completes. Its boundary carries an applicability test:
-read the effective selected stages, treat selected `discovery` as selection of its product-closure
+read the effective selected stages, treat selected `discovery` as selection of its Product Definition Approval
 boundary, choose exactly one of the following branches, and verify the candidate against that exact
 source:
 
 1. System Design selected → exact accepted `30-system-design.md` version/hash.
-2. System Design `NOT_REQUIRED`; product closure selected → exact accepted `20-prd.md` version/hash.
+2. System Design `NOT_REQUIRED`; Product Definition Approval selected → exact accepted `20-prd.md` version/hash.
 3. Both upstream semantic boundaries `NOT_REQUIRED` → exact accepted/frozen Stage 0 intake and
    effective configuration, bound by `control.json.base_run_sha256`, `effective_config_hash`, and
    `effective_config_revision`.
@@ -350,19 +350,22 @@ acceptance; it is not a second authority source. Any field or JSON-type mismatch
 
 ## Ticket-graph compilation boundary
 
-Stage 5's compiler is a producer, not its own judge. A fresh read-only ticket-graph judge evaluates
-the exact complete graph and returns `PASS` or `BLOCKED` with all gaps. It establishes applicability
-before requiring an upstream artifact and never writes a missing ticket, edge, validation contract,
+Stage 5's compiler is a producer, not its own judge, and owns semantic context selection for each
+ticket. A current candidate's manifest version is exact integer `2`; version 1 is raw historical evidence
+only and is not loadable or factory-executable. A fresh read-only ticket-graph judge evaluates the exact complete graph
+and returns `PASS` or `BLOCKED` with all gaps. It establishes applicability before requiring an
+upstream artifact and never writes a missing ticket, context declaration, edge, validation contract,
 or acceptance to satisfy its own finding.
 
 Deterministic checks bind the exact graph version/SHA-256, assert unique ticket identities and valid
 dependency references, reject self-dependencies and cycles, require unambiguous repository targets,
-verify canonical ticket order and declared validation commands, and prove every ticket's upstream
-references are drawn from the selected path's applicable accepted sources. Every promised behavioral
-outcome must name an accepted proof path through sufficient deterministic validators/evidence.
-Required review gates may supplement that proof for semantic, design, or quality obligations; they
-may not substitute for deterministic proof of the ticket's outcome-bearing behavior. The candidate
-also binds the frozen baseline for every target repository.
+verify canonical ticket order and declared validation commands, and prove every ticket's
+`context.sources` exactly covers selected-path applicable sources. Stage 0 sections are empty; every
+semantic source has nonempty unique sections resolving to existing H2s and a nonempty purpose. Every
+promised behavioral outcome must name an accepted proof path through sufficient deterministic
+validators/evidence. Required review gates may supplement that proof for semantic, design, or quality
+obligations; they may not substitute for deterministic proof of the ticket's outcome-bearing
+behavior. The candidate also binds the frozen baseline for every target repository.
 
 Semantic review checks that every non-enabling ticket is outcome-bearing, crosses every boundary
 required by its behavior rather than grouping one architectural layer, and is independently
@@ -378,6 +381,14 @@ criteria remain observable, proof paths sufficient for the promised behavior, an
 decisions absent from compilation. PASS proceeds to the configured `tickets` authority; the
 downstream planning controller records the acceptance. BLOCKED returns to Stage 5 without changing
 authoritative state.
+
+Semantic completeness remains reviewer judgment: deterministic shape checks cannot decide whether
+Stage 5 selected the right accepted sections or stated a sufficient purpose. The later supervisor
+validates/materializes accepted declarations plus current runtime facts. It cannot select, add,
+rewrite, summarize, expand, or fill semantic context. Missing declared material is a
+packaging/preflight blocker; missing accepted judgment is `DESIGN_BLOCKED`. The reviewer and
+supervisor may inspect discoverable repository facts within their grant, but neither
+turns those observations into undeclared planning context.
 
 Any accepted System Design or Program Design change makes every dependent ticket-graph acceptance
 stale in the same logical atomic transition as the upstream change. Execution preflight consumes and
@@ -418,7 +429,7 @@ Human review can occur at different points based on governance profile.
 
 Potential gates:
 
-- product-closure approval
+- Product Definition Approval
 - system design approval
 - program design approval
 - ticket graph approval

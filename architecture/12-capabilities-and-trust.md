@@ -39,11 +39,16 @@ If/when execution moves into an isolated/ephemeral runtime, prefer scoped short-
 ### Worker ownership and contained harness helpers
 
 The trusted supervisor resolves the ticket, exact accepted bindings, workspace, worker configuration,
-budget, deterministic brief, validator/review contract, and attempt policy before invocation. The
-selected worker may implement, explore within its workspace, repair, and report `DESIGN_BLOCKED`
-evidence. It cannot choose or replace the ticket, alter Atlas phase/owner, reroute staffing, change
-accepted dependency/design truth, weaken validation/governance, mutate Atlas planning/runtime
-authority, delegate Atlas ownership, commit/push/publish, or declare acceptance.
+budget, deterministic brief, validator/review contract, and attempt policy before invocation. It
+validates/materializes only the accepted ticket `context.sources` declaration plus current runtime
+facts. It cannot select sources, add sections, write purposes, summarize/expand semantic context, or
+fill context gaps. Missing declared material is a packaging/preflight blocker; missing accepted
+judgment is `DESIGN_BLOCKED`. Repository facts within granted inspection authority remain
+discoverable without becoming planning truth. The selected worker may implement, explore within its
+workspace, repair, and report `DESIGN_BLOCKED` evidence. It cannot choose or replace the ticket, alter
+Atlas phase/owner, reroute staffing, change accepted dependency/design truth, weaken
+validation/governance, mutate Atlas planning/runtime authority, delegate Atlas ownership,
+commit/push/publish, or declare acceptance.
 
 A coding harness may use helper agents only as implementation-local mechanics inside the same
 supervisor-selected worker attempt, with the same workspace, tool permissions, budget, accepted

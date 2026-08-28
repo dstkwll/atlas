@@ -1,6 +1,6 @@
 # PRD file
 
-Maintain `<run>/20-prd.md` continuously during discovery. It is the only product-closure candidate. Stage each complete replacement in `<run>/.20-prd.next.md`; never edit the canonical file directly.
+Maintain `<run>/20-prd.md` continuously during discovery. It is the only Product Definition Approval candidate. Stage each complete replacement in `<run>/.20-prd.next.md`; never edit the canonical file directly.
 
 ```markdown
 ---
@@ -89,7 +89,7 @@ None.
 Rules:
 
 - The section set and frontmatter schema are exact.
-- The only canonical write command is `python3 "<atlas-plugin-root>/tools/render_prd.py" write --run "<run-directory>" --draft .20-prd.next.md`. It renders before replacement. A render or staging failure preserves the prior pair; an interrupted two-file install may leave a mismatch, which verification detects and product closure blocks until the command is rerun.
+- The only canonical write command is `python3 "<atlas-plugin-root>/tools/render_prd.py" write --run "<run-directory>" --draft .20-prd.next.md`. It renders before replacement. A render or staging failure preserves the prior pair; an interrupted two-file install may leave a mismatch, which verification detects and Product Definition Approval blocks until the command is rerun.
 - Every normative `P|R|I|C|X-NNN` item cites one or more live decisions in `Derived from:`.
 - `derived_from` binds the exact current `10-decisions.md` version/hash after the retrospective is complete.
 - Internal design, module structure, ticketing, file lists, and implementation sequencing are prohibited here.

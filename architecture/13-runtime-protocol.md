@@ -50,7 +50,7 @@ Deterministic code consumes these envelopes and decides which state transition i
 Stages 0–2 use `<planning-root>/<feature>/control.json` as their machine-canonical planning
 state. It records only planning phase/gate outcomes and version/hash provenance. In v0.6 the
 accepted product-contract candidate is `20-prd.md`, and its `derived_from` field binds the exact
-`10-decisions.md` version/hash product closure reconciled. This closes the initial planning
+`10-decisions.md` version/hash reconciled during Product Definition Approval. This closes the initial planning
 authority gap for an effort that may span repositories without putting repository-scoped execution
 state in the planning root. `00-state.md` is generated from this file and is never transition
 authority.
@@ -62,11 +62,18 @@ for each target repository. The controller records upstream changes and all dire
 downstream invalidations as one logical atomic transition. Architecture does not fix its exact file,
 storage representation, schema, or module/CLI decomposition.
 
-The downstream planning controller ends at Stage 5. It hands execution an exact accepted
-ticket-graph version/hash; it owns no Stage 6+ execution worktree, active-ticket, execution-attempt,
-retry, execution-repair, validation, commit, branch, or event state. D-082's bounded Stage 3→4
-planning-repair episode and producer-attempt budget remain pre-execution planning control, not
-execution state. No separate compilation controller exists.
+The downstream planning controller ends at Stage 5. It hands execution an exact accepted version-2
+ticket-graph version/hash whose tickets carry compiler-selected `context.sources`; it owns no Stage 6+
+execution worktree, active-ticket, execution-attempt, retry, execution-repair, validation, commit,
+branch, or event state. Version 1 is raw historical evidence only and is not loadable or factory-executable. D-082's
+bounded Stage 3→4 planning-repair episode and producer-attempt budget remain pre-execution planning
+control, not execution state. No separate compilation controller exists.
+
+The trusted supervisor validates/materializes only the accepted context declaration plus current
+runtime facts. There is no second graph, packet acceptance, or runtime planner. It cannot select or
+fill semantic context; missing declared material blocks packaging/preflight, while missing accepted
+judgment yields `DESIGN_BLOCKED`. Repository facts within granted inspection authority remain
+discoverable.
 
 ## Machine-canonical runtime state
 

@@ -1,10 +1,10 @@
 # Boundary review envelope
 
-A fresh semantic reviewer reads the mechanically valid product-closure candidate and returns one JSON envelope. The invoker persists its exact bytes as `reviews/product_closure-v<version>.json` before invoking `advance`. The reviewer must read `10-decisions.md` before `20-prd.md`, must not modify the candidate, state, or repository, and must not repair any gap it finds.
+A fresh semantic reviewer reads the mechanically valid Product Definition Approval candidate and returns one JSON envelope. The invoker persists its exact bytes as `reviews/product_closure-v<version>.json` before invoking `advance`. The reviewer must read `10-decisions.md` before `20-prd.md`, must not modify the candidate, state, or repository, and must not repair any gap it finds.
 
 Apply every question below before choosing `PASS` or `BLOCKED`, and report every material gap in the same pass. The deterministic controller proves only the envelope plus live version/hash binding; freshness and read order are procedural requirements, not authenticated facts. The retrospective is exhaustive over identifiers and best-effort over meaning.
 
-## Product-closure semantic questions
+## Product Definition Approval semantic questions
 
 1. Does the decision record state and support the real problem?
 2. Are important consequences, contradictions, or scope questions still unresolved?
