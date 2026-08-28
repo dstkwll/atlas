@@ -350,19 +350,22 @@ acceptance; it is not a second authority source. Any field or JSON-type mismatch
 
 ## Ticket-graph compilation boundary
 
-Stage 5's compiler is a producer, not its own judge. A fresh read-only ticket-graph judge evaluates
-the exact complete graph and returns `PASS` or `BLOCKED` with all gaps. It establishes applicability
-before requiring an upstream artifact and never writes a missing ticket, edge, validation contract,
+Stage 5's compiler is a producer, not its own judge, and owns semantic context selection for each
+ticket. A current candidate's manifest version is exact integer `2`; version 1 is historical planning
+and is not factory-executable. A fresh read-only ticket-graph judge evaluates the exact complete graph
+and returns `PASS` or `BLOCKED` with all gaps. It establishes applicability before requiring an
+upstream artifact and never writes a missing ticket, context declaration, edge, validation contract,
 or acceptance to satisfy its own finding.
 
 Deterministic checks bind the exact graph version/SHA-256, assert unique ticket identities and valid
 dependency references, reject self-dependencies and cycles, require unambiguous repository targets,
-verify canonical ticket order and declared validation commands, and prove every ticket's upstream
-references are drawn from the selected path's applicable accepted sources. Every promised behavioral
-outcome must name an accepted proof path through sufficient deterministic validators/evidence.
-Required review gates may supplement that proof for semantic, design, or quality obligations; they
-may not substitute for deterministic proof of the ticket's outcome-bearing behavior. The candidate
-also binds the frozen baseline for every target repository.
+verify canonical ticket order and declared validation commands, and prove every ticket's
+`context.sources` exactly covers selected-path applicable sources. Stage 0 sections are empty; every
+semantic source has nonempty unique sections resolving to existing H2s and a nonempty purpose. Every
+promised behavioral outcome must name an accepted proof path through sufficient deterministic
+validators/evidence. Required review gates may supplement that proof for semantic, design, or quality
+obligations; they may not substitute for deterministic proof of the ticket's outcome-bearing
+behavior. The candidate also binds the frozen baseline for every target repository.
 
 Semantic review checks that every non-enabling ticket is outcome-bearing, crosses every boundary
 required by its behavior rather than grouping one architectural layer, and is independently
@@ -378,6 +381,14 @@ criteria remain observable, proof paths sufficient for the promised behavior, an
 decisions absent from compilation. PASS proceeds to the configured `tickets` authority; the
 downstream planning controller records the acceptance. BLOCKED returns to Stage 5 without changing
 authoritative state.
+
+Semantic completeness remains reviewer judgment: deterministic shape checks cannot decide whether
+Stage 5 selected the right accepted sections or stated a sufficient purpose. The later supervisor
+validates/materializes accepted declarations plus current runtime facts. It cannot select, add,
+rewrite, summarize, expand, or fill semantic context. Missing declared material is a
+packaging/preflight blocker; missing accepted judgment is `DESIGN_BLOCKED`. The reviewer and
+supervisor may inspect discoverable repository facts within their grant, but neither
+turns those observations into undeclared planning context.
 
 Any accepted System Design or Program Design change makes every dependent ticket-graph acceptance
 stale in the same logical atomic transition as the upstream change. Execution preflight consumes and

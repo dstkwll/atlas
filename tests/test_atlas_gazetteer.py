@@ -599,7 +599,7 @@ class AtlasGazetteerInventoryTest(unittest.TestCase):
         self.assertEqual(
             summary["accepted_graph"],
             {
-                "version": 1,
+                "version": 2,
                 "sha256": sha256(manifest_path),
                 "ticket_ids": ["demo-01"],
             },

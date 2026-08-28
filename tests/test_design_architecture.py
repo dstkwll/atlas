@@ -158,7 +158,170 @@ def v014_execution_contract_contradictions(text):
     return [name for name, pattern in patterns if re.search(pattern, normalized_text)]
 
 
+def v015_supervisor_context_selection_violations(text):
+    """Return bounded affirmative clauses that move semantic context choice to runtime."""
+    violations = []
+    normalized_text = " ".join(text.split())
+    action_pattern = re.compile(
+        r"\b(?:select(?:s|ed|ing)?|choose(?:s|n)?|chose|choosing|decid(?:e|es|ed|ing)|"
+        r"includ(?:e|es|ed|ing)|add(?:s|ed|ing)?|augment(?:s|ed|ing)?|author(?:s|ed|ing)?|"
+        r"write(?:s|n)?|wrote|writing|summari[sz](?:e|es|ed|ing)|"
+        r"expand(?:s|ed|ing)?|fill(?:s|ed|ing)?)\b"
+    )
+    context_pattern = re.compile(
+        r"\b(?:semantic\s+)?(?:context|sources?|sections?|excerpts?|purposes?)\b"
+    )
+    segment_pattern = re.compile(
+        r"\b(?:but|however|yet|although|though|nevertheless)\b"
+        r"|,\s*(?:and\s+)?(?=(?:the\s+)?(?:trusted\s+)?supervisor\b|(?:may|can|will|shall|must)\b)",
+        re.I,
+    )
+    other_subject_pattern = re.compile(
+        r"\b(?:compile-tickets producer|compiler|stage 5|program design)\b"
+    )
+    for clause in re.split(r"(?<=[.!?;])\s+", normalized_text):
+        if "supervisor" not in clause.lower():
+            continue
+        inherited_supervisor = False
+        for segment in segment_pattern.split(clause):
+            lower = segment.lower()
+            supervisor_positions = [match.start() for match in re.finditer(r"\bsupervisor\b", lower)]
+            other_positions = [match.start() for match in other_subject_pattern.finditer(lower)]
+            for action in action_pattern.finditer(lower):
+                last_supervisor = max(
+                    (position for position in supervisor_positions if position < action.start()),
+                    default=-1,
+                )
+                last_other = max(
+                    (position for position in other_positions if position < action.start()),
+                    default=-1,
+                )
+                if last_supervisor <= last_other and not (
+                    last_supervisor == -1 and last_other == -1 and inherited_supervisor
+                ):
+                    continue
+                nearby = lower[max(0, action.start() - 100):action.end() + 100]
+                if not context_pattern.search(nearby):
+                    continue
+                prefix = lower[max(0, action.start() - 120):action.start()]
+                if re.search(
+                    r"(?:cannot|does not|must not|may not|never|neither|without|"
+                    r"prohibited from|forbidden from|not permitted to|not allowed to|no supervisor)"
+                    r"\b[^.!?;]{0,100}$",
+                    prefix,
+                ):
+                    continue
+                suffix = lower[action.end():action.end() + 160]
+                if re.search(r"\breject(?:ed|s)?\b", suffix):
+                    continue
+                violations.append(clause)
+                break
+            else:
+                latest_supervisor = max(supervisor_positions, default=-1)
+                latest_other = max(other_positions, default=-1)
+                if latest_supervisor > latest_other:
+                    inherited_supervisor = True
+                elif latest_other > latest_supervisor:
+                    inherited_supervisor = False
+                continue
+            break
+    return violations
+
+
 class PairedDesignArchitectureTests(unittest.TestCase):
+    def test_v015_d087_refines_d085_with_ticket_graph_v2_context_authority(self):
+        root_readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        architecture_readme = read("README.md")
+        decision_path = ARCH / "30-v0.15-decisions.md"
+
+        self.assertTrue(decision_path.is_file(), "v0.15/D-087 decision record is absent")
+        decision = normalized("30-v0.15-decisions.md")
+        artifacts = normalized("03-artifact-model.md")
+        control = normalized("04-control-plane.md")
+        factory = normalized("05-execution-factory.md")
+        review = normalized("06-review-and-validation.md")
+        runtime = normalized("13-runtime-protocol.md")
+        borrow_map = normalized("15-reference-implementation-borrow-map.md")
+        d085 = normalized("28-v0.13-decisions.md")
+        current = " ".join((decision, artifacts, control, factory, review, runtime, borrow_map))
+
+        self.assertIn("architecture/30-v0.15-decisions.md", root_readme)
+        self.assertIn("**v0.15**", root_readme)
+        self.assertIn("**v0.15**", architecture_readme)
+        self.assertIn("D-087", decision)
+        self.assertIn("v0.15 north star", decision.lower())
+        self.assertRegex(d085, r"Refined by D-087")
+        self.assertRegex(current, r"(?i)ticket-graph manifest version.{0,100}exact integer `?2`?")
+        self.assertRegex(current, r"(?i)version 1.{0,160}historical planning.{0,160}not factory-executable")
+        self.assertRegex(artifacts, r"`context`.{0,120}`sources`.{0,160}`kind`.{0,100}`sections`.{0,100}`purpose`")
+        self.assertRegex(artifacts, r"(?i)body headings are exactly.{0,120}`What becomes true`.{0,120}`Acceptance`.{0,120}`Execution context`")
+        self.assertRegex(control, r"(?i)compiler.{0,180}owns semantic context selection")
+        self.assertRegex(factory, r"(?i)supervisor.{0,180}(?:validates|materializes).{0,240}accepted declarations")
+        self.assertRegex(factory, r"(?i)missing declared material.{0,160}(?:packaging|preflight).{0,80}block")
+        self.assertRegex(factory, r"(?i)missing accepted judgment.{0,100}`DESIGN_BLOCKED`")
+        self.assertRegex(review, r"(?i)semantic completeness.{0,120}reviewer judgment")
+        self.assertRegex(runtime, r"(?i)no second graph.{0,120}packet acceptance.{0,160}runtime planner")
+        self.assertRegex(borrow_map, r"(?i)supervisor gap filling.{0,120}REJECT")
+
+    def test_v015_artifact_example_execution_context_matches_declared_sections(self):
+        artifact_model = read("03-artifact-model.md")
+        example = artifact_model.split("Exact version-2 frontmatter:", 1)[1].split("## `reviews/`", 1)[0]
+
+        self.assertIn(
+            "- `program_design` — sections: `Call and data flow`; `Test seams and validation plan` — purpose: Constrain implementation to the accepted queue flow and proof seams.",
+            example,
+        )
+        self.assertNotIn("40-program-design.md#job-cancellation", example)
+
+    def test_v015_runtime_materializes_complete_declared_sections_without_excerpt_selection(self):
+        execution_factory = read("05-execution-factory.md")
+        normalized = " ".join(execution_factory.split())
+
+        self.assertNotIn("Prefer exact declared sections and excerpts", execution_factory)
+        self.assertIn(
+            "Materialize the complete accepted bytes of every exact declared section",
+            normalized,
+        )
+        self.assertIn("never selects excerpts at runtime", normalized)
+
+    def test_v015_supervisor_context_selection_regression_has_benign_controls(self):
+        live_surfaces = (
+            "02-workflow.md",
+            "04-control-plane.md",
+            "05-execution-factory.md",
+            "06-review-and-validation.md",
+            "12-capabilities-and-trust.md",
+            "13-runtime-protocol.md",
+            "15-reference-implementation-borrow-map.md",
+            "30-v0.15-decisions.md",
+        )
+        for name in live_surfaces:
+            with self.subTest(surface=name):
+                self.assertEqual(v015_supervisor_context_selection_violations(read(name)), [])
+
+        for forbidden in (
+            "The supervisor selects the semantic source sections for the worker brief.",
+            "The trusted supervisor may choose additional context excerpts at dispatch.",
+            "The supervisor fills missing purposes before invoking the worker.",
+            "The supervisor cannot select sources, but may add semantic context at runtime.",
+            "The supervisor only validates accepted sources, and may fill missing context.",
+            "The supervisor decides which accepted sections to include in the worker brief.",
+            "The supervisor augments semantic context omitted by Stage 5.",
+        ):
+            with self.subTest(forbidden=forbidden):
+                self.assertTrue(v015_supervisor_context_selection_violations(forbidden))
+
+        for permitted in (
+            "The supervisor selects the first currently ready ticket in canonical order.",
+            "The supervisor validates accepted source bindings before dispatch.",
+            "The compiler selects semantic context; the supervisor only validates and materializes it.",
+            "The supervisor cannot add sources, sections, or purposes.",
+            "The supervisor materializes the packet without adding semantic context.",
+            "The supervisor is prohibited from selecting semantic context.",
+        ):
+            with self.subTest(permitted=permitted):
+                self.assertEqual(v015_supervisor_context_selection_violations(permitted), [])
+
     def test_v014_d086_is_current_and_prior_repair_boundaries_remain(self):
         root_readme = (ROOT / "README.md").read_text(encoding="utf-8")
         architecture_readme = read("README.md")
@@ -724,9 +887,11 @@ class PairedDesignArchitectureTests(unittest.TestCase):
 
         ticket_section = read("03-artifact-model.md").split("## `tickets/*.md`", 1)[1]
         ticket_template = ticket_section.split("```yaml", 1)[1].split("```", 1)[0]
-        self.assertIn("applicable_upstream:", ticket_template)
-        self.assertNotRegex(ticket_template, re.compile(r"^\s+prd:\s+", re.MULTILINE))
-        self.assertNotRegex(ticket_template, re.compile(r"^\s+system_design:\s+", re.MULTILINE))
+        self.assertIn("context:", ticket_template)
+        self.assertIn("sources:", ticket_template)
+        self.assertIn("purpose:", ticket_template)
+        self.assertNotIn("references:", ticket_template)
+        self.assertNotIn("applicable_upstream:", ticket_template)
 
         stage_nine = workflow.split("## stage 9 — whole-feature validation and review", 1)[1].split("## stage 10", 1)[0]
         whole_feature_review = review.split("## whole-feature review", 1)[1].split("## human review policy", 1)[0]

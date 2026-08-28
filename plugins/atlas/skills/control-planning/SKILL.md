@@ -20,7 +20,7 @@ For `system_design`, require frozen participation `agent_led` or `co_design` and
 
 For `program_design`, require the configured `AGENT_REVIEW` or `HUMAN` authority exactly as defined in [`references/program-design-authority.md`](references/program-design-authority.md). Program Design has no participation, `AUTO`, or `HUMAN_IF_CHANGED` branch. If any frozen policy is incomplete, aliased, or contradictory, stop; no configured path falls back to another.
 
-For `tickets`, require configured `AGENT_REVIEW` or `HUMAN` exactly as defined in [`references/ticket-graph-authority.md`](references/ticket-graph-authority.md). Tickets has no participation, `AUTO`, `CONDITIONAL`, or `HUMAN_IF_CHANGED` branch in V1.
+For `tickets`, require the current exact integer version-2 manifest and configured `AGENT_REVIEW` or `HUMAN` exactly as defined in [`references/ticket-graph-authority.md`](references/ticket-graph-authority.md). Tickets has no participation, `AUTO`, `CONDITIONAL`, or `HUMAN_IF_CHANGED` branch. Version 1 is historical planning and is not factory-executable; do not convert, project, or fall back to it.
 
 If files, fields, phase, policy, or frozen participation contradict one another, report the exact mismatch and stop. Never repair state, candidate bytes, board bytes, source bindings, or intake.
 
@@ -63,7 +63,7 @@ Run `verify` first. On failure, return its complete mechanical repository `BLOCK
 
 Adapter `config_path`, bound `source`, Git-directory, and absolute diagnostic paths are ephemeral operational evidence. Never copy them into `reviews/program-design-v1.json`. Reviewer evidence names only stable repository identity, full baseline OID, baseline-relative repository paths, and relevant code evidence.
 
-For explicit stage `tickets`, after candidate mechanics pass and before invoking the Stage 5 judge or writing evidence, run the same `verify --run` command. On failure, return the complete repository `BLOCKED` report unchanged. On PASS, the judge may use the same packaged `list`, `search`, and `read` commands only when it needs exact frozen-baseline evidence for a target, validator, or Program Design touchpoint. Never substitute current checkout bytes or copy machine-local paths into `reviews/ticket-graph-v1.json`.
+For explicit stage `tickets`, after candidate mechanics pass and before invoking the Stage 5 judge or writing evidence, run the same `verify --run` command. On failure, return the complete repository `BLOCKED` report unchanged. On PASS, the judge may use the same packaged `list`, `search`, and `read` commands only when it needs exact frozen-baseline evidence for a target, validator, or Program Design touchpoint. Never substitute current checkout bytes or copy machine-local paths into `reviews/ticket-graph-v1.json`. Missing declared material is a packaging/preflight blocker; missing accepted judgment is `DESIGN_BLOCKED`.
 
 ## 3. Resolve the frozen authority
 
@@ -84,7 +84,7 @@ Follow the exact reviewer output, `DESIGN_BLOCKED` semantics, and authority matr
 
 ## Ticket graph branch
 
-Follow the exact seven-dimension judge schema, `DESIGN_BLOCKED` gap semantics, and authority matrix in [`references/ticket-graph-authority.md`](references/ticket-graph-authority.md). Evidence lives only at `reviews/ticket-graph-v1.json`; the invoker assembles exact duplicate-safe JSON bytes after one fresh read-only judge examines the exact complete graph. Every configured path requires PASS. `BLOCKED` returns all local gaps to `atlas:compile-tickets`; a `DESIGN_BLOCKED` row remains a BLOCKED verdict and names the exact applicable upstream source without mutating it.
+Follow the exact seven-dimension judge schema, `DESIGN_BLOCKED` gap semantics, and authority matrix in [`references/ticket-graph-authority.md`](references/ticket-graph-authority.md). Evidence lives only at `reviews/ticket-graph-v1.json`; the invoker assembles exact duplicate-safe JSON bytes after one fresh read-only judge examines the exact complete version-2 graph. Every configured path requires PASS. `BLOCKED` returns all local gaps to `atlas:compile-tickets`; a `DESIGN_BLOCKED` row remains a BLOCKED verdict and names the exact applicable upstream source without mutating it. The trusted supervisor validates and materializes only the accepted context declarations plus current execution facts; it must not select sources, add sections, write purposes, or fill context gaps. Repository facts within granted inspection authority remain discoverable.
 
 Resolve exact configured `AGENT_REVIEW` or `HUMAN`. `AGENT_REVIEW` rejects human approval. `HUMAN` requires explicit approval of the exact reviewed graph after PASS. The judge and human edit no ticket, manifest, source, repository, evidence, or state. No branch invokes execution.
 
@@ -102,7 +102,7 @@ python3 "<atlas-plugin-root>/tools/atlas_planning.py" advance --run "<run-direct
 python3 "<atlas-plugin-root>/tools/atlas_planning.py" advance --run "<run-directory>" --stage tickets --review reviews/ticket-graph-v1.json --approval human --date "<YYYY-MM-DD>"
 ```
 
-The first three commands are the exact System Design matrix: direct `HUMAN`, direct/mapped `AGENT_REVIEW`, and mapped `HUMAN`. The next two are Program Design `AGENT_REVIEW` and reviewed `HUMAN`. The final two are tickets direct/mapped `AGENT_REVIEW` and direct/mapped `HUMAN`. Select exactly one command from the explicit stage and configured or mapped branch; the adapter calls `advance` exactly once. The controller enforces each matrix. It holds `.atlas-planning.lock`, revalidates policy/planning/Stage 0, reruns mechanics, and re-reads candidate/source/envelope at the final write boundary before atomically replacing only `planning-control.json`. Acceptance stores only the envelope reference/hash when evidence is required; System Design HTML remains non-authoritative.
+The first three commands are the exact System Design matrix: direct `HUMAN`, direct/mapped `AGENT_REVIEW`, and mapped `HUMAN`. The next two are Program Design `AGENT_REVIEW` and reviewed `HUMAN`. The final two are tickets configured `AGENT_REVIEW` and configured `HUMAN`. Select exactly one command from the explicit stage and its applicable configured branch; only System Design has a mapped branch. The adapter calls `advance` exactly once. The controller enforces each matrix. It holds `.atlas-planning.lock`, revalidates policy/planning/Stage 0, reruns mechanics, and re-reads candidate/source/envelope at the final write boundary before atomically replacing only `planning-control.json`. Acceptance stores only the envelope reference/hash when evidence is required; System Design HTML remains non-authoritative.
 
 On nonzero output, report the exact error and never claim progression from an intended command. Do not retry `advance`; rerun producer/check after the mismatch is resolved.
 

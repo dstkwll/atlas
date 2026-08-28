@@ -372,16 +372,19 @@ and target repository baseline. It creates no substitute PRD or design artifact.
 
 Outputs:
 
-- one execution-complete ticket graph;
+- one execution-complete ticket graph whose manifest version is exact integer `2`;
 - truthful blocking relationships plus canonical preferred order;
 - observable external-prerequisite satisfaction conditions where applicable;
 - explicit proof paths linking promised outcomes to validators/review gates;
 - the real tracer ticket where useful; and
-- explicit references to upstream sections.
+- exact per-ticket `context.sources` declarations selected by the compiler, with purpose and exact
+  upstream H2 sections for every applicable semantic source.
 
 Stage 5 is the final pre-execution planning boundary. The compiler proposes the complete ticket
 graph; it does not accept its own output. A read-only ticket-graph judge evaluates verticality,
-dependency completeness, validation contracts, repository targeting, and exact upstream references.
+dependency completeness, validation contracts, repository targeting, and semantic context
+completeness. The current manifest version is exact integer `2`; version 1 is historical planning and
+is not factory-executable. There is no converter, projection, or fallback.
 The configured `tickets` authority decides whether the downstream planning controller may record
 acceptance. That controller records the exact graph version/SHA-256, every applicable accepted
 upstream binding, and each target repository baseline.
@@ -392,11 +395,19 @@ ticket graph stale in the same logical atomic transition as the upstream state c
 file, schema, lock, and implementation decomposition remain Program Design choices. There is no
 separate compilation controller.
 
-Tickets should reference upstream source-of-truth sections rather than copying them. Execution
-receives only the exact accepted ticket-graph binding; it may verify that acceptance and currency but
-may not create or record them. The supervisor deterministically derives a non-authoritative worker
-brief from that graph, its applicable accepted bindings, and current validated runtime evidence. It
-does not invoke a planner or treat the raw user prompt as a coequal contract.
+Each ticket replaces top-level `references` with exact `context: {sources: [...]}`. Every applicable
+selected-path source kind appears exactly once with exact `kind`, `sections`, and nonempty `purpose`.
+Stage 0 sections are empty; semantic-source sections are nonempty, unique, and resolve to existing H2
+headings. Ticket body H2s are exactly `What becomes true`, `Acceptance`, and `Execution context`.
+
+compile-tickets owns semantic context selection. Execution receives only the exact accepted
+ticket-graph binding; it may verify that acceptance and currency but may not create or record them.
+The supervisor deterministically validates and materializes accepted declarations plus current
+runtime facts into a deterministic non-authoritative worker brief. It must not select sources, add sections, write
+purposes, summarize missing context, or fill context gaps. Missing declared material is a
+packaging/preflight blocker; missing accepted judgment is `DESIGN_BLOCKED`. Repository facts within
+inspection authority remain discoverable. The supervisor does not invoke a planner or treat the raw
+user prompt as a coequal contract.
 
 ---
 

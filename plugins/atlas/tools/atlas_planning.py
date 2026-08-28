@@ -65,6 +65,7 @@ PRODUCT_CLOSURE_FIELDS = {"version", "sha256"}
 SYSTEM_DESIGN_FILE = "30-system-design.md"
 PROGRAM_DESIGN_FILE = "40-program-design.md"
 TICKET_GRAPH_FILE = "50-ticket-graph.json"
+CURRENT_TICKET_GRAPH_VERSION = 2
 SYSTEM_DESIGN_FIELDS = {
     "run", "version", "status", "gate_ready", "participation", "opened", "source_binding",
 }
@@ -78,10 +79,11 @@ TICKET_GRAPH_FIELDS = {
 TICKET_GRAPH_ENTRY_FIELDS = {"id", "path", "sha256"}
 TICKET_FIELDS = {
     "id", "kind", "status", "repository", "blocked_by", "tracer", "enabling",
-    "references", "external_prerequisites", "validators", "outcomes", "reviews",
+    "context", "external_prerequisites", "validators", "outcomes", "reviews",
 }
 TICKET_DEPENDENCY_FIELDS = {"ticket", "establishes"}
-TICKET_REFERENCE_FIELDS = {"kind", "sections"}
+TICKET_CONTEXT_FIELDS = {"sources"}
+TICKET_CONTEXT_SOURCE_FIELDS = {"kind", "sections", "purpose"}
 TICKET_VALIDATOR_FIELDS = {"id", "command", "success"}
 TICKET_OUTCOME_FIELDS = {"id", "promise", "acceptance", "validator_ids"}
 TICKET_ENABLING_FIELDS = {"consumer", "rationale"}
@@ -256,6 +258,30 @@ def program_design_headings(body: str) -> tuple[str, ...]:
         for index, token in enumerate(tokens[:-1])
         if token.type == "heading_open" and token.tag == "h2"
     )
+
+
+def expected_ticket_execution_context_lines(sources: list[dict[str, Any]]) -> tuple[str, ...]:
+    lines = []
+    for source in sources:
+        sections = source["sections"]
+        rendered_sections = (
+            "; ".join(f"`{section}`" for section in sections)
+            if sections
+            else "none"
+        )
+        purpose = " ".join(source["purpose"].split())
+        lines.append(
+            f"- `{source['kind']}` — sections: {rendered_sections} — purpose: {purpose}"
+        )
+    return tuple(lines)
+
+
+def ticket_execution_context_lines(body: str) -> tuple[str, ...]:
+    marker = "## Execution context"
+    if marker not in body:
+        return ()
+    section = body.split(marker, 1)[1]
+    return tuple(line.strip() for line in section.splitlines() if line.strip())
 
 
 def validate_semantic_review(review: Any) -> None:
@@ -1295,7 +1321,7 @@ def validate_ticket_graph_acceptance(
     expected_authority = effective["gates"]["tickets"]["authority"]
     if (
         type(record.get("candidate_version")) is not int
-        or record["candidate_version"] != 1
+        or record["candidate_version"] != CURRENT_TICKET_GRAPH_VERSION
         or re.fullmatch(r"[0-9a-f]{64}", str(record.get("candidate_sha256", ""))) is None
         or record.get("authority") != expected_authority
         or record.get("review_reference") != TICKET_GRAPH_REVIEW_REFERENCE
@@ -2569,8 +2595,18 @@ def ticket_graph_report(
     candidate_version = manifest.get("version")
     if type(candidate_version) is int:
         report["candidate_version"] = candidate_version
-    if type(candidate_version) is not int or candidate_version != 1:
-        gaps.append(gap(TICKET_GRAPH_FILE, "graph version must equal integer 1", "tickets", "write graph version 1"))
+    if type(candidate_version) is not int or candidate_version != CURRENT_TICKET_GRAPH_VERSION:
+        problem = (
+            "graph version 1 is historical planning and is not factory-executable"
+            if candidate_version == 1
+            else f"graph version must equal integer {CURRENT_TICKET_GRAPH_VERSION}"
+        )
+        gaps.append(gap(
+            TICKET_GRAPH_FILE,
+            problem,
+            "tickets",
+            f"compile a current graph at version {CURRENT_TICKET_GRAPH_VERSION}",
+        ))
     if manifest.get("run") != planning["run"]:
         gaps.append(gap(TICKET_GRAPH_FILE, "graph run does not match planning-control.json", "tickets", "bind the graph to this run"))
     if manifest.get("status") != "draft":
@@ -2685,8 +2721,8 @@ def ticket_graph_report(
         if type(frontmatter.get("tracer")) is not bool:
             gaps.append(gap(expected_path, "ticket tracer must be boolean", "tickets", "record explicit tracer identity"))
         headings = tuple(re.findall(r"(?m)^## ([^\n]+?)\s*$", body))
-        if headings != ("What becomes true", "Acceptance", "Relevant design"):
-            gaps.append(gap(expected_path, "ticket body does not match the exact human-readable shape", "tickets", "restore the three required sections"))
+        if headings != ("What becomes true", "Acceptance", "Execution context"):
+            gaps.append(gap(expected_path, "ticket body does not match the exact human-readable shape", "tickets", "restore What becomes true, Acceptance, and Execution context"))
 
         dependencies = frontmatter.get("blocked_by")
         if not isinstance(dependencies, list) or any(
@@ -2700,18 +2736,28 @@ def ticket_graph_report(
         elif len({item["ticket"] for item in dependencies}) != len(dependencies):
             gaps.append(gap(expected_path, "blocked_by contains duplicate prerequisites", "tickets", "deduplicate prerequisite edges"))
 
-        references = frontmatter.get("references")
-        reference_kinds = [item.get("kind") for item in references or [] if isinstance(item, dict)]
-        if (
-            not isinstance(references, list)
-            or not references
+        context = frontmatter.get("context")
+        context_sources = (
+            context.get("sources")
+            if isinstance(context, dict) and set(context) == TICKET_CONTEXT_FIELDS
+            else None
+        )
+        raw_context_kinds = [
+            item.get("kind") for item in context_sources or [] if isinstance(item, dict)
+        ]
+        context_kinds = [kind for kind in raw_context_kinds if isinstance(kind, str)]
+        context_is_valid = not (
+            not isinstance(context_sources, list)
+            or not context_sources
             or any(
                 not isinstance(item, dict)
-                or set(item) != TICKET_REFERENCE_FIELDS
+                or set(item) != TICKET_CONTEXT_SOURCE_FIELDS
                 or not nonempty_string(item.get("kind"))
                 or item.get("kind") not in source_kinds
                 or not isinstance(item.get("sections"), list)
                 or any(not nonempty_string(section) for section in item.get("sections", []))
+                or len(item.get("sections", [])) != len(set(item.get("sections", [])))
+                or not nonempty_string(item.get("purpose"))
                 or (item.get("kind") == "stage0" and item.get("sections") != [])
                 or (
                     item.get("kind") != "stage0"
@@ -2723,12 +2769,30 @@ def ticket_graph_report(
                         )
                     )
                 )
-                for item in references or []
+                for item in context_sources or []
             )
-            or len(reference_kinds) != len(set(reference_kinds))
-            or set(reference_kinds) != source_kinds
+            or len(context_kinds) != len(context_sources or [])
+            or len(context_kinds) != len(set(context_kinds))
+            or set(context_kinds) != source_kinds
+        )
+        if not context_is_valid:
+            gaps.append(gap(
+                expected_path,
+                "ticket context source declarations must exactly cover applicable sources with resolved sections and nonempty purpose",
+                "tickets",
+                "declare each applicable selected-path context source exactly once",
+            ))
+        elif (
+            isinstance(context_sources, list)
+            and ticket_execution_context_lines(body)
+            != expected_ticket_execution_context_lines(context_sources)
         ):
-            gaps.append(gap(expected_path, "ticket reference section does not resolve in every applicable accepted source", "tickets", "cite exact existing sections from every applicable source"))
+            gaps.append(gap(
+                expected_path,
+                "ticket Execution context must exactly mirror the ordered context.sources declarations",
+                "tickets",
+                "render one exact Execution context line per declared source, including its sections and purpose",
+            ))
 
         validators = frontmatter.get("validators")
         validator_ids = [item.get("id") for item in validators or [] if isinstance(item, dict)]

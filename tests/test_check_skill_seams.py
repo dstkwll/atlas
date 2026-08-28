@@ -77,6 +77,48 @@ class SkillSeamHardeningTests(unittest.TestCase):
             shutil.copy2(ROOT / relative, target)
         return plugin / "skills"
 
+    def test_ticket_graph_v2_context_selection_and_materialization_authority_is_load_bearing(self):
+        plugin = ROOT / "plugins" / "atlas"
+        clauses = {
+            plugin / "skills" / "compile-tickets" / "SKILL.md": (
+                "Ticket-graph manifest version is exact integer `2`",
+                "compile-tickets owns semantic context selection",
+                "No automatic projection or supervisor gap filling is allowed",
+            ),
+            plugin / "skills" / "compile-tickets" / "references" / "ticket-graph-file.md": (
+                "context:",
+                "purpose:",
+                "Execution context",
+                "Version 1 remains valid historical planning but is not factory-executable",
+            ),
+            plugin / "skills" / "control-planning" / "SKILL.md": (
+                "validates and materializes only the accepted context declarations plus current execution facts",
+                "must not select sources, add sections, write purposes, or fill context gaps",
+                "Missing declared material is a packaging/preflight blocker; missing accepted judgment is `DESIGN_BLOCKED`",
+            ),
+            plugin / "skills" / "control-planning" / "references" / "ticket-graph-authority.md": (
+                '"candidate_version": 2',
+                "`reviews/ticket-graph-v1.json` remains the evidence-envelope filename",
+            ),
+        }
+        for source_path, required in clauses.items():
+            text = source_path.read_text(encoding="utf-8")
+            for clause in required:
+                self.assertIn(clause, text)
+                with self.subTest(path=source_path.name, mutation=clause), tempfile.TemporaryDirectory() as td:
+                    skills = self.copy_plugin(Path(td))
+                    target = skills / source_path.relative_to(plugin / "skills")
+                    mutated = target.read_text(encoding="utf-8")
+                    target.write_text(
+                        mutated.replace(clause, "[removed ticket-v2 context authority]"),
+                        encoding="utf-8",
+                    )
+                    findings = SEAMS.cross_skill_contracts(skills)
+                    self.assertTrue(
+                        any("ticket v2 context authority" in message for _, message in findings),
+                        findings,
+                    )
+
     def test_design_skills_require_feature_paid_seams_and_bounded_proof(self):
         plugin = ROOT / "plugins" / "atlas"
         contracts = {
@@ -747,6 +789,21 @@ class SkillSeamHardeningTests(unittest.TestCase):
             findings = SEAMS.cross_skill_contracts(skills)
             self.assertTrue(any("exact internal control-planning handoff" in message for _, message in findings), findings)
 
+    def test_ticket_authority_has_only_direct_configured_paths(self):
+        plugin = ROOT / "plugins" / "atlas"
+        control = (plugin / "skills" / "control-planning" / "SKILL.md").read_text(
+            encoding="utf-8"
+        )
+
+        ticket_branch = control.split("## Ticket graph branch", 1)[1]
+        transition_explanation = ticket_branch.split("## 5. Verify and report", 1)[0]
+        self.assertNotIn("tickets direct/mapped", transition_explanation)
+        self.assertIn("tickets configured `AGENT_REVIEW` and configured `HUMAN`", transition_explanation)
+
+        plugin_readme = (plugin / "README.md").read_text(encoding="utf-8")
+        self.assertNotIn("direct or conditionally mapped `HUMAN`", plugin_readme)
+        self.assertIn("configured `HUMAN` also requires explicit approval", plugin_readme)
+
     def test_control_planning_supports_three_explicit_stages_and_loads_ticket_authority(self):
         plugin = ROOT / "plugins" / "atlas"
         control_path = plugin / "skills" / "control-planning" / "SKILL.md"
@@ -1114,9 +1171,37 @@ class SkillSeamHardeningTests(unittest.TestCase):
             (
                 "ticket",
                 "compile-tickets/references/ticket-graph-file.md",
-                "blocked_by: []",
-                "depends_on: []",
+                "context:\n  sources:",
+                "context_v2:\n  sources:",
                 "ticket frontmatter schema",
+            ),
+            (
+                "legacy-references",
+                "compile-tickets/references/ticket-graph-file.md",
+                "context:\n  sources:",
+                "references:\n  sources:",
+                "legacy ticket references",
+            ),
+            (
+                "context-source",
+                "compile-tickets/references/ticket-graph-file.md",
+                "      purpose: Constrain implementation flow",
+                "      rationale: Constrain implementation flow",
+                "ticket context source schema",
+            ),
+            (
+                "candidate-version",
+                "compile-tickets/references/ticket-graph-file.md",
+                '"version": 2',
+                '"version": 1',
+                "ticket graph template candidate version",
+            ),
+            (
+                "authority-candidate-version",
+                "control-planning/references/ticket-graph-authority.md",
+                '"candidate_version": 2',
+                '"candidate_version": 1',
+                "authority envelope version/candidate binding",
             ),
             (
                 "dimensions",
@@ -1139,7 +1224,10 @@ class SkillSeamHardeningTests(unittest.TestCase):
                 path = skills / relative
                 text = path.read_text(encoding="utf-8")
                 self.assertIn(old, text)
-                path.write_text(text.replace(old, new, 1), encoding="utf-8")
+                path.write_text(
+                    text.replace(old, new) if name == "filename" else text.replace(old, new, 1),
+                    encoding="utf-8",
+                )
                 findings = SEAMS.cross_skill_contracts(skills)
                 self.assertTrue(any(expected in message for _, message in findings), findings)
 

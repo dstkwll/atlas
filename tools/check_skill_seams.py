@@ -365,9 +365,10 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "READY_FOR_EXECUTION",
         ],
         "ticket-graph-template": [
-            '"preferred_order"', '"tracer_ticket"', '"source_bindings"', "exactly one",
-            "blocked_by:", "external_prerequisites:", "validators:", "outcomes:",
-            "What becomes true", "Acceptance", "Relevant design",
+            '"version": 2', '"preferred_order"', '"tracer_ticket"', '"source_bindings"', "exactly one",
+            "blocked_by:", "context:", "sources:", "purpose:", "external_prerequisites:", "validators:", "outcomes:",
+            "What becomes true", "Acceptance", "Execution context",
+            "Version 1 remains valid historical planning but is not factory-executable",
         ],
         "compile-tickets-agent": [
             'display_name: "Atlas Ticket Graph Compiler"',
@@ -419,6 +420,50 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         for needle in needles:
             if needle.lower() not in text.lower():
                 findings.append(("cross", f"{name}: missing seam contract `{needle}`"))
+
+    ticket_v2_context_contract = {
+        "compile-tickets": (
+            "Ticket-graph manifest version is exact integer `2`",
+            "compile-tickets owns semantic context selection",
+            "Execution context` body mirrors the ordered declarations exactly",
+            "No automatic projection or supervisor gap filling is allowed",
+        ),
+        "ticket-graph-template": (
+            "context:",
+            "purpose:",
+            "Execution context",
+            "exactly one ordered canonical line per `context.sources` entry",
+            "Version 1 remains valid historical planning but is not factory-executable",
+        ),
+        "control-planning": (
+            "validates and materializes only the accepted context declarations plus current execution facts",
+            "must not select sources, add sections, write purposes, or fill context gaps",
+            "Missing declared material is a packaging/preflight blocker; missing accepted judgment is `DESIGN_BLOCKED`",
+        ),
+        "ticket-graph-authority": (
+            '"candidate_version": 2',
+            "`reviews/ticket-graph-v1.json` remains the evidence-envelope filename",
+        ),
+        "planning": (
+            '"context", "external_prerequisites"',
+            'TICKET_CONTEXT_FIELDS = {"sources"}',
+            'TICKET_CONTEXT_SOURCE_FIELDS = {"kind", "sections", "purpose"}',
+            'CURRENT_TICKET_GRAPH_VERSION = 2',
+            'record["candidate_version"] != CURRENT_TICKET_GRAPH_VERSION',
+            'candidate_version != CURRENT_TICKET_GRAPH_VERSION',
+        ),
+    }
+    if any(
+        clause not in texts.get(name, "")
+        for name, clauses in ticket_v2_context_contract.items()
+        for clause in clauses
+    ):
+        findings.append(("cross", "ticket v2 context authority contract is incomplete"))
+    if (
+        re.search(r"(?im)^\s*references:\s*$", texts.get("ticket-graph-template", ""))
+        or "Every ticket references every applicable accepted source" in texts.get("compile-tickets", "")
+    ):
+        findings.append(("cross", "live Stage 5 contract still uses legacy ticket references"))
 
     repository_surface = required["repository"]
     if any(marker not in texts.get("repository", "") for marker in repository_surface):
@@ -951,6 +996,9 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
     try:
         graph_fields = set(assigned_literal(texts.get("planning", ""), "TICKET_GRAPH_FIELDS"))
         ticket_fields = set(assigned_literal(texts.get("planning", ""), "TICKET_FIELDS"))
+        context_fields = set(assigned_literal(texts.get("planning", ""), "TICKET_CONTEXT_FIELDS"))
+        context_source_fields = set(assigned_literal(texts.get("planning", ""), "TICKET_CONTEXT_SOURCE_FIELDS"))
+        current_graph_version = assigned_literal(texts.get("planning", ""), "CURRENT_TICKET_GRAPH_VERSION")
         graph_dimensions = tuple(assigned_literal(texts.get("planning", ""), "TICKET_GRAPH_DIMENSIONS"))
         graph_review_fields = set(assigned_literal(texts.get("planning", ""), "TICKET_GRAPH_REVIEW_FIELDS"))
         graph_review_reference = assigned_literal(texts.get("planning", ""), "TICKET_GRAPH_REVIEW_REFERENCE")
@@ -964,6 +1012,8 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         ticket = ticket_maps[0] if len(ticket_maps) == 1 else {}
         envelope = authority_maps[0] if authority_maps else {}
         semantic = envelope.get("semantic_review") if isinstance(envelope, dict) else None
+        context = ticket.get("context") if isinstance(ticket, dict) else None
+        context_sources = context.get("sources") if isinstance(context, dict) else None
         rows = semantic.get("dimensions") if isinstance(semantic, dict) else None
         row_dimensions = tuple(
             item.get("dimension") for item in rows if isinstance(item, dict)
@@ -972,8 +1022,23 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             findings.append(("cross", "ticket graph manifest schema does not match planning TICKET_GRAPH_FIELDS"))
         if set(ticket) != ticket_fields:
             findings.append(("cross", "ticket frontmatter schema does not match planning TICKET_FIELDS"))
+        if not isinstance(context, dict) or set(context) != context_fields:
+            findings.append(("cross", "ticket context schema does not match planning TICKET_CONTEXT_FIELDS"))
+        if (
+            not isinstance(context_sources, list)
+            or not context_sources
+            or any(
+                not isinstance(source, dict) or set(source) != context_source_fields
+                for source in context_sources
+            )
+        ):
+            findings.append(("cross", "ticket context source schema does not match planning TICKET_CONTEXT_SOURCE_FIELDS"))
+        if current_graph_version != 2 or manifest.get("version") != current_graph_version:
+            findings.append(("cross", "ticket graph template candidate version does not match planning current version"))
         if set(envelope) != graph_review_fields:
             findings.append(("cross", "Ticket graph authority envelope does not match planning schema"))
+        if envelope.get("version") != 1 or envelope.get("candidate_version") != current_graph_version:
+            findings.append(("cross", "Ticket graph authority envelope version/candidate binding is inconsistent"))
         if row_dimensions != graph_dimensions:
             findings.append(("cross", "Ticket graph semantic review dimensions do not match planning TICKET_GRAPH_DIMENSIONS"))
         exact_filename = "`reviews/ticket-graph-v1.json` is the one exact run-relative envelope."

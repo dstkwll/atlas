@@ -334,18 +334,24 @@ resetting D-082 or exposing internal stage routing to the user.
 Stage 5 has its own boundary inside that same controller:
 
 ```text
-execution compiler proposes complete ticket graph
+execution compiler proposes complete version-2 ticket graph with compiler-selected semantic context
   → independent read-only ticket-graph judge returns PASS/BLOCKED with all gaps
   → PASS goes to the configured tickets authority; BLOCKED returns to compilation
   → downstream planning controller records exact graph/version/hash acceptance
-  → execution preflight verifies the accepted binding and currency
+  → execution preflight verifies the accepted binding, context declarations, and currency
 ```
 
-The Stage 5 judge examines verticality, dependency completeness, validation contracts, repository
-targeting, and exact applicable-upstream references. The controller binds the accepted graph to
-each applicable accepted upstream source and each target repository baseline. It does not grade the
-graph's prose. Execution preflight may reject a missing or stale acceptance, but it cannot create,
-record, or manufacture one.
+The current ticket-graph manifest version is exact integer `2`; version 1 is historical planning and
+is not factory-executable. The Stage 5 compiler owns semantic context selection. Every ticket declares
+each applicable selected-path source kind exactly once, with empty Stage 0 sections, unique existing
+semantic H2s, and a nonempty purpose. The Stage 5 judge examines semantic completeness, verticality,
+dependency completeness, validation contracts, repository targeting, and exact context declarations.
+The controller binds the accepted graph to each applicable accepted upstream source and each target
+repository baseline. It does not grade the graph's prose. Execution preflight and the supervisor may
+validate and materialize only accepted declarations plus current runtime facts; they cannot select or
+fill semantic context or manufacture acceptance. Missing declared material is a packaging/preflight
+blocker; missing accepted judgment is `DESIGN_BLOCKED`. Repository facts within inspection authority
+remain discoverable.
 
 ---
 

@@ -1015,3 +1015,29 @@ Sandcastle only as a bounded execution-substrate proof-of-fit candidate, and Ink
 strong-isolation topology donor. A dependency can run machinery; it never receives Atlas authority.
 Preserve future hypotheses with explicit triggers in unnumbered `v2-horizon.md` rather than turning
 them into V1 requirements or a roadmap.
+
+---
+
+## L-026 — A pointer-only ticket defers semantic selection into execution
+
+### Contradiction found
+
+D-085 required one execution-complete graph and rejected a runtime planner, while the current ticket
+shape carried only source kinds and section names under `references`. That left the concrete reason a
+source constrained a ticket implicit and made it easy for a later supervisor to select, summarize,
+or fill semantic context while assembling a worker brief.
+
+### Reconciliation
+
+D-087 fixes the current ticket-graph manifest at exact integer version 2 and replaces top-level
+`references` with exact `context.sources`. Stage 5 selects every applicable accepted source kind,
+its exact semantic H2s, and a nonempty purpose. The judge evaluates semantic completeness; the
+supervisor only validates/materializes the accepted declaration plus current runtime facts.
+
+### Standing result
+
+Version 1 remains historical planning and is not factory-executable; no compatibility projection or
+fallback exists. Missing declared material is a packaging/preflight blocker. Missing accepted
+judgment is `DESIGN_BLOCKED`. Repository facts within granted inspection authority remain
+discoverable without becoming undeclared planning truth. No execution runtime or planning-run
+migration is introduced by this correction.

@@ -1,6 +1,6 @@
 # Ticket graph authority evidence
 
-`reviews/ticket-graph-v1.json` is the one exact run-relative envelope. The workflow invoker assembles its duplicate-safe UTF-8 JSON bytes from one fresh read-only Stage 5 judge. Reviewer output is evidence, never authority. The controller accepts no alias, symlink, escaping path, or alternative version.
+`reviews/ticket-graph-v1.json` is the one exact run-relative envelope. `reviews/ticket-graph-v1.json` remains the evidence-envelope filename. Its envelope schema stays version 1 while it binds the current ticket-graph candidate version 2. The workflow invoker assembles its duplicate-safe UTF-8 JSON bytes from one fresh read-only Stage 5 judge. Reviewer output is evidence, never authority. The controller accepts no alias, symlink, escaping path, or alternative version.
 
 ```json
 {
@@ -8,7 +8,7 @@
   "run": "feature-slug",
   "stage": "tickets",
   "policy": "AGENT_REVIEW",
-  "candidate_version": 1,
+  "candidate_version": 2,
   "candidate_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
   "source_bindings": [],
   "repository_baselines": [
@@ -32,13 +32,13 @@
 
 Rules:
 
-- Top-level fields are exact. `version` and `candidate_version` are integers. Run, stage, configured policy, graph version/SHA-256, exact applicable source bindings, and repository baselines must match the current mechanically valid candidate.
+- Top-level fields are exact. Envelope `version` is integer `1`; `candidate_version` is integer `2`. Run, stage, configured policy, graph version/SHA-256, exact applicable source bindings, and repository baselines must match the current mechanically valid candidate. Candidate version 1 is historical planning and is not factory-executable; there is no converter, projection, or fallback.
 - `policy` records configured `AGENT_REVIEW` or `HUMAN`. Ticket-graph acceptance has no `CONDITIONAL` branch in V1.
 - The seven dimension identifiers above occur exactly once. Each row has exact `dimension`, `result`, and nonempty `evidence`. `result` is `PASS`, `BLOCKED`, or `DESIGN_BLOCKED`.
 - Envelope verdict is only `PASS` or `BLOCKED`: all rows PASS gives PASS; any other row gives BLOCKED. Gaps exactly cover non-PASS dimensions.
 - A local Stage 5 defect uses exact `code`, `dimension`, `problem`, and `resume_action`.
 - `DESIGN_BLOCKED` additionally uses exact `upstream_source`, `upstream_issue`, and `resume_boundary`. The source and resume boundary are the same applicable source kind; Stage 5 never names an omitted source or rewrites it.
-- The judge checks D-084 verticality, enabling exceptions, truthful dependencies/order, D-085 readiness and proof completeness, and no redesign. It edits no ticket, manifest, source, repository, evidence, or state and returns all gaps.
+- The judge checks D-084 verticality, enabling exceptions, truthful dependencies/order, D-085 readiness and proof completeness, exact context-source applicability/purpose, and no redesign. Semantic completeness remains reviewer judgment. It edits no ticket, manifest, source, repository, evidence, or state and returns all gaps.
 
 ## Authority matrix
 
@@ -49,4 +49,4 @@ Rules:
 
 Fresh review is mandatory on every path. Human approval never bypasses review. BLOCKED or DESIGN_BLOCKED changes no state.
 
-Under `.atlas-planning.lock`, the controller reruns mechanical validation and rereads planning, graph manifest, every indexed ticket, applicable sources, repository baselines, policy, and review immediately before replacing only `planning-control.json`. Acceptance records the exact manifest version/hash, resolved authority, date, review reference/hash, source bindings, and repository baselines; sets status `READY_FOR_EXECUTION`; and stops. It creates no execution state and launches no ticket.
+Under `.atlas-planning.lock`, the controller reruns mechanical validation and rereads planning, graph manifest, every indexed ticket, applicable sources, repository baselines, policy, and review immediately before replacing only `planning-control.json`. Acceptance records the exact manifest version/hash, resolved authority, date, review reference/hash, source bindings, and repository baselines; sets status `READY_FOR_EXECUTION`; and stops. The later supervisor validates and materializes only accepted context declarations plus current runtime facts; it cannot select or repair semantic context. Missing declared material is a packaging/preflight blocker; missing accepted judgment is `DESIGN_BLOCKED`. It creates no execution state and launches no ticket.

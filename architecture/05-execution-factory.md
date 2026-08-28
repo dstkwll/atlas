@@ -4,8 +4,8 @@
 
 Input:
 
-> An approved, ready vertical ticket drawn from an exact accepted ticket graph, plus references to its
-> applicable accepted design artifacts and frozen repository baseline.
+> An approved, ready vertical ticket drawn from an exact accepted version-2 ticket graph, together
+> with its accepted `context.sources` declarations and frozen repository baseline.
 
 Output:
 
@@ -49,13 +49,13 @@ Bounded repair attempts prevent infinite loops.
 
 Deterministic checks should include as appropriate:
 
-- exact accepted ticket-graph version/hash exists and contains this ticket
+- exact accepted ticket-graph version/hash exists, has candidate version 2, and contains this ticket
 - the graph's acceptance is current under the downstream planning controller
 - all applicable accepted upstream bindings still match their exact versions/hashes
 - the execution run manifest's immutable source baseline matches the graph's frozen target baseline
 - the current worktree HEAD matches the expected chain of accepted ticket commits rooted at that baseline
 - ticket schema valid
-- all referenced upstream artifacts exist
+- all declared context-source material exists and every semantic section still resolves to its H2
 - required gates are approved
 - graph is acyclic and its readiness/proof contract is valid
 - every ticket prerequisite and external readiness condition is demonstrably satisfied
@@ -64,9 +64,10 @@ Deterministic checks should include as appropriate:
 - validation commands are declared
 - file-scope policy can be resolved
 
-Preflight verifies and consumes the accepted ticket-graph binding. It does not create, record, or
-manufacture graph acceptance, and it does not silently recompile a stale graph. A missing, stale, or
-mismatched binding fails closed before any ticket becomes active. The frozen baseline is the run's
+Preflight verifies and consumes the accepted ticket-graph binding and declarations. It does not
+create, record, convert, project, or manufacture graph acceptance or semantic context, and it does not
+silently recompile a stale graph. Version 1 is historical planning and is not factory-executable. A
+missing, stale, or mismatched binding fails closed before any ticket becomes active. The frozen baseline is the run's
 immutable starting point, not a requirement that worktree HEAD remain equal to it after accepted
 ticket commits; the expected accepted-commit chain supplies that later currency check. A graph whose
 readiness/proof contract is invalid fails before a builder attempt, preserves evidence, and is not
@@ -76,22 +77,29 @@ silently recompiled or weakened by the executor.
 
 ## Executor contract
 
-The trusted supervisor derives a compact execution brief through fixed projection rules. The brief
-has no independent acceptance and contains only the selected ticket plus mechanically selected
-material from:
+The trusted supervisor validates the current accepted version-2 graph and materializes a compact
+execution brief through fixed rules. The brief has no independent acceptance and contains only the
+selected ticket, its accepted declarations, and current runtime facts from:
 
-- the exact accepted graph and applicable selected-path source bindings;
+- the exact accepted graph, applicable selected-path source bindings, and each ticket-declared
+  `context.sources` entry;
 - frozen Stage 0 on direct/`trivial` paths;
 - current repository baseline/accepted-commit-chain facts;
 - evidence satisfying ticket and external prerequisite conditions;
 - frozen execution configuration/staffing and validated runtime-produced values;
-- relevant Program Design touchpoints and validator/review proof paths; and
+- exact declared source sections/purposes and validator/review proof paths; and
 - previous repair findings for this ticket.
 
-Prefer exact references and excerpts over duplicated planning history. The raw user prompt is
-provenance rather than a coequal instruction. No planner or summarizer agent authors this brief.
-Program Design touchpoints are normative expectations, not an exhaustive file allowlist; runtime
-write capability is enforced separately.
+The supervisor validates and materializes only accepted declarations plus current runtime facts. It
+must not select sources, add sections, write purposes, summarize or expand semantic context, or fill
+context gaps. Missing declared material is a packaging/preflight blocker; missing accepted judgment
+is `DESIGN_BLOCKED`. Repository facts within granted inspection authority remain discoverable, but
+they do not become planning context unless Stage 5 declared them. Materialize the complete accepted
+bytes of every exact declared section; the supervisor never selects excerpts at runtime. Do not
+substitute duplicated planning history. The raw user prompt is provenance rather than a coequal
+instruction. No planner or summarizer agent authors this brief. Program Design touchpoints are
+normative expectations, not an exhaustive file allowlist; runtime write capability is enforced
+separately.
 
 The executor may:
 
