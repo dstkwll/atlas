@@ -61,12 +61,12 @@ Goal → Ticket → Implement → Validate → PR
 
 ```text
 NORMAL
-Goal → Discovery + Product Closure → Program Design → Tickets → Factory
+Goal → Discovery + Product Definition Approval → Program Design → Tickets → Factory
 ```
 
 ```text
 ARCHITECTURAL
-Goal → Discovery + Product Closure → System Design → Program Design → Tickets → Factory
+Goal → Discovery + Product Definition Approval → System Design → Program Design → Tickets → Factory
 ```
 
 ```text
@@ -202,7 +202,7 @@ Output can advance immediately once deterministic prerequisites are satisfied **
 boundary contract declares no semantic acceptance question**. A successful automatic gate is
 recorded as `AUTO_PASSED`, never `AGENT_APPROVED`.
 
-Discovery's product-closure boundary requires semantic acceptance in this revision, so its
+Discovery's Product Definition Approval boundary requires semantic acceptance in this revision, so its
 configured authority is `AGENT_REVIEW` or `HUMAN`, not `AUTO`.
 
 ### `AGENT_REVIEW`
@@ -260,14 +260,14 @@ The human becomes the decision authority rather than the primary bug finder.
 ### Boundary labels are not state keys
 
 `control.json.phase`, the `gates` map, the `acceptances` map, and every gap's resume stage remain
-keyed by the controlled producer name `discovery`. `product_closure` is the semantic label for
-discovery's exit boundary: it names the review envelope and human-facing vocabulary, and it never
-becomes a phase value, gate key, or acceptance key. This keeps stage-index coherence unchanged
-while making the boundary explicit (D-067).
+keyed by the controlled producer name `discovery`. `product_closure` is the retained machine/API
+compatibility identifier for discovery's exit boundary: it names the review envelope while the
+human-facing label is **Product Definition Approval**. It never becomes a phase value, gate key, or
+acceptance key. This keeps stage-index coherence unchanged while making the boundary explicit (D-067).
 
 ### Stage 0–2 boundary seam
 
-For discovery and its product-closure boundary, keep four responsibilities distinct:
+For discovery and its Product Definition Approval boundary, keep four responsibilities distinct:
 
 ```text
 producer completes a candidate
@@ -296,8 +296,8 @@ a generalized router.
 
 Paired drafting does not merge gates. When selected, System Design is accepted first. Program Design
 is then bound, rechecked, and finalized against the selected path's applicable source: the accepted
-System Design when selected; the accepted PRD when System Design is `NOT_REQUIRED` but product
-closure is selected; or the accepted/frozen Stage 0 intake and effective-configuration hashes when
+System Design when selected; the accepted PRD when System Design is `NOT_REQUIRED` but Product
+Definition Approval is selected; or the accepted/frozen Stage 0 intake and effective-configuration hashes when
 both upstream semantic boundaries are `NOT_REQUIRED`. The downstream judge reads the effective
 selected stages, chooses exactly one branch, and never treats `NOT_REQUIRED` as approval. Program
 Design requires independent semantic review and never raw `AUTO`; the recommended standard

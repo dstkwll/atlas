@@ -13,6 +13,10 @@ factory-executable. Each ticket declares exact `context.sources` with a nonempty
 declaration plus current runtime facts. Missing declared material is a packaging/preflight blocker;
 missing accepted judgment is `DESIGN_BLOCKED`.
 
+### Current terminology and compatibility
+
+`Product Definition Approval` is the current user-facing stage label. Historical decision and provenance records retain the former user-facing label `Product Closure` unchanged. This is not an identifier migration: the serialized boundary remains `product_closure`; review files remain `reviews/product_closure-v<version>.json`; source bindings remain `kind: product_closure`; and review envelopes remain `stage: product_closure`.
+
 **v0.14**'s execution topology remains unchanged: one planning effort may span multiple target
 repositories under one accepted cross-repository ticket graph; execution instantiates one independent
 repository-scoped workspace, runtime record, and accepted chain per target repository. Logical

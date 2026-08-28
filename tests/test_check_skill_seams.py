@@ -683,7 +683,7 @@ class SkillSeamHardeningTests(unittest.TestCase):
         self.assertIn("Read exactly one applicable upstream source and do not read either omitted source", skill)
         for clause in (
             "System Design selected: read exact accepted `30-system-design.md`",
-            "System Design omitted and Product Closure selected: read exact accepted `20-prd.md`",
+            "System Design omitted and Product Definition Approval selected: read exact accepted `20-prd.md`",
             "both upstream semantic boundaries omitted: read frozen effective Stage 0 `run.yaml` and its recorded effective configuration binding",
         ):
             self.assertIn(clause, skill)
@@ -920,7 +920,7 @@ class SkillSeamHardeningTests(unittest.TestCase):
             "If validated planning phase is `program_design`, invoke `atlas:program-design` internally",
             "If validated planning phase is `tickets`, invoke `atlas:compile-tickets` internally",
             "If validated planning status is `READY_FOR_EXECUTION`, stop at the execution boundary",
-            "Preserve the existing Product Closure, System Design, and Program Design paths",
+            "Preserve the existing Product Definition Approval, System Design, and Program Design paths",
             "For `AUTO_CONTINUE`, use the existing bounded continuation loop, not one-shot dispatch",
             "After an invoked producer and its internal control handoff return, run `ensure` again and re-read validated `planning-control.json`",
             "The only legal downstream continuation after `system_design` is `program_design` or `tickets`; after `program_design` it is `tickets`; after pending `tickets` it is `READY_FOR_EXECUTION`",
@@ -1536,8 +1536,8 @@ class SkillSeamHardeningTests(unittest.TestCase):
         self.assertIn(command, start)
         self.assertIn(command, control)
         self.assertIn("already names `system_design`, `program_design`, or `tickets`", control)
-        self.assertIn("do not rerun Product Closure", control)
-        self.assertIn("After a successful Product Closure transition", control)
+        self.assertIn("do not rerun Product Definition Approval", control)
+        self.assertIn("After a successful Product Definition Approval transition", control)
         self.assertIn("re-read `control.json`", control)
         self.assertFalse([
             item for item in SEAMS.cross_skill_contracts(plugin / "skills")
@@ -1689,7 +1689,7 @@ class SkillSeamHardeningTests(unittest.TestCase):
         canonical_path = ROOT / "architecture" / "06-review-and-validation.md"
         review_text = review_path.read_text(encoding="utf-8")
         canonical_text = canonical_path.read_text(encoding="utf-8")
-        review_section = review_text.split("## Product-closure semantic questions\n", 1)[1].split(
+        review_section = review_text.split("## Product Definition Approval semantic questions\n", 1)[1].split(
             "\nThese are the packaged questions", 1
         )[0]
         canonical_section = canonical_text.split("**Semantic questions, in order:**\n", 1)[1].split(
@@ -1838,7 +1838,7 @@ class SkillSeamHardeningTests(unittest.TestCase):
         for clause in (
             "If authoritative `control.json.phase` is `discovery`",
             "validated `planning-control.json.phase` is the actual current planning phase",
-            "interrupted Product Closure → planning handoff",
+            "interrupted Product Definition Approval → planning handoff",
             "`STALE`",
             "intake-correction.md",
             "`REJECTED`",

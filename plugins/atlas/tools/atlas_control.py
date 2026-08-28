@@ -2,7 +2,7 @@
 """Tiny deterministic controller for Atlas planning Stages 0–2.
 
 Discovery continuously authors the decision log and living PRD. ``check`` is
-read-only and validates the product-closure boundary mechanically. HUMAN or
+read-only and validates the Product Definition Approval boundary mechanically. HUMAN or
 AGENT_REVIEW authority supplies semantic acceptance. This program alone
 replaces the feature's authoritative ``control.json``.
 """
@@ -46,6 +46,11 @@ PRD_HTML_FILE = "20-prd.html"
 RENDERER_VERSION = "1.0.0"
 CANDIDATES = {"discovery": PRD_FILE}
 EXIT_BOUNDARY = {"discovery": "product_closure"}
+PRODUCT_DEFINITION_STAGE_LABEL = "Product Definition Approval"
+PRODUCT_DEFINITION_ACTION = "Approve the product definition"
+PRODUCT_DEFINITION_HELPER = (
+    "Confirm the PRD and recorded decisions are complete enough to begin System Design."
+)
 CANDIDATE_FIELDS = {
     "discovery": {
         "run", "version", "status", "gate_ready", "intake_stale", "cold_read",
@@ -1244,7 +1249,10 @@ def apply_amendment(run_dir: Path) -> str:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=f"{PRODUCT_DEFINITION_STAGE_LABEL}\n{PRODUCT_DEFINITION_HELPER}",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     sub = parser.add_subparsers(dest="command", required=True)
     locate = sub.add_parser("resolve-run-path")
     locate.add_argument("--planning-root", required=True, type=Path)
@@ -1253,9 +1261,17 @@ def build_parser() -> argparse.ArgumentParser:
     init.add_argument("--run", required=True, type=Path)
     init.add_argument("--prepared-device", required=True, type=int)
     init.add_argument("--prepared-inode", required=True, type=int)
-    inspect = sub.add_parser("check")
+    inspect = sub.add_parser(
+        "check",
+        help=f"check {PRODUCT_DEFINITION_STAGE_LABEL}",
+    )
     inspect.add_argument("--run", required=True, type=Path)
-    cmd = sub.add_parser("advance")
+    cmd = sub.add_parser(
+        "advance",
+        help=PRODUCT_DEFINITION_ACTION,
+        description=f"{PRODUCT_DEFINITION_ACTION}.\n{PRODUCT_DEFINITION_HELPER}",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     cmd.add_argument("--run", required=True, type=Path)
     cmd.add_argument("--approval", choices=("human",))
     cmd.add_argument("--review")

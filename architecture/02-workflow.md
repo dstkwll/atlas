@@ -69,7 +69,7 @@ Why:
 - affects failure/recovery semantics
 
 Human gates:
-- product closure
+- Product Definition Approval
 - final PR
 
 Conditional gates:
@@ -95,7 +95,7 @@ classifies the run, but the first **producer** action may occur later in the pip
   `NOT_REQUIRED`. Its omission is not an approval.
 - If a required upstream artifact already exists, producing it again may be unnecessary, but the
   artifact must pass that stage's ordinary boundary judge and configured authority before downstream
-  admission. Reuse may skip production; it never skips product closure.
+  admission. Reuse may skip production; it never skips Product Definition Approval.
 
 The classifier therefore recommends the earliest admissible producer stage, while the control plane
 proves any required upstream contracts before allowing work to begin there.
@@ -110,10 +110,10 @@ it passes the ordinary judge/authority path.
 
 ---
 
-## Stage 1 — Decision discovery, living PRD maintenance, and product closure
+## Stage 1 — Decision discovery, living PRD maintenance, and Product Definition Approval
 
 Stage 2 was the former behavioral-specification stage; v0.6 folds it into Stage 1's
-product-closure boundary. The “Stages 0–2” control-plane scope name remains for state-key
+Product Definition Approval boundary. The “Stages 0–2” control-plane scope name remains for state-key
 coherence.
 
 Purpose:
@@ -136,18 +136,24 @@ For very large/foggy work, use a Wayfinder-style frontier of currently answerabl
 
 Output is **resolved decisions/evidence plus a living product PRD**, not implementation tickets.
 
-### Exit boundary — Product closure
+### Exit boundary — Product Definition Approval
 
 Question:
 
 > Has discovery reconciled every live decision into one reviewable product contract that is ready
 > to hand off to engineering design?
 
-Discovery owns both `10-decisions.md` and `20-prd.md` continuously; v0.6 removes the separate
-specification translation producer. Product closure is discovery's single exit boundary, not a new
-authoring stage or durable phase name.
+For a HUMAN gate, present this exact user-facing copy:
 
-Closure requires:
+- stage label: `Product Definition Approval`
+- action: `Approve the product definition`
+- helper: `Confirm the PRD and recorded decisions are complete enough to begin System Design.`
+
+Discovery owns both `10-decisions.md` and `20-prd.md` continuously; v0.6 removes the separate
+specification translation producer. Product Definition Approval is discovery's single exit boundary,
+not a new authoring stage or durable phase name.
+
+Approval requires:
 
 - a complete `10-decisions.md` with the required PRD-alignment retrospective;
 - a current `20-prd.md` whose `derived_from` binds the exact decision-log version and hash it was
@@ -209,12 +215,12 @@ Stage 3 stops before codebase-local realization inside the accepted seams.
 At its boundary, System Design reads the effective selected stages and chooses exactly one
 admission/provenance binding:
 
-- Product Closure selected → exact accepted `20-prd.md` version/hash;
-- Product Closure `NOT_REQUIRED` → exact accepted/frozen Stage 0 intake and effective configuration,
+- Product Definition Approval selected → exact accepted `20-prd.md` version/hash;
+- Product Definition Approval `NOT_REQUIRED` → exact accepted/frozen Stage 0 intake and effective configuration,
   bound by `control.json.base_run_sha256`, `effective_config_hash`, and
   `effective_config_revision`.
 
-An omitted Product Closure creates no PRD or approval. A change to whichever bound source makes
+An omitted Product Definition Approval creates no PRD or approval. A change to whichever bound source makes
 accepted System Design stale; Program Design that depends on it becomes stale transitively in the
 same logical downstream transition.
 
@@ -259,7 +265,7 @@ System Design first when that stage is selected. Program Design then binds, rech
 against the source required by the actual selected path:
 
 - selected System Design → exact accepted `30-system-design.md` candidate;
-- System Design `NOT_REQUIRED` with selected product closure → exact accepted `20-prd.md` candidate;
+- System Design `NOT_REQUIRED` with selected Product Definition Approval → exact accepted `20-prd.md` candidate;
 - both upstream semantic boundaries `NOT_REQUIRED` → exact accepted/frozen Stage 0 intake and
   effective run configuration that authorized direct Program Design admission.
 
@@ -297,7 +303,7 @@ attempt before candidate bytes change, so a crash consumes it; reviews, controll
 approvals do not. Restarts cannot reset the budget, a second contradiction cannot nest or reset it,
 and exhaustion is loud and durable.
 
-This path does not apply to Product Closure, direct Stage 0, accepted Program Design, or Stage 5 and
+This path does not apply to Product Definition Approval, direct Stage 0, accepted Program Design, or Stage 5 and
 tickets. Their current fail-closed boundaries remain unchanged.
 
 ### Human replanning escalation after non-convergence
@@ -358,7 +364,7 @@ condition and accepted proof path but does not invent a missing delivery contrac
 
 Inputs are the applicable accepted sources for the actual selected path:
 
-- exact accepted product PRD when product closure is selected;
+- exact accepted product PRD when Product Definition Approval is selected;
 - exact accepted System Design when System Design is selected;
 - exact accepted Program Design when Program Design is selected;
 - accepted/frozen Stage 0 intake and effective run configuration for a direct admission path across
@@ -366,7 +372,7 @@ Inputs are the applicable accepted sources for the actual selected path:
 
 An omitted boundary contributes neither an artifact nor an approval. Compilation preserves the
 accepted bindings carried by the selected path rather than requiring every possible upstream file.
-When product closure, System Design, and Program Design are all omitted, the `trivial` path compiles
+When Product Definition Approval, System Design, and Program Design are all omitted, the `trivial` path compiles
 one one-node ticket graph directly from the accepted/frozen Stage 0 intake, effective configuration,
 and target repository baseline. It creates no substitute PRD or design artifact.
 

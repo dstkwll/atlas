@@ -1179,7 +1179,7 @@ def expected_program_design_source(
     product = planning["stage0_anchor"].get("product_closure")
     if "discovery" in effective["stages"]:
         if not isinstance(product, dict):
-            raise ControlError("Program Design requires an accepted product-closure source")
+            raise ControlError("Program Design requires an accepted Product Definition Approval source")
         return {
             "kind": "product_closure",
             "artifact": "20-prd.md",
@@ -1204,7 +1204,7 @@ def expected_ticket_graph_sources(
     product = planning["stage0_anchor"].get("product_closure")
     if "discovery" in stages:
         if not isinstance(product, dict):
-            raise ControlError("ticket graph requires an accepted product-closure source")
+            raise ControlError("ticket graph requires an accepted Product Definition Approval source")
         sources.append({
             "kind": "product_closure",
             "artifact": "20-prd.md",
@@ -1395,7 +1395,7 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
         or product_closure["version"] < 1
         or not re.fullmatch(r"[0-9a-f]{64}", str(product_closure.get("sha256", "")))
     ):
-        raise ControlError("planning-control.json product-closure anchor is malformed")
+        raise ControlError("planning-control.json Product Definition Approval anchor is malformed")
     _, effective = verified_state(run_dir)
     validate_run(effective)
     selected = {stage for stage in DOWNSTREAM_STAGES if stage in effective["stages"]}
@@ -1782,7 +1782,7 @@ def initialize_planning(run_dir: Path) -> str:
     if discovery_selected:
         acceptance = control.get("acceptances", {}).get("discovery")
         if not isinstance(acceptance, dict):
-            raise ControlError("selected discovery lacks accepted product-closure provenance")
+            raise ControlError("selected discovery lacks accepted Product Definition Approval provenance")
         product_closure = {
             "version": acceptance["candidate_version"],
             "sha256": acceptance["candidate_sha256"],
@@ -1818,7 +1818,7 @@ def current_stage0_anchor(run_dir: Path, control: dict[str, Any], effective: dic
     if "discovery" in effective["stages"]:
         acceptance = control.get("acceptances", {}).get("discovery")
         if not isinstance(acceptance, dict):
-            raise ControlError("selected discovery lacks accepted product-closure provenance")
+            raise ControlError("selected discovery lacks accepted Product Definition Approval provenance")
         product_closure = {
             "version": acceptance["candidate_version"],
             "sha256": acceptance["candidate_sha256"],
@@ -2290,7 +2290,7 @@ def system_design_report(
         if not isinstance(source, dict) or set(source) != PRODUCT_SOURCE_FIELDS or source != expected:
             gaps.append(gap(
                 SYSTEM_DESIGN_FILE,
-                "source_binding does not match the exact accepted product closure",
+                "source_binding does not match the exact accepted Product Definition Approval source",
                 "system_design",
                 "bind source_binding to the accepted 20-prd.md version and sha256",
             ))
@@ -2498,7 +2498,7 @@ def program_design_report(
         ):
             gaps.append(gap(
                 PROGRAM_DESIGN_FILE,
-                "source_binding does not match the exact accepted product closure",
+                "source_binding does not match the exact accepted Product Definition Approval source",
                 "program_design",
                 "bind source_binding to the accepted 20-prd.md version and sha256",
             ))

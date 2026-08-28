@@ -16,7 +16,7 @@ Read immutable `run.yaml`, authoritative Stage 0 `control.json`, and `planning-c
 
 Derive every applicable source only from effective selected stages and exact current acceptances:
 
-- Product Closure selected: bind exact accepted `20-prd.md`.
+- Product Definition Approval selected: bind exact accepted `20-prd.md`.
 - System Design selected: additionally bind exact accepted `30-system-design.md`.
 - Program Design selected: additionally bind exact accepted `40-program-design.md`; a direct Program Design path also binds frozen Stage 0.
 - All semantic producers omitted: bind only frozen effective Stage 0 `run.yaml`, effective configuration, and target baselines.

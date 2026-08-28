@@ -1,12 +1,12 @@
 ---
 name: discovery
-description: Maintain the decision log and living PRD until discovery earns product closure.
+description: Maintain the decision log and living PRD until discovery earns Product Definition Approval.
 disable-model-invocation: true
 ---
 
 # Discovery
 
-Resolve a fuzzy goal into durable decisions and a living product contract. Discovery owns both `<run>/10-decisions.md` and `<run>/20-prd.md`; it never claims product closure itself.
+Resolve a fuzzy goal into durable decisions and a living product contract. Discovery owns both `<run>/10-decisions.md` and `<run>/20-prd.md`; it never claims Product Definition Approval itself.
 
 ## 1. Resume authoritative state
 

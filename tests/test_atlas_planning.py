@@ -3368,7 +3368,7 @@ class AtlasPlanningTests(unittest.TestCase):
                 report = json.loads(result.stdout)
                 self.assertEqual(report["verdict"], "PASS" if mutation is None else "BLOCKED")
                 if mutation is not None:
-                    self.assertTrue(any("product closure" in item["problem"] for item in report["gaps"]))
+                    self.assertTrue(any("Product Definition Approval" in item["problem"] for item in report["gaps"]))
 
     def test_system_design_product_path_requires_exact_accepted_prd_binding(self):
         for mutation, expected_success in ((None, True), ("wrong-hash", False)):

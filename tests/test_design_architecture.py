@@ -880,7 +880,7 @@ class PairedDesignArchitectureTests(unittest.TestCase):
 
         stage_five = workflow.split("## stage 5 — execution compilation", 1)[1].split("## stage 6", 1)[0]
         self.assertRegex(stage_five, r"applicable.{0,180}(selected path|selected upstream)")
-        self.assertRegex(stage_five, r"accepted product prd.{0,100}when product closure is selected")
+        self.assertRegex(stage_five, r"accepted product prd.{0,100}when product definition approval is selected")
         self.assertRegex(stage_five, r"accepted system design.{0,100}when system design is selected")
         self.assertRegex(stage_five, r"accepted/frozen stage 0.{0,240}direct")
         self.assertRegex(artifacts, r"direct(?:-admission| program design).{0,500}ticket.{0,240}(?:omit|not reference).{0,160}(?:prd|system design)")

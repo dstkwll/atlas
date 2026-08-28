@@ -183,7 +183,7 @@ Observed in a real run of a non-canonical skill; recorded as L-012. The mechanis
 
 ---
 
-## Discovery product-closure boundary
+## Discovery's Product Definition Approval boundary
 
 Discovery question formation has its own bounded producer-side challenge before the first grill
 round. A fresh, read-only frontier critic independently derives candidate questions and routes from
@@ -192,11 +192,11 @@ persisted frontier. This improves the inputs to deliberation; it is not an accep
 no gate authority. The final producer cold read repeats the missing-decision and wrong-owner-route
 check against the complete decision record and PRD before `gate_ready` becomes true.
 
-The discovery exit boundary is product closure. Its judge is read-only and returns `PASS` or
+The discovery exit boundary is Product Definition Approval. Its judge is read-only and returns `PASS` or
 `BLOCKED`. A blocked result reports all material gaps found in that pass; each gap names the
 affected artifact and the exact stage and action that can resume it. `BLOCKED` returns to the
 producer without changing authoritative state. A producer-authored completion flag is evidence
-that the attempt ended, never proof that product closure passed.
+that the attempt ended, never proof that Product Definition Approval passed.
 
 **Mechanical checks:** candidate identity and version match the planning run; required decision
 identifiers and record fields are present and unique; every decision has a closed contribution
@@ -245,12 +245,12 @@ images remain projections and never receive an independent acceptance outcome.
 The required source binding follows an applicability test over the effective selected stages and
 chooses exactly one branch:
 
-1. Product Closure selected → exact accepted `20-prd.md` version/hash.
-2. Product Closure `NOT_REQUIRED` → exact accepted/frozen Stage 0 intake and effective
+1. Product Definition Approval selected → exact accepted `20-prd.md` version/hash.
+2. Product Definition Approval `NOT_REQUIRED` → exact accepted/frozen Stage 0 intake and effective
    configuration, bound by `control.json.base_run_sha256`, `effective_config_hash`, and
    `effective_config_revision`.
 
-The reviewer must not require or fabricate a PRD or approval for omitted Product Closure. A change
+The reviewer must not require or fabricate a PRD or approval for omitted Product Definition Approval. A change
 to whichever bound source makes accepted System Design stale; dependent Program Design becomes
 stale transitively in the same logical downstream transition.
 
@@ -277,12 +277,12 @@ semantic questions. It never uses raw `AUTO`. The recommended standard authority
 
 Paired drafting may produce both design candidates side-by-side, but the Program Design result is
 provisional until selected upstream acceptance completes. Its boundary carries an applicability test:
-read the effective selected stages, treat selected `discovery` as selection of its product-closure
+read the effective selected stages, treat selected `discovery` as selection of its Product Definition Approval
 boundary, choose exactly one of the following branches, and verify the candidate against that exact
 source:
 
 1. System Design selected → exact accepted `30-system-design.md` version/hash.
-2. System Design `NOT_REQUIRED`; product closure selected → exact accepted `20-prd.md` version/hash.
+2. System Design `NOT_REQUIRED`; Product Definition Approval selected → exact accepted `20-prd.md` version/hash.
 3. Both upstream semantic boundaries `NOT_REQUIRED` → exact accepted/frozen Stage 0 intake and
    effective configuration, bound by `control.json.base_run_sha256`, `effective_config_hash`, and
    `effective_config_revision`.
@@ -429,7 +429,7 @@ Human review can occur at different points based on governance profile.
 
 Potential gates:
 
-- product-closure approval
+- Product Definition Approval
 - system design approval
 - program design approval
 - ticket graph approval

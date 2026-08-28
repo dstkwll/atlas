@@ -643,7 +643,7 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         "Derive the applicable branch only from effective selected stages, never from candidate prose or artifact presence",
         "Read exactly one applicable upstream source and do not read either omitted source",
         "System Design selected: read exact accepted `30-system-design.md`",
-        "System Design omitted and Product Closure selected: read exact accepted `20-prd.md`",
+        "System Design omitted and Product Definition Approval selected: read exact accepted `20-prd.md`",
         "both upstream semantic boundaries omitted: read frozen effective Stage 0 `run.yaml` and its recorded effective configuration binding",
     )
     if any(clause not in program for clause in source_contract):
@@ -833,7 +833,7 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
         "If validated planning phase is `program_design`, invoke `atlas:program-design` internally",
         "If validated planning phase is `tickets`, invoke `atlas:compile-tickets` internally",
         "If validated planning status is `READY_FOR_EXECUTION`, stop at the execution boundary",
-        "Preserve the existing Product Closure, System Design, and Program Design paths",
+        "Preserve the existing Product Definition Approval, System Design, and Program Design paths",
     )
     if any(clause not in start_text for clause in start_route_contract):
         findings.append(("cross", "start: missing complete Stage 3-5 producer route and execution-boundary stop"))
@@ -1256,7 +1256,7 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "run.yaml.gates.discovery.authority",
             "reject --run", "--reason", "third parent of this file",
             "already names `system_design`, `program_design`, or `tickets`",
-            "do not rerun Product Closure", "After a successful Product Closure transition",
+            "do not rerun Product Definition Approval", "After a successful Product Definition Approval transition",
             "Return the freshly validated phase/status to the invoking continuation owner",
             "Do not invoke a downstream producer from `control-run`",
             "re-read `planning-control.json`", "discovery never starts execution",
@@ -1365,7 +1365,7 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             findings.append(("cross", f"legacy contract `{phrase}` remains — {reason}"))
 
     if (skills / "to-spec").exists():
-        findings.append(("cross", "to-spec remains in the Atlas plugin after product-closure migration"))
+        findings.append(("cross", "to-spec remains in the Atlas plugin after Product Definition Approval migration"))
 
     for name in ("discovery",):
         for sentence in re.split(r"(?<=[.!?])\s+|\n+", texts.get(name, "")):

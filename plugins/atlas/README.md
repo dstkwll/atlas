@@ -22,7 +22,7 @@ Use natural prose. Gazetteer hides skill plumbing, not meaningful engineering ph
 ```text
 start-run freezes run.yaml and initializes control.json
   → discovery continuously maintains 10-decisions.md and 20-prd.md when selected
-  → product closure records configured AGENT_REVIEW or HUMAN acceptance when selected
+  → Product Definition Approval records configured AGENT_REVIEW or HUMAN acceptance when selected
   → atlas_planning.py ensure idempotently initializes or verifies planning-control.json at the Stage 0 handoff
   → system-design reads frozen agent_led/co_design participation and produces exact 30-system-design.md readiness
   → co_design writes through render_system_design.py and requires current non-authoritative 30-system-design.html
@@ -49,7 +49,7 @@ The following remain available for diagnosis, testing, and advanced direct entry
 | `start-run` | Accept immutable Stage 0 `run.yaml`, initialize control, or resume from authoritative state. |
 | `discovery` | Maintain decisions, the living PRD, and closure preparation. |
 | `spike` | Produce bounded discovery evidence. |
-| `control-run` | Run the read-only product-closure check, consume authority, and invoke one deterministic transition. |
+| `control-run` | Run the read-only Product Definition Approval check, consume authority, and invoke one deterministic transition. |
 | `system-design` | Produce the exact agent-led or co-design Stage 3 candidate/board, record readiness, and continue the internal control handoff. |
 | `program-design` | Produce the exact Stage 4 candidate, record readiness, and continue the internal control handoff. |
 | `compile-tickets` | Compile and hand off the exact Stage 5 ticket graph candidate. |
@@ -59,9 +59,9 @@ Gazetteer is the normal workflow entry. It invokes `atlas:start-run` and other e
 
 ## Planning authority
 
-Feature-root `control.json` is the only authoritative mutable Stage 0–2 state. Its mutable gate map contains the discovery product-closure boundary only when selected; otherwise `phase` starts at the first selected downstream stage with no mutable gate. Immutable `run.yaml` retains later-stage and conditional policy. After discovery acceptance, `phase` may name the next selected stage, where this controller likewise fails closed and hands off without creating later-stage gate state. `00-state.md` is a generated projection and is never read for legality. The controller preserves exact-byte `run.yaml` tamper detection, holds a run-local single-writer lock, and replaces only `control.json` atomically. Projection regeneration is best-effort after commit.
+Feature-root `control.json` is the only authoritative mutable Stage 0–2 state. Its mutable gate map contains the discovery Product Definition Approval boundary only when selected; otherwise `phase` starts at the first selected downstream stage with no mutable gate. Immutable `run.yaml` retains later-stage and conditional policy. After discovery acceptance, `phase` may name the next selected stage, where this controller likewise fails closed and hands off without creating later-stage gate state. `00-state.md` is a generated projection and is never read for legality. The controller preserves exact-byte `run.yaml` tamper detection, holds a run-local single-writer lock, and replaces only `control.json` atomically. Projection regeneration is best-effort after commit.
 
-Discovery keeps provenance in `10-decisions.md` and stages each complete PRD replacement in `.20-prd.next.md`. `tools/render_prd.py write` is the only canonical write path: it renders first, then atomically replaces each of `20-prd.md` and non-authoritative `20-prd.html`. Render/staging failure preserves the prior pair; an interrupted two-file install leaves a detectable mismatch that blocks closure. Producers leave candidates at `status: draft` and record readiness only. Discovery's product-closure boundary requires `AGENT_REVIEW` or `HUMAN`; `AUTO` is unavailable because the boundary includes semantic acceptance. Agent review consumes a structured read-only envelope bound to run identity and candidate version/hash. Fresh-context reviewer independence is an invocation responsibility in V1; the controller does not authenticate reviewer identity. The controller validates mechanics and authority evidence but does not grade prose.
+Discovery keeps provenance in `10-decisions.md` and stages each complete PRD replacement in `.20-prd.next.md`. `tools/render_prd.py write` is the only canonical write path: it renders first, then atomically replaces each of `20-prd.md` and non-authoritative `20-prd.html`. Render/staging failure preserves the prior pair; an interrupted two-file install leaves a detectable mismatch that blocks closure. Producers leave candidates at `status: draft` and record readiness only. Discovery's Product Definition Approval boundary requires `AGENT_REVIEW` or `HUMAN`; `AUTO` is unavailable because the boundary includes semantic acceptance. Agent review consumes a structured read-only envelope bound to run identity and candidate version/hash. Fresh-context reviewer independence is an invocation responsibility in V1; the controller does not authenticate reviewer identity. The controller validates mechanics and authority evidence but does not grade prose.
 
 Current accepted Stage 0–2 provenance is the stage binding under `control.json.acceptances`, containing candidate version/hash, authority, date, and review reference/hash when applicable. Stage 0–2 creates no historical acceptance ledger, `approved/` copies, receipt files, transaction journal, replay log, amendment ledger, event stream, or hash chain.
 

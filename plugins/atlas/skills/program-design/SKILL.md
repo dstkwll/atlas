@@ -39,7 +39,7 @@ Machine-local `config_path`, bound `source`, Git-directory, and absolute diagnos
 Derive the applicable branch only from effective selected stages, never from candidate prose or artifact presence. Read exactly one applicable upstream source and do not read either omitted source:
 
 - System Design selected: read exact accepted `30-system-design.md` and bind its integer version and SHA-256 as `kind: system_design`.
-- System Design omitted and Product Closure selected: read exact accepted `20-prd.md` and bind its integer version and SHA-256 as `kind: product_closure`.
+- System Design omitted and Product Definition Approval selected: read exact accepted `20-prd.md` and bind its integer version and SHA-256 as `kind: product_closure`.
 - both upstream semantic boundaries omitted: read frozen effective Stage 0 `run.yaml` and its recorded effective configuration binding as `kind: stage0`.
 
 Reject a missing, extra, stale, or mismatched source rather than inferring a branch.
