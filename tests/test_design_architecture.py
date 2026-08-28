@@ -267,6 +267,30 @@ class PairedDesignArchitectureTests(unittest.TestCase):
         self.assertRegex(runtime, r"(?i)no second graph.{0,120}packet acceptance.{0,160}runtime planner")
         self.assertRegex(borrow_map, r"(?i)supervisor gap filling.{0,120}REJECT")
 
+    def test_v016_records_current_system_design_decision_without_rewriting_d071(self):
+        root_readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        architecture_readme = read("README.md")
+        decision = normalized("31-v0.16-decisions.md")
+        historical = read("22-v0.7-decisions.md")
+        learnings = read("16-learnings-and-course-corrections.md")
+        skill = (ROOT / "plugins" / "atlas" / "skills" / "system-design" / "SKILL.md").read_text(encoding="utf-8")
+        board = (ROOT / "plugins" / "atlas" / "skills" / "system-design" / "references" / "system-design-board.md").read_text(encoding="utf-8")
+        renderer = (ROOT / "plugins" / "atlas" / "tools" / "render_system_design.py").read_text(encoding="utf-8")
+
+        self.assertIn("architecture/31-v0.16-decisions.md", root_readme)
+        self.assertIn("**v0.16**", root_readme)
+        self.assertIn("**v0.16**", architecture_readme)
+        self.assertIn("D-089", decision)
+        self.assertIn("Relationship / disposition", decision)
+        self.assertIn("standalone `Option <number> — ...` label", skill)
+        self.assertIn("frontmatter Boolean", board)
+        self.assertIn("Refined by D-089", historical)
+        self.assertNotIn("For each material choice, present a decision packet", historical)
+        self.assertIn("## L-026 — A pointer-only ticket", learnings)
+        self.assertIn("## L-027 — Visual decision support", learnings)
+        self.assertIn("yaml.safe_load", renderer)
+        self.assertNotIn('re.search(r"(?m)^gate_ready:', renderer)
+
     def test_v015_artifact_example_execution_context_matches_declared_sections(self):
         artifact_model = read("03-artifact-model.md")
         example = artifact_model.split("Exact version-2 frontmatter:", 1)[1].split("## `reviews/`", 1)[0]
@@ -545,7 +569,7 @@ class PairedDesignArchitectureTests(unittest.TestCase):
             self.assertIn(view, artifact)
 
     def test_codesign_material_choices_require_visual_decision_support(self):
-        for name in ("02-workflow.md", "22-v0.7-decisions.md"):
+        for name in ("02-workflow.md", "31-v0.16-decisions.md"):
             text = normalized(name).lower()
             with self.subTest(name=name):
                 self.assertIn("decision packet rather than prose alone", text)
@@ -559,7 +583,7 @@ class PairedDesignArchitectureTests(unittest.TestCase):
                 self.assertRegex(text, r"ephemeral|non-authoritative")
 
     def test_material_decisions_and_question_previews_start_with_complete_phone_first_framing(self):
-        for name in ("02-workflow.md", "22-v0.7-decisions.md"):
+        for name in ("02-workflow.md", "31-v0.16-decisions.md"):
             text = normalized(name).lower()
             with self.subTest(name=name):
                 self.assertIn("begin every material decision packet", text)
@@ -578,7 +602,7 @@ class PairedDesignArchitectureTests(unittest.TestCase):
                 self.assertIn("separate context and topology visuals", text)
 
     def test_agent_led_preserves_material_alternative_evidence_in_canonical_markdown_without_html(self):
-        for name in ("02-workflow.md", "22-v0.7-decisions.md"):
+        for name in ("02-workflow.md", "31-v0.16-decisions.md"):
             text = normalized(name).lower()
             with self.subTest(name=name):
                 self.assertIn("agent_led", text)

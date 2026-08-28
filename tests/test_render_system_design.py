@@ -1,4 +1,5 @@
 import hashlib
+import json
 import os
 import runpy
 import subprocess
@@ -37,12 +38,13 @@ def run_render(*args, cwd=None):
     )
 
 
-def write_system_design(run: Path, section_content=None, gate_ready=True) -> bytes:
+def write_system_design(run: Path, section_content=None, gate_ready=True, gate_ready_line=None) -> bytes:
+    gate_ready_line = gate_ready_line or f"gate_ready: {str(gate_ready).lower()}"
     frontmatter = f"""---
 run: demo
 version: 1
 status: draft
-gate_ready: {str(gate_ready).lower()}
+{gate_ready_line}
 participation: co_design
 opened: 2026-08-21
 source_binding:
@@ -111,10 +113,10 @@ class RenderSystemDesignTests(unittest.TestCase):
             self.assertIn("duplicate metadata attribute", malformed_attribute.stderr)
 
             self.assertEqual(run_render("render", "--run", run).returncode, 0)
-            marker = '<meta name="atlas-renderer-version" content="2.1.0">'
+            marker = '<meta name="atlas-renderer-version" content="2.2.0">'
             text = html.read_text(encoding="utf-8")
             self.assertIn(marker, text)
-            html.write_text(text.replace(marker, marker.replace("2.1.0", "unknown"), 1), encoding="utf-8")
+            html.write_text(text.replace(marker, marker.replace("2.2.0", "unknown"), 1), encoding="utf-8")
             malformed = run_render("verify", "--run", run)
             self.assertNotEqual(malformed.returncode, 0)
             self.assertIn("atlas-renderer-version", malformed.stderr)
@@ -385,8 +387,13 @@ class RenderSystemDesignTests(unittest.TestCase):
             run = Path(td)
             write_system_design(run, {
                 "Proposed system": (
+                    "### Decision map\n\n"
+                    "| Decision | Selected route | Relationship / disposition | Implementation consequence |\n"
+                    "|---|---|---|---|\n"
+                    "| Donor migration | Option 1 — calibration lane plus Atlas path (selected) | Adapt donor mechanisms | Keep the calibration lane separate |\n"
+                    "| Reviewer mutation containment | Option 2 — seal and restore the live tree (selected) | Replace live review access | Restore exact candidate bytes |\n\n"
                     "### Donor-migration alternatives\n\n"
-                    "**Option 1 — calibration lane plus Atlas path (chosen)**\n\n"
+                    "**Option 1 — calibration lane plus Atlas path (selected)**\n\n"
                     "Selected migration.\n\n"
                     "**Option 2 — intercept in place**\n\n"
                     "Rejected control."
@@ -395,7 +402,7 @@ class RenderSystemDesignTests(unittest.TestCase):
                     "### Reviewer mutation containment decision\n\n"
                     "### Option 1 — disposable copy\n\n"
                     "Alternative.\n\n"
-                    "### Option 2 — seal and restore the live tree (chosen)\n\n"
+                    "### Option 2 — seal and restore the live tree (selected)\n\n"
                     "Selected recovery."
                 ),
             })
@@ -416,7 +423,7 @@ class RenderSystemDesignTests(unittest.TestCase):
             self.assertEqual(html.count('<span class="decision-status">Selected</span>'), 2)
             self.assertEqual(html.count('<span class="decision-status">Not selected</span>'), 2)
 
-    def test_recommendation_is_selected_only_when_the_same_decision_is_explicitly_settled(self):
+    def test_recommendation_remains_provisional_for_current_candidates(self):
         with tempfile.TemporaryDirectory() as td:
             run = Path(td)
             write_system_design(run, {
@@ -438,11 +445,12 @@ class RenderSystemDesignTests(unittest.TestCase):
 
             self.assertEqual(rendered.returncode, 0, rendered.stderr)
             html = (run / "30-system-design.html").read_text(encoding="utf-8")
-            self.assertEqual(html.count('data-decision-status="selected"'), 1)
-            self.assertIn("Cache decision", html)
-            self.assertNotIn('<p class="decision-name">Runtime</p>', html)
-            self.assertIn('<p class="decision-option decision-option--alternative"><span class="decision-status">Not selected</span><strong>Option 1 — shared route (recommended)</strong></p>', html)
-            self.assertIn('<p class="decision-option decision-option--selected"><span class="decision-status">Selected</span><strong>Option 1 — shared route (recommended)</strong></p>', html)
+            self.assertEqual(html.count('data-decision-status="selected"'), 0)
+            self.assertNotIn("Decisions at a glance", html)
+            self.assertEqual(
+                html.count('<span class="decision-status">Not selected</span><strong>Option 1 — shared route (recommended)</strong>'),
+                2,
+            )
 
     def test_selected_option_number_does_not_bleed_across_h3_decision_groups(self):
         with tempfile.TemporaryDirectory() as td:
@@ -484,6 +492,116 @@ class RenderSystemDesignTests(unittest.TestCase):
             self.assertNotEqual(rendered.returncode, 0)
             self.assertIn("Decision map", rendered.stderr)
 
+    def test_gate_ready_uses_parsed_frontmatter_boolean(self):
+        unresolved = (
+            "### Runtime options\n\n"
+            "**Option 1 — route A**\n\n"
+            "**Option 2 — route B**"
+        )
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            write_system_design(
+                run,
+                {"Proposed system": unresolved},
+                gate_ready_line="gate_ready: true # producer-complete",
+            )
+            rendered = run_render("render", "--run", run)
+            self.assertNotEqual(rendered.returncode, 0)
+            self.assertIn("exactly one selected option", rendered.stderr)
+
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            write_system_design(
+                run,
+                {"Proposed system": unresolved + "\n\n```yaml\ngate_ready: true\n```"},
+                gate_ready=False,
+            )
+            rendered = run_render("render", "--run", run)
+            self.assertEqual(rendered.returncode, 0, rendered.stderr)
+
+    def test_current_decision_grammar_fails_closed(self):
+        cases = {
+            "matrix-only": (
+                "### Runtime options\n\n"
+                "| Route | Trade-off |\n|---|---|\n"
+                "| Option 1 — route A (selected) | Fast |\n"
+                "| Option 2 — route B | Safe |",
+                "standalone Option label",
+            ),
+            "duplicate-option-number": (
+                "### Runtime options\n\n"
+                "**Option 1 — route A (selected)**\n\n"
+                "**Option 1 — route B**",
+                "duplicate option numbers",
+            ),
+            "duplicate-decision-identity": (
+                "### Runtime alternatives\n\n"
+                "**Option 1 — route A (selected)**\n\n"
+                "### Runtime options\n\n"
+                "**Option 2 — route B (selected)**",
+                "decision identities must be unique",
+            ),
+            "legacy-chosen-current-write": (
+                "### Runtime options\n\n"
+                "**Option 1 — route A (chosen)**\n\n"
+                "**Option 2 — route B**",
+                "current candidates must use `(selected)`",
+            ),
+            "legacy-map-header-current-write": (
+                "### Decision map\n\n"
+                "| Decision | Selected route | Adoption or disposition | Implementation consequence |\n"
+                "|---|---|---|---|\n"
+                "| Runtime | Option 1 — route A (selected) | New | Use route A |\n\n"
+                "### Runtime options\n\n"
+                "**Option 1 — route A (selected)**\n\n"
+                "**Option 2 — route B**",
+                "Decision map header is missing or malformed",
+            ),
+        }
+        for name, (proposed, message) in cases.items():
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                write_system_design(run, {"Proposed system": proposed}, gate_ready=True)
+                rendered = run_render("render", "--run", run)
+                self.assertNotEqual(rendered.returncode, 0)
+                self.assertIn(message, rendered.stderr)
+
+    def test_chosen_is_allowed_only_for_exact_previously_accepted_candidate(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            source = write_system_design(run, {
+                "Proposed system": (
+                    "### Decision map\n\n"
+                    "| Decision | Selected route | Adoption or disposition | Implementation consequence |\n"
+                    "|---|---|---|---|\n"
+                    "| Runtime | Option 1 — route A (chosen) | Retained | Keep route A |\n\n"
+                    "### Runtime alternatives\n\n"
+                    "**Option 1 — route A (chosen)**\n\n"
+                    "**Option 2 — route B**"
+                )
+            }, gate_ready=True)
+
+            current = run_render("render", "--run", run)
+            self.assertNotEqual(current.returncode, 0)
+            self.assertIn("exact previously accepted candidate", current.stderr)
+
+            (run / "planning-control.json").write_text(json.dumps({
+                "gates": {"system_design": "AGENT_APPROVED"},
+                "acceptances": {
+                    "system_design": {
+                        "candidate_version": 1,
+                        "candidate_sha256": hashlib.sha256(source).hexdigest(),
+                    }
+                }
+            }), encoding="utf-8")
+            legacy = run_render("render", "--run", run)
+            self.assertEqual(legacy.returncode, 0, legacy.stderr)
+
+            (run / "30-system-design.md").write_bytes(source + b"\n")
+            drifted = run_render("render", "--run", run)
+            self.assertNotEqual(drifted.returncode, 0)
+            self.assertIn("exact previously accepted candidate", drifted.stderr)
+
     def test_gate_ready_board_rejects_missing_or_duplicate_selected_routes(self):
         cases = {
             "missing": (
@@ -494,7 +612,7 @@ class RenderSystemDesignTests(unittest.TestCase):
             "duplicate": (
                 "### Runtime alternatives\n\n"
                 "**Option 1 — route A (selected)**\n\n"
-                "**Option 2 — route B (chosen)**"
+                "**Option 2 — route B (selected)**"
             ),
         }
         for name, proposed in cases.items():
@@ -513,7 +631,7 @@ class RenderSystemDesignTests(unittest.TestCase):
             write_system_design(run, {
                 "Proposed system": (
                     "### Decision map\n\n"
-                    "| Decision | Selected route | Adoption or disposition | Implementation consequence |\n"
+                    "| Decision | Selected route | Relationship / disposition | Implementation consequence |\n"
                     "|---|---|---|---|\n"
                     "| Runtime | Option 1 — route A (selected) | Adapt | Use route A |\n\n"
                     "### Runtime alternatives\n\n"
@@ -547,7 +665,7 @@ class RenderSystemDesignTests(unittest.TestCase):
             "fenced-only": (
                 "```markdown\n"
                 "### Decision map\n\n"
-                "| Decision | Selected route | Adoption or disposition | Implementation consequence |\n"
+                "| Decision | Selected route | Relationship / disposition | Implementation consequence |\n"
                 "|---|---|---|---|\n"
                 "| Runtime | Option 1 — route A (selected) | Adapt | Use route A |\n"
                 "```\n\n"
@@ -555,7 +673,7 @@ class RenderSystemDesignTests(unittest.TestCase):
             ),
             "mismatch": (
                 "### Decision map\n\n"
-                "| Decision | Selected route | Adoption or disposition | Implementation consequence |\n"
+                "| Decision | Selected route | Relationship / disposition | Implementation consequence |\n"
                 "|---|---|---|---|\n"
                 "| Runtime | Option 2 — route B (selected) | Replace | Use route B |\n\n"
                 + selected_group

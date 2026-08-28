@@ -25,9 +25,9 @@ source_binding:
 
 ### Decision map
 
-| Decision | Selected route | Adoption or disposition | Implementation consequence |
+| Decision | Selected route | Relationship / disposition | Implementation consequence |
 |---|---|---|---|
-| <decision name> | <Option N — selected route (selected)> | <retained/adapted/wrapped/replaced/deferred> | <what callers, peers, operators, or later design now do> |
+| <decision name> | <Option N — selected route (selected)> | <concise relationship to the current system or disposition of the prior route> | <what callers, peers, operators, or later design now do> |
 
 <proposed topology and system-observable commitments>
 

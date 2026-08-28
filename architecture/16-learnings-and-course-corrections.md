@@ -1074,3 +1074,9 @@ Agent-led drafting also lost rationale when materially different alternatives ap
 only the winner reached the artifact. `agent_led` now preserves equivalent decision evidence in the
 Decision map and owning section of canonical System Design Markdown. It adds no thirteenth section and
 requires no HTML solely for this evidence rule.
+
+Adversarial review then showed that whole-document readiness regexes and permissive option extraction
+could let body examples alter `gate_ready`, hide matrix-only decisions, duplicate option identity, or
+reuse legacy markers for new candidates. Current rendering parses the frontmatter Boolean once,
+requires unique standalone option labels and decision identities, treats matrices as support, and
+limits legacy markers to exact previously accepted candidate bytes.

@@ -161,11 +161,13 @@ class SkillSeamHardeningTests(unittest.TestCase):
                 "mechanically verified but unreadable board is not complete decision evidence",
                 "exactly one selected option",
                 "### Decision map",
-                "recommended is not a terminal decision state",
+                "A recommendation is provisional, not a terminal decision state",
+                "standalone `Option <number> — ...` label",
+                "Relationship / disposition",
             ),
             plugin / "skills" / "system-design" / "references" / "system-design-file.md": (
                 "### Decision map",
-                "| Decision | Selected route | Adoption or disposition | Implementation consequence |",
+                "| Decision | Selected route | Relationship / disposition | Implementation consequence |",
                 "(selected)",
             ),
             plugin / "skills" / "system-design" / "references" / "system-design-board.md": (
@@ -180,11 +182,15 @@ class SkillSeamHardeningTests(unittest.TestCase):
                 "places **Decisions at a glance** above the detailed views",
                 "labels the selected option **Selected** and every other option **Not selected**",
                 "Selection is scoped by decision identity and option number, never by repeated option text",
-                "A gate-ready board fails rendering when a settled alternative set has zero or multiple selected markers",
+                "The renderer reads `gate_ready` once as a frontmatter Boolean",
+                "Comparison matrices are supporting detail and never replace those standalone labels",
+                "Decision identities are unique after normalization",
+                "option numbers are unique within each decision",
                 "Later Option-number elaborations inside the same decision inherit that decision's selected route",
                 "Status text is real HTML content, not CSS-generated content",
                 "Option-looking text inside fenced code never participates in decision extraction",
-                "A gate-ready candidate using canonical `(selected)` markers must have the Decision map as the first `Proposed system` subsection",
+                "A gate-ready current candidate must use canonical `(selected)` markers",
+                "Exact previously accepted `(chosen)` artifacts remain renderable",
             ),
         }
         for path, clauses in contracts.items():

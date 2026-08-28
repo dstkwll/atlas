@@ -758,6 +758,36 @@ recommendation and its strongest counterargument; and assign a stable label. The
 or zoom in. Accepted conversational choices are written into canonical `30-system-design.md`;
 conversation alone never has artifact or acceptance authority.
 
+For each material choice, present a decision packet rather than prose alone: a concise comparison
+matrix using the same criteria for every option, plus the minimum useful visual that exposes the
+decision-relevant structure. Select the fitting view from topology/component, sequence or data flow,
+schema/protocol, state/lifecycle, and failure/recovery; pair it with a plain-language explanation of
+the trade-offs, operational consequences, and failure modes it changes. If no visual adds
+decision-relevant clarity, state why no visual adds clarity rather than creating decoration.
+Decision-time visuals are ephemeral,
+non-authoritative aids until the settled choice is written into canonical Markdown.
+
+Begin every material decision packet, and every preview of the exact decision or next question, in
+simplified technical English. State the exact decision or next question, why it matters now, the fixed
+constraints, what is not yet decided, the same evaluation criteria and trade-off axes, what each option
+optimizes, and whether the options are genuine choices or rejected controls retained for evidence.
+When constraints determine the answer, synthesize the resulting consequence; do not manufacture a
+preference picker. Prefer one combined context-plus-diagram phone-first packet over separate context
+and topology visuals.
+
+In `agent_led`, whenever the analysis presents materially different alternatives, persist equivalent
+decision evidence in canonical `30-system-design.md`. Keep that evidence within the existing twelve
+required sections: summarize the selected route in the Decision map and retain the alternatives and
+reasoning in the owning section. This rule does not require `30-system-design.html`; HTML is not
+created solely for this evidence rule.
+
+Current decision groups use unique owning H3 identities and unique standalone `Option <number> — ...`
+labels; comparison matrices support rather than replace those labels. A settled route uses
+`(selected)`. The Decision map uses `Decision`, `Selected route`, free-form
+`Relationship / disposition`, and `Implementation consequence`. Renderer readiness comes only from
+the parsed frontmatter Boolean. Legacy markers render only for exact previously accepted candidate
+bytes.
+
 Co-design also requires `30-system-design.html`, a deterministic, self-contained visual board bound
 to the exact Markdown source path/hash and renderer version. It contains precise architecture views,
 not decorative generative imagery: current/proposed topology, seam/ownership map,
@@ -6850,6 +6880,45 @@ migration is introduced by this correction.
 
 ---
 
+## L-027 — Visual decision support must clarify a choice, not decorate a design
+
+### Evidence reviewed
+
+During real co-design use, prose-only alternatives made structural differences, comparable
+trade-offs, and failure behavior harder to evaluate than the underlying decision required. The
+existing deterministic board helped inspect the accumulated candidate after choices were written,
+but did not require decision-time comparison before the user chose.
+
+### Standing result
+
+For each material co-design choice, present one decision packet: a comparison matrix across common
+criteria, the minimum useful topology, sequence/data-flow, schema/protocol, state/lifecycle, or
+failure/recovery visual, and a plain-language explanation of trade-offs, operational consequences,
+and failure modes. When no visual improves the decision, state why and keep the packet textual.
+These aids remain ephemeral and non-authoritative until the settled choice is written into canonical
+System Design Markdown; visual output never grants approval.
+
+A comparison was still hard to use when its context, topology, and question arrived as separate phone
+surfaces or when fixed constraints were disguised as selectable preferences. Every material packet and
+next-question preview now begins in simplified technical English with the exact decision, current
+importance, fixed and unresolved constraints, common criteria/trade-off axes, option optimizations,
+and the distinction between genuine choices and rejected controls. When the constraints already decide
+the result, synthesize that consequence rather than manufacturing a picker. Prefer one combined
+context-plus-diagram phone-first packet.
+
+Agent-led drafting also lost rationale when materially different alternatives appeared in analysis but
+only the winner reached the artifact. `agent_led` now preserves equivalent decision evidence in the
+Decision map and owning section of canonical System Design Markdown. It adds no thirteenth section and
+requires no HTML solely for this evidence rule.
+
+Adversarial review then showed that whole-document readiness regexes and permissive option extraction
+could let body examples alter `gate_ready`, hide matrix-only decisions, duplicate option identity, or
+reuse legacy markers for new candidates. Current rendering parses the frontmatter Boolean once,
+requires unique standalone option labels and decision identities, treats matrices as support, and
+limits legacy markers to exact previously accepted candidate bytes.
+
+---
+
 # 17 — Agent Roles, Rosters, Model Policy, and Outcome Telemetry
 
 **Added in:** v0.3  
@@ -8024,6 +8093,10 @@ time with a plain question, two or three concrete alternatives, a recommendation
 counterargument, and a stable label. The user can redirect or zoom in. Accepted conversational
 choices are written into canonical Markdown; chat alone is never authority.
 
+**Refined by D-089:** current System Design adds explicit decision framing, canonical option grammar,
+agent-led alternative evidence, and phone/desktop projection acceptance without changing D-071's
+historical participation or authority decision.
+
 ---
 
 ## D-072 — Co-design requires a deterministic, non-authoritative System Design board
@@ -9061,6 +9134,79 @@ silently create one.
 The boundary's owner, candidate, authority, and lifecycle semantics do not change. Discovery still
 owns the living decision ledger and PRD, and approval still means that the product definition is
 complete enough for the next selected planning stage. Existing accepted artifacts remain immutable.
+
+### Status
+
+**ACCEPTED — governed CHANGE.**
+
+---
+
+# 31 — v0.16 Decisions
+
+v0.16 makes System Design decision evidence explicit and mechanically fail-closed without changing
+planning authority or adding a new artifact. Canonical Markdown remains authoritative; co-design's
+HTML board remains a deterministic, non-authoritative projection.
+
+---
+
+## D-089 — System Design decisions carry explicit framing, canonical options, and readable projection
+
+### Decision framing
+
+Begin every material decision packet and every preview of the exact decision or next question in
+simplified technical English. State the exact decision or next question, why it matters now, fixed
+constraints, what is not yet decided, the same evaluation criteria and trade-off axes, what each
+option optimizes, and whether alternatives are genuine choices or rejected controls. When accepted
+constraints determine the result, synthesize the consequence rather than manufacture a preference
+picker.
+
+Present a decision packet rather than prose alone: pair that context with one comparison matrix, the
+minimum useful visual—topology, sequence or data flow, schema/protocol, state/lifecycle, or
+failure/recovery—and a plain-language explanation of trade-offs, operational consequences, and failure modes.
+Prefer one combined context-plus-diagram phone-first packet, not separate context and topology
+visuals. If no visual adds decision-relevant clarity, explain why instead of generating decoration.
+Decision-time aids remain ephemeral and non-authoritative until written into canonical Markdown.
+
+### Canonical decision evidence
+
+Every decision group uses one owning H3 and one standalone `Option <number> — ...` label per route.
+Option numbers are unique within a decision; normalized decision identities are unique across the
+artifact. A comparison matrix may support the decision but cannot replace the standalone labels.
+Every settled current decision marks exactly one route `(selected)` and appears in the first
+`Proposed system` subsection, `### Decision map`.
+
+The Decision map columns are `Decision`, `Selected route`, `Relationship / disposition`, and
+`Implementation consequence`. Relationship/disposition is concise free-form text so both donor
+adaptation and greenfield decisions fit the same contract.
+
+The renderer parses `gate_ready` once from YAML frontmatter. Body examples cannot alter readiness,
+and valid YAML comments cannot hide it. Current writes use `(selected)` only. Legacy `(chosen)` or
+settled `(recommended)` markers are recognized only when the exact candidate bytes and version match
+a prior System Design acceptance; rendering compatibility never authorizes source mutation.
+
+### Participation and projection
+
+`co_design` presents the packet interactively and writes each settled choice into canonical
+Markdown. When `agent_led` considers materially different alternatives, it preserves equivalent
+decision evidence in canonical `30-system-design.md`: the Decision map records the selected route and
+the owning existing section retains alternatives and reasoning within the existing twelve required
+sections. This introduces no thirteenth section and does not require `30-system-design.html` solely
+for this evidence rule.
+
+When HTML is required for co-design, the board puts **Decisions at a glance** before detail, labels
+routes **Selected** and **Not selected** as real content, renders semantic mobile tables, preserves
+text-diagram geometry in local scroll regions, and remains one readable phone/desktop column. Browser
+acceptance checks phone and desktop overflow, navigation, tables, diagrams, title, and decision state.
+
+### Authority and scope
+
+- `30-system-design.md` remains the only authoritative System Design candidate.
+- The HTML board remains deterministic, self-contained, source-hash-bound, and non-authoritative.
+- Participation remains separate from acceptance authority.
+- No workflow phase, schema version, acceptance field, image generator, or execution subsystem is
+  added.
+- D-071 retains its historical body and points here for the current refinement.
+- L-027 records the observed decision-support failure; PR30's L-026 remains unchanged.
 
 ### Status
 
