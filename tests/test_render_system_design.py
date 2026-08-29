@@ -113,10 +113,10 @@ class RenderSystemDesignTests(unittest.TestCase):
             self.assertIn("duplicate metadata attribute", malformed_attribute.stderr)
 
             self.assertEqual(run_render("render", "--run", run).returncode, 0)
-            marker = '<meta name="atlas-renderer-version" content="2.2.2">'
+            marker = '<meta name="atlas-renderer-version" content="2.2.3">'
             text = html.read_text(encoding="utf-8")
             self.assertIn(marker, text)
-            html.write_text(text.replace(marker, marker.replace("2.2.2", "unknown"), 1), encoding="utf-8")
+            html.write_text(text.replace(marker, marker.replace("2.2.3", "unknown"), 1), encoding="utf-8")
             malformed = run_render("verify", "--run", run)
             self.assertNotEqual(malformed.returncode, 0)
             self.assertIn("atlas-renderer-version", malformed.stderr)
@@ -640,6 +640,51 @@ class RenderSystemDesignTests(unittest.TestCase):
             drifted = run_render("render", "--run", run)
             self.assertNotEqual(drifted.returncode, 0)
             self.assertIn("exact previously accepted candidate", drifted.stderr)
+
+    def test_exact_accepted_historical_heading_grammar_allows_selected_marker(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            source = write_system_design(run, {
+                "Proposed system": (
+                    "### Decision map\n\n"
+                    "| Decision | Selected route | Adoption or disposition | Implementation consequence |\n"
+                    "|---|---|---|---|\n"
+                    "| Runtime | Option 1 — route A (selected) | Retained | Keep route A |\n\n"
+                    "### Runtime alternatives\n\n"
+                    "**Option 1 — route A (selected)**\n\n"
+                    "**Option 2 — route B**\n\n"
+                    "### Conceptual schema comparison\n\n"
+                    "**Option 1 — no duplicated cursor**\n\n"
+                    "Schema sketch.\n\n"
+                    "**Option 2 — duplicated cursor**"
+                )
+            }, gate_ready=True)
+            (run / "planning-control.json").write_text(json.dumps({
+                "gates": {"system_design": "AGENT_APPROVED"},
+                "acceptances": {
+                    "system_design": {
+                        "candidate_version": 1,
+                        "candidate_sha256": hashlib.sha256(source).hexdigest(),
+                    }
+                }
+            }), encoding="utf-8")
+
+            rendered = run_render("render", "--run", run)
+
+            self.assertEqual(rendered.returncode, 0, rendered.stderr)
+            verified = run_render("verify", "--run", run)
+            self.assertEqual(verified.returncode, 0, verified.stderr)
+            html = (run / "30-system-design.html").read_text(encoding="utf-8")
+            self.assertEqual(html.count('data-decision-status="selected"'), 1)
+            self.assertNotIn('<p class="decision-name">Conceptual schema comparison</p>', html)
+            self.assertIn(
+                '<span class="decision-status">Selected</span><strong>Option 1 — no duplicated cursor</strong>',
+                html,
+            )
+            self.assertIn(
+                '<span class="decision-status">Not selected</span><strong>Option 2 — duplicated cursor</strong>',
+                html,
+            )
 
     def test_exact_accepted_legacy_candidate_ignores_option_labeled_supporting_h3(self):
         with tempfile.TemporaryDirectory() as td:

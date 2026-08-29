@@ -20,7 +20,7 @@ import yaml
 
 SOURCE_FILE = "30-system-design.md"
 OUTPUT_FILE = "30-system-design.html"
-RENDERER_VERSION = "2.2.2"
+RENDERER_VERSION = "2.2.3"
 SAFE_SCHEMES = {"http", "https", "mailto"}
 OPTION_PATTERN = re.compile(
     r"^Option\s+(\d+)\s+—\s+.+?(?:\s+\((chosen|selected|recommended)\))?$",
@@ -288,18 +288,37 @@ def clean_option_name(text: str) -> str:
     )
 
 
-def uses_legacy_heading_grammar(markdown: str, parser, *, exact_acceptance: bool) -> bool:
+def uses_legacy_heading_grammar(
+    markdown: str,
+    parser,
+    *,
+    exact_acceptance: bool,
+    gate_ready: bool,
+    allow_legacy_chosen: bool,
+) -> bool:
     if not exact_acceptance:
         return False
-    tokens = parser.parse(markdown)
-    markers = {
-        (match.group(2) or "").lower()
-        for index, token in enumerate(tokens[:-1])
-        if token.type in {"heading_open", "paragraph_open"}
-        and tokens[index + 1].type == "inline"
-        and (match := OPTION_PATTERN.match(inline_text(tokens[index + 1])))
-    }
-    return "selected" not in markers and bool(markers & {"chosen", "recommended"})
+    try:
+        selected_decisions(
+            markdown,
+            parser,
+            gate_ready=gate_ready,
+            allow_legacy_chosen=allow_legacy_chosen,
+            legacy_heading_grammar=False,
+        )
+    except SystemExit as current_error:
+        try:
+            selected_decisions(
+                markdown,
+                parser,
+                gate_ready=gate_ready,
+                allow_legacy_chosen=allow_legacy_chosen,
+                legacy_heading_grammar=True,
+            )
+        except SystemExit:
+            raise current_error
+        return True
+    return False
 
 
 def decision_heading_kind(candidate: str, *, legacy_heading_grammar: bool) -> str:
@@ -603,6 +622,8 @@ def render_bytes(markdown_bytes: bytes, *, run_dir: Path | None = None) -> bytes
         body,
         parser,
         exact_acceptance=allow_legacy_chosen,
+        gate_ready=gate_ready,
+        allow_legacy_chosen=allow_legacy_chosen,
     )
     decisions = selected_decisions(
         body,
