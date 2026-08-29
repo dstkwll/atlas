@@ -20,7 +20,7 @@ import yaml
 
 SOURCE_FILE = "30-system-design.md"
 OUTPUT_FILE = "30-system-design.html"
-RENDERER_VERSION = "2.2.0"
+RENDERER_VERSION = "2.2.1"
 SAFE_SCHEMES = {"http", "https", "mailto"}
 OPTION_PATTERN = re.compile(
     r"^Option\s+(\d+)\s+—\s+.+?(?:\s+\((chosen|selected|recommended)\))?$",
@@ -286,7 +286,12 @@ def clean_option_name(text: str) -> str:
     )
 
 
-def decision_groups(markdown: str, parser) -> tuple[list[DecisionGroup], set[str]]:
+def decision_groups(
+    markdown: str,
+    parser,
+    *,
+    allow_legacy_chosen: bool,
+) -> tuple[list[DecisionGroup], set[str]]:
     tokens = parser.parse(markdown)
     block_texts = [
         inline_text(tokens[index + 1])
@@ -309,6 +314,12 @@ def decision_groups(markdown: str, parser) -> tuple[list[DecisionGroup], set[str
             if not OPTION_PATTERN.match(candidate):
                 current_group = None
                 if candidate.casefold() == "decision map":
+                    continue
+                if allow_legacy_chosen and not re.search(
+                    r"\s+(alternatives|decision)$",
+                    candidate,
+                    re.IGNORECASE,
+                ):
                     continue
                 group: DecisionGroup = {
                     "name": clean_decision_name(candidate),
@@ -340,7 +351,11 @@ def selected_decisions(
     gate_ready: bool,
     allow_legacy_chosen: bool,
 ) -> list[tuple[str, str, str]]:
-    groups, settled_names = decision_groups(markdown, parser)
+    groups, settled_names = decision_groups(
+        markdown,
+        parser,
+        allow_legacy_chosen=allow_legacy_chosen,
+    )
     identities = [str(group["name"]).casefold() for group in groups]
     if len(identities) != len(set(identities)):
         raise SystemExit("render_system_design: decision identities must be unique")
@@ -550,7 +565,11 @@ def render_bytes(markdown_bytes: bytes, *, run_dir: Path | None = None) -> bytes
         gate_ready=gate_ready,
         allow_legacy_chosen=allow_legacy_chosen,
     )
-    groups, settled_names = decision_groups(body, parser)
+    groups, settled_names = decision_groups(
+        body,
+        parser,
+        allow_legacy_chosen=allow_legacy_chosen,
+    )
     selected_numbers = {name.casefold(): number for name, _, number in decisions}
     has_canonical_selected_marker = any(
         option[2] == "selected"

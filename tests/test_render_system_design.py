@@ -113,10 +113,10 @@ class RenderSystemDesignTests(unittest.TestCase):
             self.assertIn("duplicate metadata attribute", malformed_attribute.stderr)
 
             self.assertEqual(run_render("render", "--run", run).returncode, 0)
-            marker = '<meta name="atlas-renderer-version" content="2.2.0">'
+            marker = '<meta name="atlas-renderer-version" content="2.2.1">'
             text = html.read_text(encoding="utf-8")
             self.assertIn(marker, text)
-            html.write_text(text.replace(marker, marker.replace("2.2.0", "unknown"), 1), encoding="utf-8")
+            html.write_text(text.replace(marker, marker.replace("2.2.1", "unknown"), 1), encoding="utf-8")
             malformed = run_render("verify", "--run", run)
             self.assertNotEqual(malformed.returncode, 0)
             self.assertIn("atlas-renderer-version", malformed.stderr)
@@ -601,6 +601,37 @@ class RenderSystemDesignTests(unittest.TestCase):
             drifted = run_render("render", "--run", run)
             self.assertNotEqual(drifted.returncode, 0)
             self.assertIn("exact previously accepted candidate", drifted.stderr)
+
+    def test_exact_accepted_legacy_candidate_ignores_option_labeled_supporting_h3(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            source = write_system_design(run, {
+                "Proposed system": (
+                    "### Runtime alternatives\n\n"
+                    "**Option 1 — route A (chosen)**\n\n"
+                    "**Option 2 — route B**\n\n"
+                    "### Conceptual schema comparison\n\n"
+                    "**Option 1 — no duplicated cursor**\n\n"
+                    "Schema sketch.\n\n"
+                    "**Option 2 — duplicated cursor**"
+                )
+            }, gate_ready=True)
+            (run / "planning-control.json").write_text(json.dumps({
+                "gates": {"system_design": "AGENT_APPROVED"},
+                "acceptances": {
+                    "system_design": {
+                        "candidate_version": 1,
+                        "candidate_sha256": hashlib.sha256(source).hexdigest(),
+                    }
+                }
+            }), encoding="utf-8")
+
+            rendered = run_render("render", "--run", run)
+
+            self.assertEqual(rendered.returncode, 0, rendered.stderr)
+            html = (run / "30-system-design.html").read_text(encoding="utf-8")
+            self.assertIn("Decisions at a glance", html)
+            self.assertEqual(html.count('data-decision-status="selected"'), 1)
 
     def test_gate_ready_board_rejects_missing_or_duplicate_selected_routes(self):
         cases = {
