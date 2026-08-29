@@ -228,9 +228,9 @@ created solely for this evidence rule.
 Current decision groups use unique owning H3 identities and unique standalone `Option <number> — ...`
 labels; comparison matrices support rather than replace those labels. A settled route uses
 `(selected)`. The Decision map uses `Decision`, `Selected route`, free-form
-`Relationship / disposition`, and `Implementation consequence`. Renderer readiness comes only from
-the parsed frontmatter Boolean. Legacy markers render only for exact previously accepted candidate
-bytes.
+`Relationship / disposition`, and `Implementation consequence`. Renderer readiness comes only from the parsed frontmatter Boolean. D-090 supersedes D-089's narrow
+legacy marker/header rendering exception: the renderer accepts only `(selected)` and the current
+Decision map header. Historical accepted Markdown remains valid without a current projection.
 
 Co-design also requires `30-system-design.html`, a deterministic, self-contained visual board bound
 to the exact Markdown source path/hash and renderer version. It contains precise architecture views,

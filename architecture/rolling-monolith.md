@@ -784,9 +784,9 @@ created solely for this evidence rule.
 Current decision groups use unique owning H3 identities and unique standalone `Option <number> — ...`
 labels; comparison matrices support rather than replace those labels. A settled route uses
 `(selected)`. The Decision map uses `Decision`, `Selected route`, free-form
-`Relationship / disposition`, and `Implementation consequence`. Renderer readiness comes only from
-the parsed frontmatter Boolean. Legacy markers render only for exact previously accepted candidate
-bytes.
+`Relationship / disposition`, and `Implementation consequence`. Renderer readiness comes only from the parsed frontmatter Boolean. D-090 supersedes D-089's narrow
+legacy marker/header rendering exception: the renderer accepts only `(selected)` and the current
+Decision map header. Historical accepted Markdown remains valid without a current projection.
 
 Co-design also requires `30-system-design.html`, a deterministic, self-contained visual board bound
 to the exact Markdown source path/hash and renderer version. It contains precise architecture views,
@@ -6957,8 +6957,10 @@ requires no HTML solely for this evidence rule.
 Adversarial review then showed that whole-document readiness regexes and permissive option extraction
 could let body examples alter `gate_ready`, hide matrix-only decisions, duplicate option identity, or
 reuse legacy markers for new candidates. Current rendering parses the frontmatter Boolean once,
-requires unique standalone option labels and decision identities, treats matrices as support, and
-limits legacy markers to exact previously accepted candidate bytes.
+requires unique standalone option labels and decision identities, and treats matrices as support.
+D-090 later removed the narrow legacy-marker/header rendering exception entirely: historical accepted
+Markdown remains authoritative without rerendering, while every rendered candidate uses one current
+grammar.
 
 ---
 
@@ -9339,6 +9341,11 @@ version-revision rewrites that artifact into the current D-089 form. New/current
 require the exact twelve sections, owning H3 decision groups, standalone numbered options, exactly
 one `(selected)` route per settled group, and an exact Decision map. No semantic-only or looser
 completeness contract is adopted.
+
+D-090 explicitly supersedes D-089's narrow legacy-marker and legacy-header rendering exception. The
+renderer accepts only `(selected)` and the current `Relationship / disposition` Decision map header,
+even when source bytes match an acceptance record. Accepted historical Markdown remains valid
+authority without rerendering; its missing projection cannot block the D-090 replacement path.
 
 ### Status
 

@@ -1078,8 +1078,10 @@ requires no HTML solely for this evidence rule.
 Adversarial review then showed that whole-document readiness regexes and permissive option extraction
 could let body examples alter `gate_ready`, hide matrix-only decisions, duplicate option identity, or
 reuse legacy markers for new candidates. Current rendering parses the frontmatter Boolean once,
-requires unique standalone option labels and decision identities, treats matrices as support, and
-limits legacy markers to exact previously accepted candidate bytes.
+requires unique standalone option labels and decision identities, and treats matrices as support.
+D-090 later removed the narrow legacy-marker/header rendering exception entirely: historical accepted
+Markdown remains authoritative without rerendering, while every rendered candidate uses one current
+grammar.
 
 ---
 

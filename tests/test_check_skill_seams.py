@@ -190,7 +190,7 @@ class SkillSeamHardeningTests(unittest.TestCase):
                 "Status text is real HTML content, not CSS-generated content",
                 "Option-looking text inside fenced code never participates in decision extraction",
                 "A gate-ready current candidate must use canonical `(selected)` markers",
-                "Exact previously accepted `(chosen)` artifacts remain renderable",
+                "Legacy markers are rejected even when candidate bytes match a prior System Design acceptance",
             ),
         }
         for path, clauses in contracts.items():

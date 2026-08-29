@@ -4289,6 +4289,51 @@ class AtlasPlanningTests(unittest.TestCase):
             self.assertEqual((run / "30-system-design.md").read_bytes(), system_before)
             self.assertEqual(program_path.read_bytes(), program_before)
 
+    def test_confirmed_upstream_contradiction_after_d090_revision_stales_version_two(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            accepted = initialize_program_after_system(run)
+            predecessor = copy.deepcopy(accepted["acceptances"]["system_design"])
+            begun = planning_cli("begin-system-design-revision", "--run", run)
+            self.assertEqual(begun.returncode, 0, begun.stderr)
+            write_system_design(
+                run,
+                copy.deepcopy(predecessor["source_bindings"][0]),
+                version=2,
+            )
+            reaccepted = planning_cli(
+                "advance", "--run", run, "--stage", "system_design",
+                "--approval", "human", "--date", "2026-08-28",
+            )
+            self.assertEqual(reaccepted.returncode, 0, reaccepted.stderr)
+            version_two = PLANNING.load_planning_control(run)
+            self.assertEqual(version_two["acceptances"]["system_design"]["candidate_version"], 2)
+            review_input = write_upstream_block_review_input(run, version_two)
+
+            returned = planning_cli(
+                "return-upstream", "--run", run,
+                "--review-input", review_input.relative_to(run),
+            )
+
+            self.assertEqual(returned.returncode, 0, returned.stderr)
+            stale = PLANNING.load_planning_control(run)
+            self.assertEqual(stale["status"], "BLOCKED")
+            self.assertEqual(stale["phase"], "system_design")
+            self.assertEqual(stale["revision"], version_two["revision"] + 1)
+            self.assertEqual(stale["gates"]["system_design"], "STALE")
+            self.assertEqual(
+                stale["blocked_reason"]["started_from_revision"],
+                version_two["revision"],
+            )
+            self.assertEqual(
+                stale["blocked_reason"]["superseded_system_design"],
+                version_two["acceptances"]["system_design"],
+            )
+            self.assertEqual(
+                stale["acceptances"]["system_design"]["candidate_version"],
+                2,
+            )
+
     def test_not_confirmed_and_unavailable_upstream_reviews_do_not_mutate_state(self):
         for verdict in ("NOT_CONFIRMED", "UNAVAILABLE"):
             with self.subTest(verdict=verdict), tempfile.TemporaryDirectory() as td:

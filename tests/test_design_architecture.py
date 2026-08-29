@@ -318,7 +318,12 @@ class PairedDesignArchitectureTests(unittest.TestCase):
         self.assertNotIn("accepted co-design board projection is not current", planning)
         self.assertNotIn("uses_legacy_heading_grammar", renderer)
         self.assertNotIn("decision_heading_kind", renderer)
+        self.assertNotIn("accepted_legacy_candidate", renderer)
+        self.assertNotIn("allow_legacy_chosen", renderer)
+        self.assertNotIn("allow_legacy_header", renderer)
+        self.assertNotIn("Adoption or disposition", renderer)
         self.assertNotIn("historical_heading_grammar", renderer_tests)
+        self.assertIn("explicitly supersedes D-089's narrow legacy-marker", decision)
 
     def test_v015_artifact_example_execution_context_matches_declared_sections(self):
         artifact_model = read("03-artifact-model.md")

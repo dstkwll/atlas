@@ -58,7 +58,7 @@ If no visual adds decision-relevant clarity, state why no visual adds decision-r
 
 For every settled set, write one standalone `Option <number> — ...` label per route beneath its owning H3 and exactly one selected option marked `(selected)`; retain the others as evidence. Comparison matrices mirror those standalone option numbers.
 Decision identities are unique after normalization, and option numbers are unique within each decision. A recommendation is provisional, not a terminal decision state.
-Current writes use `(selected)` only; legacy markers require exact candidate bytes already bound to a prior System Design acceptance.
+Use `(selected)` only. `(chosen)` and settled `(recommended)` are invalid even when candidate bytes match a prior System Design acceptance; accepted historical Markdown remains authoritative without rerendering.
 Keep `### Decision map` first in `Proposed system`, with `Decision`, `Selected route`, `Relationship / disposition`, and `Implementation consequence`; relationship/disposition is concise free-form text, not a donor-specific enum.
 Update the map whenever a choice settles, including choices detailed in later sections. It summarizes commitments but does not replace reasoning, diagrams, counterarguments, or rejected controls.
 Before readiness, an open group may have no selected marker; a gate-ready board fails closed unless every alternative set has exactly one.

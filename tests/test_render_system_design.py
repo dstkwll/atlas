@@ -113,10 +113,10 @@ class RenderSystemDesignTests(unittest.TestCase):
             self.assertIn("duplicate metadata attribute", malformed_attribute.stderr)
 
             self.assertEqual(run_render("render", "--run", run).returncode, 0)
-            marker = '<meta name="atlas-renderer-version" content="2.2.0">'
+            marker = '<meta name="atlas-renderer-version" content="2.3.0">'
             text = html.read_text(encoding="utf-8")
             self.assertIn(marker, text)
-            html.write_text(text.replace(marker, marker.replace("2.2.0", "unknown"), 1), encoding="utf-8")
+            html.write_text(text.replace(marker, marker.replace("2.3.0", "unknown"), 1), encoding="utf-8")
             malformed = run_render("verify", "--run", run)
             self.assertNotEqual(malformed.returncode, 0)
             self.assertIn("atlas-renderer-version", malformed.stderr)
@@ -423,35 +423,6 @@ class RenderSystemDesignTests(unittest.TestCase):
             self.assertEqual(html.count('<span class="decision-status">Selected</span>'), 2)
             self.assertEqual(html.count('<span class="decision-status">Not selected</span>'), 2)
 
-    def test_recommendation_remains_provisional_for_current_candidates(self):
-        with tempfile.TemporaryDirectory() as td:
-            run = Path(td)
-            write_system_design(run, {
-                "Proposed system": (
-                    "### Runtime alternatives\n\n"
-                    "**Option 1 — shared route (recommended)**\n\n"
-                    "Recommendation is still open."
-                ),
-                "Authoritative data ownership": (
-                    "**Settled cache decision:** use one bounded cache.\n\n"
-                    "### Cache decision alternatives\n\n"
-                    "**Option 1 — shared route (recommended)**\n\n"
-                    "Settled route.\n\n"
-                    "**Option 2 — global database**"
-                ),
-            }, gate_ready=False)
-
-            rendered = run_render("render", "--run", run)
-
-            self.assertEqual(rendered.returncode, 0, rendered.stderr)
-            html = (run / "30-system-design.html").read_text(encoding="utf-8")
-            self.assertEqual(html.count('data-decision-status="selected"'), 0)
-            self.assertNotIn("Decisions at a glance", html)
-            self.assertEqual(
-                html.count('<span class="decision-status">Not selected</span><strong>Option 1 — shared route (recommended)</strong>'),
-                2,
-            )
-
     def test_selected_option_number_does_not_bleed_across_h3_decision_groups(self):
         with tempfile.TemporaryDirectory() as td:
             run = Path(td)
@@ -566,41 +537,62 @@ class RenderSystemDesignTests(unittest.TestCase):
                 self.assertNotEqual(rendered.returncode, 0)
                 self.assertIn(message, rendered.stderr)
 
-    def test_chosen_is_allowed_only_for_exact_previously_accepted_candidate(self):
-        with tempfile.TemporaryDirectory() as td:
-            run = Path(td)
-            source = write_system_design(run, {
-                "Proposed system": (
-                    "### Decision map\n\n"
-                    "| Decision | Selected route | Adoption or disposition | Implementation consequence |\n"
-                    "|---|---|---|---|\n"
-                    "| Runtime | Option 1 — route A (chosen) | Retained | Keep route A |\n\n"
-                    "### Runtime alternatives\n\n"
-                    "**Option 1 — route A (chosen)**\n\n"
-                    "**Option 2 — route B**"
+    def test_legacy_markers_and_header_are_rejected_even_for_exact_acceptance(self):
+        cases = {
+            "chosen": (
+                "### Decision map\n\n"
+                "| Decision | Selected route | Relationship / disposition | Implementation consequence |\n"
+                "|---|---|---|---|\n"
+                "| Runtime | Option 1 — route A (chosen) | Retained | Keep route A |\n\n"
+                "### Runtime alternatives\n\n"
+                "**Option 1 — route A (chosen)**\n\n"
+                "**Option 2 — route B**",
+                "current candidates must use `(selected)`",
+            ),
+            "recommended": (
+                "### Decision map\n\n"
+                "| Decision | Selected route | Relationship / disposition | Implementation consequence |\n"
+                "|---|---|---|---|\n"
+                "| Runtime | Option 1 — route A (recommended) | Retained | Keep route A |\n\n"
+                "**Settled Runtime:** retain route A.\n\n"
+                "### Runtime alternatives\n\n"
+                "**Option 1 — route A (recommended)**\n\n"
+                "**Option 2 — route B**",
+                "current candidates must use `(selected)`",
+            ),
+            "legacy-header": (
+                "### Decision map\n\n"
+                "| Decision | Selected route | Adoption or disposition | Implementation consequence |\n"
+                "|---|---|---|---|\n"
+                "| Runtime | Option 1 — route A (selected) | Retained | Keep route A |\n\n"
+                "### Runtime alternatives\n\n"
+                "**Option 1 — route A (selected)**\n\n"
+                "**Option 2 — route B**",
+                "Decision map header is missing or malformed",
+            ),
+        }
+        for name, (proposed, message) in cases.items():
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as td:
+                run = Path(td)
+                source = write_system_design(
+                    run,
+                    {"Proposed system": proposed},
+                    gate_ready=True,
                 )
-            }, gate_ready=True)
-
-            current = run_render("render", "--run", run)
-            self.assertNotEqual(current.returncode, 0)
-            self.assertIn("exact previously accepted candidate", current.stderr)
-
-            (run / "planning-control.json").write_text(json.dumps({
-                "gates": {"system_design": "AGENT_APPROVED"},
-                "acceptances": {
-                    "system_design": {
-                        "candidate_version": 1,
-                        "candidate_sha256": hashlib.sha256(source).hexdigest(),
+                (run / "planning-control.json").write_text(json.dumps({
+                    "gates": {"system_design": "AGENT_APPROVED"},
+                    "acceptances": {
+                        "system_design": {
+                            "candidate_version": 1,
+                            "candidate_sha256": hashlib.sha256(source).hexdigest(),
+                        }
                     }
-                }
-            }), encoding="utf-8")
-            legacy = run_render("render", "--run", run)
-            self.assertEqual(legacy.returncode, 0, legacy.stderr)
+                }), encoding="utf-8")
 
-            (run / "30-system-design.md").write_bytes(source + b"\n")
-            drifted = run_render("render", "--run", run)
-            self.assertNotEqual(drifted.returncode, 0)
-            self.assertIn("exact previously accepted candidate", drifted.stderr)
+                rendered = run_render("render", "--run", run)
+
+                self.assertNotEqual(rendered.returncode, 0)
+                self.assertIn(message, rendered.stderr)
 
     def test_gate_ready_board_rejects_missing_or_duplicate_selected_routes(self):
         cases = {

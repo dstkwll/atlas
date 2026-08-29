@@ -333,7 +333,7 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "mobile projection contract", "mechanically verified but unreadable board is not complete decision evidence",
             "exactly one selected option", "### Decision map", "A recommendation is provisional, not a terminal decision state",
             "standalone `Option <number> — ...` label", "Decision identities are unique after normalization",
-            "Relationship / disposition", "Current writes use", "exact candidate bytes already bound to a prior System Design acceptance",
+            "Relationship / disposition", "Use `(selected)` only", "invalid even when candidate bytes match a prior System Design acceptance",
             "Begin every material decision packet", "every preview of the exact decision or next question",
             "simplified technical English", "exact decision or next question", "why it matters now",
             "fixed constraints", "not yet decided", "same evaluation criteria and trade-off axes",
@@ -414,7 +414,7 @@ def cross_skill_contracts(skills: Path) -> list[tuple[str, str]]:
             "Status text is real HTML content, not CSS-generated content",
             "Option-looking text inside fenced code never participates in decision extraction",
             "A gate-ready current candidate must use canonical `(selected)` markers",
-            "Exact previously accepted `(chosen)` artifacts remain renderable",
+            "Legacy markers are rejected even when candidate bytes match a prior System Design acceptance",
         ],
         "control-planning": [
             "disable-model-invocation: true", "third parent of this file", "never routes",

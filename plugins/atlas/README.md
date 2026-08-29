@@ -95,7 +95,8 @@ plain-language explanation of trade-offs, operational consequences, and failure 
 adds no decision-relevant clarity is omitted with a stated reason. Decision-time visuals remain
 non-authoritative; settled choices enter canonical Markdown. D-089 requires unique standalone option
 labels, parsed-frontmatter readiness, `(selected)` for current writes, a free-form
-`Relationship / disposition` Decision-map field, and exact-acceptance binding for legacy markers.
+`Relationship / disposition` Decision-map field, and rejection of legacy markers or headers even for
+exact accepted bytes. Historical accepted Markdown remains authoritative without rerendering.
 
 When the live planning phase reaches System Design, Atlas enters that producer internally; it hands off to `atlas:control-planning` without a second user routing command. When the live planning phase reaches Program Design, Atlas enters the Program Design producer internally. A direct `atlas:program-design` invocation is a bounded entry point for testing or diagnosis, not a normal routing requirement. The producer reads exactly one D-079 source, writes only `40-program-design.md` readiness after exact baseline access is proven, runs the mechanical check, and performs the internal handoff with stage `program_design`. Program Design never asks a participation question and creates no HTML. Producer-discovered `DESIGN_BLOCKED` stops read-only before readiness; reviewer-discovered `DESIGN_BLOCKED` exists only in fresh `reviews/program-design-v1.json`. Neither mutates planning state.
 

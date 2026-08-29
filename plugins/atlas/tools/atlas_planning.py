@@ -1549,8 +1549,22 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
 
     blocked_reason = planning.get("blocked_reason")
     if blocked_reason is not None:
-        expected_started_revision = 1 + sum(
-            record is not None for record in acceptances.values()
+        superseded_system = (
+            blocked_reason.get("superseded_system_design")
+            if isinstance(blocked_reason, dict)
+            else None
+        )
+        superseded_version = (
+            superseded_system.get("candidate_version")
+            if isinstance(superseded_system, dict)
+            else None
+        )
+        expected_started_revision = (
+            1
+            + sum(record is not None for record in acceptances.values())
+            + 2 * (superseded_version - 1)
+            if type(superseded_version) is int and superseded_version >= 1
+            else None
         )
         expected_ticket_gate = "PENDING" if "tickets" in selected else "NOT_REQUIRED"
         if (

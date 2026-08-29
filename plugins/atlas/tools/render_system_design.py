@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import json
 import os
 import re
 import sys
@@ -20,7 +19,7 @@ import yaml
 
 SOURCE_FILE = "30-system-design.md"
 OUTPUT_FILE = "30-system-design.html"
-RENDERER_VERSION = "2.2.0"
+RENDERER_VERSION = "2.3.0"
 SAFE_SCHEMES = {"http", "https", "mailto"}
 OPTION_PATTERN = re.compile(
     r"^Option\s+(\d+)\s+—\s+.+?(?:\s+\((chosen|selected|recommended)\))?$",
@@ -195,24 +194,6 @@ def parse_system_design(markdown_bytes: bytes) -> tuple[dict, str, str]:
     return frontmatter, "\n".join(lines[closing + 1:]), markdown
 
 
-def accepted_legacy_candidate(run_dir: Path, source_bytes: bytes, candidate_version: object) -> bool:
-    control_path = managed_path(run_dir, "planning-control.json")
-    if not control_path.is_file():
-        return False
-    try:
-        control = json.loads(control_path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
-        return False
-    record = control.get("acceptances", {}).get("system_design") if isinstance(control, dict) else None
-    gate = control.get("gates", {}).get("system_design") if isinstance(control, dict) else None
-    return bool(
-        gate in {"HUMAN_APPROVED", "AGENT_APPROVED", "STALE"}
-        and isinstance(record, dict)
-        and record.get("candidate_sha256") == hashlib.sha256(source_bytes).hexdigest()
-        and record.get("candidate_version") == candidate_version
-    )
-
-
 def markdown_sections(markdown: str) -> dict[str, str]:
     matches = list(re.finditer(r"(?m)^## ([^\n]+?)\s*$", markdown))
     sections: dict[str, str] = {}
@@ -250,17 +231,12 @@ def option_status(
     text: str,
     decision_name: str,
     selected_numbers: dict[str, str],
-    settled_names: set[str],
-    *,
-    allow_legacy_chosen: bool,
 ) -> str | None:
     match = OPTION_PATTERN.match(text.strip())
     if not match:
         return None
     number, marker = match.group(1), (match.group(2) or "").lower()
-    if marker == "selected" or (allow_legacy_chosen and marker == "chosen"):
-        return "selected"
-    if allow_legacy_chosen and marker == "recommended" and decision_name.casefold() in settled_names:
+    if marker == "selected":
         return "selected"
     if decision_name and selected_numbers.get(decision_name.casefold()) == number:
         return "selected"
@@ -279,25 +255,15 @@ def clean_decision_name(text: str) -> str:
 
 def clean_option_name(text: str) -> str:
     return re.sub(
-        r"\s+\((chosen|selected|recommended)\)\s*$",
+        r"\s+\(selected\)\s*$",
         "",
         text.strip(),
         flags=re.IGNORECASE,
     )
 
 
-def decision_groups(markdown: str, parser) -> tuple[list[DecisionGroup], set[str]]:
+def decision_groups(markdown: str, parser) -> list[DecisionGroup]:
     tokens = parser.parse(markdown)
-    block_texts = [
-        inline_text(tokens[index + 1])
-        for index, token in enumerate(tokens[:-1])
-        if token.type in {"heading_open", "paragraph_open"} and tokens[index + 1].type == "inline"
-    ]
-    settled_names = {
-        normalize_decision_name(match.group(1)).casefold()
-        for text in block_texts
-        if (match := re.match(r"^Settled\s+([^:]+):", text, re.IGNORECASE))
-    }
     groups: list[DecisionGroup] = []
     current_group: DecisionGroup | None = None
     for index, token in enumerate(tokens[:-1]):
@@ -330,7 +296,7 @@ def decision_groups(markdown: str, parser) -> tuple[list[DecisionGroup], set[str
         match = OPTION_PATTERN.match(candidate)
         if match and current_group is not None:
             current_group[target].append((candidate, match.group(1), (match.group(2) or "").lower()))
-    return [group for group in groups if group["options"] or group["table_options"]], settled_names
+    return [group for group in groups if group["options"] or group["table_options"]]
 
 
 def selected_decisions(
@@ -338,9 +304,8 @@ def selected_decisions(
     parser,
     *,
     gate_ready: bool,
-    allow_legacy_chosen: bool,
 ) -> list[tuple[str, str, str]]:
-    groups, settled_names = decision_groups(markdown, parser)
+    groups = decision_groups(markdown, parser)
     identities = [str(group["name"]).casefold() for group in groups]
     if len(identities) != len(set(identities)):
         raise SystemExit("render_system_design: decision identities must be unique")
@@ -359,22 +324,12 @@ def selected_decisions(
                 f"render_system_design: decision `{name}` comparison matrix is supporting detail; "
                 "add one standalone Option label for every compared route"
             )
-        if not allow_legacy_chosen and any(option[2] == "chosen" for option in options):
+        if any(option[2] in {"chosen", "recommended"} for option in options):
             raise SystemExit(
-                "render_system_design: current candidates must use `(selected)`; `(chosen)` is allowed "
-                "only for an exact previously accepted candidate"
+                "render_system_design: current candidates must use `(selected)`; "
+                "`(chosen)` and `(recommended)` are not accepted"
             )
-        selected = [
-            option for option in options
-            if option[2] == "selected"
-            or (
-                allow_legacy_chosen
-                and (
-                    option[2] == "chosen"
-                    or (option[2] == "recommended" and name.casefold() in settled_names)
-                )
-            )
-        ]
+        selected = [option for option in options if option[2] == "selected"]
         if len(selected) > 1 or (gate_ready and options and len(selected) != 1):
             raise SystemExit(
                 f"render_system_design: decision `{name}` must have exactly one selected option; "
@@ -389,8 +344,6 @@ def selected_decisions(
 def decision_map_rows(
     proposed_system: str,
     parser,
-    *,
-    allow_legacy_header: bool,
 ) -> list[tuple[str, str, str, str]]:
     tokens = parser.parse(proposed_system)
     headings = [
@@ -423,8 +376,7 @@ def decision_map_rows(
             rows.append((current[0], current[1], current[2], current[3]))
             current = None
     expected = ("Decision", "Selected route", "Relationship / disposition", "Implementation consequence")
-    legacy = ("Decision", "Selected route", "Adoption or disposition", "Implementation consequence")
-    if len(rows) < 2 or (rows[0] != expected and not (allow_legacy_header and rows[0] == legacy)):
+    if len(rows) < 2 or rows[0] != expected:
         raise SystemExit("render_system_design: Decision map header is missing or malformed")
     return rows[1:]
 
@@ -513,8 +465,6 @@ def markdown_renderer():
             text,
             env.get("decision_name", ""),
             env.get("selected_numbers", {}),
-            env.get("settled_names", set()),
-            allow_legacy_chosen=bool(env.get("allow_legacy_chosen", False)),
         )
         if status:
             tokens[index].attrJoin("class", f"decision-option decision-option--{status}")
@@ -534,23 +484,19 @@ def markdown_renderer():
     return parser
 
 
-def render_bytes(markdown_bytes: bytes, *, run_dir: Path | None = None) -> bytes:
+def render_bytes(markdown_bytes: bytes) -> bytes:
     source_sha = hashlib.sha256(markdown_bytes).hexdigest()
     frontmatter, body, _ = parse_system_design(markdown_bytes)
     gate_ready = frontmatter["gate_ready"]
-    allow_legacy_chosen = bool(
-        run_dir is not None
-        and accepted_legacy_candidate(run_dir, markdown_bytes, frontmatter.get("version"))
-    )
+
     sections = markdown_sections(body)
     parser = markdown_renderer()
     decisions = selected_decisions(
         body,
         parser,
         gate_ready=gate_ready,
-        allow_legacy_chosen=allow_legacy_chosen,
     )
-    groups, settled_names = decision_groups(body, parser)
+    groups = decision_groups(body, parser)
     selected_numbers = {name.casefold(): number for name, _, number in decisions}
     has_canonical_selected_marker = any(
         option[2] == "selected"
@@ -558,11 +504,7 @@ def render_bytes(markdown_bytes: bytes, *, run_dir: Path | None = None) -> bytes
         for option in group["options"]
     )
     if gate_ready and has_canonical_selected_marker:
-        rows = decision_map_rows(
-            sections.get("Proposed system", ""),
-            parser,
-            allow_legacy_header=allow_legacy_chosen,
-        )
+        rows = decision_map_rows(sections.get("Proposed system", ""), parser)
         expected_rows = [
             (name.casefold(), clean_option_name(selection).casefold())
             for name, selection, _ in decisions
@@ -588,7 +530,7 @@ def render_bytes(markdown_bytes: bytes, *, run_dir: Path | None = None) -> bytes
             subtitle = f"<h3>{escape(section_name)}</h3>" if len(source_sections) > 1 else ""
             content.append(
                 f'{subtitle}<div class="content">'
-                f'{parser.render(sections[section_name], {"selected_numbers": selected_numbers, "settled_names": settled_names, "allow_legacy_chosen": allow_legacy_chosen})}</div>'
+                f'{parser.render(sections[section_name], {"selected_numbers": selected_numbers})}</div>'
             )
         cards.append(
             f'<section class="view" id="view-{label}" data-atlas-view="{label}">'
@@ -643,7 +585,7 @@ def render(run_dir: Path) -> str:
     source = managed_path(run_dir, SOURCE_FILE)
     target = managed_path(run_dir, OUTPUT_FILE)
     source_bytes = source.read_bytes()
-    rendered = render_bytes(source_bytes, run_dir=run_dir)
+    rendered = render_bytes(source_bytes)
     fd, name = tempfile.mkstemp(prefix=".30-system-design.", suffix=".html", dir=run_dir)
     temp = Path(name)
     try:
@@ -724,7 +666,7 @@ def verify(run_dir: Path) -> str:
             f"missing={missing} duplicates={duplicates}"
         )
     source_bytes = source.read_bytes()
-    if target.read_bytes() != render_bytes(source_bytes, run_dir=run_dir):
+    if target.read_bytes() != render_bytes(source_bytes):
         raise SystemExit(
             "render_system_design: board bytes do not match the deterministic projection of "
             f"{SOURCE_FILE}"
