@@ -113,10 +113,10 @@ class RenderSystemDesignTests(unittest.TestCase):
             self.assertIn("duplicate metadata attribute", malformed_attribute.stderr)
 
             self.assertEqual(run_render("render", "--run", run).returncode, 0)
-            marker = '<meta name="atlas-renderer-version" content="2.2.1">'
+            marker = '<meta name="atlas-renderer-version" content="2.2.2">'
             text = html.read_text(encoding="utf-8")
             self.assertIn(marker, text)
-            html.write_text(text.replace(marker, marker.replace("2.2.1", "unknown"), 1), encoding="utf-8")
+            html.write_text(text.replace(marker, marker.replace("2.2.2", "unknown"), 1), encoding="utf-8")
             malformed = run_render("verify", "--run", run)
             self.assertNotEqual(malformed.returncode, 0)
             self.assertIn("atlas-renderer-version", malformed.stderr)
@@ -566,6 +566,45 @@ class RenderSystemDesignTests(unittest.TestCase):
                 self.assertNotEqual(rendered.returncode, 0)
                 self.assertIn(message, rendered.stderr)
 
+    def test_exact_acceptance_preserves_current_heading_grammar_and_projection(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            source = write_system_design(run, {
+                "Proposed system": (
+                    "### Decision map\n\n"
+                    "| Decision | Selected route | Relationship / disposition | Implementation consequence |\n"
+                    "|---|---|---|---|\n"
+                    "| Runtime | Option 1 — route A (selected) | Adapt | Keep route A |\n\n"
+                    "### Runtime options\n\n"
+                    "**Option 1 — route A (selected)**\n\n"
+                    "Selected route.\n\n"
+                    "**Option 2 — route B**"
+                )
+            }, gate_ready=True)
+            rendered = run_render("render", "--run", run)
+            self.assertEqual(rendered.returncode, 0, rendered.stderr)
+            before_acceptance = (run / "30-system-design.html").read_bytes()
+            self.assertEqual(before_acceptance.count(b'data-decision-status="selected"'), 1)
+
+            (run / "planning-control.json").write_text(json.dumps({
+                "gates": {"system_design": "AGENT_APPROVED"},
+                "acceptances": {
+                    "system_design": {
+                        "candidate_version": 1,
+                        "candidate_sha256": hashlib.sha256(source).hexdigest(),
+                    }
+                }
+            }), encoding="utf-8")
+
+            verified = run_render("verify", "--run", run)
+            self.assertEqual(verified.returncode, 0, verified.stderr)
+            rerendered = run_render("render", "--run", run)
+            self.assertEqual(rerendered.returncode, 0, rerendered.stderr)
+            after_acceptance = (run / "30-system-design.html").read_bytes()
+            self.assertEqual(after_acceptance, before_acceptance)
+            self.assertEqual(after_acceptance.count(b'data-decision-status="selected"'), 1)
+            self.assertIn(b'<p class="decision-name">Runtime</p>', after_acceptance)
+
     def test_chosen_is_allowed_only_for_exact_previously_accepted_candidate(self):
         with tempfile.TemporaryDirectory() as td:
             run = Path(td)
@@ -632,6 +671,16 @@ class RenderSystemDesignTests(unittest.TestCase):
             html = (run / "30-system-design.html").read_text(encoding="utf-8")
             self.assertIn("Decisions at a glance", html)
             self.assertEqual(html.count('data-decision-status="selected"'), 1)
+            self.assertEqual(html.count('class="decision-option decision-option--selected"'), 2)
+            self.assertEqual(html.count('class="decision-option decision-option--alternative"'), 2)
+            self.assertIn(
+                '<span class="decision-status">Selected</span><strong>Option 1 — no duplicated cursor</strong>',
+                html,
+            )
+            self.assertIn(
+                '<span class="decision-status">Not selected</span><strong>Option 2 — duplicated cursor</strong>',
+                html,
+            )
 
     def test_gate_ready_board_rejects_missing_or_duplicate_selected_routes(self):
         cases = {

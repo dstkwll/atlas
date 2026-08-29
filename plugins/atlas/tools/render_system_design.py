@@ -20,7 +20,7 @@ import yaml
 
 SOURCE_FILE = "30-system-design.md"
 OUTPUT_FILE = "30-system-design.html"
-RENDERER_VERSION = "2.2.1"
+RENDERER_VERSION = "2.2.2"
 SAFE_SCHEMES = {"http", "https", "mailto"}
 OPTION_PATTERN = re.compile(
     r"^Option\s+(\d+)\s+—\s+.+?(?:\s+\((chosen|selected|recommended)\))?$",
@@ -257,6 +257,8 @@ def option_status(
     match = OPTION_PATTERN.match(text.strip())
     if not match:
         return None
+    if not decision_name:
+        return None
     number, marker = match.group(1), (match.group(2) or "").lower()
     if marker == "selected" or (allow_legacy_chosen and marker == "chosen"):
         return "selected"
@@ -286,11 +288,37 @@ def clean_option_name(text: str) -> str:
     )
 
 
+def uses_legacy_heading_grammar(markdown: str, parser, *, exact_acceptance: bool) -> bool:
+    if not exact_acceptance:
+        return False
+    tokens = parser.parse(markdown)
+    markers = {
+        (match.group(2) or "").lower()
+        for index, token in enumerate(tokens[:-1])
+        if token.type in {"heading_open", "paragraph_open"}
+        and tokens[index + 1].type == "inline"
+        and (match := OPTION_PATTERN.match(inline_text(tokens[index + 1])))
+    }
+    return "selected" not in markers and bool(markers & {"chosen", "recommended"})
+
+
+def decision_heading_kind(candidate: str, *, legacy_heading_grammar: bool) -> str:
+    if candidate.casefold() == "decision map":
+        return "map"
+    if legacy_heading_grammar and not re.search(
+        r"\s+(alternatives|decision)$",
+        candidate,
+        re.IGNORECASE,
+    ):
+        return "support"
+    return "owner"
+
+
 def decision_groups(
     markdown: str,
     parser,
     *,
-    allow_legacy_chosen: bool,
+    legacy_heading_grammar: bool,
 ) -> tuple[list[DecisionGroup], set[str]]:
     tokens = parser.parse(markdown)
     block_texts = [
@@ -305,21 +333,25 @@ def decision_groups(
     }
     groups: list[DecisionGroup] = []
     current_group: DecisionGroup | None = None
+    supporting_detail = False
     for index, token in enumerate(tokens[:-1]):
         if token.type == "heading_open" and token.tag == "h2":
             current_group = None
+            supporting_detail = False
             continue
         if token.type == "heading_open" and token.tag == "h3" and tokens[index + 1].type == "inline":
             candidate = inline_text(tokens[index + 1])
             if not OPTION_PATTERN.match(candidate):
-                current_group = None
-                if candidate.casefold() == "decision map":
-                    continue
-                if allow_legacy_chosen and not re.search(
-                    r"\s+(alternatives|decision)$",
+                kind = decision_heading_kind(
                     candidate,
-                    re.IGNORECASE,
-                ):
+                    legacy_heading_grammar=legacy_heading_grammar,
+                )
+                if kind == "map":
+                    current_group = None
+                    supporting_detail = False
+                    continue
+                if kind == "support":
+                    supporting_detail = current_group is not None
                     continue
                 group: DecisionGroup = {
                     "name": clean_decision_name(candidate),
@@ -327,6 +359,7 @@ def decision_groups(
                     "table_options": [],
                 }
                 current_group = group
+                supporting_detail = False
                 groups.append(group)
                 continue
             target = "options"
@@ -339,7 +372,7 @@ def decision_groups(
         else:
             continue
         match = OPTION_PATTERN.match(candidate)
-        if match and current_group is not None:
+        if match and current_group is not None and not supporting_detail:
             current_group[target].append((candidate, match.group(1), (match.group(2) or "").lower()))
     return [group for group in groups if group["options"] or group["table_options"]], settled_names
 
@@ -350,11 +383,12 @@ def selected_decisions(
     *,
     gate_ready: bool,
     allow_legacy_chosen: bool,
+    legacy_heading_grammar: bool,
 ) -> list[tuple[str, str, str]]:
     groups, settled_names = decision_groups(
         markdown,
         parser,
-        allow_legacy_chosen=allow_legacy_chosen,
+        legacy_heading_grammar=legacy_heading_grammar,
     )
     identities = [str(group["name"]).casefold() for group in groups]
     if len(identities) != len(set(identities)):
@@ -520,10 +554,16 @@ def markdown_renderer():
     def render_option_open(renderer, tokens, index, options, env):
         text = inline_text(tokens[index + 1]) if index + 1 < len(tokens) else ""
         if tokens[index].tag == "h3" and not OPTION_PATTERN.match(text):
-            if text.casefold() == "decision map":
+            kind = decision_heading_kind(
+                text,
+                legacy_heading_grammar=bool(env.get("legacy_heading_grammar", False)),
+            )
+            if kind == "map":
                 env.pop("decision_name", None)
-            else:
+            elif kind == "owner":
                 env["decision_name"] = clean_decision_name(text)
+            elif "decision_name" not in env:
+                env.pop("decision_name", None)
         status = option_status(
             text,
             env.get("decision_name", ""),
@@ -559,16 +599,22 @@ def render_bytes(markdown_bytes: bytes, *, run_dir: Path | None = None) -> bytes
     )
     sections = markdown_sections(body)
     parser = markdown_renderer()
+    legacy_heading_grammar = uses_legacy_heading_grammar(
+        body,
+        parser,
+        exact_acceptance=allow_legacy_chosen,
+    )
     decisions = selected_decisions(
         body,
         parser,
         gate_ready=gate_ready,
         allow_legacy_chosen=allow_legacy_chosen,
+        legacy_heading_grammar=legacy_heading_grammar,
     )
     groups, settled_names = decision_groups(
         body,
         parser,
-        allow_legacy_chosen=allow_legacy_chosen,
+        legacy_heading_grammar=legacy_heading_grammar,
     )
     selected_numbers = {name.casefold(): number for name, _, number in decisions}
     has_canonical_selected_marker = any(
@@ -607,7 +653,7 @@ def render_bytes(markdown_bytes: bytes, *, run_dir: Path | None = None) -> bytes
             subtitle = f"<h3>{escape(section_name)}</h3>" if len(source_sections) > 1 else ""
             content.append(
                 f'{subtitle}<div class="content">'
-                f'{parser.render(sections[section_name], {"selected_numbers": selected_numbers, "settled_names": settled_names, "allow_legacy_chosen": allow_legacy_chosen})}</div>'
+                f'{parser.render(sections[section_name], {"selected_numbers": selected_numbers, "settled_names": settled_names, "allow_legacy_chosen": allow_legacy_chosen, "legacy_heading_grammar": legacy_heading_grammar})}</div>'
             )
         cards.append(
             f'<section class="view" id="view-{label}" data-atlas-view="{label}">'
