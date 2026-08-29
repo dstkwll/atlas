@@ -479,7 +479,11 @@ def persisted_system_repair_context(
     current = planning.get("acceptances", {}).get("system_design")
     if not isinstance(current, dict) or current.get("candidate_version") == 1:
         return None
-    if current.get("review_reference") != SYSTEM_DESIGN_REVIEW_REFERENCE:
+    review_reference = current.get("review_reference")
+    review_sha256 = current.get("review_sha256")
+    if review_reference is None and review_sha256 is None:
+        return None
+    if review_reference != SYSTEM_DESIGN_REVIEW_REFERENCE or type(review_sha256) is not str:
         raise ControlError("accepted System Design repair evidence is unavailable")
     review_path = managed_path(run_dir, SYSTEM_DESIGN_REVIEW_REFERENCE)
     try:
@@ -487,12 +491,12 @@ def persisted_system_repair_context(
         review = load_json(review_bytes.decode("utf-8"))
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise ControlError("accepted System Design repair evidence is unavailable") from exc
-    context = review.get("repair_context") if isinstance(review, dict) else None
-    if (
-        hashlib.sha256(review_bytes).hexdigest() != current.get("review_sha256")
-        or not isinstance(context, dict)
-        or set(context) != SYSTEM_REPAIR_CONTEXT_FIELDS
-    ):
+    if hashlib.sha256(review_bytes).hexdigest() != review_sha256 or not isinstance(review, dict):
+        raise ControlError("accepted System Design repair evidence is not current")
+    if "repair_context" not in review:
+        return None
+    context = review.get("repair_context")
+    if not isinstance(context, dict) or set(context) != SYSTEM_REPAIR_CONTEXT_FIELDS:
         raise ControlError("accepted System Design repair evidence is not current")
     predecessor = context.get("superseded_system_design")
     attempts = context.get("attempts_used")

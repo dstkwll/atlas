@@ -3783,6 +3783,69 @@ class AtlasPlanningTests(unittest.TestCase):
             )
             self.assertIsNone(resumed["blocked_reason"])
 
+    def test_d090_agent_review_reacceptance_allows_program_design_acceptance(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            accepted = initialize_program_after_system(run, system_authority="AGENT_REVIEW")
+            prior = copy.deepcopy(accepted["acceptances"]["system_design"])
+
+            begun = planning_cli("begin-system-design-revision", "--run", run)
+            self.assertEqual(begun.returncode, 0, begun.stderr)
+            write_system_design(
+                run,
+                copy.deepcopy(prior["source_bindings"][0]),
+                version=2,
+            )
+            config = yaml.safe_load((run / "run.yaml").read_text(encoding="utf-8"))
+            system_review = run / "reviews" / "system-design-v1.json"
+            system_review.write_text(json.dumps({
+                "version": 1,
+                "run": config["run"],
+                "stage": "system_design",
+                "policy": "AGENT_REVIEW",
+                "candidate_version": 2,
+                "candidate_sha256": sha256(run / "30-system-design.md"),
+                "repository_baselines": config["repos"],
+                "materiality": None,
+                "semantic_review": semantic_review(),
+            }, indent=2) + "\n", encoding="utf-8")
+            reaccepted = planning_cli(
+                "advance", "--run", run, "--stage", "system_design",
+                "--review", system_review.relative_to(run), "--date", "2026-08-28",
+            )
+            self.assertEqual(reaccepted.returncode, 0, reaccepted.stderr)
+
+            system_state = PLANNING.load_planning_control(run)
+            system = system_state["acceptances"]["system_design"]
+            source_binding = {
+                "kind": "system_design",
+                "artifact": "30-system-design.md",
+                "version": system["candidate_version"],
+                "sha256": system["candidate_sha256"],
+            }
+            write_program_design(run, source_binding)
+            program_review = write_program_review(run, policy="AGENT_REVIEW")
+
+            advanced = planning_cli(
+                "advance", "--run", run, "--stage", "program_design",
+                "--review", program_review.relative_to(run), "--date", "2026-08-28",
+            )
+
+            self.assertEqual(advanced.returncode, 0, advanced.stderr)
+            final = PLANNING.load_planning_control(run)
+            self.assertEqual(final["status"], "PLANNING")
+            self.assertEqual(final["phase"], "tickets")
+            self.assertEqual(final["revision"], accepted["revision"] + 3)
+            self.assertEqual(final["gates"]["system_design"], "AGENT_APPROVED")
+            self.assertEqual(final["gates"]["program_design"], "AGENT_APPROVED")
+            self.assertEqual(final["gates"]["tickets"], "PENDING")
+            self.assertEqual(final["acceptances"]["system_design"]["candidate_version"], 2)
+            self.assertEqual(
+                final["acceptances"]["program_design"]["source_bindings"],
+                [source_binding],
+            )
+            self.assertIsNone(final["blocked_reason"])
+
     def test_human_system_design_acceptance_rechecks_candidate_and_source_under_lock(self):
         for changed_artifact in ("30-system-design.md", "20-prd.md"):
             with self.subTest(changed_artifact=changed_artifact), tempfile.TemporaryDirectory() as td:
