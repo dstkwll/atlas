@@ -291,6 +291,35 @@ class PairedDesignArchitectureTests(unittest.TestCase):
         self.assertIn("yaml.safe_load", renderer)
         self.assertNotIn('re.search(r"(?m)^gate_ready:', renderer)
 
+    def test_v017_records_intentional_system_revision_and_projection_authority(self):
+        root_readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        architecture_readme = read("README.md")
+        decision = normalized("32-v0.17-decisions.md")
+        workflow = normalized("02-workflow.md")
+        artifacts = normalized("03-artifact-model.md")
+        state = normalized("08-state-and-governance.md")
+        learnings = read("16-learnings-and-course-corrections.md")
+        planning = (ROOT / "plugins" / "atlas" / "tools" / "atlas_planning.py").read_text(encoding="utf-8")
+        renderer = (ROOT / "plugins" / "atlas" / "tools" / "render_system_design.py").read_text(encoding="utf-8")
+        renderer_tests = (ROOT / "tests" / "test_render_system_design.py").read_text(encoding="utf-8")
+
+        self.assertIn("architecture/32-v0.17-decisions.md", root_readme)
+        self.assertIn("**v0.17**", root_readme)
+        self.assertIn("**v0.17**", architecture_readme)
+        self.assertIn("D-090", decision)
+        self.assertIn("begin-system-design-revision", decision)
+        self.assertIn("Before a co-design System Design can be accepted", decision)
+        self.assertIn("cannot invalidate that acceptance or block Program Design", decision)
+        self.assertIn("begin-system-design-revision", workflow)
+        self.assertIn("Missing, stale, or unrenderable HTML is presentation repair only", artifacts)
+        self.assertIn("blocked_reason` null", state)
+        self.assertIn("## L-028 — Presentation compatibility", learnings)
+        self.assertIn('sub.add_parser("begin-system-design-revision")', planning)
+        self.assertNotIn("accepted co-design board projection is not current", planning)
+        self.assertNotIn("uses_legacy_heading_grammar", renderer)
+        self.assertNotIn("decision_heading_kind", renderer)
+        self.assertNotIn("historical_heading_grammar", renderer_tests)
+
     def test_v015_artifact_example_execution_context_matches_declared_sections(self):
         artifact_model = read("03-artifact-model.md")
         example = artifact_model.split("Exact version-2 frontmatter:", 1)[1].split("## `reviews/`", 1)[0]

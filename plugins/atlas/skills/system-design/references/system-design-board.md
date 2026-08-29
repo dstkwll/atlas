@@ -20,6 +20,11 @@ Each matching Markdown section contains substantive commitments or an explicit r
 
 The HTML embeds the exact run-relative source path `30-system-design.md`, its SHA-256, and renderer version. It uses inline CSS only, contains no external assets or decorative image generation, and receives no independent acceptance hash. Chat snapshots are ephemeral.
 
+For co-design, render and verification are mandatory while the candidate is being reviewed and at
+the acceptance boundary. After canonical Markdown acceptance, this projection is best-effort
+presentation: missing, stale, damaged, or unrenderable HTML cannot invalidate acceptance or block
+Program Design. Repairing it does not change planning state.
+
 ## Decision packet framing contract
 
 Every material decision packet and every preview of the exact decision or next question begins in

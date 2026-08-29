@@ -3687,7 +3687,7 @@ class AtlasPlanningTests(unittest.TestCase):
             self.assertEqual((run / "30-system-design.html").read_bytes(), html_before)
             self.assertEqual(updated["phase"], "tickets")
 
-    def test_accepted_co_design_loader_requires_a_current_board_projection(self):
+    def test_accepted_co_design_loader_does_not_require_a_current_board_projection(self):
         for mutation in ("missing", "metadata", "body"):
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as td:
                 run = Path(td)
@@ -3710,6 +3710,7 @@ class AtlasPlanningTests(unittest.TestCase):
                     "--approval", "human", "--date", "2026-08-21",
                 )
                 self.assertEqual(accepted.returncode, 0, accepted.stderr)
+                accepted_state = PLANNING.load_planning_control(run)
 
                 board = run / "30-system-design.html"
                 if mutation == "missing":
@@ -3729,8 +3730,58 @@ class AtlasPlanningTests(unittest.TestCase):
                         encoding="utf-8",
                     )
 
-                with self.assertRaisesRegex(PLANNING.ControlError, "board|projection"):
-                    PLANNING.load_planning_control(run)
+                loaded = PLANNING.load_planning_control(run)
+                self.assertEqual(loaded, accepted_state)
+
+    def test_intentional_system_design_revision_retains_then_replaces_acceptance(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            accepted = initialize_program_after_system(run, system_authority="HUMAN")
+            prior = copy.deepcopy(accepted["acceptances"]["system_design"])
+            candidate_before = (run / "30-system-design.md").read_bytes()
+
+            begun = planning_cli("begin-system-design-revision", "--run", run)
+
+            self.assertEqual(begun.returncode, 0, begun.stderr)
+            revising = PLANNING.load_planning_control(run)
+            self.assertEqual(revising["status"], "PLANNING")
+            self.assertEqual(revising["phase"], "system_design")
+            self.assertEqual(revising["revision"], accepted["revision"] + 1)
+            self.assertEqual(revising["gates"]["system_design"], "STALE")
+            self.assertEqual(revising["acceptances"]["system_design"], prior)
+            self.assertEqual(revising["gates"]["program_design"], "PENDING")
+            self.assertIsNone(revising["acceptances"]["program_design"])
+            self.assertIsNone(revising["blocked_reason"])
+            self.assertEqual((run / "30-system-design.md").read_bytes(), candidate_before)
+
+            write_system_design(
+                run,
+                copy.deepcopy(prior["source_bindings"][0]),
+                version=2,
+            )
+            candidate_after = (run / "30-system-design.md").read_bytes()
+            self.assertNotEqual(candidate_after, candidate_before)
+            reaccepted = planning_cli(
+                "advance", "--run", run, "--stage", "system_design",
+                "--approval", "human", "--date", "2026-08-22",
+            )
+
+            self.assertEqual(reaccepted.returncode, 0, reaccepted.stderr)
+            resumed = PLANNING.load_planning_control(run)
+            self.assertEqual(resumed["status"], "PLANNING")
+            self.assertEqual(resumed["phase"], "program_design")
+            self.assertEqual(resumed["revision"], accepted["revision"] + 2)
+            self.assertEqual(resumed["gates"]["system_design"], "HUMAN_APPROVED")
+            self.assertEqual(resumed["acceptances"]["system_design"]["candidate_version"], 2)
+            self.assertNotEqual(
+                resumed["acceptances"]["system_design"]["candidate_sha256"],
+                prior["candidate_sha256"],
+            )
+            self.assertEqual(
+                resumed["acceptances"]["system_design"]["source_bindings"],
+                prior["source_bindings"],
+            )
+            self.assertIsNone(resumed["blocked_reason"])
 
     def test_human_system_design_acceptance_rechecks_candidate_and_source_under_lock(self):
         for changed_artifact in ("30-system-design.md", "20-prd.md"):

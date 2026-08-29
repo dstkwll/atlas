@@ -274,6 +274,12 @@ The omitted Product Definition Approval branch creates no PRD or approval. A cha
 accepted System Design stale and transitively stales any dependent Program Design in the same
 logical downstream transition.
 
+An intentional revision before Program Design acceptance uses the existing candidate path and state
+fields. The controller retains acceptance N under a `STALE` System Design gate while version N+1 is
+produced, then replaces it only after fresh ordinary review and authority. N+1 must differ in hash,
+preserve the still-current source binding, and use the current candidate format. No repair episode,
+new state field, or acceptance-history collection is created.
+
 In the D-082 repair state only, the stale accepted candidate remains at this canonical path as
 non-current provenance until version `N+1` replaces it. N+1 must have a different content hash and
 the same still-current source binding, and must pass fresh mechanical checks, fresh semantic
@@ -304,6 +310,10 @@ replaced with decorative imagery.
 Stable labels connect board views to chat feedback. Generated chat images and snapshots are
 ephemeral projections. Neither they nor the HTML bytes receive an independent acceptance hash or
 authority.
+
+For `co_design`, a current verified board is a pre-acceptance review prerequisite. Once the canonical
+Markdown version/hash is accepted, downstream planning validates that authoritative source and does
+not load or verify HTML. Missing, stale, or unrenderable HTML is presentation repair only.
 
 ---
 

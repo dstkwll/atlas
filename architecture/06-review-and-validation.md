@@ -242,6 +242,10 @@ self-contained and binds the exact Markdown source path/hash plus renderer versi
 prescribed architecture view or an explicit reason it is inapplicable. The HTML and ephemeral chat
 images remain projections and never receive an independent acceptance outcome.
 
+That board check belongs only to candidate readiness and System Design acceptance. After canonical
+Markdown is accepted, Program Design admission and later reloads validate the accepted Markdown
+version/hash and source binding; projection failure cannot stale acceptance or block downstream work.
+
 The required source binding follows an applicability test over the effective selected stages and
 chooses exactly one branch:
 
@@ -266,6 +270,11 @@ evidence; deterministic policy sends any material dimension to `HUMAN` and other
 baseline/classification fails closed to `HUMAN`; changed inputs make the classification and approval
 stale. Autonomous governance uses `AGENT_REVIEW`; high assurance uses `HUMAN`. System Design never
 uses raw `AUTO` for its semantic boundary.
+
+Before Program Design acceptance, explicit user direction may invoke the D-090 intentional revision
+transition. It retains the current acceptance under `STALE`, requires version N+1 with a different
+hash and unchanged source binding, and then applies this same ordinary mechanical and configured
+semantic authority boundary. It does not use D-082 contradiction or repair evidence.
 
 ---
 

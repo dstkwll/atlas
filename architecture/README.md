@@ -6,6 +6,10 @@ The numbered documents are authoritative. `rolling-monolith.md` is generated fro
 
 ## Current baseline
 
+**v0.17** records D-090: accepted System Design may be intentionally revised through one explicit
+N+1 transition while Program Design is pending, without misusing D-082 or adding state fields. The
+co-design board remains mandatory before acceptance but cannot block downstream planning afterward.
+
 **v0.16** records D-089: System Design uses explicit simplified-English framing, canonical standalone
 option labels and Decision-map identity, equivalent agent-led evidence, and verified phone/desktop
 projection without changing planning authority or adding an artifact.

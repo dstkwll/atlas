@@ -254,6 +254,17 @@ An omitted Product Definition Approval creates no PRD or approval. A change to w
 accepted System Design stale; Program Design that depends on it becomes stale transitively in the
 same logical downstream transition.
 
+While Program Design is still `PENDING` with null acceptance, an explicit user-authorized
+`begin-system-design-revision` transition may intentionally replace accepted System Design without
+claiming an upstream contradiction. The controller retains acceptance N as non-current provenance,
+marks System Design `STALE`, returns to Stage 3, and increments revision once. Version N+1 must have
+a different hash, the same source binding, current D-089 format, fresh checks, and the unchanged
+review/authority policy. Reacceptance returns to pending Program Design. This adds no general
+rollback, history ledger, or Stage 0/Product Definition Approval reopen path.
+
+For co-design, the board must be usable and exact at Stage 3's pre-acceptance review boundary. After canonical
+Markdown is accepted, board loss or render drift is a presentation defect and cannot block Stage 4.
+
 ---
 
 ## Stage 4 — Program design

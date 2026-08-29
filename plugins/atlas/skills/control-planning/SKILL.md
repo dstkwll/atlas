@@ -12,9 +12,19 @@ Resolve `<atlas-plugin-root>` from this installed skill before invoking a packag
 
 The normal entry is the exact internal handoff from `atlas:system-design`, `atlas:program-design`, or `atlas:compile-tickets`; the user does not issue a second command. Receive the unchanged `<run-directory>` and explicit stage `system_design`, `program_design`, or `tickets`. Reject every other value. Do not discover a stage, choose a producer, or become a generalized router.
 
+One explicit pre-producer action is supported only after the user intentionally authorizes revision
+of an accepted System Design while Program Design is still pending:
+
+```shell
+python3 "<atlas-plugin-root>/tools/atlas_planning.py" begin-system-design-revision --run "<run-directory>"
+```
+Run it once, require its exact successful state readback, then hand the same run to
+`atlas:system-design`. It is not a substitute for D-082, never follows producer inference, and does
+not itself edit candidate or board bytes.
+
 ## 1. Establish the supported branch
 
-Read immutable `run.yaml`, Stage 0 `control.json`, and `planning-control.json`. Accept normal status `PLANNING` when the explicit stage equals current phase with gate `PENDING` and has no acceptance. Also accept one reserved `BLOCKED` repair tuple: `system_design` / gate `STALE` / `SYSTEM_DESIGN_STALE` / matching System attempt, or `program_design` / gate `PENDING` / `PROGRAM_DESIGN_RESUMED` / matching Program attempt. Tickets has no repair tuple. Every other blocked tuple or missing reservation stops unchanged.
+Read immutable `run.yaml`, Stage 0 `control.json`, and `planning-control.json`. Accept normal status `PLANNING` when the explicit stage equals current phase with gate `PENDING` and has no acceptance. For explicit System Design, also accept the D-090 intentional-revision tuple: `PLANNING` / `system_design` / gate `STALE` / null `blocked_reason` / retained acceptance. Also accept one reserved `BLOCKED` repair tuple: `system_design` / gate `STALE` / `SYSTEM_DESIGN_STALE` / matching System attempt, or `program_design` / gate `PENDING` / `PROGRAM_DESIGN_RESUMED` / matching Program attempt. Tickets has no repair tuple. Every other blocked tuple or missing reservation stops unchanged.
 
 For `system_design`, require frozen participation `agent_led` or `co_design` and one exact System Design policy: `HUMAN`, `AGENT_REVIEW`, or canonical `HUMAN_IF_CHANGED` with the seven dimensions in [`references/system-design-authority.md`](references/system-design-authority.md). Participation changes collaboration only. Do not re-ask it or use it to choose authority.
 
@@ -46,7 +56,7 @@ For explicit stage `tickets`, run only:
 python3 "<atlas-plugin-root>/tools/atlas_planning.py" check --run "<run-directory>" --stage tickets
 ```
 
-`check` is read-only and returns structured `PASS` or `BLOCKED` with all mechanical gaps and resume actions. For `co_design`, PASS requires current `30-system-design.html` metadata and every stable view; for `agent_led`, Slice 1 behavior remains unchanged and HTML is not required. For tickets, PASS binds exact manifest and ticket bytes, applicable sources, baselines, graph structure, deterministic outcome proof, and external-condition shape; it does not judge semantic verticality.
+`check` is read-only and returns structured `PASS` or `BLOCKED` with all mechanical gaps and resume actions. For a pending `co_design` System Design candidate—including intentional revision—PASS requires current `30-system-design.html` metadata and every stable view; for `agent_led`, Slice 1 behavior remains unchanged and HTML is not required. After System Design acceptance, downstream state loading never checks HTML. For tickets, PASS binds exact manifest and ticket bytes, applicable sources, baselines, graph structure, deterministic outcome proof, and external-condition shape; it does not judge semantic verticality.
 
 A `BLOCKED` result is expected control output even though the process exits nonzero: return the complete report to the named producer and make no transition. For Program Design, producer-discovered `DESIGN_BLOCKED` never enters this adapter; reviewer-discovered `DESIGN_BLOCKED` belongs only in fresh `reviews/program-design-v1.json` and also makes no transition or planning-state mutation. For tickets, reviewer `DESIGN_BLOCKED` remains one gap inside a `BLOCKED` ticket-graph review and names the applicable accepted source; it creates no upstream change. Any other nonzero result is a dependency/tool failure; report exact stderr and stop. A PASS establishes mechanics only, not approval.
 
@@ -74,7 +84,7 @@ Follow the exact schema, dimensions, fail-closed mapping, reviewer output, and a
 - `HUMAN_IF_CHANGED`: first invoke a fresh read-only classifier against the exact repository/current-system baselines and candidate. The classifier edits nothing and grants no authority. Persist per-dimension evidence. Any material/unavailable result maps to `HUMAN`; seven exact `NOT_MATERIAL` rows map to `AGENT_REVIEW`. Classifier failure or schema defects are persisted with a nonempty `unavailable_reason` and route `HUMAN`; unexplained bad output stops.
 - When classification maps to `AGENT_REVIEW`, invoke a distinct fresh semantic reviewer after classification and assemble its result. When it maps to `HUMAN`, set semantic review null and obtain explicit approval. Reviewer `BLOCKED` returns every gap to the producer and never mutates state.
 
-For the D-082 System replacement only, every policy uses a fresh review envelope with the controller-required `repair_context`: episode start revision, complete superseded System acceptance, contradiction review reference/hash and finding, attempts used, and expected acceptance revision. Direct `HUMAN` repair sets materiality and semantic review null, then requires both that fresh review envelope and explicit human approval; normal direct `HUMAN` remains review-free. Agent-review and mapped branches retain their normal judgments plus the same `repair_context`.
+For D-090 intentional revision, use the ordinary configured System Design authority and fresh candidate-bound evidence; do not add `repair_context`. For the D-082 System replacement only, every policy uses a fresh review envelope with the controller-required `repair_context`: episode start revision, complete superseded System acceptance, contradiction review reference/hash and finding, attempts used, and expected acceptance revision. Direct `HUMAN` repair sets materiality and semantic review null, then requires both that fresh review envelope and explicit human approval; normal direct `HUMAN` remains review-free. Agent-review and mapped branches retain their normal judgments plus the same `repair_context`.
 
 Freshness, role identity, and read order are procedural and honestly unauthenticated by the controller. Before any human System Design decision, present the exact canonical `30-system-design.md`, version/SHA-256, source binding, and classification evidence. Never treat conversational agreement as approval; chat choices, co-design, `gate_ready`, board, silence, classifier, or reviewer grant no human authority. If approval is declined, leave `PENDING`; no reject command exists. Do not change candidate, board, state, repository, or evidence after the final read.
 
@@ -117,9 +127,9 @@ Report the command's exact result and verified phase/status. System or Program a
 - One adapter invocation records at most one transition and launches no later producer.
 - Human approval applies only to the exact current candidate/hash/source bindings presented.
 - Frozen participation selects collaboration mechanics, never gate authority.
-- Board freshness is a mechanical precondition, never a second approval.
+- Board freshness is a mechanical precondition before co-design acceptance, never a second approval or a downstream admission condition afterward.
 - Policy labels, filename, schemas, and seven dimension identifiers are literal.
-- No copy, receipt, history, event, journal, rejection, reopen, staleness, or model-router operation exists.
+- D-090 intentional revision uses the existing `STALE` gate and retained acceptance without a new history/event field; no rejection, arbitrary rollback, or model-router operation exists.
 - System Design retains its Slice 2B classifier/reviewer and direct-HUMAN behavior unchanged.
 - `planning-control.json` remains the only mutable Stage 3–5 authority; this adapter changes only the one explicit System Design, Program Design, or ticket-graph outcome.
 - Human attention is an authority surface, not an orchestration mechanism. The user supplies judgment when policy requires it; Atlas supplies the internal handoff and must not require a second manual command.

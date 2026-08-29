@@ -15,9 +15,11 @@ Resolve `<atlas-plugin-root>` from this installed skill before invoking a packag
 Read `run.yaml`, authoritative Stage 0 `control.json`, and `planning-control.json`. Accept exactly one branch:
 
 - normal: status `PLANNING`, phase `system_design`, gate `PENDING`;
+- intentional revision: status `PLANNING`, phase `system_design`, gate `STALE`, null
+  `blocked_reason`, and a retained System Design acceptance;
 - D-082 repair: exact reserved tuple `BLOCKED` / `system_design` / `SYSTEM_DESIGN_STALE`, gate `STALE`, with `current_attempt.stage: system_design`.
 
-Both branches require frozen participation `agent_led` or `co_design` and an exact supported policy: `HUMAN`, `AGENT_REVIEW`, or canonical `HUMAN_IF_CHANGED`. Any other blocked tuple or missing reservation stops unchanged.
+All three branches require frozen participation `agent_led` or `co_design` and an exact supported policy: `HUMAN`, `AGENT_REVIEW`, or canonical `HUMAN_IF_CHANGED`. Any other blocked tuple or missing reservation stops unchanged.
 
 System Design reads the frozen value and never asks again for participation. It also reads policy literally; participation stays orthogonal. The producer does not classify materiality, invoke the acceptance reviewer, assemble evidence, obtain approval, or reinterpret/fall back from policy; those belong to the internal control handoff.
 
@@ -32,7 +34,7 @@ The direct branch has no PRD field. If source bytes or the recorded binding disa
 
 ## 3. Produce the Stage 3 candidate
 
-Use [`references/system-design-file.md`](references/system-design-file.md) as the exact shape. Frontmatter records `run`, integer `version`, `status: draft`, boolean `gate_ready`, frozen `participation`, intake `opened`, and the selected discriminated `source_binding`; preserve exactly those fields. Normal version is `1`; on the D-082 repair branch, version is the superseded acceptance version plus one. While drafting keep `gate_ready: false`.
+Use [`references/system-design-file.md`](references/system-design-file.md) as the exact shape. Frontmatter records `run`, integer `version`, `status: draft`, boolean `gate_ready`, frozen `participation`, intake `opened`, and the selected discriminated `source_binding`; preserve exactly those fields. Normal version is `1`; for D-082 repair, version is the superseded acceptance version plus one; for intentional revision, version is the retained acceptance version plus one. Intentional revision preserves the retained acceptance's exact source binding and changes no state beyond the controller transition. While drafting keep `gate_ready: false`.
 
 Write from the reliance horizon: changing a Stage 3 choice requires a caller, peer, or operator to adjust or changes an accepted guarantee. **Features pay for seams:** introduce or retain a system seam only when a named accepted behavior, authority boundary, or independently changing responsibility requires it. Delete speculative seams; anticipated reuse, aesthetic symmetry, and hypothetical flexibility do not pay for one. Cover all twelve required sections. Keep file placement, language signatures, internal calls, locking mechanics, migration order, and test seams in Program Design.
 
@@ -98,5 +100,7 @@ After `PASS`, keep the exact Markdown and, for co-design, current HTML unchanged
 - `30-system-design.md` remains `status: draft` after acceptance; `gate_ready: true` is readiness only.
 - Product Definition Approval and direct Stage 0 are exclusive source branches.
 - Mechanical `PASS` never claims semantic quality or approval.
-- Slice 2B leaves all classification, semantic review, evidence assembly, and authority consumption in the internal control handoff; it adds no rejection, reopen, or staleness operation.
+- Intentional revision begins only through `atlas_planning.py begin-system-design-revision`; the producer never marks an accepted design stale itself.
+- After acceptance, board freshness is presentation health and cannot block Program Design. This producer still requires the board before co-design acceptance.
+- Slice 2B leaves all classification, semantic review, evidence assembly, and authority consumption in the internal control handoff; it adds no rejection operation or general rollback.
 - Nothing in conversation overrides frozen intake or deterministic planning state.

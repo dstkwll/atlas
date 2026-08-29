@@ -208,6 +208,24 @@ def json_equal_exact(left: Any, right: Any) -> bool:
     )
 
 
+def is_intentional_system_revision(planning: dict[str, Any]) -> bool:
+    gates = planning.get("gates")
+    acceptances = planning.get("acceptances")
+    if not isinstance(gates, dict) or not isinstance(acceptances, dict):
+        return False
+    return (
+        planning.get("status") == "PLANNING"
+        and planning.get("phase") == "system_design"
+        and planning.get("blocked_reason") is None
+        and gates.get("system_design") == "STALE"
+        and isinstance(acceptances.get("system_design"), dict)
+        and gates.get("program_design") == "PENDING"
+        and acceptances.get("program_design") is None
+        and gates.get("tickets") in {"PENDING", "NOT_REQUIRED"}
+        and acceptances.get("tickets") is None
+    )
+
+
 def valid_repair_attempt(value: Any, attempts_used: Any, stage: str) -> bool:
     return (
         type(attempts_used) is int
@@ -1122,11 +1140,13 @@ def validate_system_design_acceptance(
     expected_version = (
         repair_context["superseded_system_design"]["candidate_version"] + 1
         if repair_context is not None
-        else 1
+        else None
     )
+    candidate_version = record.get("candidate_version")
     if (
-        type(record.get("candidate_version")) is not int
-        or record["candidate_version"] != expected_version
+        type(candidate_version) is not int
+        or candidate_version < 1
+        or (expected_version is not None and candidate_version != expected_version)
         or not re.fullmatch(r"[0-9a-f]{64}", str(record.get("candidate_sha256", "")))
         or record.get("authority") not in {"HUMAN", "AGENT_REVIEW"}
         or not json_equal_exact(record.get("source_bindings"), [expected_source])
@@ -1430,6 +1450,7 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
         raise ControlError("planning-control.json gates do not match selected downstream stages")
 
     blocked_reason = planning.get("blocked_reason")
+    intentional_system_revision = is_intentional_system_revision(planning)
     repair_episode = blocked_reason if isinstance(blocked_reason, dict) else {}
     repair_attempts = repair_episode.get("attempts_used")
     system_acceptance_repair_context = (
@@ -1439,7 +1460,7 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
         if blocked_reason is None and acceptances.get("program_design") is not None
         else None
     )
-    system_candidate_may_diverge = (
+    system_candidate_may_diverge = intentional_system_revision or (
         gates["system_design"] == "STALE"
         and type(repair_attempts) is int
         and repair_attempts > 0
@@ -1496,11 +1517,6 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
             product_path = managed_path(run_dir, "20-prd.md")
             if not product_path.is_file() or file_sha256(product_path) != product_closure["sha256"]:
                 raise ControlError("accepted System Design product source no longer matches recorded provenance")
-        if effective.get("system_design_participation") == "co_design":
-            try:
-                verify_system_design_board(run_dir)
-            except (OSError, SystemExit, UnicodeError) as exc:
-                raise ControlError(f"accepted co-design board projection is not current: {exc}") from exc
 
     program_record = acceptances["program_design"]
     if program_record is not None:
@@ -1679,6 +1695,17 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
             raise ControlError("planning-control.json repair evidence is not confirmed")
         return planning
 
+    if intentional_system_revision:
+        prior_version = acceptances["system_design"]["candidate_version"]
+        expected_revision = (
+            2
+            + sum(record is not None for record in acceptances.values())
+            + 2 * (prior_version - 1)
+        )
+        if planning.get("revision") != expected_revision:
+            raise ControlError("planning-control.json intentional System Design revision is malformed")
+        return planning
+
     pending = [stage for stage in DOWNSTREAM_STAGES if gates[stage] == "PENDING"]
     repaired_revision_delta = (
         planning["revision"] - system_acceptance_repair_context["acceptance_revision"] - 1
@@ -1690,7 +1717,19 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
         if system_acceptance_repair_context is not None
         else None
     )
-    normal_revision_is_coherent = planning["revision"] == 1 + len(approved_stages)
+    system_version = (
+        acceptances["system_design"].get("candidate_version")
+        if isinstance(acceptances.get("system_design"), dict)
+        else 1
+    )
+    intentional_revision_delta = (
+        2 * (system_version - 1)
+        if type(system_version) is int and system_version >= 1 and system_acceptance_repair_context is None
+        else 0
+    )
+    normal_revision_is_coherent = (
+        planning["revision"] == 1 + len(approved_stages) + intentional_revision_delta
+    )
     planning_revision_is_coherent = (
         normal_revision_is_coherent
         if repaired_revision_delta is None
@@ -2111,6 +2150,50 @@ def reserve_repair_attempt(run_dir: Path, stage: str) -> dict[str, Any]:
     }
 
 
+def begin_system_design_revision(run_dir: Path) -> str:
+    planning, _, effective = verified_planning_state(run_dir)
+    gates = planning["gates"]
+    acceptances = planning["acceptances"]
+    if (
+        planning.get("status") != "PLANNING"
+        or planning.get("phase") != "program_design"
+        or planning.get("blocked_reason") is not None
+        or gates.get("system_design") not in {"HUMAN_APPROVED", "AGENT_APPROVED"}
+        or not isinstance(acceptances.get("system_design"), dict)
+        or gates.get("program_design") != "PENDING"
+        or acceptances.get("program_design") is not None
+        or acceptances.get("tickets") is not None
+        or "program_design" not in effective["stages"]
+    ):
+        raise ControlError(
+            "intentional System Design revision requires pending Program Design immediately after an accepted System Design"
+        )
+    prior = copy.deepcopy(acceptances["system_design"])
+    updated = copy.deepcopy(planning)
+    updated["phase"] = "system_design"
+    updated["gates"]["system_design"] = "STALE"
+    updated["revision"] += 1
+
+    def revalidate_immediately_before_replace() -> None:
+        current, _, _ = verified_planning_state(run_dir)
+        if current != planning:
+            raise ControlError("planning state changed before intentional System Design revision")
+
+    write_planning_control_atomic(
+        run_dir,
+        updated,
+        precondition=revalidate_immediately_before_replace,
+    )
+    loaded = load_planning_control(run_dir)
+    if not is_intentional_system_revision(loaded) or loaded["acceptances"]["system_design"] != prior:
+        raise ControlError("intentional System Design revision transition did not preserve prior acceptance")
+    return (
+        "began intentional System Design revision; retained version "
+        f"{prior['candidate_version']} acceptance as stale provenance; "
+        f"planning-control revision {updated['revision']}"
+    )
+
+
 def ensure_planning(run_dir: Path) -> str:
     if not managed_path(run_dir, PLANNING_FILE).exists():
         return initialize_planning(run_dir)
@@ -2137,6 +2220,7 @@ def system_design_report(
     }
     repair_episode = planning.get("blocked_reason")
     repair_data = repair_episode if isinstance(repair_episode, dict) else {}
+    intentional_revision = is_intentional_system_revision(planning)
     system_repair = (
         planning.get("status") == "BLOCKED"
         and planning.get("phase") == "system_design"
@@ -2153,7 +2237,7 @@ def system_design_report(
         and planning.get("phase") == "system_design"
         and planning["gates"]["system_design"] == "PENDING"
     )
-    if not normal_system and not system_repair:
+    if not normal_system and not system_repair and not intentional_revision:
         gaps.append(gap(
             PLANNING_FILE,
             "system_design is not the current pending planning boundary",
@@ -2209,6 +2293,8 @@ def system_design_report(
     expected_version = (
         repair_data["superseded_system_design"]["candidate_version"] + 1
         if system_repair
+        else planning["acceptances"]["system_design"]["candidate_version"] + 1
+        if intentional_revision
         else 1
     )
     if type(frontmatter.get("version")) is not int or frontmatter.get("version") != expected_version:
@@ -2278,13 +2364,24 @@ def system_design_report(
         ))
 
     candidate_sha256 = report["candidate_sha256"]
-    if system_repair and (
-        candidate_sha256 == repair_data["superseded_system_design"]["candidate_sha256"]
-        or candidate_sha256 == repair_data["current_attempt"]["candidate_sha256_before"]
+    predecessor = (
+        repair_data["superseded_system_design"]
+        if system_repair
+        else planning["acceptances"]["system_design"]
+        if intentional_revision
+        else None
+    )
+    if predecessor is not None and (
+        candidate_sha256 == predecessor["candidate_sha256"]
+        or (
+            system_repair
+            and candidate_sha256 == repair_data["current_attempt"]["candidate_sha256_before"]
+        )
     ):
         gaps.append(gap(
             SYSTEM_DESIGN_FILE,
-            "repair candidate bytes must differ from the superseded design and reserved pre-write candidate",
+            "revision candidate bytes must differ from the superseded design"
+            + " and reserved pre-write candidate" if system_repair else "revision candidate bytes must differ from the superseded design",
             "system_design",
             "write a changed N+1 System Design candidate",
         ))
@@ -2292,8 +2389,10 @@ def system_design_report(
     source = frontmatter.get("source_binding")
     source_valid = False
     product = planning["stage0_anchor"]["product_closure"]
-    if system_repair:
-        expected = repair_data["superseded_system_design"]["source_bindings"][0]
+    if system_repair or intentional_revision:
+        if not isinstance(predecessor, dict):  # pragma: no cover - guarded by branch predicates
+            raise ControlError("System Design revision predecessor is unavailable")
+        expected = predecessor["source_bindings"][0]
         if (
             not isinstance(source, dict)
             or set(source) != set(expected)
@@ -3500,6 +3599,8 @@ def build_parser() -> argparse.ArgumentParser:
     initialize.add_argument("--run", required=True, type=Path)
     ensure = sub.add_parser("ensure")
     ensure.add_argument("--run", required=True, type=Path)
+    revise_system = sub.add_parser("begin-system-design-revision")
+    revise_system.add_argument("--run", required=True, type=Path)
     inspect = sub.add_parser("check")
     inspect.add_argument("--run", required=True, type=Path)
     inspect.add_argument("--stage", required=True, choices=("system_design", "program_design", "tickets"))
@@ -3535,6 +3636,8 @@ def main(argv: Optional[list[str]] = None) -> int:
                 print(initialize_planning(run_dir))
             elif args.command == "ensure":
                 print(ensure_planning(run_dir))
+            elif args.command == "begin-system-design-revision":
+                print(begin_system_design_revision(run_dir))
             elif args.command == "advance":
                 print(advance_boundary(run_dir, args.stage, args.approval, args.review, args.date))
             elif args.command == "return-upstream":

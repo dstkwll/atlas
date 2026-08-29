@@ -1080,3 +1080,22 @@ could let body examples alter `gate_ready`, hide matrix-only decisions, duplicat
 reuse legacy markers for new candidates. Current rendering parses the frontmatter Boolean once,
 requires unique standalone option labels and decision identities, treats matrices as support, and
 limits legacy markers to exact previously accepted candidate bytes.
+
+---
+
+## L-028 — Presentation compatibility must not become planning authority
+
+### Evidence reviewed
+
+One accepted co-design document predated D-089's current heading format. Successive renderer fixes
+tried to infer historical decision ownership from heading suffixes, marker dialect, and fallback
+validation. Each correction exposed another orthogonal grammar case while the accepted Markdown's
+substantive decisions remained usable.
+
+### Standing result
+
+The acceptance hash exists to detect silent mutation, not to forbid intentional revision. Rewrite an
+old accepted System Design through an explicit N+1 transition and fresh review instead of growing a
+historical parser around one artifact. Keep the current D-089 grammar strict. Require the co-design
+board before acceptance, but never let that non-authoritative projection block downstream planning
+after canonical Markdown is accepted.

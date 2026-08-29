@@ -810,6 +810,17 @@ An omitted Product Definition Approval creates no PRD or approval. A change to w
 accepted System Design stale; Program Design that depends on it becomes stale transitively in the
 same logical downstream transition.
 
+While Program Design is still `PENDING` with null acceptance, an explicit user-authorized
+`begin-system-design-revision` transition may intentionally replace accepted System Design without
+claiming an upstream contradiction. The controller retains acceptance N as non-current provenance,
+marks System Design `STALE`, returns to Stage 3, and increments revision once. Version N+1 must have
+a different hash, the same source binding, current D-089 format, fresh checks, and the unchanged
+review/authority policy. Reacceptance returns to pending Program Design. This adds no general
+rollback, history ledger, or Stage 0/Product Definition Approval reopen path.
+
+For co-design, the board must be usable and exact at Stage 3's pre-acceptance review boundary. After canonical
+Markdown is accepted, board loss or render drift is a presentation defect and cannot block Stage 4.
+
 ---
 
 ## Stage 4 — Program design
@@ -1425,6 +1436,12 @@ The omitted Product Definition Approval branch creates no PRD or approval. A cha
 accepted System Design stale and transitively stales any dependent Program Design in the same
 logical downstream transition.
 
+An intentional revision before Program Design acceptance uses the existing candidate path and state
+fields. The controller retains acceptance N under a `STALE` System Design gate while version N+1 is
+produced, then replaces it only after fresh ordinary review and authority. N+1 must differ in hash,
+preserve the still-current source binding, and use the current candidate format. No repair episode,
+new state field, or acceptance-history collection is created.
+
 In the D-082 repair state only, the stale accepted candidate remains at this canonical path as
 non-current provenance until version `N+1` replaces it. N+1 must have a different content hash and
 the same still-current source binding, and must pass fresh mechanical checks, fresh semantic
@@ -1455,6 +1472,10 @@ replaced with decorative imagery.
 Stable labels connect board views to chat feedback. Generated chat images and snapshots are
 ephemeral projections. Neither they nor the HTML bytes receive an independent acceptance hash or
 authority.
+
+For `co_design`, a current verified board is a pre-acceptance review prerequisite. Once the canonical
+Markdown version/hash is accepted, downstream planning validates that authoritative source and does
+not load or verify HTML. Missing, stale, or unrenderable HTML is presentation repair only.
 
 ---
 
@@ -2672,6 +2693,10 @@ self-contained and binds the exact Markdown source path/hash plus renderer versi
 prescribed architecture view or an explicit reason it is inapplicable. The HTML and ephemeral chat
 images remain projections and never receive an independent acceptance outcome.
 
+That board check belongs only to candidate readiness and System Design acceptance. After canonical
+Markdown is accepted, Program Design admission and later reloads validate the accepted Markdown
+version/hash and source binding; projection failure cannot stale acceptance or block downstream work.
+
 The required source binding follows an applicability test over the effective selected stages and
 chooses exactly one branch:
 
@@ -2696,6 +2721,11 @@ evidence; deterministic policy sends any material dimension to `HUMAN` and other
 baseline/classification fails closed to `HUMAN`; changed inputs make the classification and approval
 stale. Autonomous governance uses `AGENT_REVIEW`; high assurance uses `HUMAN`. System Design never
 uses raw `AUTO` for its semantic boundary.
+
+Before Program Design acceptance, explicit user direction may invoke the D-090 intentional revision
+transition. It retains the current acceptance under `STALE`, requires version N+1 with a different
+hash and unchanged source binding, and then applies this same ordinary mechanical and configured
+semantic authority boundary. It does not use D-082 contradiction or repair evidence.
 
 ---
 
@@ -3236,9 +3266,9 @@ acceptance requires a version increment and a new gate decision. `control.json` 
 current acceptance binding for each stage (version, hash, authority, date, and review reference
 when applicable). In v0.6 that accepted product-contract candidate is `20-prd.md`, whose
 `derived_from` binding transitively names the exact decision-log version/hash it closed against.
-The current Stage 0–2 controller has no post-approval reopen command. D-082 reaches neither Product
-Definition Approval nor direct Stage 0; any live Stage 0–2 source mismatch after acceptance fails closed rather
-than silently reopening discovery.
+The Stage 0–2 controller has no post-approval Product Definition Approval or Stage 0 reopen command.
+Any live source mismatch after acceptance fails closed rather than silently reopening discovery.
+D-082 and D-090 operate only in the downstream planning controller and do not change that rule.
 
 System Design acceptance chooses exactly one admission/provenance binding from the selected path:
 the exact accepted `20-prd.md` version/hash when Product Definition Approval is selected, or the exact
@@ -3246,7 +3276,20 @@ accepted/frozen Stage 0 intake and effective configuration when Product Definiti
 bound by `control.json.base_run_sha256`, `effective_config_hash`, and
 `effective_config_revision`. Omitted Product Definition Approval creates no PRD or approval. A change to
 whichever source is bound to accepted System Design makes that acceptance stale; dependent Program
-Design becomes stale transitively in the same logical downstream transition.
+Program Design becomes stale transitively in the same logical downstream transition.
+
+## Intentional System Design revision before Program Design acceptance
+
+D-090 adds one explicit non-repair transition while Program Design is the current `PENDING` boundary
+with null acceptance and tickets are unaccepted. `begin-system-design-revision` atomically retains
+the current System Design acceptance, marks its gate `STALE`, returns phase to `system_design`, leaves
+status `PLANNING` and `blocked_reason` null, and increments revision once. This exact tuple identifies
+intentional revision without a new state field.
+
+The candidate may then diverge only as version N+1 with a different hash and the same source binding.
+It receives current-format checks and ordinary configured review/authority. Reacceptance replaces the
+acceptance, restores its derived approved gate, returns to pending Program Design, and increments
+revision once. D-082 remains separately identified by `BLOCKED` plus its repair episode.
 
 ---
 
@@ -6919,6 +6962,25 @@ limits legacy markers to exact previously accepted candidate bytes.
 
 ---
 
+## L-028 — Presentation compatibility must not become planning authority
+
+### Evidence reviewed
+
+One accepted co-design document predated D-089's current heading format. Successive renderer fixes
+tried to infer historical decision ownership from heading suffixes, marker dialect, and fallback
+validation. Each correction exposed another orthogonal grammar case while the accepted Markdown's
+substantive decisions remained usable.
+
+### Standing result
+
+The acceptance hash exists to detect silent mutation, not to forbid intentional revision. Rewrite an
+old accepted System Design through an explicit N+1 transition and fresh review instead of growing a
+historical parser around one artifact. Keep the current D-089 grammar strict. Require the co-design
+board before acceptance, but never let that non-authoritative projection block downstream planning
+after canonical Markdown is accepted.
+
+---
+
 # 17 — Agent Roles, Rosters, Model Policy, and Outcome Telemetry
 
 **Added in:** v0.3  
@@ -9207,6 +9269,76 @@ acceptance checks phone and desktop overflow, navigation, tables, diagrams, titl
   added.
 - D-071 retains its historical body and points here for the current refinement.
 - L-027 records the observed decision-support failure; PR30's L-026 remains unchanged.
+
+### Status
+
+**ACCEPTED — governed CHANGE.**
+
+---
+
+# 32 — v0.17 Decisions
+
+v0.17 removes a presentation artifact from downstream authority and adds the smallest legal path for
+an intentional System Design revision while Program Design is still pending. It does not loosen
+current System Design completeness or decision grammar.
+
+---
+
+## D-090 — Intentional System Design revision and projection-bounded authority
+
+### Canonical authority
+
+`30-system-design.md` is the sole System Design candidate and accepted source. Its accepted version
+and SHA-256 prevent silent mutation. They do not prohibit an explicitly initiated, freshly reviewed
+version `N+1` replacement.
+
+`30-system-design.html` remains a deterministic, non-authoritative co-design projection. Before a
+co-design System Design can be accepted, the board must render, verify against the exact candidate,
+and satisfy the existing review and visual-use contract. After canonical Markdown acceptance, a
+missing, stale, damaged, or unrenderable board cannot invalidate that acceptance or block Program
+Design. Regenerating the board is presentation repair, not a planning-state transition.
+
+### Intentional revision transition
+
+The downstream planning controller exposes one explicit
+`begin-system-design-revision --run <run-directory>` transition. It is legal only while:
+
+- System Design is selected and currently accepted;
+- Program Design is the current `PENDING` boundary with null acceptance;
+- tickets have no acceptance;
+- status is `PLANNING`; and
+- no repair episode or other blocker is active.
+
+The atomic transition retains the current System Design acceptance as non-current provenance, marks
+its gate `STALE`, returns phase to `system_design`, increments the planning revision once, and leaves
+`blocked_reason` null. It adds no state field, event, history list, attempt budget, or repair fiction.
+
+The producer then writes exactly version `N+1`, with a different hash, the same still-current source
+binding, frozen participation/opened values, and the full current D-089 candidate format. Co-design
+still requires a usable current board at this pre-acceptance boundary. The candidate receives the
+ordinary fresh mechanical check and the run's unchanged System Design review/authority policy; it
+does not use D-082 `repair_context`.
+
+Reacceptance atomically replaces the current acceptance, restores its derived approved gate, returns
+to pending Program Design, and increments planning revision once. Program Design must bind the new
+version/hash and receive its own fresh review. The snapshot stores only the current acceptance after
+reacceptance; the retained predecessor exists only during the explicit stale transition.
+
+### Relationship to D-082
+
+D-082 remains the code-proven contradiction path with its bounded repair episode, evidence envelope,
+and attempt budget. D-090 is user-authorized intentional revision before Program Design acceptance.
+Neither path authorizes Product Definition Approval or Stage 0 reopening, accepted Program Design or
+ticket invalidation, execution-originated redesign, arbitrary rollback, or hand-editing accepted
+bytes/state.
+
+### Current grammar remains strict
+
+This decision removes the need to infer historical heading grammars for one accepted artifact. A
+version-revision rewrites that artifact into the current D-089 form. New/current candidates still
+require the exact twelve sections, owning H3 decision groups, standalone numbered options, exactly
+one `(selected)` route per settled group, and an exact Decision map. No semantic-only or looser
+completeness contract is adopted.
 
 ### Status
 

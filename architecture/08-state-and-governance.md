@@ -147,9 +147,9 @@ acceptance requires a version increment and a new gate decision. `control.json` 
 current acceptance binding for each stage (version, hash, authority, date, and review reference
 when applicable). In v0.6 that accepted product-contract candidate is `20-prd.md`, whose
 `derived_from` binding transitively names the exact decision-log version/hash it closed against.
-The current Stage 0–2 controller has no post-approval reopen command. D-082 reaches neither Product
-Definition Approval nor direct Stage 0; any live Stage 0–2 source mismatch after acceptance fails closed rather
-than silently reopening discovery.
+The Stage 0–2 controller has no post-approval Product Definition Approval or Stage 0 reopen command.
+Any live source mismatch after acceptance fails closed rather than silently reopening discovery.
+D-082 and D-090 operate only in the downstream planning controller and do not change that rule.
 
 System Design acceptance chooses exactly one admission/provenance binding from the selected path:
 the exact accepted `20-prd.md` version/hash when Product Definition Approval is selected, or the exact
@@ -157,7 +157,20 @@ accepted/frozen Stage 0 intake and effective configuration when Product Definiti
 bound by `control.json.base_run_sha256`, `effective_config_hash`, and
 `effective_config_revision`. Omitted Product Definition Approval creates no PRD or approval. A change to
 whichever source is bound to accepted System Design makes that acceptance stale; dependent Program
-Design becomes stale transitively in the same logical downstream transition.
+Program Design becomes stale transitively in the same logical downstream transition.
+
+## Intentional System Design revision before Program Design acceptance
+
+D-090 adds one explicit non-repair transition while Program Design is the current `PENDING` boundary
+with null acceptance and tickets are unaccepted. `begin-system-design-revision` atomically retains
+the current System Design acceptance, marks its gate `STALE`, returns phase to `system_design`, leaves
+status `PLANNING` and `blocked_reason` null, and increments revision once. This exact tuple identifies
+intentional revision without a new state field.
+
+The candidate may then diverge only as version N+1 with a different hash and the same source binding.
+It receives current-format checks and ordinary configured review/authority. Reacceptance replaces the
+acceptance, restores its derived approved gate, returns to pending Program Design, and increments
+revision once. D-082 remains separately identified by `BLOCKED` plus its repair episode.
 
 ---
 
