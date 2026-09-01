@@ -25,10 +25,16 @@ document grammar, projection gates, duplicated representations, and specialized 
 should be deleted or collapsed. It is explicitly non-authoritative and does not amend the numbered
 architecture or authorize implementation.
 
-Required case evidence is recorded separately and remains non-authoritative:
+Required case evidence and its current synthesis are recorded separately and remain non-authoritative:
 
 - [`minimum-kernel-upstream-contradiction.md`](minimum-kernel-upstream-contradiction.md) tests the
   smallest safe response when accepted System Design conflicts with exact frozen production code.
+- [`minimum-kernel-execution-proof.md`](minimum-kernel-execution-proof.md) tests which planning facts
+  must remain machine-readable for execution and behavior-level proof.
+- [`minimum-kernel-ordinary-planning.md`](minimum-kernel-ordinary-planning.md) tests the proportional
+  path against a small merged single-repository correction and records the missing real `trivial` run.
+- [`minimum-kernel-synthesis.md`](minimum-kernel-synthesis.md) combines the three results, the
+  provisional reduction ledger, unresolved questions, and the remaining promotion gate.
 
 ### Current terminology and compatibility
 

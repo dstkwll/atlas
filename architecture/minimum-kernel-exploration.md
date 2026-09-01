@@ -96,7 +96,7 @@ The exploration must not make the opposite mistake and remove structure that rea
 - exact fixture overlays and hashes;
 - behavior markers proving positive and negative paths.
 
-The private control file, accepted graph, and review receipt are intentionally not copied into this public repository. Treat the retrospective as provisional evidence until a reviewer with access verifies those exact artifacts. Even if verified, the result supports structured execution data, not automatically a new subsystem or first-class schema branch for every observed fact. A mechanism earns promotion only when an execution owner consumes it and a simpler representation cannot preserve the proof.
+The private control file, accepted graph, and review receipt are intentionally not copied into this public repository. Treat the retrospective as provisional evidence until a reviewer with access verifies those exact artifacts. Even if verified, the result supports structured execution data, not automatically a new subsystem or first-class schema branch for every observed fact. Later implementation evidence must also be checked: a legally recorded `READY_FOR_EXECUTION` state does not prove that each literal validator reaches its intended assertion. A mechanism earns promotion only when an execution owner consumes it and a simpler representation cannot preserve the proof.
 
 ## Required walk-throughs
 
