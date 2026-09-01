@@ -17,6 +17,14 @@ only and is not loadable or factory-executable. Each ticket declares exact `cont
 declaration plus current runtime facts. Missing declared material is a packaging/preflight blocker;
 missing accepted judgment is `DESIGN_BLOCKED`.
 
+## Active exploration
+
+[`minimum-kernel-exploration.md`](minimum-kernel-exploration.md) records the current reduction
+investigation: preserve Atlas's authority-and-proof kernel while testing whether deterministic
+document grammar, projection gates, duplicated representations, and specialized repair machinery
+should be deleted or collapsed. It is explicitly non-authoritative and does not amend the numbered
+architecture or authorize implementation.
+
 ### Current terminology and compatibility
 
 D-088 governs the terminology boundary. `Product Definition Approval` is the current user-facing stage label. Historical decision and provenance records retain the former user-facing label `Product Closure` unchanged. This is not an identifier migration: the serialized boundary remains `product_closure`; review files remain `reviews/product_closure-v<version>.json`; source bindings remain `kind: product_closure`; and review envelopes remain `stage: product_closure`.
