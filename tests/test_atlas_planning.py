@@ -3707,7 +3707,7 @@ class AtlasPlanningTests(unittest.TestCase):
             self.assertEqual((run / "30-system-design.html").read_bytes(), html_before)
             self.assertEqual(updated["phase"], "tickets")
 
-    def test_accepted_co_design_loader_requires_a_current_board_projection(self):
+    def test_accepted_co_design_loader_ignores_missing_or_stale_board_projection(self):
         for mutation in ("missing", "metadata", "body"):
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as td:
                 run = Path(td)
@@ -3730,6 +3730,7 @@ class AtlasPlanningTests(unittest.TestCase):
                     "--approval", "human", "--date", "2026-08-21",
                 )
                 self.assertEqual(accepted.returncode, 0, accepted.stderr)
+                accepted_sha256 = sha256(run / "30-system-design.md")
 
                 board = run / "30-system-design.html"
                 if mutation == "missing":
@@ -3749,8 +3750,12 @@ class AtlasPlanningTests(unittest.TestCase):
                         encoding="utf-8",
                     )
 
-                with self.assertRaisesRegex(PLANNING.ControlError, "board|projection"):
-                    PLANNING.load_planning_control(run)
+                loaded = PLANNING.load_planning_control(run)
+                self.assertEqual(loaded["phase"], "tickets")
+                self.assertEqual(
+                    loaded["acceptances"]["system_design"]["candidate_sha256"],
+                    accepted_sha256,
+                )
 
     def test_human_system_design_acceptance_rechecks_candidate_and_source_under_lock(self):
         for changed_artifact in ("30-system-design.md", "20-prd.md"):
