@@ -25,6 +25,11 @@ document grammar, projection gates, duplicated representations, and specialized 
 should be deleted or collapsed. It is explicitly non-authoritative and does not amend the numbered
 architecture or authorize implementation.
 
+Required case evidence is recorded separately and remains non-authoritative:
+
+- [`minimum-kernel-upstream-contradiction.md`](minimum-kernel-upstream-contradiction.md) tests the
+  smallest safe response when accepted System Design conflicts with exact frozen production code.
+
 ### Current terminology and compatibility
 
 D-088 governs the terminology boundary. `Product Definition Approval` is the current user-facing stage label. Historical decision and provenance records retain the former user-facing label `Product Closure` unchanged. This is not an identifier migration: the serialized boundary remains `product_closure`; review files remain `reviews/product_closure-v<version>.json`; source bindings remain `kind: product_closure`; and review envelopes remain `stage: product_closure`.
