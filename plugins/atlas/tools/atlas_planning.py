@@ -1066,13 +1066,14 @@ def write_planning_control_bytes_atomic(
             precondition()
         os.replace(temp, path)
         published = True
-        directory_flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
-        directory_fd = os.open(run_dir, directory_flags)
-        try:
-            os.fsync(directory_fd)
-        finally:
-            with contextlib.suppress(OSError):
-                os.close(directory_fd)
+        if sys.platform != "win32":
+            directory_flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+            directory_fd = os.open(run_dir, directory_flags)
+            try:
+                os.fsync(directory_fd)
+            finally:
+                with contextlib.suppress(OSError):
+                    os.close(directory_fd)
     finally:
         if not published:
             temp.unlink(missing_ok=True)
