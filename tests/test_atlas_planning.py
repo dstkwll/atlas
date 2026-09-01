@@ -845,6 +845,26 @@ class AtlasPlanningTests(unittest.TestCase):
         self.environment.stop()
         self.machine_temp.cleanup()
 
+    def test_atomic_write_does_not_open_the_parent_directory_on_windows(self):
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            path = run / "planning-control.json"
+            path.write_bytes(b"before\n")
+            original_open = os.open
+
+            def windows_open(target, flags, mode=0o777, *, dir_fd=None):
+                if Path(target) == run:
+                    raise PermissionError("Windows cannot open a directory for fsync")
+                return original_open(target, flags, mode, dir_fd=dir_fd)
+
+            with (
+                mock.patch.object(PLANNING.sys, "platform", "win32"),
+                mock.patch.object(PLANNING.os, "open", side_effect=windows_open),
+            ):
+                PLANNING.write_planning_control_bytes_atomic(run, b"after\n")
+
+            self.assertEqual(path.read_bytes(), b"after\n")
+
     def test_trivial_one_node_ticket_graph_is_accepted_and_stops_at_execution_boundary(self):
         with tempfile.TemporaryDirectory() as td:
             run = Path(td)
