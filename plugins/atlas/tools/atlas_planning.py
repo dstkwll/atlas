@@ -1497,11 +1497,6 @@ def load_planning_control(run_dir: Path) -> dict[str, Any]:
             product_path = managed_path(run_dir, "20-prd.md")
             if not product_path.is_file() or file_sha256(product_path) != product_closure["sha256"]:
                 raise ControlError("accepted System Design product source no longer matches recorded provenance")
-        if effective.get("system_design_participation") == "co_design":
-            try:
-                verify_system_design_board(run_dir)
-            except (OSError, SystemExit, UnicodeError) as exc:
-                raise ControlError(f"accepted co-design board projection is not current: {exc}") from exc
 
     program_record = acceptances["program_design"]
     if program_record is not None:
