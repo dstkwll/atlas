@@ -6,11 +6,11 @@ Build the minimum repository-native Atlas successor lead seed. Done means a fres
 
 ## Current slice
 
-- **Status:** implementation in progress on `feat/bootstrap-lead-seed`.
+- **Status:** seed implemented; black-box proof and independent review are pending.
 - **Repository:** `https://github.com/dstkwll/atlas-successor` (public).
 - **Bootstrap baseline:** `b56ef51dc1f79de9d059c730e56026694d853f2c` on `main`.
-- **Current candidate:** this branch; candidate SHA will be recorded after the seed is committed.
-- **Next safe action:** add the short root lead contract and repository entrypoint, then update this snapshot with the exact candidate and proof state.
+- **Implementation commit:** `e993cf89c0f0f96ffe84f6c20f8da729ede90589` on `feat/bootstrap-lead-seed`; the current-state checkpoint commit follows it and is the branch `HEAD` a fresh lead must verify.
+- **Next safe action:** use a genuinely fresh context with only the repository entrypoint to run cold-start, forced-resume, and authority-stop proofs; then obtain independent review of the exact candidate.
 
 ## Accepted truth
 
