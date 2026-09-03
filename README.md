@@ -21,7 +21,7 @@ A fresh lead should:
 - **[`dstkwll/atlas`](https://github.com/dstkwll/atlas):** canonical existing Atlas product and architecture.
 - **Dan:** product judgment, material architecture and risk decisions, repository visibility, merge authority, and consequential publication beyond this slice's already authorized working-branch push and draft pull request.
 
-The repository-local current-state file is a replaceable resume surface, not a second architecture package or an activity log. Preserve meaning rather than exact headings. Add deterministic machinery only after an observed authority, evidence-binding, or repeat-resume failure shows that guidance plus Git is insufficient.
+The repository-local current-state file is a replaceable resume surface, not a second architecture package or an activity log. Preserve meaning rather than exact headings. For this slice, reconsider only the smallest deterministic commit or authority check after an observed unauthorized action, reviewed-candidate/evidence mismatch, or repeated resume failure following a durably recorded authority transition.
 
 ## Current disposition
 

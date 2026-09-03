@@ -6,12 +6,12 @@ Build the minimum repository-native Atlas successor lead seed. Done means a fres
 
 ## Current slice
 
-- **Status:** correction blocked. The late full review exposed three unresolved `AGENTS.md` contract defects, and the protected-file write requires explicit approval.
+- **Status:** the three late-review contract findings are corrected; fresh exact-head review is pending.
 - **Repository:** `https://github.com/dstkwll/atlas-successor` (public).
 - **Bootstrap baseline:** `b56ef51dc1f79de9d059c730e56026694d853f2c` on `main`.
-- **Last proofed candidate:** `12eed8e70f26a8d9cb5e30ce7d4911d626c06a44` on `feat/bootstrap-lead-seed`; it is no longer ready for acceptance because the complete earlier review revealed unresolved findings.
+- **Last proofed candidate:** `12eed8e70f26a8d9cb5e30ce7d4911d626c06a44` on `feat/bootstrap-lead-seed`; the correction checkpoint follows it, so a fresh lead must verify the branch and draft-PR head.
 - **Draft pull request:** `https://github.com/dstkwll/atlas-successor/pull/1` (open, draft, unmerged).
-- **Next safe action:** after Dan explicitly approves editing the protected root `AGENTS.md`, correct its authority boundary, delegated-worker brief, and deterministic-mechanism trigger; then run a fresh exact-head review and update the draft PR. Do not merge.
+- **Next safe action:** run fresh Standards, Spec, and repository-only resume reviews against the corrected exact draft-PR head; update the draft PR and return without merging if they pass.
 
 ## Accepted truth
 
@@ -32,7 +32,7 @@ Build the minimum repository-native Atlas successor lead seed. Done means a fres
 
 - **Act freely:** inspect authoritative sources; delegate bounded work; make reversible in-scope changes; refine provisional realization; run proportionate checks; repair ordinary in-scope defects.
 - **Act and report:** choose filenames and layout, adjust local decomposition, update implementation details, push the authorized working branch, and open or update its draft pull request without changing responsibilities, guarantees, risk, or the accepted claim.
-- **Stop and ask Dan:** changing accepted product intent, bootstrap claim, material architecture, responsibility or authority, trust/risk boundary, repository visibility, merge state, or adding materially broader machinery; also stop for contradictory authority or non-converging correction.
+- **Stop and ask Dan:** changing accepted product intent, bootstrap claim, material architecture, responsibility or authority, accepted risk, a trust boundary, meaningful scope, repository visibility, merge state, spending beyond delegation, or taking an unauthorized consequential external action; also stop for contradictory authority, broader machinery, or non-converging correction. Working-branch pushes and draft-PR updates for this slice are already authorized.
 
 ## Evidence and blockers
 
@@ -42,7 +42,6 @@ Build the minimum repository-native Atlas successor lead seed. Done means a fres
 - Bootstrap `main` was verified remotely at the exact SHA above before this branch was created.
 - Fresh repository-only contexts passed cold-start, forced-resume, and authority-stop proofs against `9e4af295aee3a5d998285b5e42bd077ed0fb6e03`. They recovered the exact goal, authority transition, baseline/head, evidence status, and next action; resumed without chat reconstruction; and rejected replacement, direct-main, database, and retry-controller requests while preserving ordinary in-scope autonomy.
 - Deterministic proof passed at that candidate: clean remote clone, clean worktree, `git diff --check`, zero missing local Markdown targets, and zero leak-scan hits. No CI checks are configured. The three-file seed was 10,634 bytes versus 106,283 bytes of implementation source (10.0%).
-- The complete late-arriving initial reviews exposed three findings hidden by their earlier truncated summaries: `AGENTS.md` does not fully cover consequential external action/risk/spend/scope boundaries; delegated-worker briefs omit allowed files/systems and stopping conditions; and the deterministic-mechanism trigger is broader than the accepted three failure classes. Later PASS reviews did not resolve those exact findings and are not acceptance evidence for them.
-- Two protected `AGENTS.md` patch attempts were blocked because the required approval prompt timed out. No workaround was used. Correction is paused at this genuine permission boundary; no independent handoff acceptance or merge is claimed.
+- The complete late-arriving initial reviews exposed three findings hidden by their earlier truncated summaries: incomplete consequential-action/risk/spend/scope boundaries, incomplete delegated-worker constraints, and an overbroad deterministic-mechanism trigger. Dan explicitly approved the protected-file edit; this correction addresses all three. Fresh exact-head review remains, and no independent handoff acceptance or merge is claimed.
 
 This file is a compact replaceable snapshot, not an activity log. Keep only what a fresh lead needs to continue safely.
