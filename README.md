@@ -19,7 +19,7 @@ A fresh lead should:
 - **This Git repository:** production bytes, commit history, candidate identity, and diffs.
 - **[Atlas Clean-Room Successor in Drive](https://drive.google.com/drive/folders/1BZMwcqB81ZuvVdRlaSZoBDPwejfviLse):** successor architecture and decision source for this bootstrap slice.
 - **[`dstkwll/atlas`](https://github.com/dstkwll/atlas):** canonical existing Atlas product and architecture.
-- **Dan:** product judgment, material architecture and risk decisions, repository visibility, consequential publication, and merge authority.
+- **Dan:** product judgment, material architecture and risk decisions, repository visibility, merge authority, and consequential publication beyond this slice's already authorized working-branch push and draft pull request.
 
 The repository-local current-state file is a replaceable resume surface, not a second architecture package or an activity log. Preserve meaning rather than exact headings. Add deterministic machinery only after an observed authority, evidence-binding, or repeat-resume failure shows that guidance plus Git is insufficient.
 
