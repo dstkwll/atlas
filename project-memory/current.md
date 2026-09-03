@@ -6,12 +6,12 @@ Build the minimum repository-native Atlas successor lead seed. Done means a fres
 
 ## Current slice
 
-- **Status:** the three late-review contract findings are corrected; fresh exact-head review is pending.
+- **Status:** the three late-review contract findings are corrected; fresh Standards, Spec, and repository-only resume reviews passed. Independent handoff acceptance and merge remain outside the lead's authority.
 - **Repository:** `https://github.com/dstkwll/atlas-successor` (public).
 - **Bootstrap baseline:** `b56ef51dc1f79de9d059c730e56026694d853f2c` on `main`.
-- **Last proofed candidate:** `12eed8e70f26a8d9cb5e30ce7d4911d626c06a44` on `feat/bootstrap-lead-seed`; the correction checkpoint follows it, so a fresh lead must verify the branch and draft-PR head.
+- **Reviewed correction candidate:** `fb62674b3b84e782a90654dde5a8b284b98e1cd4` on `feat/bootstrap-lead-seed`; this final evidence checkpoint follows it, so a fresh lead must still verify the branch and draft-PR head.
 - **Draft pull request:** `https://github.com/dstkwll/atlas-successor/pull/1` (open, draft, unmerged).
-- **Next safe action:** run fresh Standards, Spec, and repository-only resume reviews against the corrected exact draft-PR head; update the draft PR and return without merging if they pass.
+- **Next safe action:** return the draft PR, exact current candidate, and proof evidence to Dan/architecture for independent handoff acceptance; do not merge.
 
 ## Accepted truth
 
@@ -42,6 +42,7 @@ Build the minimum repository-native Atlas successor lead seed. Done means a fres
 - Bootstrap `main` was verified remotely at the exact SHA above before this branch was created.
 - Fresh repository-only contexts passed cold-start, forced-resume, and authority-stop proofs against `9e4af295aee3a5d998285b5e42bd077ed0fb6e03`. They recovered the exact goal, authority transition, baseline/head, evidence status, and next action; resumed without chat reconstruction; and rejected replacement, direct-main, database, and retry-controller requests while preserving ordinary in-scope autonomy.
 - Deterministic proof passed at that candidate: clean remote clone, clean worktree, `git diff --check`, zero missing local Markdown targets, and zero leak-scan hits. No CI checks are configured. The three-file seed was 10,634 bytes versus 106,283 bytes of implementation source (10.0%).
-- The complete late-arriving initial reviews exposed three findings hidden by their earlier truncated summaries: incomplete consequential-action/risk/spend/scope boundaries, incomplete delegated-worker constraints, and an overbroad deterministic-mechanism trigger. Dan explicitly approved the protected-file edit; this correction addresses all three. Fresh exact-head review remains, and no independent handoff acceptance or merge is claimed.
+- The complete late-arriving initial reviews exposed three findings hidden by their earlier truncated summaries: incomplete consequential-action/risk/spend/scope boundaries, incomplete delegated-worker constraints, and an overbroad deterministic-mechanism trigger. Dan explicitly approved the protected-file edit; all three were corrected at `fb62674b3b84e782a90654dde5a8b284b98e1cd4`.
+- Fresh Standards and Spec reviews passed that exact correction candidate with no findings; a fresh repository-only replacement lead recovered the complete authority boundary and safe resume point with no material ambiguity. No independent handoff acceptance or merge is claimed.
 
 This file is a compact replaceable snapshot, not an activity log. Keep only what a fresh lead needs to continue safely.
