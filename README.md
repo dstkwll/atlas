@@ -2,7 +2,7 @@
 
 This is the isolated clean-room repository for the Atlas successor bootstrap seed. Its current claim is deliberately narrow: prove that a fresh software-delivery lead can reconstruct authority and current work from repository truth, continue after session loss, and stop at a material decision boundary.
 
-It does **not** replace or migrate the existing Atlas product, prove arbitrary software delivery, create a factory or controller, or grant merge authority. [`dstkwll/atlas`](https://github.com/dstkwll/atlas) remains authoritative for the existing product until Dan explicitly decides otherwise.
+It does **not** replace or migrate the existing Atlas product, prove arbitrary software delivery, create a factory or controller, or grant merge authority. [`dstkwll/atlas`](https://github.com/dstkwll/atlas) remains authoritative for the existing product until the user explicitly decides otherwise.
 
 ## Start or resume
 
@@ -19,7 +19,7 @@ A fresh lead should:
 - **This Git repository:** production bytes, commit history, candidate identity, and diffs.
 - **[Atlas Clean-Room Successor in Drive](https://drive.google.com/drive/folders/1BZMwcqB81ZuvVdRlaSZoBDPwejfviLse):** successor architecture and decision source for this bootstrap slice.
 - **[`dstkwll/atlas`](https://github.com/dstkwll/atlas):** canonical existing Atlas product and architecture.
-- **Dan:** product judgment, material architecture and risk decisions, repository visibility, merge authority, and consequential publication beyond this slice's already authorized working-branch push and draft pull request.
+- **The user:** product judgment, material architecture and risk decisions, repository visibility, merge authority, and consequential publication beyond this slice's already authorized working-branch push and draft pull request.
 
 The repository-local current-state file is a replaceable resume surface, not a second architecture package or an activity log. Preserve meaning rather than exact headings. For this slice, reconsider only the smallest deterministic commit or authority check after an observed unauthorized action, reviewed-candidate/evidence mismatch, or repeated resume failure following a durably recorded authority transition.
 

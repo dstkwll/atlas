@@ -11,17 +11,17 @@ Build the minimum repository-native Atlas successor lead seed. Done means a fres
 - **Bootstrap baseline:** `b56ef51dc1f79de9d059c730e56026694d853f2c` on `main`.
 - **Reviewed correction candidate:** `fb62674b3b84e782a90654dde5a8b284b98e1cd4` on `feat/bootstrap-lead-seed`; this final evidence checkpoint follows it, so a fresh lead must still verify the branch and draft-PR head.
 - **Draft pull request:** `https://github.com/dstkwll/atlas-successor/pull/1` (open, draft, unmerged).
-- **Next safe action:** return the draft PR, exact current candidate, and proof evidence to Dan/architecture for independent handoff acceptance; do not merge.
+- **Next safe action:** return the draft PR, exact current candidate, and proof evidence to the user/architecture for independent handoff acceptance; do not merge.
 
 ## Accepted truth
 
 - This is the isolated successor bootstrap / production seed. It is scoped to prove cold start, authority reconstruction, and forced resume only.
 - Current [`dstkwll/atlas`](https://github.com/dstkwll/atlas) `main` at `a57c610e133dd66ce1de75947ceced673696adb4` remains authoritative for the existing Atlas product. This repository does not supersede or migrate it.
 - Drive is the successor architecture and decision source for this slice; this Git repository owns production bytes, history, diffs, and commit identity once written.
-- Dan supplies judgment and owns accepted product or material architecture changes, risk acceptance, repository visibility, merge, and consequential publication beyond this slice's already authorized working-branch push and draft pull request.
+- The user supplies judgment and owns accepted product or material architecture changes, risk acceptance, repository visibility, merge, and consequential publication beyond this slice's already authorized working-branch push and draft pull request.
 - The lead owns bounded implementation, reversible realization choices, current-state updates, ordinary repair, and evidence integration inside the accepted slice.
 - Producer, independent reviewer, and human authority remain distinct. A completion claim or green check is not independent acceptance.
-- On 2026-09-03 Dan explicitly transferred the host-named implementation handoff to Hermes (`Discord message 1545136878972305480`); only the accountable host changed. The slice, authority, exclusions, validation, closure condition, and no-merge boundary remain unchanged.
+- On 2026-09-03 the user explicitly transferred the host-named implementation handoff to Hermes (`Discord message 1545136878972305480`); only the accountable host changed. The slice, authority, exclusions, validation, closure condition, and no-merge boundary remain unchanged.
 
 ## Provisional choices
 
@@ -32,7 +32,7 @@ Build the minimum repository-native Atlas successor lead seed. Done means a fres
 
 - **Act freely:** inspect authoritative sources; delegate bounded work; make reversible in-scope changes; refine provisional realization; run proportionate checks; repair ordinary in-scope defects.
 - **Act and report:** choose filenames and layout, adjust local decomposition, update implementation details, push the authorized working branch, and open or update its draft pull request without changing responsibilities, guarantees, risk, or the accepted claim.
-- **Stop and ask Dan:** changing accepted product intent, bootstrap claim, material architecture, responsibility or authority, accepted risk, a trust boundary, meaningful scope, repository visibility, merge state, spending beyond delegation, or taking an unauthorized consequential external action; also stop for contradictory authority, broader machinery, or non-converging correction. Working-branch pushes and draft-PR updates for this slice are already authorized.
+- **Stop and ask the user:** changing accepted product intent, bootstrap claim, material architecture, responsibility or authority, accepted risk, a trust boundary, meaningful scope, repository visibility, merge state, spending beyond delegation, or taking an unauthorized consequential external action; also stop for contradictory authority, broader machinery, or non-converging correction. Working-branch pushes and draft-PR updates for this slice are already authorized.
 
 ## Evidence and blockers
 
@@ -42,7 +42,7 @@ Build the minimum repository-native Atlas successor lead seed. Done means a fres
 - Bootstrap `main` was verified remotely at the exact SHA above before this branch was created.
 - Fresh repository-only contexts passed cold-start, forced-resume, and authority-stop proofs against `9e4af295aee3a5d998285b5e42bd077ed0fb6e03`. They recovered the exact goal, authority transition, baseline/head, evidence status, and next action; resumed without chat reconstruction; and rejected replacement, direct-main, database, and retry-controller requests while preserving ordinary in-scope autonomy.
 - Deterministic proof passed at that candidate: clean remote clone, clean worktree, `git diff --check`, zero missing local Markdown targets, and zero leak-scan hits. No CI checks are configured. The three-file seed was 10,634 bytes versus 106,283 bytes of implementation source (10.0%).
-- The complete late-arriving initial reviews exposed three findings hidden by their earlier truncated summaries: incomplete consequential-action/risk/spend/scope boundaries, incomplete delegated-worker constraints, and an overbroad deterministic-mechanism trigger. Dan explicitly approved the protected-file edit; all three were corrected at `fb62674b3b84e782a90654dde5a8b284b98e1cd4`.
+- The complete late-arriving initial reviews exposed three findings hidden by their earlier truncated summaries: incomplete consequential-action/risk/spend/scope boundaries, incomplete delegated-worker constraints, and an overbroad deterministic-mechanism trigger. The user explicitly approved the protected-file edit; all three were corrected at `fb62674b3b84e782a90654dde5a8b284b98e1cd4`.
 - Fresh Standards and Spec reviews passed that exact correction candidate with no findings; a fresh repository-only replacement lead recovered the complete authority boundary and safe resume point with no material ambiguity. No independent handoff acceptance or merge is claimed.
 
 This file is a compact replaceable snapshot, not an activity log. Keep only what a fresh lead needs to continue safely.

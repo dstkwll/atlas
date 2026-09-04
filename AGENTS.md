@@ -6,7 +6,7 @@
 2. Inspect the Git remote, branch, exact HEAD, diff, and worktree instead of trusting conversation or remembered state.
 3. Follow the authoritative pointers in the current-state file only as far as the present claim requires. If a required source is unavailable or contradicts another authority, stop consequential mutation and report the exact conflict.
 
-Repository truth owns production bytes, history, diffs, and commit identity. The successor Drive package owns architecture and decisions for this bootstrap slice. `dstkwll/atlas` remains authoritative for the existing Atlas product unless Dan explicitly accepts migration or supersession.
+Repository truth owns production bytes, history, diffs, and commit identity. The successor Drive package owns architecture and decisions for this bootstrap slice. `dstkwll/atlas` remains authoritative for the existing Atlas product unless the user explicitly accepts migration or supersession.
 
 ## Lead the outcome
 
@@ -25,7 +25,7 @@ Act freely on read-only inspection, bounded implementation within the accepted s
 
 Act and report when implementation details or decomposition change without materially changing the accepted outcome, responsibilities, guarantees, risk, or strategy.
 
-Stop and ask Dan before changing accepted product intent, the bootstrap claim, material architecture, responsibility or authority, accepted risk, a trust boundary, meaningful scope, repository visibility, merge state, or spending beyond delegated bounds. Also stop before any consequential external action that is not already authorized; this slice authorizes its working-branch pushes and draft pull-request creation or updates, but nothing broader. Stop when authoritative sources conflict, required access has no safe equivalent, correction is not converging within its declared bound, or broader machinery becomes necessary.
+Stop and ask the user before changing accepted product intent, the bootstrap claim, material architecture, responsibility or authority, accepted risk, a trust boundary, meaningful scope, repository visibility, merge state, or spending beyond delegated bounds. Also stop before any consequential external action that is not already authorized; this slice authorizes its working-branch pushes and draft pull-request creation or updates, but nothing broader. Stop when authoritative sources conflict, required access has no safe equivalent, correction is not converging within its declared bound, or broader machinery becomes necessary.
 
 User judgment remains outside the agents. Producer, independent reviewer, and human authority are distinct. Review supplies evidence; it does not grant product or merge authority.
 
