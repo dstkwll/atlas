@@ -6,7 +6,7 @@ Date: 2026-09-06. Disposition: no actionable package defect found; delivery exec
 
 Source baseline: `d877080ae3c6492176babc038cabcfea7936457a`. The portable product is five Markdown files totaling 21,969 bytes: one 999-word entrypoint and four conditionally loaded references (3,048 words total). No scripts, hooks, dependencies, services, worker roster or global settings are shipped.
 
-The skill was copied unchanged into isolated synthetic projects before independent evaluation. SHA-256 bindings are listed below; later changes to repository documentation do not change those evaluated product bytes. The final PR binds the full repository candidate.
+The skill was copied unchanged into isolated synthetic projects before independent evaluation. SHA-256 bindings are listed below; later changes to repository documentation do not change those evaluated product bytes. The product was committed as `02e6732379f1892c99e63665772926a58fe9a095`. [PR #4](https://github.com/dstkwll/atlas-successor/pull/4) binds the full repository candidate, including the later documentation checkpoint recording publication. The download's `SOURCE.txt` identifies its exact source commit.
 
 ## Checks and observations
 

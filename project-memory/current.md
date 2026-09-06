@@ -11,10 +11,11 @@ This supersedes the bootstrap-only work boundary. It permits bounded repository 
 - Repository: `https://github.com/dstkwll/atlas-successor`.
 - Inspected main: `d877080ae3c6492176babc038cabcfea7936457a`.
 - Working branch: `feat/portable-lead-package`.
+- Published draft: [PR #4](https://github.com/dstkwll/atlas-successor/pull/4). Product commit: `02e6732379f1892c99e63665772926a58fe9a095`; subsequent documentation checkpoint records publication without changing the evaluated skill.
 - Bootstrap PR #1 is merged; its old open/draft status was stale. Main also incorporates PR #2's role-neutral wording. This observation does not close historical Drive handoffs.
 - Task: the five-file portable package and Copilot setup are implemented. Independent package review found no actionable findings.
 - Evidence: [validation and limits](../docs/validation/portable-lead.md). Format, links, native CLI discovery, direct repair, authority reasoning, independent review and fresh repository-only resume checks completed. Native model execution lacks Copilot authentication; the delivery-fixture edit was rejected by automatic approval review and remains unverified.
-- Next action: publish the reviewed candidate as a draft PR and provide the portable files. The blocked delivery check requires explicit fixture-edit approval; merge requires explicit user authority. Do not repeat the rejected edit or claim a full delivery pass.
+- Next action: obtain the required explicit approval for the blocked local delivery-fixture edit, then finish that exercise and record its actual result before considering merge. Draft publication is complete; do not reopen bootstrap PR #1 or create a duplicate package PR. Merge requires explicit user authority. Do not repeat the rejected edit or claim a full delivery pass.
 
 ## Commitments
 
