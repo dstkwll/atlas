@@ -11,7 +11,7 @@
     {
       "name": "atlas",
       "source": "./plugins/atlas",
-      "description": "Software delivery guidance for your main agent: one skill with optional discovery, design, delivery, review, and continuity runbooks.",
+      "description": "Software delivery guidance for your main agent: one skill with core activity guides and optional specialist runbooks.",
       "version": "0.2.0"
     }
   ]

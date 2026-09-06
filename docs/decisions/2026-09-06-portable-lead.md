@@ -10,7 +10,7 @@ Ship one portable `atlas-lead` skill with conditional references for discovery/d
 
 ## Authority and bounds
 
-This advances beyond the bootstrap's cold-start-only claim. Preserve accepted/provisional truth, human authority, evidence for exact claims, consequence-driven review, bounded correction, and durable authority transitions. Initial authority covered local edits, disposable evaluation fixtures, branch publication, and a draft PR. The subsequent local fixture completion and the user's explicit approval to merge PR #4 are recorded in [current work](../../project-memory/current.md). Workplace access, global installation and existing-Atlas mutation remain outside this task.
+This advances beyond the bootstrap's cold-start-only claim. Preserve accepted/provisional truth, human authority, evidence for exact claims, consequence-driven review, bounded correction, and durable authority transitions. Initial authority covered local edits, disposable evaluation fixtures, branch publication, and a draft PR. The package subsequently merged with explicit approval in [PR #4](https://github.com/dstkwll/atlas-successor/pull/4) at `b8280e8a1772a35a27abe20ceb1a40c61edbb92c`, followed by separately authorized local installation. [The Copilot packaging decision](2026-09-06-copilot-plugin.md) records the later Atlas naming, PR #5 merge and local migration authority. These completed permissions grant no authority for workplace access, unrelated merges or changes to the original Atlas.
 
 The portable skill takes authority from its adopting project's instructions and user assignment. It carries no publication permission from this repository. Product use requires neither personal Drive access nor historical Atlas handoffs.
 
@@ -18,7 +18,7 @@ The portable skill takes authority from its adopting project's instructions and 
 
 - Already established: one coherent lead, optional activities, compact continuity, and autonomous converging correction within authority.
 - Accepted direction now: standalone package. An external framework dependency has setup costs without a demonstrated missing capability.
-- Implementation choices: one skill, four references, native project-scoped paths, and documented setup. Adjust through normal use.
+- Implementation choices: one skill, initially four core references, native project-scoped paths, and documented setup. Adjust through normal use. The authorized specialist expansion in [PR #6](https://github.com/dstkwll/atlas-successor/pull/6) adds optional technical runbooks alongside those core guides; their number is not an architectural limit. Selection and delegation remain with the main agent, without a required sequence or new runtime.
 - Deferred: a narrow deterministic mechanism after an objective failure that guidance and existing host/repository facilities cannot adequately prevent.
 - Rejected: another broad calibration campaign, fixed stage pipeline, mandatory reviewers for every edit, or a bulk copy of the architecture package.
 
