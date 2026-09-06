@@ -27,3 +27,5 @@ Use normal Git conflict handling and host filesystem facilities. Do not silently
 ## Pause or finish
 
 Preserve the actual result, decisions/deltas, checks and evidence, accepted risks, deferred candidates only when useful, and the next safe action. Make an unverified claim or blocker explicit. On completion, remove stale active-work instructions from the current view and retain durable decision/evidence pointers. Routine history belongs in Git and existing records, not in the next agent's starting context.
+
+Repeated corrections or stalled attempts can justify [guidance improvement](guidance-improvement.md). Diagnose the cause before turning a local failure into enduring policy. Preserve the requested outcome and remaining correction boundary; another session or worker does not reset them.

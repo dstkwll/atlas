@@ -12,6 +12,8 @@ Tests should exercise observable behavior and relevant failure modes, not merely
 
 When implementation exposes a poor provisional choice, refine it and continue. If the change would alter accepted behavior, ownership, trust, risk, or a relied-on guarantee, preserve the discovery and return the smallest material decision.
 
+For a failing build/startup use [build diagnosis](build-and-runtime-diagnosis.md); for hidden or partial failure use [failure handling](failure-handling.md). Choose [test evidence](test-adequacy.md) from the claimed behavior. These references can inform direct work or a bounded worker; they do not create extra stages.
+
 ## Use workers selectively
 
 Give a worker enough context to act without inventing accepted judgment. State outcome, authoritative sources, allowed files/systems, authority, prohibited side effects, evidence and stopping/return conditions. Narrow the brief and permissions for a less capable worker. Avoid concurrent writers on the same work surface unless isolation and integration are clear.

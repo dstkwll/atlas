@@ -16,6 +16,8 @@ Trace the affected behavior through real code, data, configuration and integrati
 
 Ask what the change makes a caller, operator, data owner, or neighboring component adjust. Consider rollout, coexistence, migration, rollback and recovery where they matter. Revisit inspection if coding reveals an unexamined dependency or constraint.
 
+When behavior or caller reliance is unclear, use [behavior tracing](understand-behavior.md). For concrete design, identify the few affected interfaces, files, data owners and dependencies needed to deliver a vertical outcome. Prefer cohesion, information hiding and narrow contracts; an abstraction needs a current consumer and a problem it prevents. Preserve existing conventions unless evidence justifies changing them.
+
 ## Make consequential design explicit
 
 Compare the few genuine options using the same criteria: user outcome, relevant quality attributes, responsibility and data ownership, cohesion/coupling, dependency direction, failure/recovery, operability, compatibility, reversibility, and ongoing cost. Focus on the properties that affect this decision. Respect accepted interfaces and boundaries; internal details can remain provisional.

@@ -38,6 +38,9 @@ Load only the reference needed now. These are guidance, not stage owners:
 | A bounded change, debugging, delegation, or ordinary repair | [Deliver and repair](references/deliver-and-repair.md) |
 | A claim warrants independent judgment or findings need reconciliation | [Independent review](references/independent-review.md) |
 | Meaningful decisions, authority changes, session loss, pause or resumption | [Continuity and decisions](references/continuity-and-decisions.md) |
+| A specific technical risk needs deeper checks or a specialist method | [Specialist runbook index](references/specialist-runbooks.md) |
+
+Each specialist runbook can guide your own work or an appropriately bounded worker; it never requires delegation. Choose from the current uncertainty, not a fixed sequence of specialist roles.
 
 For routine work, this entrypoint may be enough. Do not load every reference, call another workflow by default, or require an artifact just because a playbook mentions it. Optional tools such as ECC remain resources; their instructions must not silently replace this task's authority or outcome.
 

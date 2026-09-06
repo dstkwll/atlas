@@ -2,7 +2,7 @@
 
 Atlas is a small software-lead guide for the agent you already use. Give the main agent a goal; it chooses useful investigation, design, implementation, review and repair, carries the architectural context, and returns for decisions that belong to you.
 
-The package contains one lead skill and four short, optional runbooks. It requires no ECC installation, added service, hook, orchestration runtime or connection to this project's Drive folder. Your existing host, tools and project rules remain in control.
+The package contains one lead skill, four core activity guides and an optional specialist runbook library. It requires no ECC installation, added service, hook, orchestration runtime or connection to this project's Drive folder. Your existing host, tools and project rules remain in control.
 
 ## Use it in your project
 
@@ -23,11 +23,15 @@ The lead keeps accepted commitments separate from provisional choices. It can re
 
 You can work collaboratively on design or delegate a bounded result. Atlas does not require a PRD, ticket graph, fixed sequence of specialists, or review ceremony for every change. It never grants permission to publish, deploy, spend or merge.
 
+The [specialist library](plugins/atlas/skills/atlas/references/specialist-runbooks.md) adds focused methods for technical questions such as failure handling, types, migrations, runtime bugs, accessibility and release preparation. Atlas decides whether to use a runbook itself or delegate a bounded task. No specialist sequence is mandatory.
+
+[Donor analysis and adaptation decisions](docs/research/ecc-agent-adaptation.md) explain how the ECC prompts were consolidated, generalized or deferred.
+
 ## Scope and evidence
 
 This release advances the original three-file bootstrap into a reusable delivery package. The original bootstrap is merged; existing `dstkwll/atlas` remains a separate product. The package is intended for ordinary software work, with risk-linked assurance. It is not a guarantee of autonomous correctness or workplace-host compatibility.
 
-[Validation evidence](docs/validation/portable-lead.md) distinguishes what was actually exercised from static checks and behavior still unverified. Work-environment details do not need to be exported to use or improve the guide locally.
+[Runbook validation](docs/validation/specialist-runbooks.md) records the current expansion; [earlier delivery evidence](docs/validation/portable-lead.md) covers the initial package. These distinguish actual exercises from static checks and unverified behavior. Work-environment details do not need to be exported to use or improve the guide locally.
 
 ## Maintain this package
 
