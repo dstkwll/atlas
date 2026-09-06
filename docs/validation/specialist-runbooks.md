@@ -24,7 +24,7 @@ The user requested a deep dive into useful ECC agents, adaptation to Atlas, addi
 - Entrypoint: 1,044 words (baseline 999). Specialist index: 480 words. Entire skill including notices: 24 Markdown files / 9,831 words; this total is not startup context.
 - Source inventory matches all 68 actual donor filenames and recorded SHA-256 hashes.
 - `git diff --check`: PASS.
-- Native Git-backed Copilot installation of the final candidate: pending publication/check, to be recorded before delivery.
+- Native Git-backed Copilot CLI 1.0.82 installation: PASS for product commit `e7c15f8b3a4d5b4fc84097961f97543510ae7dd9`. In a fresh disposable `COPILOT_HOME`, adding `dstkwll/atlas-successor#feat/specialist-runbooks` and installing `atlas@atlas-successor` discovered one enabled plugin at 0.2.0 and one enabled Atlas skill, with no discovery errors. All 26 installed files exactly matched the recorded product SHA-256 inventory, with no extra files. No existing user installation was changed.
 
 ## Independent forward exercises
 
@@ -53,6 +53,10 @@ A Sol/low worker was asked to simplify a separate small formatter fixture while 
 ## Independent library review
 
 A fresh read-only reviewer inspected all 24 skill Markdown files, all relative links and selected donor originals. It reported no blocking or actionable non-blocking findings. It specifically checked optional use/delegation, authority boundaries, false-positive control, substantive language/framework distinctions and removal of mandatory RAG reranking. This establishes source coherence, not proof of every runtime behavior.
+
+A separate follow-up audit verified that the research map accounts for all 68 donor filenames exactly once, that the recorded source hashes match, that adaptation destinations exist, and that sampled interpretations match the originals. It found no concrete issues.
+
+The implementation is published as [draft PR #6](https://github.com/dstkwll/atlas-successor/pull/6). Subsequent evidence/state-only commits preserve the product inventory above.
 
 ## Limits
 
