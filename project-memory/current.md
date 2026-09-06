@@ -2,9 +2,9 @@
 
 ## Outcome and authority
 
-On 2026-09-06 the user requested researching Copilot plugins and progressing implementation for the successor, noting that original Atlas already supported plugins. They dislike `atlas-lead` and are considering `atlas`. This authorizes a bounded packaging change and draft PR under the repository maintenance contract; it does not authorize merge or replacing existing installations. `Atlas` is the proposed draft name, pending the user's naming response.
+On 2026-09-06 the user requested researching Copilot plugins and progressing implementation for the successor, noting that original Atlas already supported plugins. The user subsequently said "proceed with merge. Lets keep Atlas as the primary instead of the lead". This accepts Atlas as the name, authorizes merging PR #5 and completing the local skill rename while preserving local edits. It grants no workplace access or unrelated merge authority.
 
-The preceding portable package is complete: PR #4 merged at `b8280e8a1772a35a27abe20ceb1a40c61edbb92c`. The user subsequently explicitly authorized local installation, and its five files were installed at `~/.codex/skills/atlas-lead` and verified against that commit. The old prohibition on global installation in the preceding task no longer describes that completed authorized action. Leave this working installation intact during the plugin proposal.
+The preceding portable package is complete: PR #4 merged at `b8280e8a1772a35a27abe20ceb1a40c61edbb92c`. The user subsequently explicitly authorized local installation, and its five files were installed at `~/.codex/skills/atlas-lead` and verified against that commit. The old prohibition on global installation in the preceding task no longer describes that completed authorized action. Verify and back up the old installation outside skill discovery before retiring it after the new Atlas installation passes byte comparison.
 
 ## Repository and progress
 
@@ -12,9 +12,9 @@ The preceding portable package is complete: PR #4 merged at `b8280e8a1772a35a27a
 - Current inspected main/base: `b8280e8a1772a35a27abe20ceb1a40c61edbb92c`.
 - Working branch: `feat/copilot-plugin`; published [draft PR #5](https://github.com/dstkwll/atlas-successor/pull/5).
 - Scope: native Copilot plugin and separate `atlas-successor` marketplace, one canonical skill directory, install/update/migration documentation, native package checks. The skill's operating behavior remains unchanged.
-- Product candidate: `plugins/atlas/`, with one `atlas` skill and four runbooks. The proposed skill rename changes only its frontmatter name and title.
+- Product candidate: `plugins/atlas/`, with one `atlas` skill and four runbooks. The accepted skill rename changes only its frontmatter name and title.
 - Native proof: GitHub marketplace install from candidate `82458ca` succeeded, discovering one enabled Atlas plugin and one enabled Atlas skill with no errors. All installed product files match the candidate. Local-directory marketplace discovery has a documented host limitation; Git-backed installation is verified. VS Code UI and authenticated model behavior remain untested.
-- Next action: obtain the user's naming/merge decision on draft PR #5. No merge authority for this change. Do not rerun initial behavioral experiments for unchanged guidance.
+- Next action: merge PR #5 under the explicit authorization above after confirming its final head; install the merged Atlas skill locally and retire the verified old copy. Once GitHub confirms the merge and installation matches the merged source, this task is complete. Do not repeat the merge or initial behavioral experiments on resume.
 
 ## Commitments and evidence
 

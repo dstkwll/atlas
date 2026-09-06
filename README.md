@@ -13,7 +13,7 @@ copilot plugin marketplace add dstkwll/atlas-successor
 copilot plugin install atlas@atlas-successor
 ```
 
-These commands apply after the plugin packaging reaches `main`. In a fresh main-agent chat, select the `atlas` skill and describe your goal. The [setup guide](SETUP.md) covers VS Code, CLI, team configuration, local packages, manual skill installation and migration from `atlas-lead` or the original Atlas plugin.
+In a fresh main-agent chat, select the `atlas` skill and describe your goal. The [setup guide](SETUP.md) covers VS Code, CLI, team configuration, local packages, manual skill installation and migration from `atlas-lead` or the original Atlas plugin.
 
 The installable product is [plugins/atlas](plugins/atlas); the standalone [Atlas skill](plugins/atlas/skills/atlas) remains usable in Codex and other file-reading hosts. This repository's root files govern maintenance and are excluded from the plugin.
 
