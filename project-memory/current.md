@@ -13,11 +13,11 @@ After the lead requested approval to finish the disposable local feature test an
 - Repository: `https://github.com/dstkwll/atlas-successor`.
 - Inspected main: `d877080ae3c6492176babc038cabcfea7936457a`.
 - Working branch: `feat/portable-lead-package`.
-- Published draft: [PR #4](https://github.com/dstkwll/atlas-successor/pull/4). Product commit: `02e6732379f1892c99e63665772926a58fe9a095`; subsequent documentation checkpoint records publication without changing the evaluated skill.
+- Published candidate: [PR #4](https://github.com/dstkwll/atlas-successor/pull/4). Product commit: `02e6732379f1892c99e63665772926a58fe9a095`; subsequent documentation checkpoints leave the evaluated skill unchanged. Check live PR status before acting.
 - Bootstrap PR #1 is merged; its old open/draft status was stale. Main also incorporates PR #2's role-neutral wording. This observation does not close historical Drive handoffs.
-- Task: the five-file portable package and Copilot setup are implemented. Independent package review found no actionable findings.
+- Task: the five-file portable package and Copilot setup are implemented. Three independent final reviews of `ba4ef4a46eec5438da1d3a306cd4f59e26bf1f04` found no blocking architecture, correctness or proof defects. A final documentation checkpoint makes the setup evidence link portable and records this result; the PR description must reflect the completed tests before merge.
 - Evidence: [validation and limits](../docs/validation/portable-lead.md). Format, links, native CLI discovery, direct repair, authority reasoning, independent review and fresh repository-only resume checks completed. Following approval, Sol completed the bounded delivery exercise; the primary independently verified four tests, five CLI cases and preservation of the copied skill and fixture data. Native model execution still lacks Copilot authentication.
-- Next action: review the final PR candidate, then merge PR #4 if that review passes. The approved local delivery check has passed. Do not reopen bootstrap PR #1 or create a duplicate package PR. Broader production behavior and authenticated host execution are not claimed.
+- Next action: if PR #4 is still open, verify the final documentation-only delta and current PR head, update its description, and merge under the recorded approval. Once GitHub confirms PR #4 merged, this delivery is complete: provide/use the portable files and refine through ordinary authorized work. Do not reopen bootstrap PR #1, create a duplicate package PR, or rerun the initial experiments by default. Broader production behavior and authenticated host execution are not claimed.
 
 ## Commitments
 
