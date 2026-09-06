@@ -2,33 +2,26 @@
 
 ## Outcome and authority
 
-On 2026-09-06 the user authorized advancing the successor from its bootstrap seed to a usable standalone lead package, including implementation and initial validation here. Work-environment feedback is costly; prepare a coherent first version that can improve naturally during real use. ECC is optional and the host's main agent remains the lead.
+On 2026-09-06 the user requested researching Copilot plugins and progressing implementation for the successor, noting that original Atlas already supported plugins. The user subsequently said "proceed with merge. Lets keep Atlas as the primary instead of the lead". This accepts Atlas as the name, authorizes merging PR #5 and completing the local skill rename while preserving local edits. It grants no workplace access or unrelated merge authority.
 
-This supersedes the bootstrap-only work boundary. It permits bounded repository updates, native skill packaging, local disposable behavioral exercises, ordinary corrections, working-branch publication, and a draft PR. It grants no workplace access, protected-data export, global installation, existing-Atlas mutation, or unrelated publication.
-
-The local fixture was completed successfully. After automatic approval review rejected an earlier ambiguous merge confirmation, the lead asked "Do you explicitly authorize me to merge PR #4?" and the user answered "yes" on 2026-09-06. This explicitly authorizes marking PR #4 ready and merging it after verifying the reviewed candidate; the earlier authorization blocker is resolved. It grants no authority for unrelated merges. The user selected Sol with low reasoning for bounded implementation while the primary retains architecture, review and corrections. This model choice belongs to this task, not the portable product.
+The preceding portable package is complete: PR #4 merged at `b8280e8a1772a35a27abe20ceb1a40c61edbb92c`. The user subsequently explicitly authorized local installation, and its five files were installed at `~/.codex/skills/atlas-lead` and verified against that commit. The old prohibition on global installation in the preceding task no longer describes that completed authorized action. Verify and back up the old installation outside skill discovery before retiring it after the new Atlas installation passes byte comparison.
 
 ## Repository and progress
 
 - Repository: `https://github.com/dstkwll/atlas-successor`.
-- Inspected main: `d877080ae3c6492176babc038cabcfea7936457a`.
-- Working branch: `feat/portable-lead-package`.
-- Published candidate: [PR #4](https://github.com/dstkwll/atlas-successor/pull/4). Product commit: `02e6732379f1892c99e63665772926a58fe9a095`; subsequent documentation checkpoints leave the evaluated skill unchanged. Check live PR status before acting.
-- Bootstrap PR #1 is merged; its old open/draft status was stale. Main also incorporates PR #2's role-neutral wording. This observation does not close historical Drive handoffs.
-- Task: the five-file portable package and Copilot setup are implemented. Three independent final reviews of `ba4ef4a46eec5438da1d3a306cd4f59e26bf1f04` found no blocking architecture, correctness or proof defects. The setup-link and state checkpoint at `19a144cd491ef7bfa99a68a4cb1e043265a08cc6` passed independent narrow verification. The PR description now reflects completed tests. A later documentation-only checkpoint records the merge rejection without changing the product.
-- Evidence: [validation and limits](../docs/validation/portable-lead.md). Format, links, native CLI discovery, direct repair, authority reasoning, independent review and fresh repository-only resume checks completed. Following approval, Sol completed the bounded delivery exercise; the primary independently verified four tests, five CLI cases and preservation of the copied skill and fixture data. Native model execution still lacks Copilot authentication.
-- Next action: verify the final documentation-only delta and live PR head, then merge PR #4 under the explicit approval above if it is still open. Once GitHub confirms PR #4 merged, this delivery is complete: use the portable files and refine through ordinary authorized work. Do not reopen bootstrap PR #1, create a duplicate package PR, or rerun the initial experiments by default. Broader production behavior and authenticated host execution are not claimed.
+- Current inspected main/base: `b8280e8a1772a35a27abe20ceb1a40c61edbb92c`.
+- Working branch: `feat/copilot-plugin`; published [draft PR #5](https://github.com/dstkwll/atlas-successor/pull/5).
+- Scope: native Copilot plugin and separate `atlas-successor` marketplace, one canonical skill directory, install/update/migration documentation, native package checks. The skill's operating behavior remains unchanged.
+- Product candidate: `plugins/atlas/`, with one `atlas` skill and four runbooks. The accepted skill rename changes only its frontmatter name and title.
+- Native proof: GitHub marketplace install from candidate `82458ca` succeeded, discovering one enabled Atlas plugin and one enabled Atlas skill with no errors. All installed product files match the candidate. Local-directory marketplace discovery has a documented host limitation; Git-backed installation is verified. VS Code UI and authenticated model behavior remain untested.
+- Next action: merge PR #5 under the explicit authorization above after confirming its final head; install the merged Atlas skill locally and retire the verified old copy. Once GitHub confirms the merge and installation matches the merged source, this task is complete. Do not repeat the merge or initial behavioral experiments on resume.
 
-## Commitments
+## Commitments and evidence
 
-The user supplies judgment; the lead supplies orchestration. Accepted commitments remain distinct from provisional choices. Review supplies evidence, not authority. Ordinary correction stays autonomous within stable scope and authority while converging. Authority changes become durable before subsequent work relies on them.
+The user supplies judgment; the main agent supplies orchestration. Optional runbooks remain guidance. No ECC dependency, workflow controller, hooks, services, fixed agent roster, or new privileges. Keep repository maintenance rules and state outside the installed plugin. Preserve original Atlas as a separate product.
 
-Use one host-native lead, optional playbooks, and compact local continuity. No workflow engine, mandatory stages, ECC dependency, or new service. Installed guidance is self-contained and must not carry this repository's history, personal Drive requirements, publication permissions, or bootstrap task into another project.
+Original Atlas main `a57c610e133dd66ce1de75947ceced673696adb4` already uses a root Agent Plugins 1.0 manifest and `.github/plugin/marketplace.json`, under marketplace `dstkwll`. Its packaging is a donor; its orchestration is not adopted. The successor's distinct marketplace avoids claiming to update `atlas@dstkwll`.
 
-Existing Atlas main at `a57c610e133dd66ce1de75947ceced673696adb4` remains canonical for the existing product. The successor Drive package remains its architecture/decision source; [the delivery decision](../docs/decisions/2026-09-06-portable-lead.md) records this task's explicit direction. Git owns production bytes and history.
+Drive controls freshly read on 2026-09-06: `AGENTS.md` modified `2026-08-25T15:07:14.356Z`; `README.md` modified `2026-08-25T15:07:26.672Z`. Official GitHub and VS Code plugin documentation was inspected the same day. Prior behavioral evidence remains in [portable package validation](../docs/validation/portable-lead.md); new packaging evidence belongs in [plugin validation](../docs/validation/copilot-plugin.md).
 
-## Source freshness
-
-Drive controls read on 2026-09-06: root `AGENTS.md` modified `2026-08-25T15:07:14.356Z`; root `README.md` modified `2026-08-25T15:07:26.672Z`. Current successor v0.2 contracts and Experiment 2 decisions were inspected in the preceding architecture discussion. Refresh applicable coordination instructions before consequential repository work.
-
-This is a replaceable snapshot. Compare it with current Git/PR evidence on resume; repair stale observations without manufacturing new authority.
+Compare this replaceable snapshot with current Git and PR evidence on resume.

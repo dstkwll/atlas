@@ -1,43 +1,107 @@
-# Use Atlas in an existing project
+# Install and use Atlas
 
-Atlas is Markdown guidance for your normal main agent. Use your organization's approved agent and model. It needs no extra account, ECC, script, service or network connection of its own. The host may still need its usual network access.
+Atlas guides the main agent you already use. Choose your organization's approved agent and model. The plugin contains one skill and four optional runbooks; it adds no scripts, service, hooks, MCP servers or ECC dependency.
 
-## Copilot in VS Code or Copilot CLI
+## Copilot plugin installation
 
-1. Get the complete `atlas-lead` folder from this repository's `.agents/skills/` directory or the supplied bundle. Copy the folder into the target project's `.agents/skills/` directory, producing `.agents/skills/atlas-lead/SKILL.md` and its `references/` folder. Do not copy only `SKILL.md`, replace existing instructions, or copy Atlas's root `AGENTS.md` or project memory.
-2. Use the project root as your workspace/current directory. Start a fresh main-agent session. A reasoning-capable model is appropriate for the lead; use the choices approved in your environment.
-3. Ask: **Use atlas-lead to complete [specific goal]. Inspect this project first, make ordinary in-scope decisions, and return for material choices with your recommendation.** Copilot also supports `/atlas-lead` when the skill is discovered.
+For Copilot CLI:
 
-The same folder can be placed in `.github/skills/atlas-lead/` instead if that is your team's convention. Choose one location to avoid duplicate discovery. Existing project instructions and tool permissions still apply.
-
-This is enough to begin normal work. The first task is not a request for a calibration report, raw transcript, or workplace evidence export.
-
-## Make it the project default, if wanted
-
-Add the following small paragraph to the project's existing `.github/copilot-instructions.md` (or root `AGENTS.md` for a host that reads it). Create a new instruction file only if the project has none. Keep all existing content and resolve actual conflicts under project policy.
-
-```text
-For software-delivery tasks, read .agents/skills/atlas-lead/SKILL.md and use it as operating guidance in the main session. Load only the references relevant to the current task. Existing project/organizational rules and the user's authority still apply.
+```shell
+copilot plugin marketplace add dstkwll/atlas-successor
+copilot plugin install atlas@atlas-successor
 ```
 
-If you installed under `.github/skills/`, use that path in the paragraph. This enables the lead role in the main session; it does not create a child agent. Native skill discovery alone makes the skill available, but does not guarantee it is selected for every request.
+Start a fresh session in the project you want to work on. VS Code can also discover plugins installed by Copilot CLI. If using only VS Code, add `dstkwll/atlas-successor` to your existing `chat.plugins.marketplaces` setting, preserving the other entries. Open Extensions, search `@agentPlugins`, and install **Atlas** from **atlas-successor**. Use Copilot Agent mode.
 
-## If the skill is not discovered
+To share the choice with coworkers, merge these entries into the work repository's existing `.github/copilot/settings.json` through its normal review process; preserve other settings:
 
-Ask the main agent to read the exact installed file path and follow its links for this task. For example: **Read .agents/skills/atlas-lead/SKILL.md and use it to lead this change: [goal].** This uses the same guidance without relying on a slash-command picker.
+```json
+{
+  "extraKnownMarketplaces": {
+    "atlas-successor": {
+      "source": {
+        "source": "github",
+        "repo": "dstkwll/atlas-successor"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "atlas@atlas-successor": true
+  }
+}
+```
 
-Check that the workspace is the intended project, the folder name is `atlas-lead`, `SKILL.md` is present with its frontmatter, and all references were copied. In VS Code, `/skills` opens skill configuration; in Copilot CLI, `/instructions` shows discovered instruction files when checking the optional default paragraph. Keep enterprise restrictions in place. If the host cannot read the files, report the missing capability; do not change security settings or install another agent to work around policy.
+VS Code presents workspace plugin recommendations; CLI supports declarative installation. Availability still depends on the host version and enterprise policy. Adding the plugin does not make it the main agent's default guidance for every task.
 
-## Other hosts and restricted environments
+## Use it
 
-A file-reading agent can use the same explicit-path request. For native discovery in another host, place the complete folder in that host's documented skill location. Do not assume identical host features or install multiple copies to try to force discovery.
+In a fresh Copilot chat, select the `atlas` skill from the `/` picker and give it a goal:
 
-For work, transfer only the reusable skill folder and this setup guide through an approved route. Keep project decisions, code, state, test output and credentials in the approved environment. No Atlas Drive access or feedback connection is required. Reuse the project's existing state convention; let the lead create a small local note only when continuation needs one and its location is permitted.
+```text
+/atlas Help me [goal]. Inspect this project first, make ordinary in-scope
+implementation decisions, and bring me material choices with your recommendation.
+```
+
+Some hosts or conflicting plugins qualify the command as `/atlas:atlas`; use the entry shown in your picker. Natural language also works: **Use the Atlas skill from the atlas-successor plugin to complete [goal].** You stay in the main session, using the usual host agent.
+
+For collaborative design, add **Work through the design with me before implementing.** For delivery, specify the desired result and constraints. Continue the conversation normally; Atlas chooses the relevant runbooks. No calibration report or workplace evidence export is needed.
+
+To make Atlas the project's default, append this to the existing `.github/copilot-instructions.md` (or the host's existing root `AGENTS.md`), preserving current content:
+
+```text
+For software-delivery tasks, use the installed Atlas skill from atlas-successor
+as operating guidance in the main session. Load only the references relevant to
+the task. Existing project/organizational rules and the user's authority apply.
+If the skill is unavailable, report that instead of claiming Atlas is active.
+```
+
+## Local or restricted installation
+
+Transfer the complete `plugins/atlas/` directory through an approved route. Keep its `plugin.json`, `skills/atlas/SKILL.md` and four references together. Do not transfer repository maintenance instructions, project memory or work data.
+
+For VS Code, add its absolute directory to the existing `chat.pluginLocations` map with value `true`. Example on Windows (use your actual path):
+
+```json
+{
+  "chat.pluginLocations": {
+    "C:/Tools/atlas": true
+  }
+}
+```
+
+For a Copilot CLI session using the local package:
+
+```shell
+copilot --plugin-dir /absolute/path/to/atlas
+```
+
+This mounts the plugin for that session. The native CLI also currently supports `copilot plugins install /absolute/path/to/atlas`, but warns that direct installs are deprecated; prefer the marketplace for ongoing installation. Local directory marketplaces have a discovery limitation in the tested CLI; see [validation](docs/validation/copilot-plugin.md).
+
+## Manual skill installation and Codex
+
+The skill remains independently portable. Copy the complete `plugins/atlas/skills/atlas/` folder into the target project's `.agents/skills/` directory, producing `.agents/skills/atlas/SKILL.md`. Personal Codex installations can put that same folder under `~/.codex/skills/atlas/`; invoke it with `$atlas` after discovery. For personal Copilot skills, use `~/.copilot/skills/atlas/` and `/atlas`.
+
+Choose plugin installation or manual skill installation in each host. A project/personal skill can take precedence over a plugin's skill, leaving an old copy active after a plugin update. If discovery is unavailable, ask the agent to read the exact installed `SKILL.md` path and follow its references.
+
+## Migrating existing installations
+
+The old `atlas-lead` installation continues to work until you replace it. Preserve local edits, install the new package, confirm Atlas appears in the host's skill picker, then remove only the old `atlas-lead` folder and update explicit invocation/default-instruction references. Keep project state and other instructions.
+
+The original **atlas@dstkwll** is a separate, larger plugin. This package does not update or replace it. Disable the original for a project when choosing the successor so both do not offer competing Atlas guidance. Do not remove the original plugin's work records or other plugins from its marketplace.
 
 ## Update or remove
 
-Review an update as a change to agent behavior. Replace only the installed `atlas-lead` folder after preserving any local edits. Keep project memory outside it. To stop using Atlas, remove the optional default paragraph and the installed skill folder; leave project instructions and work records intact. No global cleanup is needed.
+For the marketplace-installed CLI plugin:
+
+```shell
+copilot plugin marketplace update atlas-successor
+copilot plugin update atlas@atlas-successor
+```
+
+In VS Code, use **Extensions: Check for Extension Updates** and review the offered update. Local copied packages are updated by replacing only their package folder after preserving local edits. Start a fresh session after updating.
+
+To stop using the CLI plugin, run `copilot plugin uninstall atlas@atlas-successor`. In VS Code, disable or uninstall its entry in Agent Plugins. Remove any project recommendation/default paragraph that would reactivate it. Leave project instructions and work records intact.
 
 ## Compatibility evidence
 
-Setup paths and invocation were checked against official documentation on 2026-09-06: [VS Code Agent Skills](https://code.visualstudio.com/docs/agent-customization/agent-skills), [Copilot CLI skills reference](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference#skills-reference), and [Copilot CLI instructions](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-custom-instructions). Host behavior can vary with version and enterprise policy. See [this package's validation record](https://github.com/dstkwll/atlas-successor/blob/ba4ef4a46eec5438da1d3a306cd4f59e26bf1f04/docs/validation/portable-lead.md) for actual execution evidence and limits. The supplied bundle also includes an offline copy at `docs/validation/portable-lead.md`.
+Checked on 2026-09-06 against [GitHub's plugin reference](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-plugin-reference), [VS Code plugin documentation](https://code.visualstudio.com/docs/agent-customization/agent-plugins), and [Copilot plugin concepts](https://docs.github.com/en/copilot/concepts/agents/about-plugins). See [the packaging validation record](docs/validation/copilot-plugin.md) for actual native checks and remaining limits. Documentation support is not proof of execution in your workplace host.
