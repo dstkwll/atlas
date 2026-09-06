@@ -1,38 +1,21 @@
-# Atlas Successor lead contract
+# Maintaining Atlas Successor
 
-## Start from durable truth
+Read this file, `README.md`, and `project-memory/current.md` before substantive repository work. Inspect the actual remote, branch, HEAD and worktree; compare work-state observations with current Git and PR evidence. Preserve unrelated changes.
 
-1. Read this file, `README.md`, and `project-memory/current.md` before substantive work.
-2. Inspect the Git remote, branch, exact HEAD, diff, and worktree instead of trusting conversation or remembered state.
-3. Follow the authoritative pointers in the current-state file only as far as the present claim requires. If a required source is unavailable or contradicts another authority, stop consequential mutation and report the exact conflict.
+Use [the Atlas lead contract](.agents/skills/atlas-lead/SKILL.md) as the main-session operating guidance. Read deeper references only for the present task. The portable skill owns enduring lead behavior; this file owns maintenance rules specific to this repository.
 
-Repository truth owns production bytes, history, diffs, and commit identity. The successor Drive package owns architecture and decisions for this bootstrap slice. `dstkwll/atlas` remains authoritative for the existing Atlas product unless the user explicitly accepts migration or supersession.
+## Authority and scope
 
-## Lead the outcome
+The current user assignment and accepted decisions govern the work. `project-memory/current.md` records the current assignment and authority, not independent permission. Git owns production bytes and history. The successor Drive package remains the architecture/decision source, with current explicit decisions recorded locally. Existing `dstkwll/atlas` remains canonical for its own product and is not changed or superseded by this repository.
 
-Own the bounded outcome and its meta-workflow through proven result, genuine blocker, or explicit handoff. Choose the smallest useful activity—inspect, reason, probe, implement, review, repair, or escalate. Delegate only for capability, context isolation, parallelism, or independent judgment; give each worker a bounded outcome, authoritative context, granted authority, allowed files or systems, prohibited side effects, proof, stopping conditions, and return conditions. Integrate the result yourself.
+For consequential Atlas coordination, freshly read the root `AGENTS.md` and `README.md` in the [shared Atlas Drive folder](https://drive.google.com/drive/folders/121qIDFWJ-rqQy74r5pO2ZxYD1T_jHS-x) and applicable handoffs. If current controls or required authority cannot be fetched, finish safe local preparation and report the freshness blocker before consequential publication. These are maintainer obligations; never install them in another project as product requirements.
 
-Keep these truth classes distinct:
+## Change and validation
 
-- **Accepted:** authorized product or material architecture commitments; do not change silently.
-- **Provisional:** lead-owned realization choices that evidence may refine.
-- **Discovered:** facts supported by repository, runtime, or cited source evidence.
-- **Proposed:** options without authority until accepted by the appropriate owner.
+Work on a branch, review the final diff, preserve evidence, and return a draft PR. Merge requires explicit user authorization. Ordinary in-scope implementation and corrections need no second approval. Record material authority changes before relying on them.
 
-## Authority
+Treat instructional changes as behavior changes. Identify important behavior being retained, moved behind a trigger, or explicitly superseded. Check realistic outcomes with fresh independent review where authority or complex guidance makes producer bias material. Format checks do not prove judgment. Keep runtime tests for actual behavior; do not create validators of exact prose or headings.
 
-Act freely on read-only inspection, bounded implementation within the accepted slice, reversible realization choices, proportionate verification, current-state maintenance, and ordinary in-scope repair.
+Keep product guidance self-contained and portable. Do not add ECC as a dependency, universal stages, workflow controllers, queues, schedulers, retry engines, schemas, compatibility systems or bulk architecture copies without an explicit accepted decision and demonstrated need. Native skill placement is packaging, not a runtime adapter.
 
-Act and report when implementation details or decomposition change without materially changing the accepted outcome, responsibilities, guarantees, risk, or strategy.
-
-Stop and ask the user before changing accepted product intent, the bootstrap claim, material architecture, responsibility or authority, accepted risk, a trust boundary, meaningful scope, repository visibility, merge state, or spending beyond delegated bounds. Also stop before any consequential external action that is not already authorized; this slice authorizes its working-branch pushes and draft pull-request creation or updates, but nothing broader. Stop when authoritative sources conflict, required access has no safe equivalent, correction is not converging within its declared bound, or broader machinery becomes necessary.
-
-User judgment remains outside the agents. Producer, independent reviewer, and human authority are distinct. Review supplies evidence; it does not grant product or merge authority.
-
-## Preserve continuity and proof
-
-At a meaningful boundary—and before downstream work relies on an authority change—replace or compactly update `project-memory/current.md` with the goal/done claim, accepted and provisional truth, authority, exact repository identity, evidence or blocker, and next safe action. Keep it smaller than the work it coordinates. Do not turn it into a transcript, event log, generalized schema, registry, queue, or workflow database.
-
-Verify the exact claim. Prefer deterministic evidence for objective properties and fresh semantic review where producer bias matters. A completion message, green check, or file's existence is not proof. Ordinary review-confirmed defects remain lead-owned while the claim, architecture, authority, risk, and strategy stay stable and findings converge; obtain fresh review after meaningful correction.
-
-Do not add stages, a controller, retry engine, scheduler, daemon, ticket graph, compatibility layer, multi-host adapter, bulk architecture copies, or validators. For this slice, reconsider only the smallest deterministic commit or authority check if a fresh lead acts outside written authority, uses a different Git candidate than the reviewed evidence, or repeatedly cannot resume after an authority transition was durably recorded. Do not broaden that trigger into general orchestration machinery, test exact prose or headings, or merge autonomously.
+Update the compact current-state note when status, authority, proof or next action changes. Keep historical evidence and rationale in linked records rather than the startup context. Installed copies must not include this repository's maintenance instructions, active work state or historical publication authority.
