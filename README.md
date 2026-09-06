@@ -1,28 +1,29 @@
 # Atlas Successor
 
-This is the isolated clean-room repository for the Atlas successor bootstrap seed. Its current claim is deliberately narrow: prove that a fresh software-delivery lead can reconstruct authority and current work from repository truth, continue after session loss, and stop at a material decision boundary.
+Atlas is a small software-lead guide for the agent you already use. Give the main agent a goal; it chooses useful investigation, design, implementation, review and repair, carries the architectural context, and returns for decisions that belong to you.
 
-It does **not** replace or migrate the existing Atlas product, prove arbitrary software delivery, create a factory or controller, or grant merge authority. [`dstkwll/atlas`](https://github.com/dstkwll/atlas) remains authoritative for the existing product until the user explicitly decides otherwise.
+The package contains one lead skill and four short, optional runbooks. It requires no ECC installation, added service, hook, orchestration runtime or connection to this project's Drive folder. Your existing host, tools and project rules remain in control.
 
-## Start or resume
+## Use it in your project
 
-A fresh lead should:
+1. Copy the complete [atlas-lead folder](.agents/skills/atlas-lead) into your project's `.agents/skills/` directory. Preserve existing files and instructions.
+2. Start a fresh main-agent session in the target project.
+3. Ask: **Use atlas-lead to complete [your goal]. Follow this project's rules, make ordinary implementation decisions, and bring me material choices with a recommendation.**
 
-1. Read [`AGENTS.md`](AGENTS.md) for enduring behavior and authority.
-2. Read [`project-memory/current.md`](project-memory/current.md) for the active goal, accepted and provisional truth, exact repository identity, evidence, and next safe action.
-3. Run `git status --short --branch`, inspect the remote and exact `HEAD`, and compare the current diff with the baseline named in the state file.
-4. Follow only the authoritative pointers needed for the current claim; continue autonomously within the recorded authority and stop only at a stated material boundary.
-5. Compactly update the current-state file at meaningful boundaries so a replacement lead can resume without chat history.
+[Setup and troubleshooting](SETUP.md) covers Copilot in VS Code and the CLI, optional default activation, restricted environments and direct-file use if discovery is unavailable. Install only the skill folder; this repository's root files govern development of Atlas itself.
 
-## Where truth lives
+## How it behaves
 
-- **This Git repository:** production bytes, commit history, candidate identity, and diffs.
-- **[Atlas Clean-Room Successor in Drive](https://drive.google.com/drive/folders/1BZMwcqB81ZuvVdRlaSZoBDPwejfviLse):** successor architecture and decision source for this bootstrap slice.
-- **[`dstkwll/atlas`](https://github.com/dstkwll/atlas):** canonical existing Atlas product and architecture.
-- **The user:** product judgment, material architecture and risk decisions, repository visibility, merge authority, and consequential publication beyond this slice's already authorized working-branch push and draft pull request.
+The lead keeps accepted commitments separate from provisional choices. It can refine implementation as evidence arrives, correct ordinary defects within authority, and use independent review when the consequences warrant it. It maintains compact project-local continuity for work that needs to resume. A small clear fix can remain a small clear fix.
 
-The repository-local current-state file is a replaceable resume surface, not a second architecture package or an activity log. Preserve meaning rather than exact headings. For this slice, reconsider only the smallest deterministic commit or authority check after an observed unauthorized action, reviewed-candidate/evidence mismatch, or repeated resume failure following a durably recorded authority transition.
+You can work collaboratively on design or delegate a bounded result. Atlas does not require a PRD, ticket graph, fixed sequence of specialists, or review ceremony for every change. It never grants permission to publish, deploy, spend or merge.
 
-## Current disposition
+## Scope and evidence
 
-Implementation work belongs on a branch and returns through a draft pull request with exact candidate and proof evidence. No agent may merge autonomously. See [`project-memory/current.md`](project-memory/current.md) for the live branch, baseline, status, and next safe action.
+This release advances the original three-file bootstrap into a reusable delivery package. The original bootstrap is merged; existing `dstkwll/atlas` remains a separate product. The package is intended for ordinary software work, with risk-linked assurance. It is not a guarantee of autonomous correctness or workplace-host compatibility.
+
+[Validation evidence](docs/validation/portable-lead.md) distinguishes what was actually exercised from static checks and behavior still unverified. Work-environment details do not need to be exported to use or improve the guide locally.
+
+## Maintain this package
+
+Read [AGENTS.md](AGENTS.md), [current work](project-memory/current.md), and the [delivery decision](docs/decisions/2026-09-06-portable-lead.md). The reusable product is `.agents/skills/atlas-lead/`. Deeper runbooks load only when relevant; the repository's coordination history is not part of the installed product.
