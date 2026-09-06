@@ -1,4 +1,4 @@
-# Atlas Successor
+# Atlas
 
 Atlas is a small software-lead guide for the agent you already use. Give the main agent a goal; it chooses useful investigation, design, implementation, review and repair, carries the architectural context, and returns for decisions that belong to you.
 
@@ -6,11 +6,16 @@ The package contains one lead skill and four short, optional runbooks. It requir
 
 ## Use it in your project
 
-1. Copy the complete [atlas-lead folder](.agents/skills/atlas-lead) into your project's `.agents/skills/` directory. Preserve existing files and instructions.
-2. Start a fresh main-agent session in the target project.
-3. Ask: **Use atlas-lead to complete [your goal]. Follow this project's rules, make ordinary implementation decisions, and bring me material choices with a recommendation.**
+Install the **Atlas** plugin from the **atlas-successor** marketplace in Copilot:
 
-[Setup and troubleshooting](SETUP.md) covers Copilot in VS Code and the CLI, optional default activation, restricted environments and direct-file use if discovery is unavailable. Install only the skill folder; this repository's root files govern development of Atlas itself.
+```shell
+copilot plugin marketplace add dstkwll/atlas-successor
+copilot plugin install atlas@atlas-successor
+```
+
+These commands apply after the plugin packaging reaches `main`. In a fresh main-agent chat, select the `atlas` skill and describe your goal. The [setup guide](SETUP.md) covers VS Code, CLI, team configuration, local packages, manual skill installation and migration from `atlas-lead` or the original Atlas plugin.
+
+The installable product is [plugins/atlas](plugins/atlas); the standalone [Atlas skill](plugins/atlas/skills/atlas) remains usable in Codex and other file-reading hosts. This repository's root files govern maintenance and are excluded from the plugin.
 
 ## How it behaves
 
@@ -26,4 +31,4 @@ This release advances the original three-file bootstrap into a reusable delivery
 
 ## Maintain this package
 
-Read [AGENTS.md](AGENTS.md), [current work](project-memory/current.md), and the [delivery decision](docs/decisions/2026-09-06-portable-lead.md). The reusable product is `.agents/skills/atlas-lead/`. Deeper runbooks load only when relevant; the repository's coordination history is not part of the installed product.
+Read [AGENTS.md](AGENTS.md), [current work](project-memory/current.md), and the [delivery decision](docs/decisions/2026-09-06-portable-lead.md). The reusable product is `plugins/atlas/`; its one canonical skill lives at `plugins/atlas/skills/atlas/`. Deeper runbooks load only when relevant; the repository's coordination history is not part of the installed product.

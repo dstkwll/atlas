@@ -1,0 +1,12 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "atlas",
+  "description": "Software delivery guidance for your main agent: one skill with optional discovery, design, delivery, review, and continuity runbooks.",
+  "version": "0.1.0",
+  "repository": "https://github.com/dstkwll/atlas-successor",
+  "keywords": [
+    "skills",
+    "engineering",
+    "atlas"
+  ]
+}

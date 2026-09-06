@@ -2,7 +2,7 @@
 
 Read this file, `README.md`, and `project-memory/current.md` before substantive repository work. Inspect the actual remote, branch, HEAD and worktree; compare work-state observations with current Git and PR evidence. Preserve unrelated changes.
 
-Use [the Atlas lead contract](.agents/skills/atlas-lead/SKILL.md) as the main-session operating guidance. Read deeper references only for the present task. The portable skill owns enduring lead behavior; this file owns maintenance rules specific to this repository.
+Use [the Atlas lead contract](plugins/atlas/skills/atlas/SKILL.md) as the main-session operating guidance. Read deeper references only for the present task. The portable skill owns enduring lead behavior; this file owns maintenance rules specific to this repository.
 
 ## Authority and scope
 
