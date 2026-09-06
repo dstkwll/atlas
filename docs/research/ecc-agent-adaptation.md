@@ -1,10 +1,10 @@
 # ECC agent adaptation study
 
-Date: 2026-09-06. Atlas baseline: `0d85860a484182ab22b7890be2a3e7c893d85f0f`. Donor: all 68 installed ECC 2.2.1 agent prompts, identified by [source hashes](ecc-2.2.1-source-hashes.json). Upstream repository metadata identifies https://github.com/affaan-m/ECC. The supplied ECC_AGENTS_GUIDE.md helped select the source catalog; recommendations below came from the actual prompts, not the summaries alone. Two read-only researchers examined 24 review donors and 28 build/specialist donors; the primary inspected the remaining 16 and reconciled the findings.
+Source: all 68 agent prompts in [ECC](https://github.com/affaan-m/ECC) 2.2.1, reviewed on 2026-09-06. The supplied ECC_AGENTS_GUIDE.md identified the catalog; the adaptations below were based on the actual prompts.
 
 ## Decision and adaptation method
 
-The user authorized a broad deep dive and implementation, not merely the previously suggested first four references. The result is 17 specialist runbooks, a selective index, and narrow refinements to the four existing activity guides. This is a bounded implementation of the accepted main-agent model. A required worker roster, ordered workflow, tool subsystem or autonomous controller is incompatible with this adaptation and is not introduced.
+The adaptation adds 17 specialist runbooks, a selective index, and narrow refinements to the four existing activity guides. It preserves Atlas's main-agent model: the lead chooses relevant guidance and whether to work directly or delegate, without a required worker roster, ordered workflow or tool subsystem.
 
 Every runbook may guide direct work or an appropriately bounded worker. Independence is a property of the review assignment/context, not of a file name. The lead owns selection, integration and authority. Donor technical questions survive; donor personas, model choices, tool frontmatter, agent-to-agent routing, repeated security boilerplate and report schemas do not.
 
@@ -12,7 +12,7 @@ Generalization retains non-obvious failure mechanisms: missing runtime validatio
 
 Tool neutrality means using approved existing capabilities, not pretending every check can be completed without tools. No new scanner, browser, evaluator, runtime or documentation service is installed or required by Atlas. Missing access produces a bounded evidence gap. Framework/API/standards details must be checked against the actual version when relevant; this library is not a copied vendor manual.
 
-Dedicated network architecture/operations, clinical and campaign workflows remain useful future options with concrete triggers below. General transferable checks are retained now. This keeps the requested software-delivery purpose coherent without discarding the source research.
+Dedicated network architecture/operations, clinical and campaign workflows remain useful future options with concrete triggers below. General transferable checks are retained now. These remain outside the current software-delivery scope.
 
 ## Per-agent disposition
 
@@ -93,6 +93,4 @@ Destinations below are reference basenames under `plugins/atlas/skills/atlas/ref
 
 The shipped skill includes [third-party attribution and the ECC MIT notice](../../plugins/atlas/skills/atlas/THIRD_PARTY_NOTICES.md), so both plugin and standalone copies preserve the notice. The database source also credits Supabase; Atlas retains general integrity/measurement principles rather than copying vendor-specific SQL conventions.
 
-Do not automatically synchronize donor updates. A future source update is evidence to inspect and adapt against the same boundaries, then validate. The per-file hashes identify the reviewed snapshot; they are research evidence, not a workflow registry or runtime schema. Review a new specialized addition when an actual task or failure shows the existing reference is insufficient.
-
-The implementation and forward-test evidence are recorded in [runbook validation](../validation/specialist-runbooks.md). No claim is made that every supported language/framework or domain has been executed in a live host.
+Do not automatically synchronize donor updates. A future source update is evidence to inspect and adapt against the same boundaries, then validate. Review a new specialized addition when an actual task or failure shows the existing reference is insufficient.

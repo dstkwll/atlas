@@ -4,7 +4,7 @@ Date: 2026-09-06. Status: user-authorized implementation direction; merge is a s
 
 ## Decision
 
-Continue the existing clean-room successor as a standalone guide enacted by the host's main agent. ECC remains optional. The user authorized implementation and initial validation here because repeated work-environment experiments and feedback are difficult.
+Continue the existing clean-room successor as a standalone guide enacted by the host's main agent. External agent frameworks remain optional.
 
 Ship one portable `atlas-lead` skill with conditional references for discovery/design, delivery/repair, independent review, and continuity/decisions. Provide native file-copy setup for Copilot and a direct-file fallback. No installer, controller, agent roster, hooks, dependency resolver, or universal workflow. Packaging is a file-location choice, not a runtime abstraction.
 
@@ -17,7 +17,7 @@ The portable skill takes authority from its adopting project's instructions and 
 ## Dispositions
 
 - Already established: one coherent lead, optional activities, compact continuity, and autonomous converging correction within authority.
-- Accepted direction now: standalone package. A stock-ECC dependency has setup costs without a demonstrated missing capability.
+- Accepted direction now: standalone package. An external framework dependency has setup costs without a demonstrated missing capability.
 - Implementation choices: one skill, four references, native project-scoped paths, and documented setup. Adjust through normal use.
 - Deferred: a narrow deterministic mechanism after an objective failure that guidance and existing host/repository facilities cannot adequately prevent.
 - Rejected: another broad calibration campaign, fixed stage pipeline, mandatory reviewers for every edit, or a bulk copy of the architecture package.

@@ -1,8 +1,6 @@
 # Third-party notices
 
-The specialist runbooks and selected refinements to the core references adapt ideas and instructional material from ECC 2.2.1 (https://github.com/affaan-m/ECC), copyright 2026 Affaan Mustafa. Atlas consolidates and rewrites that material for optional, host-independent use. ECC is not a runtime or installation dependency. The ECC database reviewer also credits the Supabase team for PostgreSQL patterns; Atlas uses general data-integrity and measurement principles without copying that vendor-specific implementation.
-
-The ECC license follows and accompanies both standalone skill and plugin distribution.
+Portions of the runbook guidance are adapted from [ECC](https://github.com/affaan-m/ECC). The following notice accompanies plugin and standalone skill distributions.
 
 MIT License
 

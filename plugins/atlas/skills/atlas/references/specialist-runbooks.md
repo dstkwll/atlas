@@ -8,7 +8,7 @@ For a delegated task, provide the exact outcome/question, relevant source and ca
 
 Carry the [entrypoint's runbook notice rule](../SKILL.md) into the brief, including any further delegation: report actual runbook use and purpose, including self-selected additions, through available progress messages and in the return. The lead keeps these notices visible in the main conversation.
 
-Use existing approved project/host tools. No reference requires ECC, its commands, model choices or integrations. If a capability is absent, use a valid available method and state what it proves; do not silently substitute static inspection for execution or install tooling merely because a donor used it. A runbook grants no additional permissions. Keep work records in the project, outside this library.
+Use existing approved project/host tools. Runbooks prescribe no additional tools, models or integrations. If a capability is absent, use a valid available method and state what it proves; do not silently substitute static inspection for execution or install tooling merely because a reference mentions it. A runbook grants no additional permissions. Keep work records in the project, outside this library.
 
 | Technical question or trigger | Reference |
 | --- | --- |

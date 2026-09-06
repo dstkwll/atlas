@@ -1,6 +1,6 @@
 # Install and use Atlas
 
-Atlas guides the main agent you already use. Choose your organization's approved agent and model. The plugin contains one skill with core activity guides and optional specialist runbooks; it adds no scripts, service, hooks, MCP servers or ECC dependency.
+Atlas guides the main agent you already use. Choose your organization's approved agent and model. The plugin contains one skill with core activity guides and optional specialist runbooks; it adds no scripts, services, hooks or MCP servers.
 
 ## Copilot plugin installation
 

@@ -16,6 +16,6 @@ Work on a branch, review the final diff, preserve evidence, and return a draft P
 
 Treat instructional changes as behavior changes. Identify important behavior being retained, moved behind a trigger, or explicitly superseded. Check realistic outcomes with fresh independent review where authority or complex guidance makes producer bias material. Format checks do not prove judgment. Keep runtime tests for actual behavior; do not create validators of exact prose or headings.
 
-Keep product guidance self-contained and portable. Do not add ECC as a dependency, universal stages, workflow controllers, queues, schedulers, retry engines, schemas, compatibility systems or bulk architecture copies without an explicit accepted decision and demonstrated need. Native skill placement is packaging, not a runtime adapter.
+Keep product guidance self-contained and portable. Do not add external agent-framework dependencies, universal stages, workflow controllers, queues, schedulers, retry engines, schemas, compatibility systems or bulk architecture copies without an explicit accepted decision and demonstrated need. Native skill placement is packaging, not a runtime adapter.
 
 Update the compact current-state note when status, authority, proof or next action changes. Keep historical evidence and rationale in linked records rather than the startup context. Installed copies must not include this repository's maintenance instructions, active work state or historical publication authority.
