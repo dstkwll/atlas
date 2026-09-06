@@ -1,7 +1,7 @@
 {
   "README.md": "e93e226f0bf9e1cd145900b962fa5aa830063cc8477a9138f77f77c5f37924a6",
   "plugin.json": "3b6c32d1db4c017bd07766f12306dc6b43c85efbd394e73cb2783aa329342e5d",
-  "skills/atlas/SKILL.md": "d9bc52e4d43c86774016de973f34a7bf835f5266177673738f20921a44114e48",
+  "skills/atlas/SKILL.md": "27c67ed6264791da25a60207f6337df23743837635c05c2e58ef19cb96f3f02d",
   "skills/atlas/THIRD_PARTY_NOTICES.md": "4c6acafeb5faad9603912d3c1e32e765efb97ac9d890cfd671788b644e3f7aef",
   "skills/atlas/references/build-and-runtime-diagnosis.md": "cbe5a41d8805d7ec45d509f4e2868cf688ebe871a7ab9902662a0ac773eb38c3",
   "skills/atlas/references/client-state-checks.md": "caaa4da6c2c213589cf9603799a724fcc039f34d045422810cf15a56a0677d23",
@@ -20,7 +20,7 @@
   "skills/atlas/references/security-boundaries.md": "c59edca79aa85cb2fed5b8f9d9bb55790f7500b4e04bd4f4eaf55e5e2492e599",
   "skills/atlas/references/service-framework-checks.md": "2c5ae924ed7c165c1e6d87257106b2de0854bb4403ba069dc9393438c0c57880",
   "skills/atlas/references/simplify-and-clean.md": "0713f470a6610f3b9bb78ee54fbbcc6a5bfb0ee69bbc544dbbba8f9c65393f2a",
-  "skills/atlas/references/specialist-runbooks.md": "e2a4ed3417b7accd69dde76772ded3fb8ae960895a7831f2b04d0a42ec74299f",
+  "skills/atlas/references/specialist-runbooks.md": "2b39403d218c18ac337d9c5e79b82784bf92087f653531639bcd741a08761358",
   "skills/atlas/references/test-adequacy.md": "6440e0e19b4a6be69b1538eba9161cf43c7dfcc83a902f466f1fc3713a570139",
   "skills/atlas/references/types-and-invariants.md": "b07b5f19e3f44a30e2f94442b639034efcb608b9812ea0f508c154749bcd9558",
   "skills/atlas/references/understand-behavior.md": "daf30b29e083d700b2ca60ff58eb10e427f5b36e3567da664d23d4f3723f41dc",

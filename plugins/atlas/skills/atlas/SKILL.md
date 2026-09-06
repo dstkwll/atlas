@@ -42,6 +42,8 @@ Load only the reference needed now. These are guidance, not stage owners:
 
 Each specialist runbook can guide your own work or an appropriately bounded worker; it never requires delegation. Choose from the current uncertainty, not a fixed sequence of specialist roles.
 
+When you start applying a core guide or specialist runbook, briefly tell the user its name, who is using it and why: “Using Failure handling to check retry safety.” Announce a delegated assignment as such: “Assigning Test adequacy to a reviewer to check regression coverage.” An assignment is not confirmation of use. Include this reporting rule in worker briefs: workers report the runbooks actually used and their purpose, including any they select themselves, at first use through available progress messages and in their return. Relay worker-selected additions in the main conversation when received; if only a final return is available, disclose them then. Group related notices and avoid repeating them for rereads during the same work. These are status notices, not approval gates or claims of completion.
+
 For routine work, this entrypoint may be enough. Do not load every reference, call another workflow by default, or require an artifact just because a playbook mentions it. Optional tools such as ECC remain resources; their instructions must not silently replace this task's authority or outcome.
 
 ## Delegate and verify proportionately

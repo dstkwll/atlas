@@ -1,6 +1,6 @@
 # Specialist runbook validation
 
-Date: 2026-09-06. Baseline: `0d85860a484182ab22b7890be2a3e7c893d85f0f`. Candidate branch: `feat/specialist-runbooks`. [Product hashes](specialist-runbooks-product-hashes.json) identify the exact inspected package independently of later evidence/state-only commits.
+Date: 2026-09-06. Baseline: `0d85860a484182ab22b7890be2a3e7c893d85f0f`. Candidate branch: `feat/specialist-runbooks`. [Product hashes](specialist-runbooks-product-hashes.json) identify the current package, including the runbook notice follow-up below.
 
 ## Scope and requirements
 
@@ -21,10 +21,10 @@ The user requested a deep dive into useful ECC agents, adaptation to Atlas, addi
 - All skill-relative Markdown links: PASS.
 - Manifest and marketplace name/path/version agree at 0.2.0: PASS.
 - One skill entrypoint; no runtime dependency files, executables, hooks or model-specific configurations introduced.
-- Entrypoint: 1,044 words (baseline 999). Specialist index: 480 words. Entire skill including notices: 24 Markdown files / 9,831 words; this total is not startup context.
+- Entrypoint: 1,171 words (baseline 999). Specialist index: 520 words. Entire skill including notices: 24 Markdown files / 9,998 words; this total is not startup context.
 - Source inventory matches all 68 actual donor filenames and recorded SHA-256 hashes.
 - `git diff --check`: PASS.
-- Native Git-backed Copilot CLI 1.0.82 installation: PASS for product commit `e7c15f8b3a4d5b4fc84097961f97543510ae7dd9`. In a fresh disposable `COPILOT_HOME`, adding `dstkwll/atlas-successor#feat/specialist-runbooks` and installing `atlas@atlas-successor` discovered one enabled plugin at 0.2.0 and one enabled Atlas skill, with no discovery errors. All 26 installed files exactly matched the recorded product SHA-256 inventory, with no extra files. No existing user installation was changed.
+- Native Git-backed Copilot CLI 1.0.82 installation: PASS for product commit `e7c15f8b3a4d5b4fc84097961f97543510ae7dd9`. In a fresh disposable `COPILOT_HOME`, adding `dstkwll/atlas-successor#feat/specialist-runbooks` and installing `atlas@atlas-successor` discovered one enabled plugin at 0.2.0 and one enabled Atlas skill, with no discovery errors. All 26 installed files exactly matched the product SHA-256 inventory at that commit, with no extra files. No existing user installation was changed.
 
 ## Independent forward exercises
 
@@ -56,8 +56,14 @@ A fresh read-only reviewer inspected all 24 skill Markdown files, all relative l
 
 A separate follow-up audit verified that the research map accounts for all 68 donor filenames exactly once, that the recorded source hashes match, that adaptation destinations exist, and that sampled interpretations match the originals. It found no concrete issues.
 
-The implementation is published as [draft PR #6](https://github.com/dstkwll/atlas-successor/pull/6). Subsequent evidence/state-only commits preserve the product inventory above.
+The implementation is published as [draft PR #6](https://github.com/dstkwll/atlas-successor/pull/6). The initial independent reviews and native installation cover product commit `e7c15f8`; the notice follow-up below changes two guidance files and refreshes the current product inventory.
 
 ## Limits
 
 These are targeted agent-guidance exercises, not a benchmark or a guarantee. The library's language/framework, accessibility, security, database, model and release instructions have not each been executed against live projects. VS Code UI, authenticated Copilot model execution, real concurrency, production operations and workplace policy were not exercised. Missing capabilities remain explicit evidence gaps. No user data, credentials or workplace artifacts were used or exported.
+
+## Runbook notice follow-up
+
+Dan requested visibility when the main agent or a subagent uses a runbook. The entrypoint now requires a brief name/actor/purpose notice for core guides and specialist runbooks. Worker briefs carry the reporting rule, including further delegation. Workers report actual use and self-selected additions through available progress messages and their return; the lead relays additions in the main conversation. Assignment is distinguished from confirmed use. Repeated reads do not generate repeated notices, and notices introduce no approval gate.
+
+Validation: directly inspected the main-agent, delegated assignment, worker-selected addition, return-only host and repeated-read cases against the two edited guidance files. Skill format, relative links and diff whitespace checks pass; package inventory refreshed. This small instruction change has not had a fresh agent behavior exercise or a repeat native installation. Earlier behavior/install results retain their original scope; notice compliance is guidance, not instrumented telemetry.
