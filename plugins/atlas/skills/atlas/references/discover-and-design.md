@@ -10,6 +10,20 @@ For broad work, retain a low-fidelity view of the whole journey while deepening 
 
 Use collaborative design when taste or intent is forming, pressure-test apparent certainty, and investigate independently when the outcome is clear. Reflect a consequential interpretation before treating it as accepted. Select a diagram or comparison only when it improves the user's decision. The user should not have to choose a notation or internal method.
 
+## Maintain a living brief or specification
+
+For substantial or ambiguous work, default to a concise agent-readable brief before detailed implementation breakdown. Reuse an existing issue or design document when it already serves that purpose. A small clear fix can use its existing request and acceptance example; a bounded discovery probe need not wait for a finished specification. Create or expand a PRD when requested, required by the project, or useful for stakeholder agreement or handoff. Do not wait for the user to name an artifact when durable shared understanding is needed.
+
+A PRD explains the problem, intended users and outcomes; a specification makes observable behavior and constraints precise. They may be one document. Capture the relevant scope and exclusions, journeys, acceptance examples including important failure cases, constraints, assumptions and open questions. Add technical responsibilities, interfaces and tradeoffs where they affect the decision. Use a project template if required; otherwise omit sections that do not help a reader decide or implement. Separate accepted intent, agent proposals, discovered facts and provisional design. Drafting a requirement does not accept it or authorize implementation.
+
+Keep the whole outcome visible at low fidelity and make the next slice precise. Resolve questions that change that slice's outcome, acceptance or authority before dependent implementation; leave unrelated uncertainty open with an owner or next investigation. Derive implementation units from observable outcomes and their dependencies, not from document headings or a demand for a complete ticket tree. A useful brief can evolve through design, experiments and working software.
+
+## Co-design through a useful visual
+
+When co-design is requested and a polished view improves participation, generate a professional HTML view of the current journeys, architecture, alternatives, commitments and open questions. Use existing approved host capabilities and keep artifacts in the approved project environment; if HTML rendering is unavailable, provide a useful available representation and state the limitation. Do not introduce a hosting service or publish the view without authority.
+
+The HTML is a regenerable view of the agent-readable design, not a second source of truth. Distinguish alternatives and uncertain behavior from accepted choices. Record decisions made while discussing or interacting with the view in the underlying brief, then refresh the view when it matters to the next decision. A visual selection or polished mockup alone does not establish acceptance or permission to build.
+
 ## Ground changes in the existing system
 
 Trace the affected behavior through real code, data, configuration and integrations. Inspect relevant tests, operational assumptions, failure handling, history and compatibility obligations. Distinguish current behavior from intended contracts and local uncommitted changes. Do not inventory the entire system unless the decision needs it.
@@ -32,4 +46,4 @@ A probe answers one falsifiable question. A walking skeleton crosses the real en
 
 For a probe, state the hypothesis, success/failure signal and side-effect bounds before running. Record the result and its implication, including negative evidence. Disposable probe code becomes production code only through deliberate implementation and verification.
 
-Useful residue is a clear outcome, accepted constraints, provisional design, evidence, unresolved judgment and next action. Reuse existing issues, design notes or code when they already carry that meaning. No universal PRD, system design, ticket graph or diagram suite is required.
+Useful residue is a clear outcome, accepted constraints, provisional design, evidence, unresolved judgment and next action. Update the living brief as learning changes it, and preserve consequential choices through [continuity and decisions](continuity-and-decisions.md). No universal PRD, system design, ticket graph or diagram suite is required.

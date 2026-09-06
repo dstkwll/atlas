@@ -21,7 +21,7 @@ The installable product is [plugins/atlas](plugins/atlas); the standalone [Atlas
 
 The lead keeps accepted commitments separate from provisional choices. It can refine implementation as evidence arrives, correct ordinary defects within authority, and use independent review when the consequences warrant it. It maintains compact project-local continuity for work that needs to resume. A small clear fix can remain a small clear fix.
 
-You can work collaboratively on design or delegate a bounded result. Atlas does not require a PRD, ticket graph, fixed sequence of specialists, or review ceremony for every change. It never grants permission to publish, deploy, spend or merge.
+For substantial design, Atlas maintains a living brief, records meaningful decisions and develops the next usable slice in detail. It can expand that brief into a PRD or specification and produce an HTML view for co-design when useful. Small clear changes can proceed directly. Atlas does not require a ticket graph, fixed sequence of specialists or review ceremony for every change. It never grants permission to publish, deploy, spend or merge.
 
 The [specialist library](plugins/atlas/skills/atlas/references/specialist-runbooks.md) adds focused methods for technical questions such as failure handling, types, migrations, runtime bugs, accessibility and release preparation. Atlas decides whether to use a runbook itself or delegate a bounded task. No specialist sequence is mandatory.
 

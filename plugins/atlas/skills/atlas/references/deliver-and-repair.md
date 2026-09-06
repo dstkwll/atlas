@@ -6,6 +6,8 @@ Use when implementing a bounded outcome, investigating a defect, coordinating a 
 
 Choose the smallest integrated behavior that can be verified. Include the code, data, configuration and interface work that behavior actually needs. Inline enabling work unless an imminent consumer justifies separating it. Match the target project's style, dependencies and checks; do not add preferred tools or unrelated cleanup.
 
+Plan the next usable vertical slice in detail and keep later work coarse. Tie it to the intended outcome and acceptance examples in the brief or existing request; demonstrate the result and use evidence or user feedback to choose what comes next. Update the brief and remaining work when learning changes provisional design. Changes to accepted intent still need the applicable judgment. A spec supports this feedback loop; it does not freeze requirements or oblige completion of an obsolete task list. Use the team's cadence where one exists, without imposing sprints, story points or a new backlog system.
+
 For a bug, reproduce the incorrect behavior and identify the causal path before broad changes. Add a separating regression check when it protects meaningful behavior: it should expose the defect before the repair and pass afterward. For a trivial reversible text change, direct inspection or an existing check may suffice.
 
 Tests should exercise observable behavior and relevant failure modes, not merely mirror the implementation. Reuse the project's checks. Investigate a failing check before blaming the environment; distinguish existing failures from regressions with evidence. Never weaken an assertion or skip a required check just to obtain green output. Report unavailable dependencies as a bounded evidence gap.

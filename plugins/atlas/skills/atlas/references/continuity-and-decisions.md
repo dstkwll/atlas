@@ -14,6 +14,10 @@ Persist authority changes before any downstream action relies on them, including
 
 Keep the current view compact. Preserve a material superseded commitment and its rationale in an existing decision record or a short decision note when later work relies on it; do not erase it or accumulate a transcript. For a consequential user choice, record context, genuine options, recommendation/reasoning, the user's selected or introduced direction, and any rationale they actually supplied. Do not infer a general preference or taste profile.
 
+Distinguish an option the user chose from those offered, an alternative they introduced, an agent proposal still awaiting judgment, and a choice the agent made under delegated authority. Record who decided and the scope of acceptance; an unanswered recommendation is not consent. Preserve the relevant prompt or option wording when needed to interpret the choice. Do not invent missing options or rationale, or attribute an agent's assumption to the user.
+
+During substantial design, keep the current brief/specification up to date and append short material decision entries in that document or an existing decision log. A progress checkpoint records the meaningful result, what changed, evidence or unresolved questions, and the next action; do not log every tool call. The current-state note links to this design and history rather than duplicating them. Update the affected documents when accepted scope or behavior changes, preserving important superseded decisions and their rationale.
+
 ## Resume from evidence
 
 Inspect current project instructions, repository identity, branch/HEAD, worktree and applicable live PR/check state before relying on a note. Treat old status statements as observations to verify. Distinguish stale status from conflicting authority: a merge can obsolete a next-action note but does not grant permission for the next feature.
