@@ -10,11 +10,11 @@ The preceding portable package is complete: PR #4 merged at `b8280e8a1772a35a27a
 
 - Repository: `https://github.com/dstkwll/atlas-successor`.
 - Current inspected main/base: `b8280e8a1772a35a27abe20ceb1a40c61edbb92c`.
-- Working branch: `feat/copilot-plugin`.
+- Working branch: `feat/copilot-plugin`; published [draft PR #5](https://github.com/dstkwll/atlas-successor/pull/5).
 - Scope: native Copilot plugin and separate `atlas-successor` marketplace, one canonical skill directory, install/update/migration documentation, native package checks. The skill's operating behavior remains unchanged.
 - Product candidate: `plugins/atlas/`, with one `atlas` skill and four runbooks. The proposed skill rename changes only its frontmatter name and title.
 - Native proof: GitHub marketplace install from candidate `82458ca` succeeded, discovering one enabled Atlas plugin and one enabled Atlas skill with no errors. All installed product files match the candidate. Local-directory marketplace discovery has a documented host limitation; Git-backed installation is verified. VS Code UI and authenticated model behavior remain untested.
-- Next action: publish the reviewed packaging proposal as a draft PR and obtain the user's naming/merge decision. No merge authority for this change. Do not rerun initial behavioral experiments for unchanged guidance.
+- Next action: obtain the user's naming/merge decision on draft PR #5. No merge authority for this change. Do not rerun initial behavioral experiments for unchanged guidance.
 
 ## Commitments and evidence
 
