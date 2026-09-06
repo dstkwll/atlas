@@ -4,7 +4,9 @@
 
 On 2026-09-06 the user authorized advancing the successor from its bootstrap seed to a usable standalone lead package, including implementation and initial validation here. Work-environment feedback is costly; prepare a coherent first version that can improve naturally during real use. ECC is optional and the host's main agent remains the lead.
 
-This supersedes the bootstrap-only work boundary. It permits bounded repository updates, native skill packaging, local disposable behavioral exercises, ordinary corrections, working-branch publication, and a draft PR. It grants no workplace access, protected-data export, global installation, existing-Atlas mutation, publication beyond this repository's branch/PR, or merge.
+This supersedes the bootstrap-only work boundary. It permits bounded repository updates, native skill packaging, local disposable behavioral exercises, ordinary corrections, working-branch publication, and a draft PR. It grants no workplace access, protected-data export, global installation, existing-Atlas mutation, or unrelated publication.
+
+After the lead requested approval to finish the disposable local feature test and merge PR #4 if that check and final review pass, the user replied "sounds good" and asked about PRs #2 and #3 before merging #4. This supplies the requested fixture-edit and conditional merge approval. The prior automatic rejection remains historical evidence; any new tool rejection must still be honored. The user also selected Sol with low reasoning for bounded implementation while the primary lead retains architecture, review and corrections. This model choice belongs to this task, not the portable product.
 
 ## Repository and progress
 
@@ -14,8 +16,8 @@ This supersedes the bootstrap-only work boundary. It permits bounded repository 
 - Published draft: [PR #4](https://github.com/dstkwll/atlas-successor/pull/4). Product commit: `02e6732379f1892c99e63665772926a58fe9a095`; subsequent documentation checkpoint records publication without changing the evaluated skill.
 - Bootstrap PR #1 is merged; its old open/draft status was stale. Main also incorporates PR #2's role-neutral wording. This observation does not close historical Drive handoffs.
 - Task: the five-file portable package and Copilot setup are implemented. Independent package review found no actionable findings.
-- Evidence: [validation and limits](../docs/validation/portable-lead.md). Format, links, native CLI discovery, direct repair, authority reasoning, independent review and fresh repository-only resume checks completed. Native model execution lacks Copilot authentication; the delivery-fixture edit was rejected by automatic approval review and remains unverified.
-- Next action: obtain the required explicit approval for the blocked local delivery-fixture edit, then finish that exercise and record its actual result before considering merge. Draft publication is complete; do not reopen bootstrap PR #1 or create a duplicate package PR. Merge requires explicit user authority. Do not repeat the rejected edit or claim a full delivery pass.
+- Evidence: [validation and limits](../docs/validation/portable-lead.md). Format, links, native CLI discovery, direct repair, authority reasoning, independent review and fresh repository-only resume checks completed. Following approval, Sol completed the bounded delivery exercise; the primary independently verified four tests, five CLI cases and preservation of the copied skill and fixture data. Native model execution still lacks Copilot authentication.
+- Next action: review the final PR candidate, then merge PR #4 if that review passes. The approved local delivery check has passed. Do not reopen bootstrap PR #1 or create a duplicate package PR. Broader production behavior and authenticated host execution are not claimed.
 
 ## Commitments
 

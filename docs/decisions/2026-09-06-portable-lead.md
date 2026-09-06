@@ -10,7 +10,7 @@ Ship one portable `atlas-lead` skill with conditional references for discovery/d
 
 ## Authority and bounds
 
-This advances beyond the bootstrap's cold-start-only claim. Preserve accepted/provisional truth, human authority, evidence for exact claims, consequence-driven review, bounded correction, and durable authority transitions. Local edits, disposable evaluation fixtures, branch publication, and a draft PR are authorized. Workplace access, global installation, merge, and existing-Atlas mutation are not.
+This advances beyond the bootstrap's cold-start-only claim. Preserve accepted/provisional truth, human authority, evidence for exact claims, consequence-driven review, bounded correction, and durable authority transitions. Initial authority covered local edits, disposable evaluation fixtures, branch publication, and a draft PR. The user's subsequent fixture-edit confirmation and conditional merge approval for PR #4 are recorded in [current work](../../project-memory/current.md). Workplace access, global installation and existing-Atlas mutation remain outside this task.
 
 The portable skill takes authority from its adopting project's instructions and user assignment. It carries no publication permission from this repository. Product use requires neither personal Drive access nor historical Atlas handoffs.
 

@@ -6,7 +6,7 @@ Use [the Atlas lead contract](.agents/skills/atlas-lead/SKILL.md) as the main-se
 
 ## Authority and scope
 
-The current user assignment and accepted decisions govern the work. `project-memory/current.md` records the current assignment and authority, not independent permission. Git owns production bytes and history. The successor Drive package remains the architecture/decision source, with current explicit decisions recorded locally. Existing `dstkwll/atlas` remains canonical for its own product and is not changed or superseded by this repository.
+The current user assignment and accepted decisions govern the work. `project-memory/current.md` records the current assignment and authority, not independent permission. Git owns production bytes and history. The [successor Drive package](https://drive.google.com/drive/folders/1BZMwcqB81ZuvVdRlaSZoBDPwejfviLse) remains the architecture/decision source, with current explicit decisions recorded locally. Existing `dstkwll/atlas` remains canonical for its own product and is not changed or superseded by this repository.
 
 For consequential Atlas coordination, freshly read the root `AGENTS.md` and `README.md` in the [shared Atlas Drive folder](https://drive.google.com/drive/folders/121qIDFWJ-rqQy74r5pO2ZxYD1T_jHS-x) and applicable handoffs. If current controls or required authority cannot be fetched, finish safe local preparation and report the freshness blocker before consequential publication. These are maintainer obligations; never install them in another project as product requirements.
 
