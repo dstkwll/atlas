@@ -4,7 +4,7 @@ Atlas guides the main agent you already use. Choose your organization's approved
 
 ## Copilot plugin installation
 
-These repository commands apply once the plugin packaging is merged to `main`. Until then, use a local checkout of the candidate as described below.
+These repository commands apply once the plugin packaging is merged to `main`. To try the draft before merge, use `dstkwll/atlas-successor#feat/copilot-plugin` in the marketplace-add command instead. After merge, remove that branch pin by re-registering the marketplace from `dstkwll/atlas-successor` and update the plugin.
 
 For Copilot CLI:
 
