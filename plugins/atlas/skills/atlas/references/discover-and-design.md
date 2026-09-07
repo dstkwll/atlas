@@ -30,6 +30,8 @@ The HTML is a regenerable view of the agent-readable design, not a second source
 
 Keep the decision, relevant context, comparison and smallest useful visual together so the user can judge without hunting across the artifact. Check rendered readability on the intended device or a representative viewport, including a phone when relevant: labels, accepted/proposed status and consequences must remain legible. State what could not be checked; visual polish alone is not evidence of usability.
 
+Use [Diagram craft](diagram-craft.md) when a substantial diagram needs deliberate layout, source-preserving simplification or an exportable artifact. It is optional; a clear inline explanation or diagram needs no extra artifact.
+
 ## Ground changes in the existing system
 
 Trace the affected behavior through real code, data, configuration and integrations. Inspect relevant tests, operational assumptions, failure handling, history and compatibility obligations. Distinguish current behavior from intended contracts and local uncommitted changes. Do not inventory the entire system unless the decision needs it.
@@ -41,6 +43,8 @@ When behavior or caller reliance is unclear, use [behavior tracing](understand-b
 ## Make consequential design explicit
 
 Compare the few genuine options using the same criteria: user outcome, relevant quality attributes, responsibility and data ownership, cohesion/coupling, dependency direction, failure/recovery, operability, compatibility, reversibility, and ongoing cost. Focus on the properties that affect this decision. Respect accepted interfaces and boundaries; internal details can remain provisional.
+
+For a consequential interface choice, compare small usage sketches of the same representative caller task under genuine alternatives, including the existing design when viable. An interface includes everything the caller must know: invariants, ordering, errors, configuration, ownership and relevant performance guarantees. Show what each option hides, what the caller still coordinates, and where verification belongs. Fewer methods or a shorter call sequence is not automatically better if it hides necessary control or loses guarantees. Explore alternatives directly or through bounded workers when useful; no fixed number of designs or agents is required.
 
 Present the exact decision and why it matters now, fixed constraints, remaining uncertainty, recommendation, rationale and strongest counterargument together with the comparison. When judgment belongs to the user, state the practical consequences, what can continue and what must pause. Use plain language and only the visual that helps this choice; no fixed presentation format is required. Do not manufacture options when the constraints determine the answer. Record material accepted choices locally with their rationale and source of authority.
 

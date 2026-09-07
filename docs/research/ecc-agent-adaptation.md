@@ -101,6 +101,10 @@ The iterated-agent and control-loop skills remain future options for an explicit
 
 ## Provenance and maintenance
 
+The September 2026 follow-up adapts [Matt Pocock's architecture skills](https://github.com/mattpocock/skills/tree/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering) into Simplify and clean and Discover and design: prioritize demonstrated friction, use deletion as a thought experiment, and compare interfaces through representative caller tasks. It retains authority and compatibility boundaries rather than fixed vocabulary, adapter counts, mandatory parallel designs or automatic deletion of old tests.
+
+[Diagram Design](https://github.com/cathrynlavery/diagram-design/tree/3b446333f164174a571106673f943c58df282ff8) informs the optional Diagram craft runbook and HTML/SVG starter: preserve source meaning, keep connectors and labels readable, distinguish states and adapt to the destination. The starter uses embedded styles, system fonts and responsive HTML layout with decorative SVG arrows. No source parsers, validators, motion controllers, brand gates or fixed diagram quotas are imported. A diagram remains a view of the underlying design; consequential simplifications stay visible.
+
 The shipped skill includes [third-party attribution and MIT notices](../../plugins/atlas/skills/atlas/THIRD_PARTY_NOTICES.md), so both plugin and standalone copies preserve them. The ECC database source also credits Supabase; Atlas retains general integrity/measurement principles rather than copying vendor-specific SQL conventions.
 
 Do not automatically synchronize donor updates. A future source update is evidence to inspect and adapt against the same boundaries, then validate. Review a new specialized addition when an actual task or failure shows the existing reference is insufficient.

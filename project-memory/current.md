@@ -1,11 +1,9 @@
 # Current work
 
-[PR #6](https://github.com/dstkwll/atlas-successor/pull/6) is merged at `23b2efe`. Its specialist library, notices, living design guidance and five follow-on refinements are now on main; its validation history remains in the PR.
+[PR #7](https://github.com/dstkwll/atlas-successor/pull/7) remains a draft on `feat/visual-contract-guidance`, based on main at `23b2efe` (merged PR #6). It contains the HumanLayer refinements; their validation is summarized in the PR.
 
-Dan authorized three HumanLayer-inspired refinements and a draft PR: visual explanation choices, production contracts protected from fixture convenience, and concrete guidance triggers with verified deduplication. Work is on `feat/visual-contract-guidance` from that merged baseline. Existing runbooks are updated for version 0.2.1, with attribution in the existing [source adaptation record](../docs/research/ecc-agent-adaptation.md) and shipped notices. No automation infrastructure or new runbook is in scope.
+Dan additionally authorized the explained file-level proposal: focused architecture improvement guidance, caller usage comparisons, an optional Diagram craft runbook and a compact HTML/SVG starter. Extend this draft for version 0.3.0, keeping attribution in the existing source record and shipped notices. No donor frameworks, mandatory stages or installed-copy changes are in scope. Implementation and draft publication are authorized; merge still requires explicit authority.
 
-The implementation is in [draft PR #7](https://github.com/dstkwll/atlas-successor/pull/7). Skill format, Markdown paths/anchors, manifest agreement and whitespace checks passed. Fresh independent review found no defects; response exercises preserved external contracts, distinguished actual enforcement from naming lint, and avoided an unnecessary diagram. These are guidance checks, not runtime or rendering proof. User review is next. Merge and changes to installed copies require further authority; this task does not update installations.
+The additions are implemented. Static package, link/anchor, HTML reference and no-external-asset checks passed; fresh independent review and response exercises found no issues. Browser URL security blocked opening the local starter, so desktop/phone rendering, assistive technology and export remain unverified. Publish the updated draft, then await user review; installed copies remain unchanged.
 
-The follow-up requests about Matt Pocock's skills and diagram-design authorize source assessment; their candidate adaptations are not part of PR #7.
-
-Drive controls were refreshed on 2026-09-06: AGENTS modified `2026-08-25T15:07:14.356Z`, README modified `2026-08-25T15:07:26.672Z`. Refresh controls and inspect live Git/PR state before consequential work.
+Drive controls were refreshed on 2026-09-07: AGENTS modified `2026-08-25T15:07:14.356Z`, README modified `2026-08-25T15:07:26.672Z`. Refresh controls and inspect live Git/PR state before consequential work.
