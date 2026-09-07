@@ -6,15 +6,23 @@ Use when implementing a bounded outcome, investigating a defect, coordinating a 
 
 Choose the smallest integrated behavior that can be verified. Include the code, data, configuration and interface work that behavior actually needs. Inline enabling work unless an imminent consumer justifies separating it. Match the target project's style, dependencies and checks; do not add preferred tools or unrelated cleanup.
 
+Plan the next usable vertical slice in detail and keep later work coarse. Tie it to the intended outcome and acceptance examples in the brief or existing request; demonstrate the result and use evidence or user feedback to choose what comes next. Update the brief and remaining work when learning changes provisional design. Changes to accepted intent still need the applicable judgment. A spec supports this feedback loop; it does not freeze requirements or oblige completion of an obsolete task list. Use the team's cadence where one exists, without imposing sprints, story points or a new backlog system.
+
 For a bug, reproduce the incorrect behavior and identify the causal path before broad changes. Add a separating regression check when it protects meaningful behavior: it should expose the defect before the repair and pass afterward. For a trivial reversible text change, direct inspection or an existing check may suffice.
 
 Tests should exercise observable behavior and relevant failure modes, not merely mirror the implementation. Reuse the project's checks. Investigate a failing check before blaming the environment; distinguish existing failures from regressions with evidence. Never weaken an assertion or skip a required check just to obtain green output. Report unavailable dependencies as a bounded evidence gap.
 
 When implementation exposes a poor provisional choice, refine it and continue. If the change would alter accepted behavior, ownership, trust, risk, or a relied-on guarantee, preserve the discovery and return the smallest material decision.
 
+For a failing build/startup use [build diagnosis](build-and-runtime-diagnosis.md); for hidden or partial failure use [failure handling](failure-handling.md). Choose [test evidence](test-adequacy.md) from the claimed behavior. These references can inform direct work or a bounded worker; they do not create extra stages.
+
 ## Use workers selectively
 
 Give a worker enough context to act without inventing accepted judgment. State outcome, authoritative sources, allowed files/systems, authority, prohibited side effects, evidence and stopping/return conditions. Narrow the brief and permissions for a less capable worker. Avoid concurrent writers on the same work surface unless isolation and integration are clear.
+
+Select the relevant source sections and explain why each constrains this task; a pile of links is not a usable brief. Distinguish binding decisions from background evidence and identify what the worker may decide. Leave implementation reasoning to the worker within that boundary. Use the reconciled living brief when design spans multiple decisions.
+
+If the handoff relies on a particular validation command, check when possible that it runs in the intended environment and reaches the relevant assertion or known control case. A successful startup or smoke check establishes that the check can run, not that the proposed behavior is correct. Report missing access, setup failures and assertions not reached as evidence gaps; do not promise proof from an unusable check or weaken acceptance to fit it.
 
 Worker completion is a claim. Inspect the actual result and evidence, reconcile overlapping changes, and verify the integrated candidate. Reviewers report findings; they must not repair the work they judge. A worker's proposed scope expansion remains a proposal.
 

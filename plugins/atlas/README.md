@@ -1,6 +1,6 @@
 # Atlas
 
-Give your main agent a software goal. Atlas guides discovery, design, implementation, review and recovery as needed, with one skill and four optional runbooks. It needs no runtime dependencies, hooks, extra accounts or ECC installation.
+Give your main agent a software goal. Atlas guides discovery, design, implementation, review and recovery as needed, using one skill with core activity guides and optional specialist runbooks. It needs no runtime dependencies, hooks or extra accounts.
 
 In Copilot Agent mode, start a fresh chat and select the `atlas` skill from the `/` picker, then describe your goal. For example:
 

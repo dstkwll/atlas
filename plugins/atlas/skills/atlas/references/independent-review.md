@@ -16,6 +16,10 @@ Use the project's existing deterministic checks for objective properties. Inspec
 
 Return prioritized findings with exact locations, triggering conditions, affected behavior/contract, evidence, uncertainty, and verification not performed. Separate blockers from suggestions. Avoid style preferences, speculative future problems and required documentation whose only consumer is the review itself.
 
+For a specific risk, select a lens from the [specialist index](specialist-runbooks.md). Before reporting a defect, identify the triggering input/state and bad outcome, inspect callers and framework guards, and explain why existing protection is insufficient. Pattern matches and stylistic thresholds are not findings. A zero-finding result is valid; disclose important uncertainty rather than inventing severity or approval.
+
+When evaluating an agent report, compare its claims with the original assignment and actual artifacts; neither a confident narrative nor a numeric quality score proves completion.
+
 ## Integrate findings
 
 The lead verifies findings, removes duplicates, challenges unsupported claims, and owns the final synthesis. Independent reviewers are evidence sources, not a majority vote. Green checks cannot settle a semantic contradiction; a forceful reviewer assertion does not make a defect real.

@@ -2,7 +2,7 @@
 
 Atlas is a small software-lead guide for the agent you already use. Give the main agent a goal; it chooses useful investigation, design, implementation, review and repair, carries the architectural context, and returns for decisions that belong to you.
 
-The package contains one lead skill and four short, optional runbooks. It requires no ECC installation, added service, hook, orchestration runtime or connection to this project's Drive folder. Your existing host, tools and project rules remain in control.
+The package contains one lead skill, four core activity guides and an optional specialist runbook library. It requires no added service, hook, orchestration runtime or connection to this project's Drive folder. Your existing host, tools and project rules remain in control.
 
 ## Use it in your project
 
@@ -21,13 +21,17 @@ The installable product is [plugins/atlas](plugins/atlas); the standalone [Atlas
 
 The lead keeps accepted commitments separate from provisional choices. It can refine implementation as evidence arrives, correct ordinary defects within authority, and use independent review when the consequences warrant it. It maintains compact project-local continuity for work that needs to resume. A small clear fix can remain a small clear fix.
 
-You can work collaboratively on design or delegate a bounded result. Atlas does not require a PRD, ticket graph, fixed sequence of specialists, or review ceremony for every change. It never grants permission to publish, deploy, spend or merge.
+For substantial design, Atlas maintains a living brief, records meaningful decisions and develops the next usable slice in detail. It can expand that brief into a PRD or specification and produce an HTML view for co-design when useful. Small clear changes can proceed directly. Atlas does not require a ticket graph, fixed sequence of specialists or review ceremony for every change. It never grants permission to publish, deploy, spend or merge.
+
+The [specialist library](plugins/atlas/skills/atlas/references/specialist-runbooks.md) adds focused methods for technical questions such as failure handling, types, migrations, runtime bugs, accessibility and release preparation. Atlas decides whether to use a runbook itself or delegate a bounded task. No specialist sequence is mandatory.
+
+[Source provenance and adaptation](docs/research/ecc-agent-adaptation.md) records the library's origins and design choices.
 
 ## Scope and evidence
 
 This release advances the original three-file bootstrap into a reusable delivery package. The original bootstrap is merged; existing `dstkwll/atlas` remains a separate product. The package is intended for ordinary software work, with risk-linked assurance. It is not a guarantee of autonomous correctness or workplace-host compatibility.
 
-[Validation evidence](docs/validation/portable-lead.md) distinguishes what was actually exercised from static checks and behavior still unverified. Work-environment details do not need to be exported to use or improve the guide locally.
+Validation results and limits accompany each pull request. Work-environment details do not need to be exported to use or improve the guide locally.
 
 ## Maintain this package
 

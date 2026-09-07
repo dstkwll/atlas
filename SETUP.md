@@ -1,6 +1,6 @@
 # Install and use Atlas
 
-Atlas guides the main agent you already use. Choose your organization's approved agent and model. The plugin contains one skill and four optional runbooks; it adds no scripts, service, hooks, MCP servers or ECC dependency.
+Atlas guides the main agent you already use. Choose your organization's approved agent and model. The plugin contains one skill with core activity guides and optional specialist runbooks; it adds no scripts, services, hooks or MCP servers.
 
 ## Copilot plugin installation
 
@@ -57,7 +57,7 @@ If the skill is unavailable, report that instead of claiming Atlas is active.
 
 ## Local or restricted installation
 
-Transfer the complete `plugins/atlas/` directory through an approved route. Keep its `plugin.json`, `skills/atlas/SKILL.md` and four references together. Do not transfer repository maintenance instructions, project memory or work data.
+Transfer the complete `plugins/atlas/` directory through an approved route. Keep its `plugin.json`, complete `skills/atlas/` directory and third-party notices together. Do not transfer repository maintenance instructions, project memory or work data.
 
 For VS Code, add its absolute directory to the existing `chat.pluginLocations` map with value `true`. Example on Windows (use your actual path):
 
