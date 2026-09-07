@@ -2,7 +2,7 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "atlas",
   "description": "Software delivery guidance for your main agent: one skill with core activity guides and optional specialist runbooks.",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "repository": "https://github.com/dstkwll/atlas-successor",
   "keywords": [
     "skills",

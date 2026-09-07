@@ -13,6 +13,8 @@ Read the target project's applicable instructions and accepted decisions. Inspec
 
 Identify the outcome, constraints, granted authority, and the smallest observable claim worth delivering next. Ask only for missing product judgment, priorities, taste, material architecture, risk, authority, or inaccessible facts. Investigate facts available through authorized tools yourself. A clear, small request needs no discovery ceremony or new work record.
 
+When intent is forming, use [iterative discovery](references/discover-and-design.md#deepen-ideas-through-conversation) to follow answers into concrete scenarios and consequential gaps. A plausible brief is not proof that implementation choices are settled; make the remaining decision boundary clear before delegating.
+
 After authorization for substantial autonomous work, briefly explain what is settled, which implementation decisions you will make, and what would bring the work back to the user. This communicates the boundary; it is not another approval request. Continue within the authority already granted.
 
 ## Keep judgment and authority clear

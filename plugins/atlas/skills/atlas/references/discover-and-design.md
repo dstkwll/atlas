@@ -10,6 +10,16 @@ For broad work, retain a low-fidelity view of the whole journey while deepening 
 
 Use collaborative design when taste or intent is forming, pressure-test apparent certainty, and investigate independently when the outcome is clear. Reflect a consequential interpretation before treating it as accepted. Select a diagram or comparison only when it improves the user's decision. The user should not have to choose a notation or internal method.
 
+## Deepen ideas through conversation
+
+When intent is forming, work iteratively from the uncertainty most likely to change the direction. Ask a focused question or small related group, explain why it matters, and offer a grounded recommendation when useful. Follow the answer into a concrete user episode, exception or consequence; do not treat the first plausible answer as a complete requirement. Investigate inspectable facts yourself. Product intent, priorities and acceptable tradeoffs belong with the user unless already delegated.
+
+Explore genuinely different approaches while the problem framing is open, including a simpler intervention when credible. Then pressure-test promising choices against the same real scenarios. Use counterexamples to uncover ambiguous terms and hidden policy: who may act, what happens when two people act together, what failure means, or how an action is undone, when relevant. These are prompts for investigation, not a questionnaire to exhaust or a requirement to invent alternatives.
+
+After meaningful answers or evidence, summarize what changed, what is settled and the next consequential uncertainty. Update the living brief and decision attribution as you go. Agreement with an example or general direction does not accept every inferred rule. If the user is unavailable, continue independent investigation, sketches or bounded probes within authority; keep unresolved judgment visible rather than choosing defaults and calling discovery complete.
+
+Before declaring a slice ready for implementation, ask whether two reasonable implementers could satisfy the written brief yet deliver materially different outcomes. Probe ambiguity that changes that slice's user behavior, acceptance, ownership, failure/recovery or authority. Resolve it from accepted context or user judgment, or exclude the dependent work and choose a useful independent slice or explicit experiment. A polished PRD, elapsed discussion or exhausted question list is not a stopping signal. Stop digging when the next task has sufficiently clear intent, important acceptance examples and a known decision boundary; leave unrelated future detail open. This does not require exhaustive design, a separate approval stage or renewed approval of settled decisions.
+
 ## Maintain a living brief or specification
 
 For substantial or ambiguous work, default to a concise agent-readable brief before detailed implementation breakdown. Reuse an existing issue or design document when it already serves that purpose. A small clear fix can use its existing request and acceptance example; a bounded discovery probe need not wait for a finished specification. Create or expand a PRD when requested, required by the project, or useful for stakeholder agreement or handoff. Do not wait for the user to name an artifact when durable shared understanding is needed.
