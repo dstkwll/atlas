@@ -20,7 +20,9 @@ Keep the whole outcome visible at low fidelity and make the next slice precise. 
 
 Before substantial implementation or handoff, read the relevant brief afresh against the material decisions it should express. Supersede obsolete requirements, expose contradictions, and keep proposed details distinct from accepted intent. Reconcile affected acceptance examples and visuals as well as prose; do not silently choose between conflicting commitments. Use a fresh independent reader when ambiguity or consequences warrant it, without making every brief pass a separate review stage.
 
-## Co-design through a useful visual
+## Explain and co-design through a useful visual
+
+Choose the representation from what the reader needs to understand. Pseudocode can explain a rule, a call tree execution order, a component or shallow file tree ownership, and a sequence or flow diagram interactions across boundaries. A small before/after view can isolate a change; include enough surrounding context to preserve meaning and order. Use actual names and distinguish inspected behavior from proposed behavior. A short inline explanation may be sufficient; richer UI or dense comparisons can benefit from HTML. These are choices, not a required visual suite.
 
 When co-design is requested and a polished view improves participation, generate a professional HTML view of the current journeys, architecture, alternatives, commitments and open questions. Use existing approved host capabilities and keep artifacts in the approved project environment; if HTML rendering is unavailable, provide a useful available representation and state the limitation. Do not introduce a hosting service or publish the view without authority.
 

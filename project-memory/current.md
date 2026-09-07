@@ -1,11 +1,9 @@
 # Current work
 
-[PR #6](https://github.com/dstkwll/atlas-successor/pull/6) is a draft on `feat/specialist-runbooks`, based on main at `0d85860`. It adds 17 optional specialist runbooks, a selective index, and brief notices identifying which guide an agent or worker uses and why.
+[PR #6](https://github.com/dstkwll/atlas-successor/pull/6) is merged at `23b2efe`. Its specialist library, notices, living design guidance and five follow-on refinements are now on main; its validation history remains in the PR.
 
-Implementation and draft publication are authorized. Merge and updates to existing installations require new authority. The installed Atlas skill remains the version from merged PR #5.
+Dan authorized three HumanLayer-inspired refinements and a draft PR: visual explanation choices, production contracts protected from fixture convenience, and concrete guidance triggers with verified deduplication. Work is on `feat/visual-contract-guidance` from that merged baseline. Existing runbooks are updated for version 0.2.1, with attribution in the existing [source adaptation record](../docs/research/ecc-agent-adaptation.md) and shipped notices. No automation infrastructure or new runbook is in scope.
 
-Dan approved all five follow-on refinements, now implemented in the existing core guides: decision presentation, reconsideration triggers, brief/decision reconciliation, risk-first probes, and worker context with runnable validation. Static checks and a fresh independent text review with scenario application passed; execution and rendering were not exercised. No new workflow framework or evidence inventory was added.
-
-The library is self-contained and uses the host's existing capabilities. One [provenance document](../docs/research/ecc-agent-adaptation.md) records source adaptations; the package retains the required license notice. Validation results and limits are summarized in the PR, including local direct/delegated notice checks and an entrypoint-only task at `c93fbff`. The stale decision reference, specialist-scope clarification, marketplace descriptions and protected-artifact wording are corrected. Design guidance now covers living briefs/PRDs, HTML co-design views, explicit decision attribution and incremental delivery. Review is pending.
+Skill format, Markdown paths/anchors, manifest agreement and whitespace checks passed. Fresh independent review found no defects; response exercises preserved external contracts, distinguished actual enforcement from naming lint, and avoided an unnecessary diagram. These are guidance checks, not runtime or rendering proof. Draft publication and user review are next. Merge and changes to installed copies require further authority; this task does not update installations.
 
 Drive controls were refreshed on 2026-09-06: AGENTS modified `2026-08-25T15:07:14.356Z`, README modified `2026-08-25T15:07:26.672Z`. Refresh controls and inspect live Git/PR state before consequential work.

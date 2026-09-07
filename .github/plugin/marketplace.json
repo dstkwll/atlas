@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "The lightweight Atlas successor",
-    "version": "0.2.0"
+    "version": "0.2.1"
   },
   "plugins": [
     {
       "name": "atlas",
       "source": "./plugins/atlas",
       "description": "Software delivery guidance for your main agent: one skill with core activity guides and optional specialist runbooks.",
-      "version": "0.2.0"
+      "version": "0.2.1"
     }
   ]
 }

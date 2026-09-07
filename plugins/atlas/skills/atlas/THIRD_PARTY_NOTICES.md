@@ -1,10 +1,12 @@
 # Third-party notices
 
-Portions of the runbook guidance are adapted from [ECC](https://github.com/affaan-m/ECC). The following notice accompanies plugin and standalone skill distributions.
+Portions of the runbook guidance are adapted from [ECC](https://github.com/affaan-m/ECC) and [HumanLayer skills](https://github.com/humanlayer/skills). HumanLayer adaptations concern visual explanation, type contracts and instruction maintenance. Both sources use the following MIT license; these notices accompany plugin and standalone skill distributions.
 
 MIT License
 
 Copyright (c) 2026 Affaan Mustafa
+
+Copyright (c) 2026 HumanLayer
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

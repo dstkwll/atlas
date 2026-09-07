@@ -6,6 +6,8 @@ Use for reactive UI changes where state identity, asynchronous updates, renderin
 
 Check stable hook order, dependencies and stale closures. Trace effects through setup/cleanup and changing inputs, including responses arriving out of order. Confirm list identity preserves the intended item state when entries reorder. Inspect server/client boundaries for forbidden imports, leaked data, per-request isolation and hydration determinism. Do not add memoization or copy props into state without evidence it solves the actual problem.
 
+For prop changes, use [types and invariants](types-and-invariants.md) to distinguish supported states from fixture convenience. An enabled action needs a working handler; if unavailability is legitimate, represent the intended disabled or hidden state rather than silently doing nothing through an optional callback. Trace shared child props and consuming packages before narrowing, preserve legitimate null values, and check both types and relevant interaction behavior.
+
 ## Vue and Nuxt
 
 Distinguish reactive sources from snapshots, watcher inputs from captured values, and readonly props from writable state. Check watcher/subscription cleanup, computed dependencies and stable list identity. Trace SSR state and public configuration per request. Version-specific reactivity behavior needs verification before declaring destructuring or an update pattern incorrect.
