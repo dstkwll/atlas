@@ -16,6 +16,8 @@ Keep the current view compact. Preserve a material superseded commitment and its
 
 Distinguish an option the user chose from those offered, an alternative they introduced, an agent proposal still awaiting judgment, and a choice the agent made under delegated authority. Record who decided and the scope of acceptance; an unanswered recommendation is not consent. Preserve the relevant prompt or option wording when needed to interpret the choice. Do not invent missing options or rationale, or attribute an agent's assumption to the user.
 
+When a material decision depends on a concrete assumption, add a brief reconsideration trigger if it will help later judgment: for example, revisit synchronous processing if measured latency exceeds the agreed response budget. Use actual assumptions and agreed limits, not invented thresholds or a required field on every decision. When the trigger occurs, record the evidence and bring back the affected judgment; it does not itself authorize changing an accepted commitment. Provisional implementation choices remain refinable within delegated authority.
+
 During substantial design, keep the current brief/specification up to date and append short material decision entries in that document or an existing decision log. A progress checkpoint records the meaningful result, what changed, evidence or unresolved questions, and the next action; do not log every tool call. The current-state note links to this design and history rather than duplicating them. Update the affected documents when accepted scope or behavior changes, preserving important superseded decisions and their rationale.
 
 ## Resume from evidence

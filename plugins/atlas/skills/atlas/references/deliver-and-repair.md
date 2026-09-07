@@ -20,6 +20,10 @@ For a failing build/startup use [build diagnosis](build-and-runtime-diagnosis.md
 
 Give a worker enough context to act without inventing accepted judgment. State outcome, authoritative sources, allowed files/systems, authority, prohibited side effects, evidence and stopping/return conditions. Narrow the brief and permissions for a less capable worker. Avoid concurrent writers on the same work surface unless isolation and integration are clear.
 
+Select the relevant source sections and explain why each constrains this task; a pile of links is not a usable brief. Distinguish binding decisions from background evidence and identify what the worker may decide. Leave implementation reasoning to the worker within that boundary. Use the reconciled living brief when design spans multiple decisions.
+
+If the handoff relies on a particular validation command, check when possible that it runs in the intended environment and reaches the relevant assertion or known control case. A successful startup or smoke check establishes that the check can run, not that the proposed behavior is correct. Report missing access, setup failures and assertions not reached as evidence gaps; do not promise proof from an unusable check or weaken acceptance to fit it.
+
 Worker completion is a claim. Inspect the actual result and evidence, reconcile overlapping changes, and verify the integrated candidate. Reviewers report findings; they must not repair the work they judge. A worker's proposed scope expansion remains a proposal.
 
 ## Correct without turning every defect into a user decision
