@@ -4,6 +4,6 @@
 
 Dan additionally authorized the explained file-level proposal: focused architecture improvement guidance, caller usage comparisons, an optional Diagram craft runbook and a compact HTML/SVG starter. Extend this draft for version 0.3.0, keeping attribution in the existing source record and shipped notices. No donor frameworks, mandatory stages or installed-copy changes are in scope. Implementation and draft publication are authorized; merge still requires explicit authority.
 
-The additions are implemented. Static package, link/anchor, HTML reference and no-external-asset checks passed; fresh independent review and response exercises found no issues. Browser URL security blocked opening the local starter, so desktop/phone rendering, assistive technology and export remain unverified. Publish the updated draft, then await user review; installed copies remain unchanged.
+The additions are published in draft PR #7 for user review. Static package, link/anchor, HTML reference and no-external-asset checks passed; fresh independent review and response exercises found no issues. Browser URL security blocked opening the local starter, so desktop/phone rendering, assistive technology and export remain unverified. Installed copies remain unchanged.
 
 Drive controls were refreshed on 2026-09-07: AGENTS modified `2026-08-25T15:07:14.356Z`, README modified `2026-08-25T15:07:26.672Z`. Refresh controls and inspect live Git/PR state before consequential work.
