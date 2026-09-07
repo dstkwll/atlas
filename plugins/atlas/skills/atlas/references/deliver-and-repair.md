@@ -20,6 +20,8 @@ For a failing build/startup use [build diagnosis](build-and-runtime-diagnosis.md
 
 Give a worker enough context to act without inventing accepted judgment. State outcome, authoritative sources, allowed files/systems, authority, prohibited side effects, evidence and stopping/return conditions. Narrow the brief and permissions for a less capable worker. Avoid concurrent writers on the same work surface unless isolation and integration are clear.
 
+Name the isolation the assignment actually needs and what the host supplies. Fresh context supports independent judgment; a separate worktree or write surface prevents concurrent file collisions; host permissions or a security sandbox constrain access. One does not imply the others merely because a tool calls a session or workspace isolated.
+
 Select the relevant source sections and explain why each constrains this task; a pile of links is not a usable brief. Distinguish binding decisions from background evidence and identify what the worker may decide. Leave implementation reasoning to the worker within that boundary. Use the reconciled living brief when design spans multiple decisions.
 
 Before delegating substantial implementation, apply the [discovery readiness check](discover-and-design.md#deepen-ideas-through-conversation) to the assigned slice. Carry the intended behavior, important success/failure examples, settled responsibilities, known unknowns and the worker's allowed choices into its brief. Do not bury unresolved product or architecture judgment inside an implementation task as "use sensible defaults." Match task size and specificity to the worker's demonstrated capability and available context; a model label alone is not evidence that it can resolve ambiguity safely.
@@ -29,6 +31,8 @@ Tell workers to return a newly uncovered consequential choice to the lead with t
 If the handoff relies on a particular validation command, check when possible that it runs in the intended environment and reaches the relevant assertion or known control case. A successful startup or smoke check establishes that the check can run, not that the proposed behavior is correct. Report missing access, setup failures and assertions not reached as evidence gaps; do not promise proof from an unusable check or weaken acceptance to fit it.
 
 Worker completion is a claim. Inspect the actual result and evidence, reconcile overlapping changes, and verify the integrated candidate. Reviewers report findings; they must not repair the work they judge. A worker's proposed scope expansion remains a proposal.
+
+If a worker is interrupted or its return is unusable, first distinguish a report-only failure from an incorrect implementation, an environment/dependency failure, and execution whose effects are unknown. Establish liveness and effect uncertainty before retrying or cleaning up. Preserve recoverable changes, failure output and proof, and carry already-tried remedies into the correction; a malformed report must not replay a successful mutation, and a failed dependency must not trigger an identical blind retry. Remove an ephemeral workspace only after confirming that needed work and evidence have been retained.
 
 ## Correct without turning every defect into a user decision
 

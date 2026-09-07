@@ -8,6 +8,8 @@ Give a fresh reviewer the outcome under review, applicable commitments, exact ca
 
 The reviewer establishes which requirements apply before treating an absent artifact as a defect. Missing required evidence is a finding, never something the reviewer should manufacture. Review must not modify the candidate or grant product, risk, publication or merge authority.
 
+For an ambiguous bug or repeated failed repair, derive the required behavior and at least one discriminating example from the original issue, accepted amendments and inspected system before reading the producer's causal story in depth. Then test that story and candidate against the evidence. Do not require one privileged deepest function or invent an oracle for unstated user judgment; expose unresolved intent instead.
+
 ## Examine behavior and consequences
 
 Trace relevant success and failure paths. Check accepted contracts, neighboring behavior, input and trust boundaries, state/data ownership, concurrency, recovery, migration, and operational effects only where applicable. In stateful or evidence-composing code, actively challenge combinations of states that could produce an incorrect success claim or bypass a boundary. Happy-path tests and isolated field checks may miss those combinations.
@@ -18,7 +20,7 @@ Return prioritized findings with exact locations, triggering conditions, affecte
 
 For a specific risk, select a lens from the [specialist index](specialist-runbooks.md). Before reporting a defect, identify the triggering input/state and bad outcome, inspect callers and framework guards, and explain why existing protection is insufficient. Pattern matches and stylistic thresholds are not findings. A zero-finding result is valid; disclose important uncertainty rather than inventing severity or approval.
 
-When evaluating an agent report, compare its claims with the original assignment and actual artifacts; neither a confident narrative nor a numeric quality score proves completion.
+When evaluating an agent report, compare its claims with the original assignment, accepted amendments and actual artifacts; neither a confident narrative nor a numeric quality score proves completion.
 
 ## Integrate findings
 
