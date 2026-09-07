@@ -1,0 +1,124 @@
+<!doctype html>
+<!--
+Optional example: replace the subject, nodes, relationships and caption together.
+Use unique IDs when embedding multiple copies. This is a simple flow, not a
+general graph layout engine. Adapt or replace the layout for another question.
+
+Diagram guidance adapted from https://github.com/cathrynlavery/diagram-design
+MIT License
+Copyright (c) 2025 Cathryn Lavery
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Successful submission — illustrative flow</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f7f8fa;
+      --surface: #ffffff;
+      --ink: #172b3a;
+      --muted: #485e6b;
+      --line: #506777;
+      --border: #b8c7d1;
+      --accent: #175b70;
+      --tint: #eaf3f5;
+      font-family: system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: clamp(1rem, 4vw, 3rem); background: var(--paper); color: var(--ink); }
+    main { max-width: 70rem; margin-inline: auto; }
+    .eyebrow { color: var(--accent); font-size: .8rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    h1 { margin: .5rem 0 .75rem; font-size: clamp(1.8rem, 4vw, 2.7rem); line-height: 1.15; }
+    .summary, figcaption { max-width: 65ch; color: var(--muted); line-height: 1.6; }
+    figure { margin: 2rem 0 0; }
+    .flow { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+    .flow > li { min-width: 0; }
+    .node { height: 100%; padding: 1.3rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--surface); overflow-wrap: anywhere; }
+    .node.focus { border: 2px solid var(--accent); background: var(--tint); }
+    .step { color: var(--muted); font-size: .85rem; }
+    h2 { margin: .55rem 0; font-size: 1.15rem; }
+    .node p { margin: 0; line-height: 1.5; }
+    .edge { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .3rem; padding: .65rem; color: var(--muted); font-size: .85rem; text-align: center; }
+    .edge svg { display: block; width: 2rem; height: 2rem; color: var(--line); }
+    .with-edge { display: grid; grid-template-rows: auto 1fr; }
+    figcaption { margin-top: 1.5rem; }
+    @media (min-width: 48rem) {
+      .flow { grid-template-columns: 1fr 1.4fr 1.4fr; align-items: stretch; }
+      .with-edge { grid-template-columns: 5rem minmax(0, 1fr); grid-template-rows: auto; }
+      .edge svg { transform: rotate(-90deg); }
+    }
+    @media print {
+      body { padding: 0; background: white; }
+      figure { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">Illustrative example · success path</p>
+      <h1 id="submission-heading">Validate before storing</h1>
+      <p class="summary">A request reaches storage only after validation succeeds.</p>
+    </header>
+    <figure aria-labelledby="submission-heading" aria-describedby="submission-caption">
+      <!-- The ordered list and caption carry meaning; arrows are decorative. -->
+      <ol class="flow" role="list">
+        <li>
+          <section class="node">
+            <span class="step">01 · Input</span>
+            <h2>Receive request</h2>
+            <p>Collect the submitted fields.</p>
+          </section>
+        </li>
+        <li class="with-edge">
+          <div class="edge" aria-hidden="true">
+            <span>submit</span>
+            <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+              <path d="M16 3v24m-7-7 7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <section class="node focus">
+            <span class="step">02 · Check</span>
+            <h2>Validate request</h2>
+            <p>Check the required fields and supported values.</p>
+          </section>
+        </li>
+        <li class="with-edge">
+          <div class="edge" aria-hidden="true">
+            <span>valid</span>
+            <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+              <path d="M16 3v24m-7-7 7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <section class="node">
+            <span class="step">03 · Effect</span>
+            <h2>Store request</h2>
+            <p>Persist the validated fields.</p>
+          </section>
+        </li>
+      </ol>
+      <figcaption id="submission-caption">Read in order: receive the request, validate it, then store it only if valid. This illustrative view shows the success path; rejection and storage-failure handling are not shown. It does not describe an inspected application.</figcaption>
+    </figure>
+  </main>
+</body>
+</html>

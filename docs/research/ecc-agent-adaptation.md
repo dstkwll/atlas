@@ -1,4 +1,4 @@
-# ECC agent adaptation study
+# Runbook source adaptations
 
 Source: all 68 agent prompts in [ECC](https://github.com/affaan-m/ECC) 2.2.1, reviewed on 2026-09-06. The supplied ECC_AGENTS_GUIDE.md identified the catalog; the adaptations below were based on the actual prompts.
 
@@ -89,8 +89,22 @@ Destinations below are reference basenames under `plugins/atlas/skills/atlas/ref
 | opensource-sanitizer | release-preparation; security-boundaries | Independent exact-artifact exposure review including relevant history | No one-commit proof, regex certainty or secret-value reproduction |
 | opensource-packager | release-preparation; documentation-and-references | Fresh-consumer install, actual prerequisites and useful package docs | No forced setup script/instruction file/templates or implied licensing choice |
 
+## HumanLayer refinements
+
+Reviewed the five [HumanLayer skills](https://github.com/humanlayer/skills/tree/3c2629142c5d437428269b1b722b08c0b87f574d) and selected automation references on 2026-09-06. Three bounded adaptations extend existing runbooks:
+
+- `show-me`: representation choices for visual explanations in Discover and design, linked from behavior tracing. Preserve relevant context and distinguish inspected from proposed behavior; no compulsory HTML artifact.
+- `narrow-react-prop-types`: fixture convenience must not weaken production contracts, with a React application in Client state. Correct the donor's reliance on observed callers alone: accepted requirements and supported external consumers govern what may be narrowed.
+- `improve-claude-md`: concrete relevance triggers and selective deduplication in Guidance improvement. Verify actual tool enforcement before removing guidance; retain accepted obligations and useful rationale. Do not import the host-specific XML convention or unverified adherence claims.
+
+The iterated-agent and control-loop skills remain future options for an explicitly requested recurring maintenance task with measurable outcomes and review capacity. No workflows, iteration scripts, scheduled agents or automatic policy learning are imported. The refinements add no runbooks or runtime dependencies.
+
 ## Provenance and maintenance
 
-The shipped skill includes [third-party attribution and the ECC MIT notice](../../plugins/atlas/skills/atlas/THIRD_PARTY_NOTICES.md), so both plugin and standalone copies preserve the notice. The database source also credits Supabase; Atlas retains general integrity/measurement principles rather than copying vendor-specific SQL conventions.
+The September 2026 follow-up adapts [Matt Pocock's architecture skills](https://github.com/mattpocock/skills/tree/3cca18b368ae95cdbdebbff572ccafa662551015/skills/engineering) into Simplify and clean and Discover and design: prioritize demonstrated friction, use deletion as a thought experiment, and compare interfaces through representative caller tasks. It retains authority and compatibility boundaries rather than fixed vocabulary, adapter counts, mandatory parallel designs or automatic deletion of old tests.
+
+[Diagram Design](https://github.com/cathrynlavery/diagram-design/tree/3b446333f164174a571106673f943c58df282ff8) informs the optional Diagram craft runbook and HTML/SVG starter: preserve source meaning, keep connectors and labels readable, distinguish states and adapt to the destination. The starter uses embedded styles, system fonts and responsive HTML layout with decorative SVG arrows. No source parsers, validators, motion controllers, brand gates or fixed diagram quotas are imported. A diagram remains a view of the underlying design; consequential simplifications stay visible.
+
+The shipped skill includes [third-party attribution and MIT notices](../../plugins/atlas/skills/atlas/THIRD_PARTY_NOTICES.md), so both plugin and standalone copies preserve them. The ECC database source also credits Supabase; Atlas retains general integrity/measurement principles rather than copying vendor-specific SQL conventions.
 
 Do not automatically synchronize donor updates. A future source update is evidence to inspect and adapt against the same boundaries, then validate. Review a new specialized addition when an actual task or failure shows the existing reference is insufficient.

@@ -20,13 +20,17 @@ Keep the whole outcome visible at low fidelity and make the next slice precise. 
 
 Before substantial implementation or handoff, read the relevant brief afresh against the material decisions it should express. Supersede obsolete requirements, expose contradictions, and keep proposed details distinct from accepted intent. Reconcile affected acceptance examples and visuals as well as prose; do not silently choose between conflicting commitments. Use a fresh independent reader when ambiguity or consequences warrant it, without making every brief pass a separate review stage.
 
-## Co-design through a useful visual
+## Explain and co-design through a useful visual
+
+Choose the representation from what the reader needs to understand. Pseudocode can explain a rule, a call tree execution order, a component or shallow file tree ownership, and a sequence or flow diagram interactions across boundaries. A small before/after view can isolate a change; include enough surrounding context to preserve meaning and order. Use actual names and distinguish inspected behavior from proposed behavior. A short inline explanation may be sufficient; richer UI or dense comparisons can benefit from HTML. These are choices, not a required visual suite.
 
 When co-design is requested and a polished view improves participation, generate a professional HTML view of the current journeys, architecture, alternatives, commitments and open questions. Use existing approved host capabilities and keep artifacts in the approved project environment; if HTML rendering is unavailable, provide a useful available representation and state the limitation. Do not introduce a hosting service or publish the view without authority.
 
 The HTML is a regenerable view of the agent-readable design, not a second source of truth. Distinguish alternatives and uncertain behavior from accepted choices. Record decisions made while discussing or interacting with the view in the underlying brief, then refresh the view when it matters to the next decision. A visual selection or polished mockup alone does not establish acceptance or permission to build.
 
 Keep the decision, relevant context, comparison and smallest useful visual together so the user can judge without hunting across the artifact. Check rendered readability on the intended device or a representative viewport, including a phone when relevant: labels, accepted/proposed status and consequences must remain legible. State what could not be checked; visual polish alone is not evidence of usability.
+
+Use [Diagram craft](diagram-craft.md) when a substantial diagram needs deliberate layout, source-preserving simplification or an exportable artifact. It is optional; a clear inline explanation or diagram needs no extra artifact.
 
 ## Ground changes in the existing system
 
@@ -39,6 +43,8 @@ When behavior or caller reliance is unclear, use [behavior tracing](understand-b
 ## Make consequential design explicit
 
 Compare the few genuine options using the same criteria: user outcome, relevant quality attributes, responsibility and data ownership, cohesion/coupling, dependency direction, failure/recovery, operability, compatibility, reversibility, and ongoing cost. Focus on the properties that affect this decision. Respect accepted interfaces and boundaries; internal details can remain provisional.
+
+For a consequential interface choice, compare small usage sketches of the same representative caller task under genuine alternatives, including the existing design when viable. An interface includes everything the caller must know: invariants, ordering, errors, configuration, ownership and relevant performance guarantees. Show what each option hides, what the caller still coordinates, and where verification belongs. Fewer methods or a shorter call sequence is not automatically better if it hides necessary control or loses guarantees. Explore alternatives directly or through bounded workers when useful; no fixed number of designs or agents is required.
 
 Present the exact decision and why it matters now, fixed constraints, remaining uncertainty, recommendation, rationale and strongest counterargument together with the comparison. When judgment belongs to the user, state the practical consequences, what can continue and what must pause. Use plain language and only the visual that helps this choice; no fixed presentation format is required. Do not manufacture options when the constraints determine the answer. Record material accepted choices locally with their rationale and source of authority.
 

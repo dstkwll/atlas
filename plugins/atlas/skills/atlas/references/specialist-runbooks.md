@@ -26,6 +26,7 @@ Use existing approved project/host tools. Runbooks prescribe no additional tools
 | Request/ORM/dependency lifecycle depends on framework semantics | [Service/framework checks](service-framework-checks.md) |
 | Reactive state, stale responses, rendering or mobile lifecycle | [Client state checks](client-state-checks.md) |
 | Interactive outcome, accessibility or public-page discoverability | [User journeys](user-journeys.md) |
+| Substantial explanatory diagram, layout or faithful redraw | [Diagram craft](diagram-craft.md) |
 | Training, inference, retrieval or grounded-answer quality | [Model and retrieval quality](model-and-retrieval-quality.md) |
 | Package distribution or a change in information exposure | [Release preparation](release-preparation.md) |
 | Recurring agent failure or a proposed instruction change | [Guidance improvement](guidance-improvement.md) |

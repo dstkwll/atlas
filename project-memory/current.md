@@ -1,11 +1,9 @@
 # Current work
 
-[PR #6](https://github.com/dstkwll/atlas-successor/pull/6) is a draft on `feat/specialist-runbooks`, based on main at `0d85860`. It adds 17 optional specialist runbooks, a selective index, and brief notices identifying which guide an agent or worker uses and why.
+[PR #7](https://github.com/dstkwll/atlas-successor/pull/7) remains a draft on `feat/visual-contract-guidance`, based on main at `23b2efe` (merged PR #6). It contains the HumanLayer refinements; their validation is summarized in the PR.
 
-Implementation and draft publication are authorized. Merge and updates to existing installations require new authority. The installed Atlas skill remains the version from merged PR #5.
+Dan additionally authorized the explained file-level proposal: focused architecture improvement guidance, caller usage comparisons, an optional Diagram craft runbook and a compact HTML/SVG starter. Extend this draft for version 0.3.0, keeping attribution in the existing source record and shipped notices. No donor frameworks, mandatory stages or installed-copy changes are in scope. Implementation and draft publication are authorized; merge still requires explicit authority.
 
-Dan approved all five follow-on refinements, now implemented in the existing core guides: decision presentation, reconsideration triggers, brief/decision reconciliation, risk-first probes, and worker context with runnable validation. Static checks and a fresh independent text review with scenario application passed; execution and rendering were not exercised. No new workflow framework or evidence inventory was added.
+The additions are published in draft PR #7 for user review. Static package, link/anchor, HTML reference and no-external-asset checks passed; fresh independent review and response exercises found no issues. Browser URL security blocked opening the local starter, so desktop/phone rendering, assistive technology and export remain unverified. Installed copies remain unchanged.
 
-The library is self-contained and uses the host's existing capabilities. One [provenance document](../docs/research/ecc-agent-adaptation.md) records source adaptations; the package retains the required license notice. Validation results and limits are summarized in the PR, including local direct/delegated notice checks and an entrypoint-only task at `c93fbff`. The stale decision reference, specialist-scope clarification, marketplace descriptions and protected-artifact wording are corrected. Design guidance now covers living briefs/PRDs, HTML co-design views, explicit decision attribution and incremental delivery. Review is pending.
-
-Drive controls were refreshed on 2026-09-06: AGENTS modified `2026-08-25T15:07:14.356Z`, README modified `2026-08-25T15:07:26.672Z`. Refresh controls and inspect live Git/PR state before consequential work.
+Drive controls were refreshed on 2026-09-07: AGENTS modified `2026-08-25T15:07:14.356Z`, README modified `2026-08-25T15:07:26.672Z`. Refresh controls and inspect live Git/PR state before consequential work.
