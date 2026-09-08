@@ -7,26 +7,26 @@ Atlas guides the main agent you already use. Choose your organization's approved
 For Copilot CLI:
 
 ```shell
-copilot plugin marketplace add dstkwll/atlas-successor
-copilot plugin install atlas@atlas-successor
+copilot plugin marketplace add dstkwll/atlas
+copilot plugin install atlas@atlas
 ```
 
-Start a fresh session in the project you want to work on. VS Code can also discover plugins installed by Copilot CLI. If using only VS Code, add `dstkwll/atlas-successor` to your existing `chat.plugins.marketplaces` setting, preserving the other entries. Open Extensions, search `@agentPlugins`, and install **Atlas** from **atlas-successor**. Use Copilot Agent mode.
+Start a fresh session in the project you want to work on. VS Code can also discover plugins installed by Copilot CLI. If using only VS Code, add `dstkwll/atlas` to your existing `chat.plugins.marketplaces` setting, preserving the other entries. Open Extensions, search `@agentPlugins`, and install **Atlas** from **atlas**. Use Copilot Agent mode.
 
 To share the choice with coworkers, merge these entries into the work repository's existing `.github/copilot/settings.json` through its normal review process; preserve other settings:
 
 ```json
 {
   "extraKnownMarketplaces": {
-    "atlas-successor": {
+    "atlas": {
       "source": {
         "source": "github",
-        "repo": "dstkwll/atlas-successor"
+        "repo": "dstkwll/atlas"
       }
     }
   },
   "enabledPlugins": {
-    "atlas@atlas-successor": true
+    "atlas@atlas": true
   }
 }
 ```
@@ -46,7 +46,7 @@ In Copilot CLI, enter `/agent` and select `atlas:atlas`, or start a session with
 
 The profile directs the main session to load Atlas. It specifies no model or tool override; the host controls tool availability, permissions and project instructions. Activate it once for the task, then use normal follow-up messages until the goal is complete or you replace its scope. State the assignment you want: exploration, explanation, critique, advice and design are valid completed outcomes and do not implicitly authorize implementation.
 
-The skill fallback is available from the `/` picker as `/atlas` or, when qualified, `/atlas:atlas`. Natural language also works: **Use the Atlas skill from the atlas-successor plugin for this task: [goal].** Skill activation likewise applies to that task rather than requiring the command on each follow-up.
+The skill fallback is available from the `/` picker as `/atlas` or, when qualified, `/atlas:atlas`. Natural language also works: **Use the Atlas skill from the atlas plugin for this task: [goal].** Skill activation likewise applies to that task rather than requiring the command on each follow-up.
 
 For collaborative design, add **Work through the design with me before implementing.** For delivery, explicitly ask for implementation and specify the desired result and constraints. Atlas chooses the relevant runbooks. No calibration report or workplace evidence export is needed.
 
@@ -54,7 +54,7 @@ To make Atlas the project's default, append this to the existing `.github/copilo
 
 ```text
 For software exploration, design and delivery tasks, read and apply the installed Atlas skill from the
-atlas-successor plugin in the main session. Its canonical entry is the plugin's
+atlas plugin in the main session. Its canonical entry is the plugin's
 skills/atlas/SKILL.md; load only references relevant to the task. Existing
 project/organizational rules and the user's authority apply. If that guidance
 is unavailable, report it instead of claiming Atlas is active.
@@ -102,24 +102,18 @@ Hosts differ in how they restore instructions after compaction or resume. Recove
 
 Remote or mobile clients connected to a configured coding host may expose the host's active session, but this package has not verified a mobile Atlas picker. Confirm activation in the connected host rather than assuming the local desktop picker is available.
 
-## Migrating existing installations
-
-The old `atlas-lead` installation continues to work until you replace it. Preserve local edits, install the new package, confirm Atlas appears in the host's skill picker, then remove only the old `atlas-lead` folder and update explicit invocation/default-instruction references. Keep project state and other instructions.
-
-The original **atlas@dstkwll** is a separate, larger plugin. This package does not update or replace it. Disable the original for a project when choosing the successor so both do not offer competing Atlas guidance. Do not remove the original plugin's work records or other plugins from its marketplace.
-
 ## Update or remove
 
 For the marketplace-installed CLI plugin:
 
 ```shell
-copilot plugin marketplace update atlas-successor
-copilot plugin update atlas@atlas-successor
+copilot plugin marketplace update atlas
+copilot plugin update atlas@atlas
 ```
 
 In VS Code, use **Extensions: Check for Extension Updates** and review the offered update. Local copied packages are updated by replacing only their package folder after preserving local edits. Start a fresh session after updating.
 
-To stop using the CLI plugin, run `copilot plugin uninstall atlas@atlas-successor`. In VS Code, disable or uninstall its entry in Agent Plugins. Remove any project recommendation/default paragraph that would reactivate it. Leave project instructions and work records intact.
+To stop using the CLI plugin, run `copilot plugin uninstall atlas@atlas`. In VS Code, disable or uninstall its entry in Agent Plugins. Remove any project recommendation/default paragraph that would reactivate it. Leave project instructions and work records intact.
 
 ## Compatibility evidence
 
