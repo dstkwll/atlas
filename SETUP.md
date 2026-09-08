@@ -102,14 +102,6 @@ Hosts differ in how they restore instructions after compaction or resume. Recove
 
 Remote or mobile clients connected to a configured coding host may expose the host's active session, but this package has not verified a mobile Atlas picker. Confirm activation in the connected host rather than assuming the local desktop picker is available.
 
-## Migrating existing installations
-
-For an installation from the former **atlas-successor** marketplace, uninstall `atlas@atlas-successor`, remove that marketplace with `copilot plugin marketplace remove atlas-successor`, then follow the installation steps above for **atlas@atlas**. Update workspace marketplace recommendations and default-instruction references too. In VS Code, remove the old marketplace entry and install from `dstkwll/atlas`. Preserve local customizations before replacing copied packages.
-
-The old `atlas-lead` installation continues to work until you replace it. Preserve local edits, install the new package, confirm Atlas appears in the host's skill picker, then remove only the old `atlas-lead` folder and update explicit invocation/default-instruction references. Keep project state and other instructions.
-
-The original **atlas@dstkwll** belongs to the separate legacy product now preserved in private `dstkwll/legacy-Atlas`. Disable that plugin when choosing current Atlas. Preserve its project records and other plugins in its marketplace. Existing checkouts of the original repository must repoint their remote to `https://github.com/dstkwll/legacy-Atlas.git`: the old `dstkwll/atlas` URL now serves this product.
-
 ## Update or remove
 
 For the marketplace-installed CLI plugin:

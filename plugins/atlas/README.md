@@ -14,6 +14,6 @@ The profile directs the main session to load the same canonical skill. It specif
 
 If the profile is unavailable, invoke the Atlas plugin's skill from the `/` picker (it may appear as `/atlas` or `/atlas:atlas`) or ask: **Use the Atlas skill from the atlas plugin for this task: [goal].**
 
-This is Atlas from `dstkwll/atlas`, formerly Atlas successor. The original `atlas@dstkwll` pipeline plugin belongs to the separate legacy product now preserved in private `dstkwll/legacy-Atlas`. Enable the intended version for the project. Existing organizational/project instructions and tool permissions continue to apply.
+Existing organizational/project instructions and tool permissions continue to apply.
 
-See the repository [setup guide](https://github.com/dstkwll/atlas/blob/main/SETUP.md) for installation, updates, manual skill use, continuity and migration. All operational guidance is contained in [the skill](skills/atlas/SKILL.md) and its relative references; the profile is only a native entrypoint. No access to the Atlas repository or Drive is required during work.
+See the repository [setup guide](https://github.com/dstkwll/atlas/blob/main/SETUP.md) for installation, updates, manual skill use and continuity. All operational guidance is contained in [the skill](skills/atlas/SKILL.md) and its relative references; the profile is only a native entrypoint. No access to the Atlas repository or Drive is required during work.

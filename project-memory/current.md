@@ -1,15 +1,9 @@
 # Current work
 
-Dan authorized renaming the original repository to private `dstkwll/legacy-Atlas`, renaming this repository from `dstkwll/atlas-successor` to public `dstkwll/atlas`, reclaiming the original URL, and replacing or removing the Mac mini personal Atlas skill. Update affected local remotes and active package references while preserving repository histories and local work. Workplace installs are detached according to Dan; do not access the workplace or alter Hermes. Repository source updates follow the maintainer draft-PR process.
+Atlas is published at `dstkwll/atlas`. The draft on `chore/atlas-repository-name` aligns its marketplace and installation instructions around `atlas@atlas`. Editing and publishing this draft are authorized; merge remains a separate user decision.
 
-Repository identity before migration: original GitHub ID `1332926254`, main `a57c610e133dd66ce1de75947ceced673696adb4`; successor ID `1356247587`, main `28149a22df08760ead4cd71dc613e544dceea814`. These identities, not the reused URL, distinguish legacy history from the active product.
+The canonical lead is `plugins/atlas/skills/atlas/SKILL.md`. The standalone skill and Copilot profile are unchanged from merged main. The personal skill at `~/.codex/skills/atlas` matches all 26 packaged skill files.
 
-The activation/discovery changes have merged. The shared packaged skill remains the behavior source; native checks and limits are in `docs/validation/activation.md`. This rename changes product location and installation references, not lead behavior.
+Native Copilot installation from the draft branch succeeded: marketplace `atlas`, plugin `atlas@atlas`, enabled plugin and skill, no listing errors. Link, manifest and whitespace checks passed. Model behavior, VS Code UI and workplace use were not retested for these documentation and metadata changes.
 
-Drive root controls freshly read on 2026-09-08; AGENTS modified `2026-08-25T15:07:14.356Z`, README modified `2026-08-25T15:07:26.672Z`. Their old `dstkwll/atlas` references refer to the original repository and must be interpreted by repository identity during this migration. Do not apply the legacy architecture to the successor merely because the URL was reused.
-
-GitHub renames and visibility change are complete and verified by repository ID and unchanged main commits. The original local checkout now points to `legacy-Atlas`; both known successor checkouts point to `atlas`. Their directories and worktrees are preserved. Installation-reference changes are on `chore/atlas-repository-name` for the normal draft-PR process; merge remains a separate user decision.
-
-The Mac mini personal skill at `~/.codex/skills/atlas` has been refreshed from the merged skill; all 26 files match. Its previous contents are preserved outside discovery in the workspace's `local-backups/atlas-before-rename-20260908-120939/` directory. Native local package recognition, 79 relative file links, marketplace/manifest identity agreement and whitespace checks pass.
-
-Independent source review found no blocking or actionable non-blocking findings. In disposable `COPILOT_HOME=/private/tmp/atlas-rename-marketplace-check`, native Copilot marketplace add from `dstkwll/atlas#chore/atlas-repository-name` and install of `atlas@atlas` succeeded against `d61807c`. Listing reports enabled plugin/skill and no errors. This proves branch package discovery/installation, not a default-main release or new behavioral evidence. The standalone skill and Copilot profile are byte-unchanged from merged main.
+Next: review and merge the draft. Refresh live Git/PR state before acting. Follow the repository's Drive freshness requirements for consequential coordination; product behavior is governed by this repository and accepted decisions.
