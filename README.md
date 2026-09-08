@@ -13,13 +13,13 @@ copilot plugin marketplace add dstkwll/atlas-successor
 copilot plugin install atlas@atlas-successor
 ```
 
-In a fresh main-agent chat, select the `atlas` skill and describe your goal. The [setup guide](SETUP.md) covers VS Code, CLI, team configuration, local packages, manual skill installation and migration from `atlas-lead` or the original Atlas plugin.
+In a fresh main-agent chat, choose the **Atlas** profile and describe your goal. Atlas stays active for that task, so continue with ordinary follow-up messages. The [setup guide](SETUP.md) covers Copilot, Codex, Claude Code, team configuration, local packages, manual skill installation and migration from `atlas-lead` or the original Atlas plugin. Direct skill invocation remains available where a host does not expose the profile.
 
 The installable product is [plugins/atlas](plugins/atlas); the standalone [Atlas skill](plugins/atlas/skills/atlas) remains usable in Codex and other file-reading hosts. This repository's root files govern maintenance and are excluded from the plugin.
 
 ## How it behaves
 
-The lead keeps accepted commitments separate from provisional choices. It can refine implementation as evidence arrives, correct ordinary defects within authority, and use independent review when the consequences warrant it. It maintains compact project-local continuity for work that needs to resume. A small clear fix can remain a small clear fix.
+The lead keeps accepted commitments separate from provisional choices. It can refine implementation as evidence arrives, correct ordinary defects within authority, and use independent review when the consequences warrant it. It maintains compact project-local continuity for work that needs to resume. Exploration, advice or design can be the completed result; asking for one does not implicitly authorize implementation. A small clear fix can remain a small clear fix.
 
 For substantial design, Atlas maintains a living brief, records meaningful decisions and develops the next usable slice in detail. It can expand that brief into a PRD or specification and produce an HTML view for co-design when useful. Small clear changes can proceed directly. Atlas does not require a ticket graph, fixed sequence of specialists or review ceremony for every change. It never grants permission to publish, deploy, spend or merge.
 
