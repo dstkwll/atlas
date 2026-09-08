@@ -1,18 +1,18 @@
 {
-  "name": "atlas-successor",
+  "name": "atlas",
   "owner": {
     "name": "dstkwll"
   },
   "metadata": {
-    "description": "The lightweight Atlas successor",
-    "version": "0.3.1"
+    "description": "Atlas guidance for your main coding agent",
+    "version": "0.3.2"
   },
   "plugins": [
     {
       "name": "atlas",
       "source": "./plugins/atlas",
       "description": "Software delivery guidance for your main agent: one skill with core activity guides and optional specialist runbooks.",
-      "version": "0.3.1"
+      "version": "0.3.2"
     }
   ]
 }

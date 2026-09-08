@@ -6,11 +6,11 @@ The package contains one lead skill, four core activity guides and an optional s
 
 ## Use it in your project
 
-Install the **Atlas** plugin from the **atlas-successor** marketplace in Copilot:
+Install the **Atlas** plugin from the **atlas** marketplace in Copilot:
 
 ```shell
-copilot plugin marketplace add dstkwll/atlas-successor
-copilot plugin install atlas@atlas-successor
+copilot plugin marketplace add dstkwll/atlas
+copilot plugin install atlas@atlas
 ```
 
 In a fresh main-agent chat, choose the **Atlas** profile and describe your goal. Atlas stays active for that task, so continue with ordinary follow-up messages. The [setup guide](SETUP.md) covers Copilot, Codex, Claude Code, team configuration, local packages, manual skill installation and migration from `atlas-lead` or the original Atlas plugin. Direct skill invocation remains available where a host does not expose the profile.
@@ -29,7 +29,7 @@ The [specialist library](plugins/atlas/skills/atlas/references/specialist-runboo
 
 ## Scope and evidence
 
-This release advances the original three-file bootstrap into a reusable delivery package. The original bootstrap is merged; existing `dstkwll/atlas` remains a separate product. The package is intended for ordinary software work, with risk-linked assurance. It is not a guarantee of autonomous correctness or workplace-host compatibility.
+This repository contains the lightweight Atlas product, formerly developed as Atlas successor. The older pipeline product is preserved separately in private `dstkwll/legacy-Atlas`. The package is intended for ordinary software work, with risk-linked assurance. It is not a guarantee of autonomous correctness or workplace-host compatibility.
 
 Validation results and limits accompany each pull request. Work-environment details do not need to be exported to use or improve the guide locally.
 
