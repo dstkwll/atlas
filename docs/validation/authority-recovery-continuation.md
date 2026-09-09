@@ -26,6 +26,8 @@ The primary reviewer inspected the full affected guides and current main. An ind
 
 ## Objective checks and limitations
 
+A subsequent small finish-guidance refinement recommends the next useful activity and its purpose at meaningful stopping points. Primary textual checks covered: design complete with implementation unauthorized (recommend, do not build); an authorized active task (continue); an explicit pause (stop); a self-contained answer or closing thanks (no obligatory suggestion); and delivered work ready for ordinary use (recommend experience rather than invented features). This addition was checked against the existing authority and advisory-completion rules; it was not part of the independent model reviews described below and was not exercised in a live host.
+
 Relative file links in the plugin and whitespace were checked. No executable product code changed. These checks establish package consistency, not model adherence.
 
 The scenario responses were text-only simulations in an independent model context. No workplace host, real MCP outage, publication service, late-write race, host attempt accounting or live multi-turn Atlas session was exercised. This does not establish that the reported workplace failures originated in Atlas, nor that updated instructions will reliably eliminate them. Installed copies were not changed.
