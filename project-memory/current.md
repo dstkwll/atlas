@@ -1,9 +1,9 @@
 # Current work
 
-Atlas is published at `dstkwll/atlas`. The draft on `chore/atlas-repository-name` aligns its marketplace and installation instructions around `atlas@atlas`. Editing and publishing this draft are authorized; merge remains a separate user decision.
+The active assignment is to clarify Atlas authority, routine recovery, continuation after conversational agreement and useful recommendations at natural stopping points. Implementation and a draft PR are authorized; merge and installation of the candidate are separate actions.
 
-The canonical lead is `plugins/atlas/skills/atlas/SKILL.md`. The standalone skill and Copilot profile are unchanged from merged main. The personal skill at `~/.codex/skills/atlas` matches all 26 packaged skill files.
+The canonical lead is `plugins/atlas/skills/atlas/SKILL.md`. Four existing product files change; the Copilot profile continues to load that shared source. Preserve existing explicit limits, safe external effects, discovery-only scope, pauses and completed advisory outcomes.
 
-Native Copilot installation from the draft branch succeeded: marketplace `atlas`, plugin `atlas@atlas`, enabled plugin and skill, no listing errors. Link, manifest and whitespace checks passed. Model behavior, VS Code UI and workplace use were not retested for these documentation and metadata changes.
+The candidate passed relative-file-link and whitespace checks. Independent textual scenario review prompted corrections for bare thanks, cumulative correction bounds and late-completing writes. Final review and publication status belong in the validation record and live PR evidence. Workplace behavior and installed copies have not been retested or updated.
 
-Next: review and merge the draft. Refresh live Git/PR state before acting. Follow the repository's Drive freshness requirements for consequential coordination; product behavior is governed by this repository and accepted decisions.
+The draft is published on `fix/authority-recovery-continuation`. Independent review found no blocking findings in the initial corrected product diff; the subsequent small stopping-point refinement received primary textual checks only. Next: review the updated draft before merge. See `docs/validation/authority-recovery-continuation.md` for evidence and limits; check live Git/PR state before acting.
