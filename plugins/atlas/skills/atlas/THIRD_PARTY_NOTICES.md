@@ -1,6 +1,6 @@
 # Third-party notices
 
-Portions of the guidance are adapted from [ECC](https://github.com/affaan-m/ECC), [HumanLayer skills](https://github.com/humanlayer/skills), [Matt Pocock's skills](https://github.com/mattpocock/skills) and [Diagram Design](https://github.com/cathrynlavery/diagram-design). Their contributions cover specialist engineering checks, visual explanation, type contracts, instruction maintenance, refactoring and diagram craft. All use the following MIT license; these notices accompany plugin and standalone skill distributions. The diagram starter also carries its applicable notice for standalone copying.
+Portions of the guidance are adapted from [ECC](https://github.com/affaan-m/ECC), [HumanLayer skills](https://github.com/humanlayer/skills), [Matt Pocock's skills](https://github.com/mattpocock/skills) and [Diagram Design](https://github.com/cathrynlavery/diagram-design). Their contributions cover specialist engineering checks, visual explanation, type contracts, instruction maintenance, refactoring, planning deliverables, test-first techniques and diagram craft. All use the following MIT license; these notices accompany plugin and standalone skill distributions. The diagram starter also carries its applicable notice for standalone copying.
 
 MIT License
 

@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "Atlas guidance for your main coding agent",
-    "version": "0.3.2"
+    "version": "0.4.0"
   },
   "plugins": [
     {
       "name": "atlas",
       "source": "./plugins/atlas",
-      "description": "Software delivery guidance for your main agent: one skill with core activity guides and optional specialist runbooks.",
-      "version": "0.3.2"
+      "description": "Software delivery guidance for your main agent: one lead with PRD, ticket and handoff skills plus shared runbooks.",
+      "version": "0.4.0"
     }
   ]
 }

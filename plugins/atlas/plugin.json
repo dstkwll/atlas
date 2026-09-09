@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "atlas",
-  "description": "Software delivery guidance for your main agent: one skill with core activity guides and optional specialist runbooks.",
-  "version": "0.3.2",
+  "description": "Software delivery guidance for your main agent: one lead with PRD, ticket and handoff skills plus shared runbooks.",
+  "version": "0.4.0",
   "repository": "https://github.com/dstkwll/atlas",
   "keywords": [
     "skills",
