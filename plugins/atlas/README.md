@@ -1,6 +1,6 @@
 # Atlas
 
-Give your main agent a software goal. Atlas guides discovery, design, implementation, review and recovery as needed, using one skill with core activity guides and optional specialist runbooks. It needs no runtime dependencies, hooks or extra accounts.
+Give your main agent a software goal. Atlas guides discovery, design, implementation, review and recovery as needed, using one lead skill, optional artifact entry points, core activity guides and specialist runbooks. It needs no runtime dependencies, hooks or extra accounts.
 
 In Copilot Agent mode, start a fresh chat and choose the **Atlas** profile from the agent picker, then describe your goal. In Copilot CLI, use `/agent` and select `atlas:atlas`, or start with `copilot --agent atlas:atlas`. For example:
 
@@ -17,3 +17,5 @@ If the profile is unavailable, invoke the Atlas plugin's skill from the `/` pick
 Existing organizational/project instructions and tool permissions continue to apply.
 
 See the repository [setup guide](https://github.com/dstkwll/atlas/blob/main/SETUP.md) for installation, updates, manual skill use and continuity. All operational guidance is contained in [the skill](skills/atlas/SKILL.md) and its relative references; the profile is only a native entrypoint. No access to the Atlas repository or Drive is required during work.
+
+For a concrete planning deliverable, ask Atlas to turn the discussion into a PRD, executable vertical slices or a recipient-oriented handoff. Optional `atlas-to-prd`, `atlas-to-tickets` and `atlas-handoff` entry points load those same runbooks. Keep all sibling skill folders together when copying the full package; the wrappers depend on `skills/atlas/`. Producing the artifact does not authorize publishing tickets or starting implementation.

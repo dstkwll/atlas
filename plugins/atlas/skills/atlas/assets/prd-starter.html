@@ -1,0 +1,71 @@
+<!doctype html>
+<!-- Atlas original starter. Synthetic example: replace content, diagrams and recovery notes together.
+Fluent 2–informed document styling; not a Microsoft component or brand asset. No external resources. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Queue cancellation · Product brief</title>
+<style>
+:root{color-scheme:light;--ink:#242424;--muted:#525252;--accent:#0f548c;--line:#d1d1d1;--surface:#fff;--canvas:#f5f5f5}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--canvas);color:var(--ink);font:16px/1.65 "Segoe UI",system-ui,sans-serif}
+a{color:var(--accent);text-underline-offset:.18em}a:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:4px}
+.page{max-width:1160px;margin:auto;display:grid;grid-template-columns:200px minmax(0,1fr);gap:48px;padding:48px 32px}
+nav{align-self:start;position:sticky;top:32px;font-size:14px}nav strong{display:block;margin-bottom:16px}nav a{display:block;padding:7px 0}
+main{min-width:0;background:var(--surface);padding:40px 48px;border:1px solid var(--line)}
+.eyebrow{color:var(--accent);font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+h1{font-size:clamp(32px,5vw,48px);line-height:1.15;letter-spacing:-.035em;margin:16px 0 20px;font-weight:600}
+h2{font-size:25px;line-height:1.3;font-weight:600;margin:0 0 18px}h3{font-size:18px;font-weight:600;margin:24px 0 10px}
+.lead{font-size:20px;line-height:1.5}.meta,figcaption{font-size:14px;color:var(--muted)}
+section{padding-top:32px;margin-top:32px;border-top:1px solid var(--line);scroll-margin-top:24px}
+ul,ol{padding-left:24px}li+li{margin-top:8px}.note{border-left:3px solid var(--accent);padding:4px 0 4px 18px}
+figure{margin:24px 0}.diagram-scroll{overflow-x:auto}svg{display:block;width:100%;min-width:560px;height:auto}svg text{font:16px "Segoe UI",system-ui,sans-serif;fill:var(--ink)}
+.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:15px}th,td{text-align:left;vertical-align:top;padding:12px 10px;border-bottom:1px solid var(--line)}th{background:var(--canvas);font-weight:600}
+details{margin-top:36px;border-top:2px solid var(--accent);padding-top:20px}summary{cursor:pointer;font-weight:600}details p{overflow-wrap:anywhere}footer{font-size:13px;color:var(--muted);margin-top:32px}
+@media(max-width:760px){.page{display:block;padding:20px 12px}nav{position:static;margin:0 12px 24px}nav a{display:inline-block;margin-right:16px}main{padding:28px 20px}.lead{font-size:18px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{body{background:white}.page{display:block;padding:0}nav{display:none}main{border:0;padding:0}h1{font-size:30px}section{break-inside:avoid}details>summary{display:block}details>*{display:block!important}details::details-content{content-visibility:visible}a{color:inherit}svg{min-width:0;max-height:300px}}
+</style>
+</head>
+<body>
+<div class="page">
+<nav aria-label="Document sections"><strong>Product brief</strong><a href="#intent">Intent</a><a href="#design">Design</a><a href="#acceptance">Acceptance</a><a href="#open">Open decisions</a><a href="#recovery">Agent context</a></nav>
+<main>
+<header><div class="eyebrow">Synthetic example · Planning draft</div><h1>Cancel work before it starts.</h1>
+<p class="lead">Give a job owner a reliable way to withdraw queued work, while keeping cancellation and execution from both winning.</p>
+<p class="meta">Topic: queue cancellation · Status: product intent settled; implementation readiness unverified.</p></header>
+<section id="intent"><h2>Intent and boundaries</h2>
+<p>The owner may cancel an unstarted queued job. Running jobs cannot be cancelled. Existing status polling must report the durable outcome.</p>
+<p>Accepted in the synthetic assignment: owner-only access, queued-only cancellation, one atomic winner between start and cancel, and visible cancellation status. No separate rationale was supplied.</p>
+<p class="note">Out of scope: stopping running work, deleting history, bulk actions, a new queue, and publishing or implementing this plan.</p></section>
+<section id="design"><h2>One decision at the persistence boundary</h2>
+<p>Proposed realization: both operations condition their transition on the same queued state. The persisted result determines what polling reports. Exact response codes and status spelling remain open.</p>
+<figure>
+<div class="diagram-scroll" tabindex="0" role="region" aria-label="State diagram; scroll horizontally on narrow screens"><svg viewBox="0 0 640 350" role="img" aria-labelledby="state-title state-desc">
+<title id="state-title">Queued work can become running or cancelled</title><desc id="state-desc">Start and owner cancel compete on queued state. Exactly one transition may commit. Both committed outcomes are reported by status polling. Running cannot transition to cancelled.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#0f548c"/></marker></defs>
+<g fill="#f5f5f5" stroke="#8a8886"><rect x="230" y="12" width="180" height="58" rx="5"/><rect x="30" y="170" width="240" height="58" rx="5"/><rect x="370" y="170" width="240" height="58" rx="5"/><rect x="180" y="284" width="280" height="54" rx="5"/></g>
+<g text-anchor="middle"><text x="320" y="47">Queued</text><text x="150" y="205">Running</text><text x="490" y="205">Cancelled</text><text x="320" y="317">Existing status polling</text></g>
+<g fill="none" stroke="#0f548c" stroke-width="2" marker-end="url(#arrow)"><path d="M270 70L150 164"/><path d="M370 70L490 164"/><path d="M150 228L235 280"/><path d="M490 228L405 280"/></g>
+<g text-anchor="middle"><text x="154" y="111">Start wins</text><text x="485" y="111">Owner cancel wins</text><text x="320" y="151" font-weight="600">Exactly one commits</text></g>
+</svg></div>
+<figcaption>Proposed state realization of the accepted rule. The diagram does not prove that the existing implementation enforces it.</figcaption>
+</figure></section>
+<section id="acceptance"><h2>What must be observable</h2><div class="table-wrap"><table><thead><tr><th scope="col">Scenario</th><th scope="col">Expected outcome</th></tr></thead><tbody>
+<tr><td>Owner cancels queued work</td><td>Cancellation persists, polling reports it, and subsequent start cannot run the job.</td></tr>
+<tr><td>Another user attempts cancellation</td><td>No cancellation; follow the established disclosure and denial contract.</td></tr>
+<tr><td>Start and cancel overlap</td><td>Exactly one commits; the losing operation cannot overwrite the winner.</td></tr>
+<tr><td>Job already running</td><td>Cancellation is denied and running state remains intact.</td></tr>
+</tbody></table></div>
+<p>Planned proof: service-boundary checks with the real test database, both winner orderings, an overlapping-transaction witness and polling readback. These checks have not run.</p></section>
+<section id="open"><h2>Decisions still needed</h2><ul><li>Recover existing error, unknown-job and repeated-cancellation semantics from the target repository.</li><li>Check status representation and compatibility with older readers and workers.</li><li>Restore the test database and verify the runner reaches a relevant assertion.</li></ul>
+<p><strong>Next activity:</strong> inspect the target's existing contracts and test setup. Return for judgment only where those sources leave material behavior unsettled.</p></section>
+<details id="recovery"><summary>Agent recovery context</summary>
+<p><strong>Source and authority:</strong> this is an illustrative synthetic brief, not a real implementation assignment. The visible accepted commitments came from its supplied scope. Current permission covers planning only; implementation, tracker publication, deployment and sending a handoff were not authorized.</p>
+<p><strong>Supplied facts, not inspected:</strong> enqueue/start/getStatus exist; rows store owner ID and queued/running/done state; compare-and-set is available; existing start tests use a test DB. No target repository identity or paths were supplied. The test DB is unavailable. The supplied command <code>npm test -- queue</code> was not run.</p>
+<p><strong>Decision record:</strong> the accepted product commitments are in Intent and Acceptance above. A terminal cancellation state and shared persistence guard are proposed realization, not accepted enum names or a verified design. No alternatives were formally selected or rejected, no superseded decisions and no numerical effort budget were supplied.</p>
+<p><strong>Recovery boundary:</strong> reconstruct intent and pending work from this file. Recheck current instructions, target identity, contracts, authority and environment before acting. This document preserves no source code or raw runtime proof and cannot establish current repository correctness.</p>
+<p><strong>Resume point:</strong> read-only grounding and test-prerequisite inspection. Prepare a conditional integrated ticket after resolving material gaps; do not implement based on this document alone. A database startup failure is not an observed TDD red phase.</p>
+</details>
+<footer>Self-contained example · No network resources or executable scripts. Agent context is part of this document and remains visible when expanded.</footer>
+</main></div></body></html>

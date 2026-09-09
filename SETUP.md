@@ -1,6 +1,6 @@
 # Install and use Atlas
 
-Atlas guides the main agent you already use. Choose your organization's approved agent and model. The plugin contains one skill with core activity guides and optional specialist runbooks; it adds no scripts, services, hooks or MCP servers.
+Atlas guides the main agent you already use. Choose your organization's approved agent and model. The plugin contains one lead skill, optional artifact entry points, core activity guides and specialist runbooks; it adds no scripts, services, hooks or MCP servers.
 
 ## Copilot plugin installation
 
@@ -64,7 +64,7 @@ For a manual project installation, use the exact entry path `.agents/skills/atla
 
 ## Local or restricted installation
 
-Transfer the complete `plugins/atlas/` directory through an approved route. Keep its `plugin.json`, `com.github.copilot/` profile directory, complete `skills/atlas/` directory and third-party notices together. Do not transfer repository maintenance instructions, project memory or work data.
+Transfer the complete `plugins/atlas/` directory through an approved route. Keep its `plugin.json`, `com.github.copilot/` profile directory, complete `skills/` directory and third-party notices together. Do not transfer repository maintenance instructions, project memory or work data.
 
 For VS Code, add its absolute directory to the existing `chat.pluginLocations` map with value `true`. Example on Windows (use your actual path):
 
@@ -94,7 +94,19 @@ Choose plugin installation or manual skill installation in each host. Duplicate 
 
 For an optional Codex project default, add the default-guidance paragraph above to the existing root `AGENTS.md`, using `.agents/skills/atlas/SKILL.md` as its source. Codex reads project instructions when starting work; this supplies an entry path independent of an earlier skill invocation. Preserve the project's other instructions. See [Codex project instructions](https://learn.chatgpt.com/docs/agent-configuration/agents-md).
 
+## PRD, ticket and handoff deliverables
+
+Ask Atlas naturally: **Turn this into a PRD**, **Break this into executable vertical slices**, or **Prepare a handoff for the next agent**. It uses the same shared runbooks as the optional skills `atlas-to-prd`, `atlas-to-tickets` and `atlas-handoff`. These requests finish at the artifact unless further work is authorized; they do not publish tracker issues or start implementation automatically.
+
+The plugin includes all four skill folders. For manual installation of the artifact entry points, copy the complete contents of `plugins/atlas/skills/` into your chosen host's skill directory, keeping `atlas`, `atlas-to-prd`, `atlas-to-tickets` and `atlas-handoff` as siblings. The three entry points require the shared `atlas` folder and its notices; copying a wrapper alone is incomplete. Copying only `atlas` still supports all three outcomes through ordinary conversation.
+
+In Codex, select the discovered skill or use `$atlas-to-prd`, `$atlas-to-tickets` or `$atlas-handoff`. In other hosts, select the corresponding installed skill from the host's skill picker or ask it to read the exact installed entry path; namespacing and picker support vary. The Atlas agent profile stays the same. A skill name identifies the deliverable, not a separate lead or mandatory stage.
+
 ## Continuity and context recovery
+
+For planning artifacts, Atlas first reuses the topic's approved home. Where configured, `artifacts.planning_root` in project settings or `~/.config/atlas/config.yaml` selects a repository-relative or absolute location, including a vault. Project restrictions override personal defaults; a personal vault never authorizes exporting workplace material. If no convention exists, the fallback is `.planning/<topic>/` in the target repository. Atlas reports the destination rather than silently switching it when inaccessible.
+
+A new substantial PRD defaults to a self-contained `prd.html`: readable requirements and diagrams plus collapsed agent recovery context. It can be the source of record without a Markdown twin; existing authoritative formats remain respected. Default related files are `tickets/index.md`, numbered slice Markdown files, and `handoff.md`, all under the same topic. Vault catalog/index rules still apply without requiring duplicated PRD content. The optional Fluent 2–informed HTML starter is offline and framework-free. Material decisions and handoffs update the PRD; small tasks do not require one.
 
 For work that needs continuity, let Atlas use the project's existing task record to retain the canonical skill location, active task and scope, and pointers to material decisions, evidence and the next action. This is a recovery path, not additional permission. It avoids a new Atlas ledger and does not require you to remind the agent on every turn.
 

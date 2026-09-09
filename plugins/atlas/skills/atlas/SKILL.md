@@ -47,6 +47,9 @@ Load only the reference needed now. These are guidance, not stage owners:
 | A claim warrants independent judgment or findings need reconciliation | [Independent review](references/independent-review.md) |
 | Meaningful decisions, authority changes, session loss, pause or resumption | [Continuity and decisions](references/continuity-and-decisions.md) |
 | A specific technical risk needs deeper checks or a specialist method | [Specialist runbook index](references/specialist-runbooks.md) |
+| Turn settled discussion into a product brief for another planner | [Produce a PRD](references/to-prd.md) |
+| Break accepted scope into testable implementation slices | [Plan executable vertical slices](references/to-tickets.md) |
+| Prepare another agent or session to continue | [Prepare a handoff](references/handoff.md) |
 
 Each specialist runbook can guide your own work or an appropriately bounded worker; it never requires delegation. Choose from the current uncertainty, not a fixed sequence of specialist roles.
 
