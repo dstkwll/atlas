@@ -6,6 +6,8 @@ Use for multi-session work, material decisions, authority changes, pauses, hando
 
 Prefer the target project's existing work-state convention. If none exists and continuity is needed, use a small task-specific Markdown note in a local project-approved location, such as `project-memory/current.md` for a single active task. Do not overwrite another task's note or store state in the reusable skill. Keep protected state within its approved environment; a public source repository is not automatically an approved location for work evidence.
 
+An existing topic PRD can own planning continuity, including a self-contained HTML document with embedded recovery context. Use [Artifact location](artifact-location.md) to honor the configured planning root or approved vault. Do not require a separate Markdown state record when the existing artifact already supplies what recovery needs. Keep that PRD current at material decisions and handoffs; do not create one for every small task.
+
 The record should let a fresh lead recover the canonical Atlas skill's installed or source location, the active task and bounded scope, the goal/done claim, accepted versus provisional choices, current authority, relevant repository/worktree identity, meaningful evidence or blocker, and next safe action. Link to the decisions and evidence needed at the resume point instead of duplicating them. These locations and pointers make recovery possible; they are not new permission and do not prove that a host will restore guidance automatically. Use ordinary prose, links and headings; exact grammar is not correctness. Commit a state file only when project policy permits its content and location.
 
 ## Write at meaningful boundaries

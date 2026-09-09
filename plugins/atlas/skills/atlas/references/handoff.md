@@ -4,6 +4,8 @@ Use when another agent, session or team needs to continue a particular assignmen
 
 Read current task state, accepted decisions and relevant live artifacts. Reuse the project's durable location and existing handoff convention; do not overwrite useful work or use a temporary-only location for a durable transfer unless requested. Keep the handoff outside the installed skill.
 
+Use [Artifact location](artifact-location.md) to keep `handoff.md` beside the topic PRD and tickets, or use separate named files for distinct transfers. Read embedded recovery context when the source is an HTML PRD; link that single artifact rather than demand a Markdown twin.
+
 Include the minimum context needed to resume:
 - Intended next outcome, current status and why the work is being transferred.
 - Accepted commitments and relevant rationale; proposals, assumptions and unresolved judgment distinguished.

@@ -2,6 +2,8 @@
 
 Use to turn accepted scope into a coherent sequence of work that a specified implementer can execute and test. Produce local ticket drafts using existing project conventions unless tracker publication is explicitly authorized. Readiness is an evidence-backed planning judgment, not permission to execute.
 
+Resolve the existing topic home through [Artifact location](artifact-location.md). By default create `tickets/index.md` for scope, dependency order and readiness, plus one numbered Markdown file per meaningful slice. Reuse established project/tracker organization; do not move artifacts into the code repository when an approved vault is configured.
+
 ## Ground intent and the recipient
 
 Read the source brief, accepted amendments and relevant repository instructions and behavior. Reconcile dropped, conflicting or invented requirements before decomposing. A formal PRD is not mandatory if the request already supplies sufficient intent. Use [Discover and design](discover-and-design.md) for consequential gaps; prepare unaffected work while unresolved choices block dependent slices.
@@ -28,7 +30,7 @@ Map the whole requested scope. Make currently knowable slices executable; keep l
 
 ## Make each ticket usable
 
-Use the project's ticket shape; a compact plan with clearly addressable tickets or separate local files is sufficient. Supply:
+Use the project's ticket shape; absent one, use the separate files and index above. Supply:
 - Outcome and scope exclusions; source requirements or acceptance examples it serves.
 - Current behavior and relevant source locations, distinguished from proposed file changes. Tell the recipient to recheck stale paths/baselines before relying on them.
 - Prerequisites and dependency outputs; readiness and any exact blocker.
