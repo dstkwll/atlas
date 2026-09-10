@@ -25,7 +25,7 @@ The output retains raw native events, tool-call/output records filtered from the
 
 The repair checker runs candidate Python in the synthetic project, under the invoking operator's permissions. This is for trusted local fixtures and bounded non-adversarial trials, not arbitrary hostile code. Do not run it on an untrusted submission. Other checks inspect state without running generated code.
 
-Exit 0 means native turns completed; exit 2 means one or more host trials were blocked. Neither is a behavioral pass. Inspect result.json facts, then apply review.md to completed events and actual artifacts with independent judgment. Failed setup, unavailable traces and unreviewed behavior remain explicit. There is intentionally no keyword-based routing grader, numeric quality score or automatic PR gate.
+Exit 0 means native turns completed; exit 2 means one or more host trials were blocked. Neither is a behavioral pass. Inspect result.json facts, then apply review.md to completed events and actual artifacts with independent judgment. Failed setup, unavailable traces and unreviewed behavior remain explicit. There is intentionally no keyword-based routing grader, numeric quality score or automatic behavioral PR gate.
 
 The fast tests challenge the objective checks with a real failing boundary, valid alternative repairs, missing/empty-quality artifacts, duplicate writes and forbidden edits/deletion/mode/symlink changes. They test evaluator sensitivity, not model adherence. The separate calibration examples challenge the judgment rubric. Agent assertions and the evaluator's own successful test do not prove that the agent ran that test.
 
@@ -34,3 +34,13 @@ For comparisons, hold task/fixture, host, model, effort, initial instruction sou
 Raw runs are local-only and ignored under evals/runs/. They can contain host metadata, local paths or unexpected content; review and sanitize any excerpts before publishing. Keep a concise sanitized result report under docs/validation/. Synthetic reusable cases, runner, assertions and rubric belong in this repository because maintainers need reproducible proof; private donor research does not.
 
 For a compact review packet, run `python3 evals/review_packet.py /tmp/atlas-trial/repair-1`. It cites raw event lines and marks clipped outputs; inspect raw evidence before resolving claims that depend on omitted content.
+
+## Pull request checks
+
+The **Evaluator correctness** GitHub Actions check runs the fast unittest command on every pull request and pushes to main, using Python 3.11 on Ubuntu. It needs no Codex installation, model authentication or inference. A green check establishes evaluator correctness for the tested cases, not Atlas adherence. The workflow does not configure repository rules requiring the check before merge; maintainers can enable that once it is established.
+
+Behavioral trials remain optional, local maintainer evidence. Choose relevant cases before running: routing changes warrant activation and trivial-task cases; discovery changes warrant agreement and scope-boundary cases; ticket guidance warrants artifact and accepted-decision review; recovery changes warrant retry and uncertain-write cases. For consequential guidance changes, compare main and the candidate under matching conditions as described above. Retain every attempt, including failures and setup problems, rather than rerunning until a case passes.
+
+Include a concise sanitized report in the PR description or link a report under `docs/validation/`. Identify the exact tested revision (and any uncommitted candidate changes), host, model/effort, selected cases and repetition count. Separate native execution status, objective facts, reviewed routing/behavior findings, and UNKNOWN or UNREVIEWED claims; cite evidence for findings and state who reviewed it. Later commits affecting the tested behavior require fresh evidence or an explicit statement that the report covers an earlier revision. Do not upload raw trial directories automatically.
+
+Native trials currently depend on local account authentication and execute synthetic project code. Hosting them in Actions would require a separate authentication and isolation design. There is no credentialed model workflow or automatic behavioral merge gate in this pilot.
