@@ -28,3 +28,9 @@ Both agents reported reading and applying Discover and design and Failure handli
 The baseline also passed. This exercise therefore does not reproduce the workplace omission or establish an adherence improvement rate. It supports selection and useful application in a fresh file-reading agent context, not native Copilot profile activation, long-session retention, every specialist trigger or behavior across models. Earlier text-only scenarios remain separate evidence. The candidate change makes selection explicit and removes a broad routine-work exception; it adds no hooks, services, required hierarchy or new reporting system.
 
 Final skill validation, 95 relative links, matching manifests and whitespace checks passed. Profile wiring still resolves to the shared skill; no profile policy was duplicated. Raw outcomes are retained in the sibling workspace research/2026-09-09-direction-checks/selection/.
+
+## Relevance-based selection wording
+
+The selection trigger now uses the activity and uncertainty rather than substantial task size. Primary source review checked the intended contrast: a small flaky-test investigation matches diagnosis/evidence guidance, while a mechanical grammatical correction with no meaningful uncertainty may skip additional runbooks. Consultation permits selective application without a full process or new artifact, while retaining applicable constraints. The periodic direction-check threshold is unchanged.
+
+Skill format, 95 relative links, matching manifests and whitespace checks passed for this wording correction. No new independent model exercise or native host test was run; earlier exercises above concern their stated candidates and do not establish adherence to this revision.
