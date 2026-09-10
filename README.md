@@ -25,8 +25,6 @@ For substantial design, Atlas maintains a living brief, records meaningful decis
 
 The [specialist library](plugins/atlas/skills/atlas/references/specialist-runbooks.md) adds focused methods for technical questions such as failure handling, types, migrations, runtime bugs, accessibility and release preparation. Atlas decides whether to use a runbook itself or delegate a bounded task. No specialist sequence is mandatory.
 
-[Source provenance and adaptation](docs/research/ecc-agent-adaptation.md) records the library's origins and design choices.
-
 ## Finish at a useful artifact
 
 Ask Atlas to produce a PRD, an ordered set of testable vertical slices, or a handoff for another agent. Optional `atlas-to-prd`, `atlas-to-tickets` and `atlas-handoff` skills expose those same runbooks directly. They preserve settled intent and make remaining decisions, dependencies and test prerequisites visible. Artifact creation does not authorize implementation or tracker publication. See [setup](SETUP.md#prd-ticket-and-handoff-deliverables).
