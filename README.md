@@ -51,3 +51,5 @@ Validation results and limits accompany each pull request. Work-environment deta
 ## Maintain this package
 
 Read [AGENTS.md](AGENTS.md), [current work](project-memory/current.md), and the [delivery decision](docs/decisions/2026-09-06-portable-lead.md). The reusable product is `plugins/atlas/`; its one canonical skill lives at `plugins/atlas/skills/atlas/`. Deeper runbooks load only when relevant; the repository's coordination history is not part of the installed product.
+
+For maintainer behavior checks, use the [evaluation pilot](evals/README.md) and read its [observations and limits](docs/validation/behavior-evals.md). The evaluator and fixtures are not installed with Atlas.
