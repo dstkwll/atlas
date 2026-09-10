@@ -111,5 +111,21 @@
     ],
     "check": "repair",
     "no_edit_before": 1
+  },
+  {
+    "id": "continuity",
+    "turns": [
+      "Help me design a team request inbox. We are exploring only, not implementing. People should claim requests manually. Help me flesh out the behavior and the next decision.",
+      "Agreed: when two people try to claim the same request, only one should succeed and the other should see who got it. Owners can release a claim. Leave manager reassignment undecided for now.",
+      "I need to stop for today. Next time we should decide manager reassignment before implementing anything."
+    ],
+    "check": "no_implementation"
+  },
+  {
+    "id": "continuity-no-write",
+    "turns": [
+      "Help me reason about manual versus automatic claiming for a team request inbox. Advice only; do not create or modify any files."
+    ],
+    "check": "unchanged"
   }
 ]

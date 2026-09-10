@@ -1,6 +1,6 @@
 # Locate topic artifacts
 
-Use the current project's approved artifact location for PRDs, tickets and handoffs. Keep one topic together; do not create a second home merely because a new skill was invoked.
+Use the current project's approved artifact location for task continuity, PRDs, tickets and handoffs. Keep one topic together; do not create a second home merely because a new skill was invoked.
 
 Resolve the destination from explicit task instructions, then the project's existing instructions/configuration and topic records. Where Atlas configuration is used, read the location value `artifacts.planning_root` in the applicable project configuration or `~/.config/atlas/config.yaml`; project restrictions take precedence over a personal default. This setting supplies only a candidate path; it does not itself authorize writing or exporting material there, or importing other policies from that file. Inspect only the relevant setting and never include unrelated configuration or secrets in an artifact.
 
@@ -12,6 +12,7 @@ Default artifact shape when no project convention overrides it:
 
 ```text
 <planning-root>/<topic>/
+  current.md             # when no adequate brief/PRD owns continuity
   prd.html
   tickets/
     index.md
@@ -19,6 +20,6 @@ Default artifact shape when no project convention overrides it:
   handoff.md
 ```
 
-Create only requested artifacts. Use separate named handoffs for distinct recipients/transfers when needed, preserving earlier material decisions rather than overwriting them. Ticket numbering aids navigation; dependency links determine order. Reuse existing issue identities if a tracker is authoritative rather than create an unsynchronized second backlog.
+Create only deliverables warranted by the assignment; routine continuity follows the lead contract without a separate artifact request. When no existing brief or PRD supplies recovery context, the topic may contain a compact `current.md`. A missing configuration file does not block the repository fallback or authorize creating global configuration. Ask only when a destination cannot be resolved safely; report inaccessible or conflicting configured locations instead of silently falling back. Use separate named handoffs for distinct recipients/transfers when needed, preserving earlier material decisions rather than overwriting them. Ticket numbering aids navigation; dependency links determine order. Reuse existing issue identities if a tracker is authoritative rather than create an unsynchronized second backlog.
 
 Keep links within the topic relative when possible. Record target repositories and source relevance, but avoid embedding machine-specific vault roots in portable documents. Honor the destination's own format/index conventions: if a vault requires a Markdown catalog entry, it may point to the HTML source of record without duplicating the PRD. Do not migrate or delete an established canonical source as an incidental format change.
