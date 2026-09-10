@@ -22,6 +22,8 @@ When a material decision depends on a concrete assumption, add a brief reconside
 
 During substantial design, keep the current brief/specification up to date and append short material decision entries in that document or an existing decision log. A progress checkpoint records the meaningful result, what changed, evidence or unresolved questions, and the next action; do not log every tool call. The current-state note links to this design and history rather than duplicating them. Update the affected documents when accepted scope or behavior changes, preserving important superseded decisions and their rationale.
 
+For periodic direction checks, use the accepted outcome, design constraints and material decisions in this existing record or its linked brief/PRD as the reference point. Record only a meaningful drift finding, changed provisional approach, unresolved decision or accepted amendment and its next action. Keep the reference current without rewriting accepted commitments to match whatever execution happened to produce. Do not create a separate direction log or preserve a turn count; after recovery, reestablish alignment before dependent work.
+
 ## Resume from evidence
 
 After compaction, session restoration or another material context loss, reload the canonical Atlas skill from its recorded location, only the references relevant to the next action, and the existing task record when available before doing work that depends on them. If the canonical guidance cannot be recovered, identify the missing source rather than claiming Atlas remains active. Do not reread every reference on every turn.
