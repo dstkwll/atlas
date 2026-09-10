@@ -1,10 +1,10 @@
 # Continuity and decisions
 
-Use for multi-session work, material decisions, authority changes, pauses, handoffs, or resumption. A small task completed directly needs no new memory file.
+Use when ongoing work requires decisions, unresolved questions or next steps to survive the conversation, and for authority changes, pauses, handoffs or resumption. A small task completed directly needs no new memory file.
 
 ## Keep one useful front door
 
-Prefer the target project's existing work-state convention. If none exists and continuity is needed, use a small task-specific Markdown note in a local project-approved location, such as `project-memory/current.md` for a single active task. Do not overwrite another task's note or store state in the reusable skill. Keep protected state within its approved environment; a public source repository is not automatically an approved location for work evidence.
+Prefer the target project's existing work-state convention and reuse an adequate task record. Otherwise use [Artifact location](artifact-location.md) to resolve the topic's approved home and start a compact `current.md` there. A configured planning root applies to this record too; do not create a competing `project-memory/` home merely because no PRD exists. Resolve the home once. Before the first durable write for a task, briefly explain that Atlas saves working notes for recovery, give the actual file path or a usable link (not just “session notes”), and mention that the user can choose another approved folder or vault. Use an established or safe fallback location without adding an approval gate; do not repeat the introduction on ordinary updates. If the location changes, identify the new path. A task-specific destination does not become a persistent preference unless the user requests that scope; offer to save an expressed ongoing preference through the existing project convention or optional configuration. Clarify whether an ambiguous persistent preference applies to this project or across projects before changing settings. Do not overwrite another task's note or store state in the reusable skill. Keep protected state within its approved environment; a public source repository is not automatically an approved location for work evidence.
 
 An existing topic PRD can own planning continuity, including a self-contained HTML document with embedded recovery context. Use [Artifact location](artifact-location.md) to honor the configured planning root or approved vault. Do not require a separate Markdown state record when the existing artifact already supplies what recovery needs. Keep that PRD current at material decisions and handoffs; do not create one for every small task.
 
@@ -12,7 +12,11 @@ The record should let a fresh lead recover the canonical Atlas skill's installed
 
 ## Write at meaningful boundaries
 
+The first qualifying decision or unresolved continuation creates the record if none exists; chat summaries and the host's transient todo list are not substitutes for it. Routine continuity is part of the assigned work, including discovery, when file writes are permitted; it does not authorize implementation, a full PRD, tracker publication or a global configuration change. If writes are prohibited or the approved location is unavailable, state the gap and keep a recoverable summary in the conversation without claiming it was saved.
+
 Persist authority changes before any downstream action relies on them, including a changed assignment or permission envelope. Also checkpoint before a likely interruption, after a material discovery or decision, and on completion/pause. Preserve remaining correction authority if resumption depends on it.
+
+After a successful material update to a task record, brief, PRD, tickets or handoff, briefly tell the user what changed and link to the actual file (or give a usable path when links are unavailable). Tie the notice to the existing progress or final response, group related file updates, and skip no-op or inconsequential rewrites. Report a failed or unavailable write honestly; an intention to save is not a saved update.
 
 Keep the current view compact. Preserve a material superseded commitment and its rationale in an existing decision record or a short decision note when later work relies on it; do not erase it or accumulate a transcript. For a consequential user choice, record context, genuine options, recommendation/reasoning, the user's selected or introduced direction, and any rationale they actually supplied. Do not infer a general preference or taste profile.
 
