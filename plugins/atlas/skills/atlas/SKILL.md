@@ -15,6 +15,8 @@ Read the target project's applicable instructions and accepted decisions. Inspec
 
 Identify the outcome, constraints, granted authority, and the smallest observable claim worth delivering next. The assigned outcome may be exploration, explanation, critique, advice, design, implementation, review, or a combination. Complete the requested discovery or advisory result when that is the task; do not infer permission to implement from permission to investigate, recommend, or design. Ask only for missing product judgment, priorities, taste, material architecture, risk, authority, or inaccessible facts. Investigate facts available through authorized tools yourself. A clear, small request needs no discovery ceremony or new work record.
 
+Before the next substantive action at task entry, and whenever the main uncertainty changes, match the task to the reference table below. When a trigger applies, read and apply the relevant guide before acting; reuse an already-loaded guide while its contents remain available and relevant. Simple factual answers and deterministic small edits need no additional guide. Loading Atlas alone is not evidence that a guide was applied. If a needed guide is unavailable, report the gap and continue only work that does not depend on it.
+
 When intent is forming, use [iterative discovery](references/discover-and-design.md#deepen-ideas-through-conversation) to follow answers into concrete scenarios and consequential gaps. A plausible brief is not proof that implementation choices are settled; make the remaining decision boundary clear before delegating.
 
 After authorization for substantial autonomous work, briefly explain what is settled, which implementation decisions you will make, and what would bring the work back to the user. This communicates the boundary; it is not another approval request. Continue within the authority already granted.
@@ -44,7 +46,7 @@ Revisit the relevant accepted brief, PRD or decisions when available rather than
 
 Make the result briefly visible: state the agreed direction, any meaningful drift or evidence, and the next action. When aligned, a sentence tied to the actual work is enough; continue authorized work without another approval request. Correct provisional choices within authority. If accepted intent, architecture, scope or priorities need to change, bring back the specific decision and continue only unaffected work. Persist material changes through the existing continuity guidance; an unchanged check needs no new record. Small self-contained tasks need no scheduled direction report.
 
-Load only the reference needed now. These are guidance, not stage owners:
+Select the guide for the next action, not every possible later activity. These are guidance, not stage owners:
 
 | Situation | Reference |
 | --- | --- |
@@ -52,6 +54,10 @@ Load only the reference needed now. These are guidance, not stage owners:
 | A bounded change, debugging, delegation, or ordinary repair | [Deliver and repair](references/deliver-and-repair.md) |
 | A claim warrants independent judgment or findings need reconciliation | [Independent review](references/independent-review.md) |
 | Meaningful decisions, authority changes, session loss, pause or resumption | [Continuity and decisions](references/continuity-and-decisions.md) |
+| Unfamiliar behavior or code/spec disagreement | [Understand existing behavior](references/understand-behavior.md) |
+| Evidence needed to catch a regression or substantiate a behavioral change | [Test adequacy](references/test-adequacy.md) |
+| Uncertain effects, partial failure, or retries that could duplicate work | [Failure handling](references/failure-handling.md) |
+| Material trust, authorization or sensitive-data boundary | [Security boundaries](references/security-boundaries.md) |
 | A specific technical risk needs deeper checks or a specialist method | [Specialist runbook index](references/specialist-runbooks.md) |
 | Turn settled discussion into a product brief for another planner | [Produce a PRD](references/to-prd.md) |
 | Break accepted scope into testable implementation slices | [Plan executable vertical slices](references/to-tickets.md) |
@@ -61,7 +67,7 @@ Each specialist runbook can guide your own work or an appropriately bounded work
 
 When you start applying a core guide or specialist runbook, briefly tell the user its name, who is using it and why: “Using Failure handling to check retry safety.” Announce a delegated assignment as such: “Assigning Test adequacy to a reviewer to check regression coverage.” An assignment is not confirmation of use. Include this reporting rule in worker briefs: workers report the runbooks actually used and their purpose, including any they select themselves, at first use through available progress messages and in their return. Relay worker-selected additions in the main conversation when received; if only a final return is available, disclose them then. Group related notices and avoid repeating them for rereads during the same work. These are status notices, not approval gates or claims of completion.
 
-For routine work, this entrypoint may be enough. Do not load every reference, call another workflow by default, or require an artifact just because a playbook mentions it. Optional tools remain resources; their instructions must not silently replace this task's authority or outcome.
+For simple factual answers and deterministic small edits, this entrypoint may be enough. Do not use that exception to skip a matching guide for substantive design, investigation or behavioral changes. Do not load every reference or require an artifact just because a playbook mentions it. Optional tools remain resources; their instructions must not silently replace this task's authority or outcome.
 
 ## Delegate and verify proportionately
 

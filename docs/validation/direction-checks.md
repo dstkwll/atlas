@@ -18,3 +18,13 @@ Primary inspection confirmed those authority and cadence distinctions against th
 Skill format validation, all 90 relative plugin file links, matching manifest versions and whitespace checks passed. The final diff preserves the existing no-default-retry-limit rule and uses existing records for material changes only. No separate skill, counter or direction log was introduced.
 
 These checks do not establish exact timing, adherence after compaction, actual tool recovery, or behavior in workplace hosts. Raw independent output is retained in the sibling workspace research/2026-09-09-direction-checks/review.md.
+
+## Runbook selection extension
+
+Two fresh independent agents received separate copies of baseline main and candidate guidance. Each was told to use Atlas and answer the same raw synthetic tasks, without naming the expected runbooks: advise on a status-lookup design drifting toward a daemon despite an accepted no-service constraint; handle an uncertain issue-creation write; and correct a standalone grammatical error. They had local file-reading capability and were asked to report paths read and task outcomes. No workplace material or external mutations were involved.
+
+Both agents reported reading and applying Discover and design and Failure handling, with first-use notices. The baseline additionally read the specialist index; the candidate used the direct Failure handling link. Primary inspection of both outputs confirmed that the recommendations preserved accepted architecture, distinguished observations from proof, proposed bounded investigation, required reconciliation or established idempotency before a duplicate-unsafe retry, and completed the small correction without additional guidance. The candidate explicitly preserved existing authorization for safe recovery.
+
+The baseline also passed. This exercise therefore does not reproduce the workplace omission or establish an adherence improvement rate. It supports selection and useful application in a fresh file-reading agent context, not native Copilot profile activation, long-session retention, every specialist trigger or behavior across models. Earlier text-only scenarios remain separate evidence. The candidate change makes selection explicit and removes a broad routine-work exception; it adds no hooks, services, required hierarchy or new reporting system.
+
+Final skill validation, 95 relative links, matching manifests and whitespace checks passed. Profile wiring still resolves to the shared skill; no profile policy was duplicated. Raw outcomes are retained in the sibling workspace research/2026-09-09-direction-checks/selection/.
