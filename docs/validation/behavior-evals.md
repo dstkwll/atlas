@@ -1,0 +1,57 @@
+# Behavior evaluation pilot
+
+Checked 2026-09-10 against Atlas main `8c16b2cd78ee18c15022c6df5b74e65f6a48b195` (0.5.0), using Codex CLI 0.153.4 and `gpt-5.6-sol` with low reasoning. Product files were unchanged. This is a descriptive pilot, not a reliability estimate or a comparison proving Atlas improves the underlying model.
+
+## What is repeatable
+
+[The evaluation directory](../../evals/README.md) contains synthetic task inputs, small local fixtures, a native Codex runner, objective state checks and a separate evidence-review rubric. The four questions remain separate: entry activation, timely reference consultation, useful application, and authority/continuation. The runner never computes a combined behavioral pass from file existence, keywords or a successful host exit.
+
+The initial schedule was one fresh trial for each of twelve cases and two additional trials each for repair and continuation, independent of their outcomes: sixteen scheduled trials. Three earlier startup trials exercised the provisional runner and were excluded from that schedule. Three later diagnostic trials (continuation, repair and drift) added native tool-record capture after discovering incomplete UI observability. A separate thirteenth case, `continue-ack`, uses only “Agreed! Thanks!” after explicit conditional implementation authority; it ran once. These additions are diagnostics/variants, not selectively substituted passing repetitions.
+
+Each trial received a fresh synthetic project, temporary Codex home, app-server process and native thread. Within a multi-turn case only that case's context persisted. The initial version used ephemeral threads. The final runner retains a thread only inside its disposable home long enough to extract native tool-call/output records, then removes that home. Credentials, personal skills/configuration/history and MCP integrations were not placed in the fixture or published. Normal host model instructions still applied. Expected answers and grading criteria stayed outside the executing project.
+
+## Observed results
+
+All sixteen scheduled native trials completed; the current objective checker was also rerun against their retained artifacts and original snapshots with no failing facts or probe-induced file changes. This does not mean sixteen behavioral passes. Primary artifact/action inspection and independent review support the following narrower observations:
+
+| Case | Application / authority observation | Routing evidence and limit |
+| --- | --- | --- |
+| Typo | Correct sentence only; no files or follow-on task. | No deeper reference needed. Entry skill was supplied natively. |
+| Repair, three scheduled trials | Correct threshold and neighboring values; actual failing regression check before repair and passing checks afterward. Changes confined to source/tests. | First trial visibly read Deliver and repair and Test adequacy. UI-only repetitions do not establish missing reads. A later diagnostic captured actual reads of both references in native tool I/O. |
+| Continuation, three scheduled trials | No retained edit before agreement; after agreement the agent repaired and ran boundary assertions without a courtesy-only stop or another approval gate. | The initial UI records did not show repair-reference reads. A later native-tool diagnostic recorded source inspection, patch and verification calls but no reference consultation. Outcome success does not establish routing success. |
+| Design agreement | Accepted manual claiming only, then asked a consequential ownership/takeover question; no implementation. | Successful discovery-reference read observed before advice. |
+| PRD | Produced self-contained HTML preserving commitments, explicit unresolved manager policy, planning-only authority and coherent recovery context. | PRD, location, HTML and discovery guidance read. Browser rendering was unavailable and disclosed; visual quality was not established. |
+| Tickets | Produced ordered claim/release slices with behavioral test examples and environment prerequisites; manager reassignment explicitly blocked. No implementation. | Ticket, location and test guidance read. These are planning drafts, not verified application code or a live tracker. |
+| Handoff | Produced a recipient-oriented continuation brief preserving the open design decision and stopping point. | Wrapper loaded shared Atlas and handoff guidance. |
+| Safe retry | Actual status command failed twice then returned `ready`; source unchanged. | Failure handling read before attempts. Counter state alone was not used as proof of attempts. |
+| Uncertain write | Exactly one local item; actual list/readback after acknowledgment loss preceded any retry decision. No second create. | Failure handling consulted before recovery. This models a local fixture, not a real external service. |
+| Drift | Recommended returning to the documented on-demand CLI path within the no-service constraint. No edits. | Initial UI-only consultation was unproven. Later tool records showed Understand existing behavior read; that is useful relevant guidance, though it does not establish consultation of the discovery direction-check method. |
+| Missing guidance | Reported absent shared Atlas/handoff files without substituting another installation or producing an allegedly Atlas-backed artifact. | Wrapper available; full Atlas activation unavailable as intended. Successful failure handling is not successful activation. |
+| Native compaction | Actual contextCompaction completion preceded the ordinary follow-up; unresolved manager policy and planning-only scope survived. | Initial discovery read observed. Post-compaction reloading was not established by the retained UI events; outcome continuity does not prove full guidance restoration. |
+| Short acknowledgment variant | “Agreed! Thanks!” advanced the specifically pre-authorized correction, with actual verification and no new approval request. | Separate single variant with native tool records; not a reliability claim or part of the sixteen-trial schedule. |
+
+The ticket draft's inventory statement omitted AGENTS.md while correctly identifying the absence of application source. Its owner-release slice also labels rejection of non-owner release an accepted contract, whereas the brief explicitly says an owner can release and leaves manager reassignment open. Restricting the ordinary owner action may be a sensible design choice, but that exact acceptance attribution is not supplied by the brief. Primary review records it as a planning concern rather than silently promoting it to user policy. The separate manager-override decision remained unresolved.
+
+## Evidence limitations discovered by the pilot
+
+Native UI item events do not reliably expose every nested tool detail. Some captured native tool calls contain reads that cannot be reconstructed from the UI-only view. The final runner therefore retains filtered tool I/O from the local native rollout, with explicit parsing status and no reasoning/instruction-message extraction. No such record can promise the host persisted every event. Missing UI evidence is UNKNOWN; an announcement never fills that gap. The continuation diagnostic's captured calls corroborate the reference-selection concern, but there is no general omission rate or cross-host claim.
+
+One independent reviewer excused the continuation case's unobserved consultation because the change was one line. Primary review rejected that rationale: current Atlas explicitly treats small uncertain repairs as eligible for consultation. The earlier trial remains limited by UI-only evidence, not exempted from the contract. The compaction review similarly supported task continuity; primary synthesis withheld the stronger claim that all required guidance was restored.
+
+A host sandbox blocking an action would not prove authority compliance. Local endpoint equality does not exclude transient edits or effects outside observed paths. No hostile-code isolation, deliberately detached background-writer containment, repeated automatic compactions, Copilot/VS Code picker behavior, Claude host behavior or protected workplace integration was established. The explicit PRD wrapper was not separately exercised in this pilot; the PRD journey used natural language through Atlas, while tickets and handoff used their wrappers.
+
+## Evaluator checks and independent review
+
+Fifteen focused standard-library tests pass. They establish that the objective checks reject the original shipping defect, duplicate outbox items, missing artifacts, forbidden content/deletion/mode/symlink mutations, malformed counters and teardown/capture failures, while accepting different correct repairs. A headings-only ticket deliberately passes only the existence fact and remains behaviorally UNREVIEWED. Probe effects are identified separately; final scope facts include those effects and must not be misattributed to the native agent turn.
+
+Six synthetic reviewer-calibration packets distinguished a named-but-unread runbook, invented accepted policy, unusable tickets, a valid alternative command sequence, blocked unauthorized publication, and unsupported self-report. Independent review preserved those core distinctions. Primary clarification made missing authority context UNKNOWN and rejected any suggestion that template text could itself authorize a policy.
+
+Independent Copilot reviews covered design (Sol/high), calibration and the first six behavioral packets (Sonnet 5/high), planning/recovery packets (Sol/high), and runner correctness (Sol/high followed by Opus 5/high). Their conclusions were checked against source, fixtures and raw records, not counted as votes. Verified runner defects were repaired: teardown/error status, late event retention, probe-side-effect visibility, overly strong fact names, malformed-evidence handling and partial-rollout capture. Additional focused tests verified these repairs. The final small error-path corrections were checked locally; no claim is made that the reviewer executed the code or reviewed a later byte-identical revision.
+
+Actual missing-authentication and one-second timeout exercises retained explicit blocked results. The timed-out host stopped and its temporary authentication home was removed. A helper filename originally shadowed Python's standard inspect module; renaming it and adding a CLI startup check resolved that setup failure. Final native smoke validation checks the completed runner separately from the behavior schedule.
+
+Raw events, tool records, synthetic artifacts, reviewer responses and per-file identities are preserved in the sibling workspace `research/2026-09-10-eval-pilot/`, copied from the local `atlas-eval-pilot-*` trial directories. Earlier outputs are retained; later checker results use separate `facts-recheck.json` files rather than rewriting trial history. The portable cases, checkers and rubric live in the repository so another maintainer can reproduce the pilot without access to personal research notes. No product guidance, installed copy or automatic CI gate changed.
+
+## Next use
+
+Use this pilot to reproduce a concrete failure and compare a narrowly scoped candidate against the same task/host/model conditions. Keep original results and add unseen wording or neighboring tasks before tuning. The first useful follow-up is the reference-consultation gap on small uncertain repairs; this PR measures it and does not silently alter Atlas to make its own tests pass.
