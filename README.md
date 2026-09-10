@@ -31,6 +31,19 @@ The [specialist library](plugins/atlas/skills/atlas/references/specialist-runboo
 
 Ask Atlas to produce a PRD, an ordered set of testable vertical slices, or a handoff for another agent. Optional `atlas-to-prd`, `atlas-to-tickets` and `atlas-handoff` skills expose those same runbooks directly. They preserve settled intent and make remaining decisions, dependencies and test prerequisites visible. Artifact creation does not authorize implementation or tracker publication. See [setup](SETUP.md#prd-ticket-and-handoff-deliverables).
 
+## Describe the outcome you need
+
+After activating Atlas, use ordinary requests such as:
+
+- “Explain how this request reaches storage; I need enough context to change validation.”
+- “Find out why this workaround exists and whether its constraint still applies. Investigate only.”
+- “Turn our agreed design into a PRD, then prepare testable tickets. Leave implementation for the next agent.”
+- “This report links to a proposed fix. Verify whether it addresses the failure before writing another patch.”
+- “Make the existing project checks usable by a fresh agent, including setup, evidence and cleanup.”
+- “Migrate this component while preserving its appearance and keyboard behavior.”
+
+Atlas chooses the relevant runbooks from the request. Teaching, investigation, verification and planning can each be the completed outcome; implementation follows the authority you actually give it.
+
 ## Scope and evidence
 
 The package is intended for ordinary software work, with risk-linked assurance. It is not a guarantee of autonomous correctness or workplace-host compatibility.

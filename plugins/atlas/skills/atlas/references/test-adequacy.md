@@ -14,6 +14,12 @@ For an ambiguous bug or recurring failed repair, derive expected behavior and a 
 
 Return which claims are proven, which are only inspected, important missing coverage, and actual commands/results. Investigate flaky failures rather than skipping them to produce a green result; any accepted quarantine needs visible lost coverage and its owner. Read [user journeys](user-journeys.md) for interactive behavior.
 
+## Verify an existing fix
+
+When asked whether a supplied patch resolves a report, identify the exact candidate and a meaningful baseline, including required dependencies and environment. Derive the discriminating behavior from the report and accepted expectations before relying on the patch's explanation. Preserve unrelated work when preparing comparisons. Exercise equivalent conditions on both revisions when possible, and retain the before evidence while inspecting the candidate. For interactive claims, use [User journeys](user-journeys.md).
+
+Distinguish a supported correction, evidence that the fix is insufficient, and an inconclusive comparison. State which half was actually executed and what the checks cover. An unavailable or unbuildable baseline limits the claim; passing candidate tests alone do not demonstrate that the original defect was reproduced and removed. Changed base code or dependencies can invalidate earlier evidence even if the patch text is unchanged. Verification-only scope does not authorize editing or merging the supplied fix.
+
 ## Test-first work when it helps
 
 For behavior changes and bug fixes with observable expected outcomes, prefer a small red-green-refactor loop when it supplies useful feedback; honor an explicit project or user TDD requirement. Establish the relevant test boundary, fixtures and runnable environment first. Use existing interfaces and accepted behavior; ask only when defining the boundary would require new judgment, not for approval of every test.

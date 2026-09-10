@@ -8,6 +8,8 @@ Choose the smallest integrated behavior that can be verified. Include the code, 
 
 Plan the next usable vertical slice in detail and keep later work coarse. Tie it to the intended outcome and acceptance examples in the brief or existing request; demonstrate the result and use evidence or user feedback to choose what comes next. Update the brief and remaining work when learning changes provisional design. Changes to accepted intent still need the applicable judgment. A spec supports this feedback loop; it does not freeze requirements or oblige completion of an obsolete task list. Use the team's cadence where one exists, without imposing sprints, story points or a new backlog system.
 
+For a report from a thread or tracker, inspect existing evidence, ownership and relevant fix artifacts before starting another patch. Distinguish observed defects from requested behavior and unresolved expectations. Compare possible duplicates by trigger, signature, affected version and current status; a long-closed issue may be a recurrence. Use causal evidence and established ownership rather than routing solely by the screen showing the symptom. Clarification, a related-issue recommendation or [verification of an existing fix](test-adequacy.md#verify-an-existing-fix) may be the useful outcome. Do not turn weak similarity into a duplicate verdict or a stale PR into a permanent veto on authorized repair. Assignment, tracker changes and notifications still require applicable authority.
+
 For a bug, reproduce the incorrect behavior and identify the causal path before broad changes. Add a separating regression check when it protects meaningful behavior: it should expose the defect before the repair and pass afterward. For a trivial reversible text change, direct inspection or an existing check may suffice.
 
 Tests should exercise observable behavior and relevant failure modes, not merely mirror the implementation. Reuse the project's checks. Investigate a failing check before blaming the environment; distinguish existing failures from regressions with evidence. Never weaken an assertion or skip a required check just to obtain green output. Report unavailable dependencies as a bounded evidence gap.
@@ -19,6 +21,8 @@ For a failing build/startup use [build diagnosis](build-and-runtime-diagnosis.md
 ## Use workers selectively
 
 Give a worker enough context to act without inventing accepted judgment. State outcome, authoritative sources, allowed files/systems, authority, prohibited side effects, evidence and stopping/return conditions. Narrow the brief and permissions for a less capable worker. Avoid concurrent writers on the same work surface unless isolation and integration are clear.
+
+Before multiplying uncertain repeated work across workers, consider one representative slice to check the brief, verification method and integration arrangement. Use what it reveals to correct later briefs within accepted scope; a successful pilot does not prove every slice or extend the total budget. Skip a separate pilot when the work or method is already clear.
 
 Name the isolation the assignment actually needs and what the host supplies. Fresh context supports independent judgment; a separate worktree or write surface prevents concurrent file collisions; host permissions or a security sandbox constrain access. One does not imply the others merely because a tool calls a session or workspace isolated.
 

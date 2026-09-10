@@ -14,6 +14,8 @@ For an ambiguous bug or repeated failed repair, derive the required behavior and
 
 Trace relevant success and failure paths. Check accepted contracts, neighboring behavior, input and trust boundaries, state/data ownership, concurrency, recovery, migration, and operational effects only where applicable. In stateful or evidence-composing code, actively challenge combinations of states that could produce an incorrect success claim or bypass a boundary. Happy-path tests and isolated field checks may miss those combinations.
 
+Identify the consequential assumptions that make the change safe and seek evidence capable of overturning them. Focus on unresolved assumptions that could change the verdict, rather than producing an exhaustive speculative risk list. Match each claim to its evidence: live interaction, unit tests and source inspection can establish different properties, so one does not automatically replace the others.
+
 Use the project's existing deterministic checks for objective properties. Inspect whether the tests reach the claimed behavior and whether evidence belongs to the candidate being delivered. Missing execution access limits the verdict; it does not justify fabricated results.
 
 Return prioritized findings with exact locations, triggering conditions, affected behavior/contract, evidence, uncertainty, and verification not performed. Separate blockers from suggestions. Avoid style preferences, speculative future problems and required documentation whose only consumer is the review itself.

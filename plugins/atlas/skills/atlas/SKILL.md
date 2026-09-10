@@ -51,11 +51,13 @@ Select the runbook for the next action, not every possible later activity. These
 | Situation | Reference |
 | --- | --- |
 | Unclear goal, consequential design, or unfamiliar existing system | [Discover and design](references/discover-and-design.md) |
-| A bounded change, debugging, delegation, or ordinary repair | [Deliver and repair](references/deliver-and-repair.md) |
+| A bounded change, report triage, debugging, delegation, or ordinary repair | [Deliver and repair](references/deliver-and-repair.md) |
 | A claim warrants independent judgment or findings need reconciliation | [Independent review](references/independent-review.md) |
 | Meaningful decisions, authority changes, session loss, pause or resumption | [Continuity and decisions](references/continuity-and-decisions.md) |
 | Unfamiliar behavior or code/spec disagreement | [Understand existing behavior](references/understand-behavior.md) |
-| Evidence needed to catch a regression or substantiate a behavioral change | [Test adequacy](references/test-adequacy.md) |
+| Why a design or constraint exists, or whether its original rationale still applies | [Reconstruct design rationale](references/reconstruct-rationale.md) |
+| Create or repair a repeatable project verification path | [Establish project verification](references/project-verification.md) |
+| Evidence needed for a regression, behavioral change or an existing fix | [Test adequacy](references/test-adequacy.md) |
 | Uncertain effects, partial failure, or retries that could duplicate work | [Failure handling](references/failure-handling.md) |
 | Material trust, authorization or sensitive-data boundary | [Security boundaries](references/security-boundaries.md) |
 | A specific technical risk needs deeper checks or a specialist method | [Specialist runbook index](references/specialist-runbooks.md) |
