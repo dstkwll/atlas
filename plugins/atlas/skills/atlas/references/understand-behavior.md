@@ -8,6 +8,8 @@ For each important observation, identify the triggering input/state, observable 
 
 Compare code, tests, documentation and accepted commitments. Record contradictions explicitly. Observed behavior is not newly accepted intent: a swallowed error or missing authorization check does not become a requirement because current code exhibits it. Characterization tests can preserve a known baseline while a defect remains separately identified. Do not impose a specification format or silently replace existing decisions with mined assertions.
 
+When the missing fact is why a guard, interface or workaround was introduced, use [Reconstruct design rationale](reconstruct-rationale.md). Keep historical explanation separate from present-day authority.
+
 Identify coupling that matters to the proposed change: callers that depend on ordering or exceptions, shared state owners, transaction boundaries, public compatibility, and external systems whose behavior is only assumed. Trace an event through both publisher and consumer when accessible; otherwise identify the missing segment rather than inventing an end-to-end guarantee.
 
 Return the smallest useful behavior map, precise evidence locations, uncertainties and implications for the next change. Use [visual explanation guidance](discover-and-design.md#explain-and-co-design-through-a-useful-visual) when a call tree, flow or change comparison makes that map clearer. Stop when the risky assumptions are resolved or a specific inaccessible boundary limits the claim. Use [documentation and references](documentation-and-references.md) if versioned API behavior is the missing fact. Do not require a codemap or formal spec when a short explanation suffices.

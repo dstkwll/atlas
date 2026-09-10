@@ -18,4 +18,6 @@ Treat instructional changes as behavior changes. Identify important behavior bei
 
 Keep product guidance self-contained and portable. Do not add external agent-framework dependencies, universal stages, workflow controllers, queues, schedulers, retry engines, schemas, compatibility systems or bulk architecture copies without an explicit accepted decision and demonstrated need. Native skill placement is packaging, not a runtime adapter.
 
+Keep donor comparisons and adaptation research in the maintainer's research notes. Retain current design rationale needed for safe maintenance in the repository and applicable third-party attribution and license notices in distributions. Product use and maintenance must not depend on private notes.
+
 Update the compact current-state note when status, authority, proof or next action changes. Keep historical evidence and rationale in linked records rather than the startup context. Installed copies must not include this repository's maintenance instructions, active work state or historical publication authority.

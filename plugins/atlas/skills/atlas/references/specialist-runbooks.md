@@ -13,12 +13,14 @@ Use existing approved project/host tools. Runbooks prescribe no additional tools
 | Technical question or trigger | Reference |
 | --- | --- |
 | Unfamiliar behavior or code/spec disagreement | [Understand existing behavior](understand-behavior.md) |
+| Why a design or constraint exists, or whether its original rationale still applies | [Reconstruct design rationale](reconstruct-rationale.md) |
+| Create or repair a repeatable project verification path | [Establish project verification](project-verification.md) |
 | Could errors become success, retries duplicate effects or work be lost? | [Failure handling](failure-handling.md) |
 | What evidence would catch a regression or substantiate this change? | [Test adequacy](test-adequacy.md) |
 | Invalid states, unit/identity confusion or mutation escape paths | [Types and invariants](types-and-invariants.md) |
 | Material trust, authorization or sensitive-data boundary | [Security boundaries](security-boundaries.md) |
 | Persistence correctness, query behavior or deployment migration | [Data and migrations](data-and-migrations.md) |
-| Measured slowness, resource growth or a performance budget | [Performance](performance.md) |
+| Measured slowness, resource growth, captured profile or performance budget | [Performance](performance.md) |
 | Compiler, dependency, startup or runtime failure | [Build/runtime diagnosis](build-and-runtime-diagnosis.md) |
 | Behavior-preserving simplification or proven obsolete code | [Simplify and clean](simplify-and-clean.md) |
 | Versioned API uncertainty, stale docs or misleading comments | [Documentation and references](documentation-and-references.md) |

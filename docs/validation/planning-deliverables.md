@@ -23,7 +23,7 @@ An independent Copilot reviewer, gpt-5.6-sol/high, received the three runbooks, 
 
 No workplace host, VS Code picker, live tracker publishing, cross-host transfer, unavailable-source model session or actual TDD implementation was exercised. Native CLI discovery does not prove the model loads and follows every skill. The forward exercise used candidate source files in an independent agent context, not the installed Copilot runtime. No personal installed copy was updated. Broader multi-ticket projects and recipient reliability remain unmeasured.
 
-Synthetic PRD, ticket, handoff and independent-review artifacts are retained in the sibling workspace directory research/2026-09-09-planning-deliverables. Donor dispositions remain in the existing source-adaptation record; reusable skills contain no donor runtime dependency.
+Synthetic PRD, ticket, handoff and independent-review artifacts are retained in the sibling workspace directory research/2026-09-09-planning-deliverables. Reusable skills contain no donor runtime dependency.
 
 ## Configured location and recoverable HTML extension
 
