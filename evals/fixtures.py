@@ -45,3 +45,5 @@ else:
     print(json.dumps(items[-1]))
 '''}
 }
+
+FIXTURES['working-notes'] = {'planning/inbox/current.md': '# Team request inbox\n\nDiscovery only. Accepted: manual claiming; concurrent claims have one winner and the loser sees the owner; no new external service. Open: owner release, release destination, manager reassignment. Existing topic home is planning/inbox.\n'}
