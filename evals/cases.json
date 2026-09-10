@@ -127,5 +127,25 @@
       "Help me reason about manual versus automatic claiming for a team request inbox. Advice only; do not create or modify any files."
     ],
     "check": "unchanged"
+  },
+  {
+    "id": "partial-agreement",
+    "fixture": "working-notes",
+    "turns": [
+      "Help refine our team request inbox. Discovery only, no implementation. Consider owner release behavior, whether requests return to the unclaimed queue, and whether managers can reassign. Explain options and your recommendation.",
+      "I agree only that owners can release their own claims. Queue destination and manager reassignment remain undecided. Keep going with the design.",
+      "Prepare local vertical-slice tickets for the settled behavior. Leave unresolved policy decisions out of executable requirements. Do not implement or publish anything."
+    ],
+    "check": "tickets"
+  },
+  {
+    "id": "notes-to-prd",
+    "fixture": "working-notes",
+    "turns": [
+      "Turn our existing request-inbox notes into a self-contained HTML PRD. Preserve what is settled and what remains open. This is a planning deliverable only; do not implement.",
+      "One design amendment: owners can release their own claims, and released requests return to the unclaimed queue. Manager reassignment is still undecided. Update the design.",
+      "I need to stop now. Make sure a new agent can resume from the HTML alone."
+    ],
+    "check": "prd"
   }
 ]

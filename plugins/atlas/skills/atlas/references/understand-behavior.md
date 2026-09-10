@@ -1,6 +1,6 @@
 # Understand existing behavior
 
-Use for an unfamiliar change path, legacy behavior, or a missing/contradictory contract. Start with the requested outcome, affected entry points, available source revision, and any accepted specifications. Analysis is read-only unless documentation or repair is separately in scope.
+Use for an unfamiliar change path, legacy behavior, or a missing/contradictory contract. Start with the requested outcome, affected entry points, available source revision, and any accepted specifications. Keep the inspected system unchanged unless documentation or repair is separately in scope. Normal [continuity records](continuity-and-decisions.md) may still capture findings in the approved artifact location when writes are permitted; an explicit no-write instruction takes precedence.
 
 Trace one representative operation from its trigger through validation, decisions, storage, external effects and response. Include error branches, asynchronous handoffs, retries and cancellation where they change the result. Follow configuration, dependency injection and generated bindings when a source-level call alone cannot establish what runs. Expand around unresolved behavior rather than inventorying every file.
 

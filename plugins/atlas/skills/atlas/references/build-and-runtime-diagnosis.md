@@ -2,7 +2,7 @@
 
 Use when a build, startup, test process or runtime fails. Establish the exact failing command, selected workspace/target, resolved dependencies, toolchain and relevant recent change. Use the repository's wrappers, lockfiles and configured commands. Capture the first causal error and enough surrounding output to distinguish its downstream symptoms. When the evidence is a captured profile or resource trace, use [Performance diagnosis](performance.md) for attribution and measurement limits.
 
-Separate source/type errors, generated-artifact mismatch, dependency resolution, environment/configuration and runtime data failures. Reproduce the narrowest representative failure, then test a hypothesis that discriminates between causes. If a retry produces the same failure without new evidence, change the investigation; do not restart an unlimited loop or shrink the requested outcome.
+Separate source/type errors, generated-artifact mismatch, dependency resolution, environment/configuration and runtime data failures. Reproduce the narrowest representative failure, then test a hypothesis that discriminates between causes. For a repeatable source or configuration failure, repeating the same action is not a new investigation. Safe retries for credible transient failures follow [delivery and repair](deliver-and-repair.md); a second failure alone is not a stop rule. Check uncertain external effects through [failure handling](failure-handling.md) before retrying. Keep effort bounded by the task’s authority, time and risk; do not restart an unlimited loop or shrink the requested outcome.
 
 Load only the ecosystem checks that apply:
 

@@ -46,3 +46,5 @@ Include a concise sanitized report in the PR description or link a report under 
 Native trials currently depend on local account authentication and execute synthetic project code. Hosting them in Actions would require a separate authentication and isolation design. There is no credentialed model workflow or automatic behavioral merge gate in this pilot.
 
 The `continuity` and `continuity-no-write` cases cover unprompted task records and the explicit write prohibition. See [native Copilot continuity evidence](../docs/validation/continuity.md) for separate profile activation trials, source revisions and observed limits. The rubric requires actual record content and update notices; planning-only change facts alone cannot establish success.
+
+The `partial-agreement` and `notes-to-prd` cases probe acceptance boundaries through tickets and continuity across a PRD amendment. See [planning-transition observations](../docs/validation/guidance-consistency.md) for separate native Copilot profile results, intermediate misses and recovery limits.
