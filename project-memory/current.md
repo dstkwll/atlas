@@ -8,4 +8,4 @@ The user also corrected another courtesy-only stopping reply. Added an agreement
 
 Final Sol/high and Opus/high source reviews are complete; verified findings informed the HTML fallback and evidence clarity. Host-aware skill validation is deferred.
 
-Next: publish a draft PR with explicit evidence limits, and recommend review of the capability additions. Treat the acknowledgment failure as a separate diagnosed follow-up, not proof that all routing failed or justification for a new runtime. Installed copies remain unchanged.
+Draft PR: https://github.com/dstkwll/atlas/pull/18. Capability implementation and source review are complete, with explicit evidence limits. Next: review the capability additions for merge judgment. Treat the acknowledgment failure as a separate diagnosed follow-up, not proof that all routing failed or justification for a new runtime. Installed copies remain unchanged.
