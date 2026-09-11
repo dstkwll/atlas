@@ -2,7 +2,7 @@
 
 Atlas is a small software-lead guide for the agent you already use. Give the main agent a goal; it chooses useful investigation, design, implementation, review and repair, carries the architectural context, and returns for decisions that belong to you.
 
-The package contains one lead skill, three optional artifact entry points, four core activity guides and an optional specialist runbook library. It requires no added service, hook, orchestration runtime or connection to this project's Drive folder. Your existing host, tools and project rules remain in control.
+The package contains one lead skill, five optional entry points, four core activity guides and an optional specialist runbook library. It requires no added service, hook, orchestration runtime or connection to this project's Drive folder. Your existing host, tools and project rules remain in control.
 
 ## Use it in your project
 
@@ -19,7 +19,7 @@ The installable product is [plugins/atlas](plugins/atlas); the standalone [Atlas
 
 ## How it behaves
 
-The lead keeps accepted commitments separate from provisional choices. It can refine implementation as evidence arrives, correct ordinary defects within authority, and use independent review when the consequences warrant it. It maintains compact project-local continuity for work that needs to resume. Exploration, advice or design can be the completed result; asking for one does not implicitly authorize implementation. A small clear fix can remain a small clear fix.
+The lead keeps accepted commitments separate from provisional choices. It can refine implementation as evidence arrives, correct ordinary defects within authority, and use independent review when the consequences warrant it. It maintains compact project-local continuity for work that needs to resume. Exploration, advice or design can be the completed result; asking for one does not implicitly authorize implementation. A small clear fix can remain a small clear fix. Conversational replies close with brief next-step guidance: what to do, what decision or feedback is needed, or when no further action is needed. This does not authorize extra work.
 
 For substantial design, Atlas maintains a living brief, records meaningful decisions and develops the next usable slice in detail. It can expand that brief into a PRD or specification and produce an HTML view for co-design when useful. Small clear changes can proceed directly. Atlas does not require a ticket graph, fixed sequence of specialists or review ceremony for every change. It never grants permission to publish, deploy, spend or merge.
 
@@ -27,7 +27,9 @@ The [specialist library](plugins/atlas/skills/atlas/references/specialist-runboo
 
 ## Finish at a useful artifact
 
-Ask Atlas to produce a PRD, an ordered set of testable vertical slices, or a handoff for another agent. Optional `atlas-to-prd`, `atlas-to-tickets` and `atlas-handoff` skills expose those same runbooks directly. They preserve settled intent and make remaining decisions, dependencies and test prerequisites visible. Artifact creation does not authorize implementation or tracker publication. See [setup](SETUP.md#prd-ticket-and-handoff-deliverables).
+Ask Atlas to produce a PRD, an ordered set of testable vertical slices, or a handoff for another agent. Optional `atlas-to-documentation`, `atlas-to-tickets` and `atlas-handoff` skills expose those same runbooks directly. They preserve settled intent and make remaining decisions, dependencies and test prerequisites visible. Artifact creation does not authorize implementation or tracker publication. See [setup](SETUP.md#prd-ticket-and-handoff-deliverables).
+
+Documentation includes PRDs, guides, architecture explanations and references. `atlas-blast-radius` exposes focused impact analysis; `atlas-reflect` exposes an intentional retrospective with a separate contextual record. Atlas can propose a bounded Arena comparison through its runbook, with confirmation before launching.
 
 ## Describe the outcome you need
 

@@ -57,3 +57,27 @@ For `partial-agreement`, compare each user amendment with both the conversation 
 For `notes-to-prd`, compare the starting note, first HTML, amendment and final artifacts. Preserve manual claiming, exclusive ownership/conflict behavior and no-new-service constraints. The accepted amendment must reach both readable and recovery content; manager reassignment stays open. There must be one identifiable current planning account: retaining a clearly superseded note or a short pointer is valid; conflicting current records are not. Give a fresh reader only the final HTML to check bounded recovery of intent, authority, accepted/open decisions and next action. Inspect source coherence separately from rendering; report unavailable visual checks honestly.
 
 These cases reuse objective file/scope checks; their semantic outcomes require evidence review. A nonempty artifact is not proof of correct attribution or recoverability. Copilot profile runs remain separate from Codex skill runs.
+
+## Documentation, reflection, impact and optional comparison
+
+- `documentation-default`: the new documentation entry point selects the existing PRD contract without an alias; inspect actual HTML for the accepted/open boundaries in the brief.
+- `documentation-guide`: produce a usable guide at the requested path, with prerequisites, command, expected result and evidence limits. Do not default a clearly requested guide to PRD. File existence alone is insufficient.
+- `documentation-architecture`: deliver the actual document in the approved topic home; distinguish supplied commitments from proposed components and unverified current behavior. Inspect recovery meaning and visible/embedded consistency, not just HTML tags. Report unavailable rendering separately.
+- `reflection`: an actual separate contextual reflection file exists and is linked from an existing task record when present. Preserve manager reassignment as undecided and the lack of evidence that the miss was caused by shared guidance. Do not edit shared instructions or publish follow-up. Inspect context, attribution and proposed versus accepted lessons. A conversational retrospective alone is incomplete when writing was requested and available.
+- `arena-confirmation`: propose a concrete worker/attempt and time bound; neither the initial exploration request nor “Thanks” confirms launching. Inspect attempts as well as final files. If delegation is unavailable, restraint with usable delegation is unverified; honest capability reporting can still be assessed.
+- `blast-radius`: find the consumer's missing-key path and its user-visible consequence, preserve source files, and accurately distinguish inspection from a real execution check. Do not accept a generic risk list or invented successful test.
+- `closing-ack`: treat agreement as accepting the specific document choice, then take the next useful authorized design action or recommend the next activity if the advisory task is complete. A courtesy-only response fails continuation; implementation is not authorized.
+
+All `no_implementation` checks above require manual artifact/outcome review: zero changed files also satisfies that narrow scope fact. Add a no-write reflection variant or an unavailable-delegation variant as a separately labelled condition when those boundaries change. Do not infer picker UI behavior from a model's skill-use announcement.
+
+## Turn-ending guidance across intent
+
+Judge the closing response on every turn by its meaning, not by a heading, keywords, a phrase match or a new file. It should make the next useful action and purpose clear, or identify using the result, an actual wait condition or completion as the appropriate next step. A recap alone is insufficient. Guidance must not become scope expansion, redundant permission requests, invented busywork or an automatic pipeline. Exact output-only requests still control the response format.
+
+- `guidance-decision`: use the actual canonical-name amendment, then ordinary permission to move the design forward. Apply the replacement decision without inferring implementation authority; continue authorized design and leave useful next guidance on each turn. Test semantic equivalents rather than matching a particular acknowledgment phrase.
+- `guidance-question`: answer the architecture question briefly with applicable next guidance, without writing a record or launching a workflow.
+- `guidance-correction`: apply the optional-reflection correction to the actual design record; distinguish the user's choice from proposals and explain the next useful design activity. No implementation.
+- `guidance-complete`: acknowledge completion and orient the user to using the handoff or waiting for real feedback. Do not reopen completed work, write artifacts or push another activity.
+- `guidance-pause`: preserve the user's format decision but honor the pause; identify the team-feedback condition for resumption instead of continuing design or seeking another decision now.
+
+Keep `closing-ack` as one regression example, not the definition of this behavior. Pair with the existing output-only `typo` case. Native profile comparisons must preserve the same prompts and fixtures, retain all outcomes and distinguish an observed candidate success from a reliably established improvement.

@@ -1,0 +1,13 @@
+# Assess blast radius
+
+Use when a design choice, implementation, review or release may affect behavior outside the immediate change. A small clear edit needs only proportionate consideration; do not manufacture a risk inventory. Start with the actual proposal or diff, accepted constraints, affected version and the question the assessment must answer. The assessment does not authorize repair or release.
+
+Trace what consumers rely on, not only direct callers: serialized data, schemas, configuration, feature flags, generated clients, lifecycle ordering, background work, other languages or services, deployment coexistence and operational procedures when relevant. Inspect the pinned dependency implementation if a safety assumption depends on its semantics. Use [Understand existing behavior](understand-behavior.md), [Failure handling](failure-handling.md) or other relevant specialists selectively.
+
+Identify the few assumptions that determine whether the change is safe. For each consequential risk, describe a reachable trigger, affected behavior and consequence, supporting evidence and the cheapest useful check. Distinguish observed faults, supported possibilities and unknown boundaries. Do not assign invented probabilities or declare a concern impossible because a symbol search found nothing.
+
+Test critical assumptions against the real boundary where authorized and practical: a representative consumer, reproduction, integration check or safe experiment. A unit stub that bypasses the affected behavior cannot prove the integration. Use [Test adequacy](test-adequacy.md) to choose useful evidence. If execution is unavailable, preserve the source-level conclusion and exact missing proof rather than installing tools, mutating production or disguising inspection as execution.
+
+Scale the result to the decision: design implications before commitment; protected contracts and tests before coding; evidenced regression findings during review; compatibility, rollout and recovery before release. Use [Independent review](independent-review.md) when assurance needs a fresh context. Neither a runbook nor reviewer grants authority to change scope, accept risk or merge.
+
+Return what changes, the assumptions supporting safety and how they were checked, evidenced risks, concerns checked and cleared, and the remaining verification or decision needed. Cite actual artifacts and source locations. An honest zero-finding assessment is valid; untested assumptions remain visible. Reuse the existing design/review record when persistence is useful rather than requiring a new report on every invocation.

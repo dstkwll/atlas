@@ -47,3 +47,16 @@ else:
 }
 
 FIXTURES['working-notes'] = {'planning/inbox/current.md': '# Team request inbox\n\nDiscovery only. Accepted: manual claiming; concurrent claims have one winner and the loser sees the owner; no new external service. Open: owner release, release destination, manager reassignment. Existing topic home is planning/inbox.\n'}
+
+FIXTURES['documentation'] = dict(FIXTURES['brief'], **{
+    'HOWTO.txt': 'Existing utility: python3 inbox.py list prints open requests. Requires Python 3, no packages, network or credentials.\n',
+    'inbox.py': 'print("No open requests")\n',
+    'SESSION.md': 'Planning only. User accepted manual claiming, no new service and owner release. Agent assumed managers may reassign. User corrected this: manager policy stays undecided. Brief corrected; no implementation. No evidence yet that shared guidance caused the miss.\n',
+    'producer.py': 'def payload(request):\n    return {"id": request.id, "owner": request.owner}\n',
+    'consumer.py': 'def owner_label(payload):\n    return "Unclaimed" if payload["owner"] is None else "Owned by " + payload["owner"]\n',
+})
+
+FIXTURES['documentation-design'] = {
+    'BRIEF.md': '# Atlas documentation design\nPlanning only; no implementation or publication authorized.\nAccepted: one Atlas lead; shared runbooks; HTML PRD with agent recovery context; architecture shares its visual and diagram guidance when useful; no mandatory separate architecture file.\nDecision now: retain atlas-to-prd alongside a documentation entry point, or replace it with atlas-to-documentation. Candidate modes: prd (default), guide, architecture, reference.\nProposed and unaccepted: guides/reference Markdown by default; automatically reflect after every PRD.\nNext design work after naming: define how each document mode selects its existing guidance, which source owns planning truth, and a few observable acceptance examples. Do not create implementation tickets until asked.\n',
+    'planning/inbox/current.md': '# Documentation design\nDesign only. Accepted and open choices: [brief](../../BRIEF.md). This record owns subsequent design decisions. No implementation or publication.\n',
+}

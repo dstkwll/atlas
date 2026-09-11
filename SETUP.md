@@ -96,11 +96,11 @@ For an optional Codex project default, add the default-guidance paragraph above 
 
 ## PRD, ticket and handoff deliverables
 
-Ask Atlas naturally: **Turn this into a PRD**, **Break this into executable vertical slices**, or **Prepare a handoff for the next agent**. It uses the same shared runbooks as the optional skills `atlas-to-prd`, `atlas-to-tickets` and `atlas-handoff`. These requests finish at the artifact unless further work is authorized; they do not publish tracker issues or start implementation automatically.
+Ask Atlas naturally: **Turn this into a PRD**, **Break this into executable vertical slices**, or **Prepare a handoff for the next agent**. It uses the same shared runbooks as the optional skills `atlas-to-documentation`, `atlas-to-tickets` and `atlas-handoff`. These requests finish at the artifact unless further work is authorized; they do not publish tracker issues or start implementation automatically.
 
-The plugin includes all four skill folders. For manual installation of the artifact entry points, copy the complete contents of `plugins/atlas/skills/` into your chosen host's skill directory, keeping `atlas`, `atlas-to-prd`, `atlas-to-tickets` and `atlas-handoff` as siblings. The three entry points require the shared `atlas` folder and its notices; copying a wrapper alone is incomplete. Copying only `atlas` still supports all three outcomes through ordinary conversation.
+The plugin includes the lead plus documentation, tickets, handoff, blast-radius and reflection entry points. For manual installation of the artifact entry points, copy the complete contents of `plugins/atlas/skills/` into your chosen host's skill directory, keeping all skill folders as siblings. The entry points require the shared `atlas` folder and its notices; copying a wrapper alone is incomplete. Copying only `atlas` still supports these outcomes through its shared runbooks and ordinary conversation.
 
-In Codex, select the discovered skill or use `$atlas-to-prd`, `$atlas-to-tickets` or `$atlas-handoff`. In other hosts, select the corresponding installed skill from the host's skill picker or ask it to read the exact installed entry path; namespacing and picker support vary. The Atlas agent profile stays the same. A skill name identifies the deliverable, not a separate lead or mandatory stage.
+In Codex, select the discovered skill or use `$atlas-to-documentation`, `$atlas-to-tickets` or `$atlas-handoff`. In other hosts, select the corresponding installed skill from the host's skill picker or ask it to read the exact installed entry path; namespacing and picker support vary. The Atlas agent profile stays the same. A skill name identifies the deliverable, not a separate lead or mandatory stage.
 
 ## Continuity and context recovery
 
@@ -134,3 +134,13 @@ To stop using the CLI plugin, run `copilot plugin uninstall atlas@atlas`. In VS 
 ## Compatibility evidence
 
 Plugin packaging was checked on 2026-09-06 against [GitHub's plugin reference](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-plugin-reference), [VS Code plugin documentation](https://code.visualstudio.com/docs/agent-customization/agent-plugins), and [Copilot plugin concepts](https://docs.github.com/en/copilot/concepts/agents/about-plugins). See [the packaging validation record](docs/validation/copilot-plugin.md) for actual native checks and remaining limits. The [activation and continuity record](docs/validation/activation.md) covers the subsequent native profile, follow-up and compaction checks. Documentation support is not proof of execution in your workplace host.
+
+## Documentation, impact and reflection
+
+`atlas-to-documentation` is the canonical documentation entry point. Its hint lists `prd (default) | guide | architecture | reference — topic or source`. A bare invocation defaults to PRD when a topic is available; a requested guide, architecture document, reference or existing-document update takes precedence. The hint is descriptive text, not a promised selectable dropdown. Copilot documents [argument hints](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference); exact picker presentation and plugin prefixes depend on the host.
+
+PRDs retain the recoverable HTML contract. Substantial architecture documents share its presentation, diagrams and recovery guidance, with architecture-specific content. Keep architecture inside the PRD when useful; do not create a mandatory companion. Guides and references use the existing format or ordinarily Markdown. All use the approved topic home.
+
+Ask “what could this break?” or invoke `atlas-blast-radius` for focused impact analysis. Ask for a retrospective or invoke `atlas-reflect` to write contextual lessons in a separate topic reflection file. Atlas may offer reflection at a useful milestone but does not run it merely because a task ends. Reflection is explicit-only through Copilot/Claude skill metadata and Codex invocation policy; the runbook also owns the request boundary, since discovery metadata is not permission enforcement.
+
+Arena has no skill entry point. Atlas may offer a confirmed, bounded comparison using available independent workers. It introduces no fixed model panel, cloud requirement or coordination service.

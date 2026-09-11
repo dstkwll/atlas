@@ -1,6 +1,6 @@
 # Locate topic artifacts
 
-Use the current project's approved artifact location for task continuity, PRDs, tickets and handoffs. Keep one topic together; do not create a second home merely because a new skill was invoked.
+Use the current project's approved artifact location for task continuity, documentation, reflections, tickets and handoffs. Keep one topic together; do not create a second home merely because a new skill was invoked.
 
 Resolve the destination from explicit task instructions, then the project's existing instructions/configuration and topic records. Where Atlas configuration is used, read the location value `artifacts.planning_root` in the applicable project configuration or `~/.config/atlas/config.yaml`; project restrictions take precedence over a personal default. This setting supplies only a candidate path; it does not itself authorize writing or exporting material there, or importing other policies from that file. Inspect only the relevant setting and never include unrelated configuration or secrets in an artifact.
 
@@ -13,7 +13,12 @@ Default artifact shape when no project convention overrides it:
 ```text
 <planning-root>/<topic>/
   current.md             # when no adequate brief/PRD owns continuity
-  prd.html
+  prd.html               # PRD pathway
+  architecture.html      # only when a separate architecture document is useful
+  guide.md               # ordinary guide; honor existing names/formats
+  reference.md           # ordinary lookup document
+  reflections/
+    YYYY-MM-DD-short-topic.md
   tickets/
     index.md
     01-<slice>.md

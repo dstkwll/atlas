@@ -33,3 +33,5 @@ Ordinary in-scope defects remain the lead's responsibility to repair. Material c
 If the required reviewer is unavailable, complete safe preparation and objective checks, preserve the exact candidate and open review requirement, and return that specific blocker. Do not replace independence with the producer's own approval. This does not stop an otherwise authorized trivial task whose assurance never required independent review.
 
 Communicate the supported outcome, blocking findings, non-blocking concerns, checks/results, required behavior not directly verified and remaining uncertainty. Scale report length to the claim. Do not attach a universal verdict schema or fixed review dimensions unless an actual consumer requires them.
+
+For plausible effects outside the immediate diff, use [Blast radius](blast-radius.md) to trace affected contracts and check the safety assumptions.
