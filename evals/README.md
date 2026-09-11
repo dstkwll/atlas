@@ -50,3 +50,5 @@ The `continuity` and `continuity-no-write` cases cover unprompted task records a
 The `partial-agreement` and `notes-to-prd` cases probe acceptance boundaries through tickets and continuity across a PRD amendment. See [planning-transition observations](../docs/validation/guidance-consistency.md) for separate native Copilot profile results, intermediate misses and recovery limits.
 
 Documentation routing, reflection persistence, impact assessment, Arena confirmation and acknowledgment continuation have reusable cases and manual criteria. See [capability observations](../docs/validation/documentation-and-reflection.md) for native Copilot evidence, including the unresolved acknowledgment failure and picker limitations.
+
+[Turn-ending guidance](../docs/validation/turn-ending-guidance.md) evaluates the actual naming decision, ordinary design progression, short replies, corrections and pauses with native Copilot profile conditions. It separates source availability from use and judges useful guidance rather than phrase matches.

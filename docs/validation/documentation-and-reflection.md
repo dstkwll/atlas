@@ -4,7 +4,7 @@
 
 The candidate replaces the PRD skill entry point with documentation, adds naturally routed impact analysis and intentional reflection, introduces Arena only as a confirmed runbook, and shares HTML presentation/recovery between PRDs and architecture documents. There is no PRD alias or swarm runtime.
 
-Baseline main: `a2cec960c2dbaa36428fdad1ec00c4450f3cdb47`. Initial native cases used the working candidate with per-file identities retained in each metadata file. A follow-up candidate clarified the lead’s distinction between closing acknowledgment and agreement advancing unfinished work. A later source-only refinement explicitly permits delivering HTML with unavailable independent recovery validation disclosed. No other product behavior changed after those trials. These are descriptive probes, not a reliability estimate or a controlled improvement claim.
+Baseline main: `a2cec960c2dbaa36428fdad1ec00c4450f3cdb47`. Initial native cases used the working candidate with per-file identities retained in each metadata file. A follow-up candidate clarified the lead’s distinction between closing acknowledgment and agreement advancing unfinished work. A later source-only refinement explicitly permits delivering HTML with unavailable independent recovery validation disclosed. The subsequent turn-ending correction is evaluated separately in [Turn-ending guidance](turn-ending-guidance.md); the observations below describe the earlier candidate. These are descriptive probes, not a reliability estimate or a controlled improvement claim.
 
 ## Native conditions and observations
 
@@ -38,7 +38,7 @@ Sol/high reviewed the new shared contracts. One finding was accepted: explicitly
 
 The final supervised source review used Opus/high and found no material defect in its supplied packet. Verified editorial findings clarified the follow-up case labels, retained disclosure omissions in this disposition, and kept the reconstruction comparison adjacent to the available-reader path. Its suggested extra pause wording was unnecessary because explicit pauses already take precedence; no behavior claim rests on that suggestion.
 
-The feature scope is implemented with the limitations above. Guide example-verification disclosure and architecture rendering-disclosure omissions also remain open, as does the PRD source-accuracy miss. The recovery-validation refinement was source-reviewed, not behaviorally retested. The acknowledgment failure remains open; avoid additional universal instructions or a claim that this change solved it. The source clarification makes the intended boundary explicit, but its observed behavior remains unsuccessful in the tested condition.
+The feature scope is implemented with the limitations above. Guide example-verification disclosure and architecture rendering-disclosure omissions also remain open, as does the PRD source-accuracy miss. The recovery-validation refinement was source-reviewed, not behaviorally retested. These early acknowledgment probes were too narrow to define the requested behavior. The user required contextual next guidance across all conversational turns; see the subsequent [turn-ending correction and verification](turn-ending-guidance.md). Historical failures remain observations of the earlier candidates, not the intended final disposition.
 
 ## Evidence
 

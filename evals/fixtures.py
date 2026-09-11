@@ -55,3 +55,8 @@ FIXTURES['documentation'] = dict(FIXTURES['brief'], **{
     'producer.py': 'def payload(request):\n    return {"id": request.id, "owner": request.owner}\n',
     'consumer.py': 'def owner_label(payload):\n    return "Unclaimed" if payload["owner"] is None else "Owned by " + payload["owner"]\n',
 })
+
+FIXTURES['documentation-design'] = {
+    'BRIEF.md': '# Atlas documentation design\nPlanning only; no implementation or publication authorized.\nAccepted: one Atlas lead; shared runbooks; HTML PRD with agent recovery context; architecture shares its visual and diagram guidance when useful; no mandatory separate architecture file.\nDecision now: retain atlas-to-prd alongside a documentation entry point, or replace it with atlas-to-documentation. Candidate modes: prd (default), guide, architecture, reference.\nProposed and unaccepted: guides/reference Markdown by default; automatically reflect after every PRD.\nNext design work after naming: define how each document mode selects its existing guidance, which source owns planning truth, and a few observable acceptance examples. Do not create implementation tickets until asked.\n',
+    'planning/inbox/current.md': '# Documentation design\nDesign only. Accepted and open choices: [brief](../../BRIEF.md). This record owns subsequent design decisions. No implementation or publication.\n',
+}

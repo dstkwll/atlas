@@ -19,7 +19,7 @@ The installable product is [plugins/atlas](plugins/atlas); the standalone [Atlas
 
 ## How it behaves
 
-The lead keeps accepted commitments separate from provisional choices. It can refine implementation as evidence arrives, correct ordinary defects within authority, and use independent review when the consequences warrant it. It maintains compact project-local continuity for work that needs to resume. Exploration, advice or design can be the completed result; asking for one does not implicitly authorize implementation. A small clear fix can remain a small clear fix.
+The lead keeps accepted commitments separate from provisional choices. It can refine implementation as evidence arrives, correct ordinary defects within authority, and use independent review when the consequences warrant it. It maintains compact project-local continuity for work that needs to resume. Exploration, advice or design can be the completed result; asking for one does not implicitly authorize implementation. A small clear fix can remain a small clear fix. Conversational replies close with brief next-step guidance: what to do, what decision or feedback is needed, or when no further action is needed. This does not authorize extra work.
 
 For substantial design, Atlas maintains a living brief, records meaningful decisions and develops the next usable slice in detail. It can expand that brief into a PRD or specification and produce an HTML view for co-design when useful. Small clear changes can proceed directly. Atlas does not require a ticket graph, fixed sequence of specialists or review ceremony for every change. It never grants permission to publish, deploy, spend or merge.
 

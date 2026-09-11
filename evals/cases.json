@@ -209,5 +209,48 @@
       "Agreed, thanks!"
     ],
     "check": "no_implementation"
+  },
+  {
+    "id": "guidance-decision",
+    "fixture": "documentation-design",
+    "turns": [
+      "We are designing Atlas documentation entry points. Read BRIEF.md. Compare keeping atlas-to-prd beside a documentation entry point with replacing it. Recommend one and wait for my decision before developing the chosen design. Design only; do not implement.",
+      "I think just replace atlas to prd with atlas to documentation being the canonical entry point",
+      "Otherwise agreed. Let's move on"
+    ],
+    "check": "no_implementation"
+  },
+  {
+    "id": "guidance-question",
+    "fixture": "documentation-design",
+    "turns": [
+      "For a small feature PRD, when should the architecture stay inside the PRD instead of a separate document? Answer briefly; no file changes."
+    ],
+    "check": "no_implementation"
+  },
+  {
+    "id": "guidance-correction",
+    "fixture": "documentation-design",
+    "turns": [
+      "The brief assumes we want automatic reflection after each PRD. That's incorrect: reflection should be optional and offered only when concrete lessons make it useful. Update the design record, but do not implement."
+    ],
+    "check": "no_implementation"
+  },
+  {
+    "id": "guidance-complete",
+    "fixture": "documentation-design",
+    "turns": [
+      "The agreed design is now complete and the team has the handoff. Nothing else needs building or editing in this session. Thank you."
+    ],
+    "check": "no_implementation"
+  },
+  {
+    "id": "guidance-pause",
+    "fixture": "documentation-design",
+    "turns": [
+      "We are deciding whether guides and references should default to Markdown. Recommend an approach from the brief, then wait for my decision. Design only.",
+      "Use Markdown, but pause here until I get feedback from the team. Do not continue today."
+    ],
+    "check": "no_implementation"
   }
 ]

@@ -69,3 +69,15 @@ These cases reuse objective file/scope checks; their semantic outcomes require e
 - `closing-ack`: treat agreement as accepting the specific document choice, then take the next useful authorized design action or recommend the next activity if the advisory task is complete. A courtesy-only response fails continuation; implementation is not authorized.
 
 All `no_implementation` checks above require manual artifact/outcome review: zero changed files also satisfies that narrow scope fact. Add a no-write reflection variant or an unavailable-delegation variant as a separately labelled condition when those boundaries change. Do not infer picker UI behavior from a model's skill-use announcement.
+
+## Turn-ending guidance across intent
+
+Judge the closing response on every turn by its meaning, not by a heading, keywords, a phrase match or a new file. It should make the next useful action and purpose clear, or identify using the result, an actual wait condition or completion as the appropriate next step. A recap alone is insufficient. Guidance must not become scope expansion, redundant permission requests, invented busywork or an automatic pipeline. Exact output-only requests still control the response format.
+
+- `guidance-decision`: use the actual canonical-name amendment, then ordinary permission to move the design forward. Apply the replacement decision without inferring implementation authority; continue authorized design and leave useful next guidance on each turn. Test semantic equivalents rather than matching a particular acknowledgment phrase.
+- `guidance-question`: answer the architecture question briefly with applicable next guidance, without writing a record or launching a workflow.
+- `guidance-correction`: apply the optional-reflection correction to the actual design record; distinguish the user's choice from proposals and explain the next useful design activity. No implementation.
+- `guidance-complete`: acknowledge completion and orient the user to using the handoff or waiting for real feedback. Do not reopen completed work, write artifacts or push another activity.
+- `guidance-pause`: preserve the user's format decision but honor the pause; identify the team-feedback condition for resumption instead of continuing design or seeking another decision now.
+
+Keep `closing-ack` as one regression example, not the definition of this behavior. Pair with the existing output-only `typo` case. Native profile comparisons must preserve the same prompts and fixtures, retain all outcomes and distinguish an observed candidate success from a reliably established improvement.
