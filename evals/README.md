@@ -48,3 +48,5 @@ Native trials currently depend on local account authentication and execute synth
 The `continuity` and `continuity-no-write` cases cover unprompted task records and the explicit write prohibition. See [native Copilot continuity evidence](../docs/validation/continuity.md) for separate profile activation trials, source revisions and observed limits. The rubric requires actual record content and update notices; planning-only change facts alone cannot establish success.
 
 The `partial-agreement` and `notes-to-prd` cases probe acceptance boundaries through tickets and continuity across a PRD amendment. See [planning-transition observations](../docs/validation/guidance-consistency.md) for separate native Copilot profile results, intermediate misses and recovery limits.
+
+Documentation routing, reflection persistence, impact assessment, Arena confirmation and acknowledgment continuation have reusable cases and manual criteria. See [capability observations](../docs/validation/documentation-and-reflection.md) for native Copilot evidence, including the unresolved acknowledgment failure and picker limitations.

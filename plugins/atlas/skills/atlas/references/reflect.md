@@ -1,0 +1,15 @@
+# Reflect on completed work
+
+Use after an intentional user request for a retrospective, including acceptance of a specific offer. Near a PRD, handoff or implementation milestone, offer a short reflection only when corrections, surprises, rework or a reusable success provide a concrete reason. Name that reason. Do not start from a generic “thanks,” prompt after every artifact, repeat a declined offer, or interrupt an explicit stop. Reflection is optional and never a completion gate.
+
+Review the relevant task, accepted decisions, available conversation and actual artifacts. Access only this task's authorized evidence; do not scan unrelated transcripts. If the transcript is unavailable, work from the evidence available and state the coverage limit. Separate what happened from a plausible explanation. Submission for review is not review completion, and a proposed fix is not a verified improvement.
+
+Distinguish project-specific lessons, reusable techniques, possible guidance/tooling defects and insufficiently supported observations. Include useful successful techniques as well as failures. For a suspected guidance defect, apply [Guidance improvement](guidance-improvement.md) to distinguish missing selection, non-application, incorrect guidance and host capability. A single miss does not justify another universal instruction.
+
+## Leave a contextual record
+
+When reflection is authorized and writes are permitted, create a separate file in the existing topic home, resolved through [Artifact location](artifact-location.md). Default to `reflections/YYYY-MM-DD-short-topic.md`; reuse the same reflection for follow-up on that milestone, or choose a distinct descriptive filename for a different one without overwriting it. Honor destination format/index conventions. Link the file from the existing current record, brief or handoff when one exists; do not create a competing source of planning truth.
+
+The file must be understandable without the original chat. Include task/date and relevant artifact/revision identity; intended outcome and scope; actual result and evidence limits; material decisions or corrections and their supplied rationale; lessons and supporting evidence; proposed follow-up versus changes actually accepted or applied. Explain when a lesson would be relevant again. Preserve enough context to interpret links, not a transcript or hidden reasoning. The record is retrospective evidence, not authority or automatically installed guidance. A future session consults relevant reflections, not every prior file.
+
+Return a concise account of the useful findings and link to the successfully written file. If writes are prohibited or the approved home is unavailable, provide a recoverable reflection in chat, report the persistence gap and do not claim a file was saved. Permission to reflect does not by itself authorize editing shared skills, settings, accepted architecture or filing external backlog items. Apply any separately granted authority accurately; proposed follow-up remains proposed until covered.

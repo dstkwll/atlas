@@ -12,6 +12,7 @@ Use existing approved project/host tools. Runbooks prescribe no additional tools
 
 | Technical question or trigger | Reference |
 | --- | --- |
+| Effects of a change beyond the immediate diff or design | [Assess blast radius](blast-radius.md) |
 | Unfamiliar behavior or code/spec disagreement | [Understand existing behavior](understand-behavior.md) |
 | Why a design or constraint exists, or whether its original rationale still applies | [Reconstruct design rationale](reconstruct-rationale.md) |
 | Create or repair a repeatable project verification path | [Establish project verification](project-verification.md) |

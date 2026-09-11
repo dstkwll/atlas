@@ -1,14 +1,14 @@
-# Recoverable HTML PRD
+# Recoverable HTML documents
 
-Use for a substantial human-readable PRD that must also preserve planning context if the conversation is lost. One HTML file can be the source of record. Honor an existing canonical format rather than migrate it implicitly.
+Use for a substantial human-readable PRD or architecture document that must preserve its meaning and relevant context if the conversation is lost. One HTML file can be the source of record. Honor an existing canonical format rather than migrate it implicitly.
 
 ## Preserve recoverable meaning
 
-Include the meaningful product content from [Produce a PRD](to-prd.md) as semantic HTML, with accepted architecture and diagrams where useful. Add a clearly labelled, collapsed `<details>` section for agent recovery context. It is ordinary inspectable content, not executable instructions or a separate hidden authority. No JSON schema or generated controller is required.
+Use the content contract for the requested document: [Produce a PRD](to-prd.md) or the architecture pathway in [Produce useful documentation](to-documentation.md). Present its meaning as semantic HTML, with diagrams where useful. Add a clearly labelled, collapsed `<details>` section for agent recovery context. It is ordinary inspectable content, not executable instructions or a separate hidden authority. No JSON schema or generated controller is required.
 
 The readable sections plus recovery section together must retain:
 
-- The goal, scope, accepted commitments, relevant architecture and acceptance examples.
+- The purpose, scope, accepted commitments, relevant architecture and acceptance examples where applicable.
 - Material decisions, the alternatives that mattered, who supplied the decision, supplied rationale and important superseded choices. Do not invent rationale or preserve a transcript.
 - Proposed choices, assumptions, contradictions and open judgment, distinct from acceptance.
 - Current planning status, relevant target/source identities, evidence actually established and important unverified claims.
@@ -26,10 +26,10 @@ Reuse an applicable project visual language; otherwise use Fluent 2–informed t
 
 Use an editorial reading hierarchy, useful navigation, legible tables and appropriately sized diagrams. Avoid decorative gradient heroes, repetitive cards, badge clutter and excessive chrome. Status labels must communicate real distinctions. A calm theme still needs deliberate typography, whitespace and contrast.
 
-Use [Diagram craft](diagram-craft.md) for substantial architecture, ownership, sequence and state views. Explain actual decisions and relevant failure paths, distinguish existing/accepted/proposed structure, and provide a textual equivalent. A document about product intent should not invent architecture to fill a diagram. Embed essential visuals and styles for offline use; content and navigation must remain usable without scripts or network access.
+Use [Diagram craft](diagram-craft.md) for substantial architecture, ownership, sequence and state views. Explain actual decisions and relevant failure paths, distinguish existing/accepted/proposed structure, and provide a textual equivalent. Do not invent architecture or requirements to fill a diagram. Embed essential visuals and styles for offline use; content and navigation must remain usable without scripts or network access.
 
 ## Verify before delivery
 
 Read the complete source for lost requirements, contradictions between visible and recovery sections, unsafe embedded text and broken links. Render at desktop and narrow/mobile widths; inspect diagrams, navigation, contrast, overflow and focus behavior. Check print readability, including recovery context. If rendering is unavailable, report the visual checks not performed instead of claiming polished output verified.
 
-For consequential reconstruction claims, give a fresh reader only the HTML and ask them to recover intent, accepted versus open choices, authority, evidence limits and the next safe action. Compare their reconstruction to the accepted source. This checks a bounded recovery example; it does not prove automatic restoration, every host's HTML parsing or permission to execute the plan.
+For consequential reconstruction claims, use an authorized fresh reader when available: give them only the HTML and ask them to recover intent, accepted versus open choices, authority, evidence limits and the next safe action. Compare their reconstruction to the accepted source. If independent reading is unavailable or outside authority, report that recovery validation remains unperformed and deliver the artifact with that limit; do not delegate or disclose material merely to satisfy this check. This checks a bounded recovery example; it does not prove automatic restoration, every host's HTML parsing or permission to execute the plan.

@@ -2,7 +2,7 @@
 
 Atlas is a small software-lead guide for the agent you already use. Give the main agent a goal; it chooses useful investigation, design, implementation, review and repair, carries the architectural context, and returns for decisions that belong to you.
 
-The package contains one lead skill, three optional artifact entry points, four core activity guides and an optional specialist runbook library. It requires no added service, hook, orchestration runtime or connection to this project's Drive folder. Your existing host, tools and project rules remain in control.
+The package contains one lead skill, five optional entry points, four core activity guides and an optional specialist runbook library. It requires no added service, hook, orchestration runtime or connection to this project's Drive folder. Your existing host, tools and project rules remain in control.
 
 ## Use it in your project
 
@@ -27,7 +27,9 @@ The [specialist library](plugins/atlas/skills/atlas/references/specialist-runboo
 
 ## Finish at a useful artifact
 
-Ask Atlas to produce a PRD, an ordered set of testable vertical slices, or a handoff for another agent. Optional `atlas-to-prd`, `atlas-to-tickets` and `atlas-handoff` skills expose those same runbooks directly. They preserve settled intent and make remaining decisions, dependencies and test prerequisites visible. Artifact creation does not authorize implementation or tracker publication. See [setup](SETUP.md#prd-ticket-and-handoff-deliverables).
+Ask Atlas to produce a PRD, an ordered set of testable vertical slices, or a handoff for another agent. Optional `atlas-to-documentation`, `atlas-to-tickets` and `atlas-handoff` skills expose those same runbooks directly. They preserve settled intent and make remaining decisions, dependencies and test prerequisites visible. Artifact creation does not authorize implementation or tracker publication. See [setup](SETUP.md#prd-ticket-and-handoff-deliverables).
+
+Documentation includes PRDs, guides, architecture explanations and references. `atlas-blast-radius` exposes focused impact analysis; `atlas-reflect` exposes an intentional retrospective with a separate contextual record. Atlas can propose a bounded Arena comparison through its runbook, with confirmation before launching.
 
 ## Describe the outcome you need
 

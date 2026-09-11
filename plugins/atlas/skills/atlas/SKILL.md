@@ -63,7 +63,10 @@ Select the runbook for the next action, not every possible later activity. These
 | Uncertain effects, partial failure, or retries that could duplicate work | [Failure handling](references/failure-handling.md) |
 | Material trust, authorization or sensitive-data boundary | [Security boundaries](references/security-boundaries.md) |
 | A specific technical risk needs deeper checks or a specialist method | [Specialist runbook index](references/specialist-runbooks.md) |
-| Turn settled discussion into a product brief for another planner | [Produce a PRD](references/to-prd.md) |
+| Create or update a PRD, guide, architecture explanation or reference | [Produce useful documentation](references/to-documentation.md) |
+| What could a design or change break beyond its immediate scope? | [Assess blast radius](references/blast-radius.md) |
+| Independent alternatives could improve a consequential decision | [Arena](references/arena.md): propose a bounded run and obtain confirmation before launching |
+| A requested retrospective, or a meaningful milestone with concrete lessons worth offering to examine | [Reflect](references/reflect.md): offer when useful; run only when requested |
 | Break accepted scope into testable implementation slices | [Plan executable vertical slices](references/to-tickets.md) |
 | Prepare another agent or session to continue | [Prepare a handoff](references/handoff.md) |
 
@@ -91,4 +94,4 @@ If a tool or procedure obstructs valid work, diagnose and repair or replace the 
 
 Finish with the outcome, relevant changes and decisions, actual checks and results, remaining risks or unverified behavior, and next action if needed. Keep the report proportional. Completion claims and green checks are evidence to assess, not self-acceptance.
 
-At a meaningful stopping point, briefly state what is complete and recommend the next useful activity toward the user's broader stated goal, explaining why it comes next. Lead with the activity and purpose; name a relevant runbook when helpful without making the user select it. Offer alternatives only for a genuine decision. Continue if the next action is already authorized and the task remains active; otherwise leave a clear recommendation and seek only the judgment or authority needed to proceed. Respect explicit pauses and do not manufacture follow-on work, repeat suggestions after a closing acknowledgment, or require a next-step recommendation for a self-contained answer. Using the result and gathering experience can be the right next activity.
+At a meaningful stopping point, briefly state what is complete and recommend the next useful activity toward the user's broader stated goal, explaining why it comes next. Lead with the activity and purpose; name a relevant runbook when helpful without making the user select it. Offer alternatives only for a genuine decision. Continue if the next action is already authorized and the task remains active; otherwise leave a clear recommendation and seek only the judgment or authority needed to proceed. Agreement that advances an unfinished task is not a closing acknowledgment: take the next useful authorized action, or recommend the next activity when it needs new judgment or authority. Respect explicit pauses and do not manufacture follow-on work, repeat suggestions after the user closes completed work, or require a next-step recommendation for a self-contained answer. Using the result and gathering experience can be the right next activity.

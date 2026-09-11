@@ -47,3 +47,11 @@ else:
 }
 
 FIXTURES['working-notes'] = {'planning/inbox/current.md': '# Team request inbox\n\nDiscovery only. Accepted: manual claiming; concurrent claims have one winner and the loser sees the owner; no new external service. Open: owner release, release destination, manager reassignment. Existing topic home is planning/inbox.\n'}
+
+FIXTURES['documentation'] = dict(FIXTURES['brief'], **{
+    'HOWTO.txt': 'Existing utility: python3 inbox.py list prints open requests. Requires Python 3, no packages, network or credentials.\n',
+    'inbox.py': 'print("No open requests")\n',
+    'SESSION.md': 'Planning only. User accepted manual claiming, no new service and owner release. Agent assumed managers may reassign. User corrected this: manager policy stays undecided. Brief corrected; no implementation. No evidence yet that shared guidance caused the miss.\n',
+    'producer.py': 'def payload(request):\n    return {"id": request.id, "owner": request.owner}\n',
+    'consumer.py': 'def owner_label(payload):\n    return "Unclaimed" if payload["owner"] is None else "Owned by " + payload["owner"]\n',
+})
