@@ -1,9 +1,9 @@
 # Current work
 
-Branch: `feat/copilot-core-preload`. The user authorized native core preload on the Copilot profile and a reviewable change. Merge is not authorized. Preserve one shared Atlas core, selective runbooks, existing file-loading/recovery instructions and host authority. Hooks remain outside this change.
+Branch: `fix/plugin-versioning`. Address the reported stale package version after product merges. Main is refreshed and all six local Codex skills match its 46 source files. Prepare the version correction and maintainer guidance as a draft PR; merge and GitHub Release publication remain separate actions requiring authority.
 
-The profile declares `skills: [atlas]`; its instructions and shared skill bytes remain unchanged. Setup guidance explains host-dependent core-only preload, the continued availability of the optional skills, and compatibility limits. Detailed experiments remain in local maintainer evidence; the public [compatibility summary](../docs/validation/copilot-core-preload.md) records relevant coverage and unresolved behavior.
+Advance the package and both marketplace version fields together to `0.7.0` for the accumulated capability additions. The maintainer rule requires a version increment for installable package changes and distinguishes maintenance-only work. Setup explains explicit updates and checking the installed version in the correct host environment. Shared skill and profile behavior is unchanged by this correction.
 
-The candidate profile matches retained native preload evidence apart from YAML key order, and all shared skill files match exactly. All 17 evaluator tests, package/link checks and whitespace checks passed. Independent review established no product defect; the test-host description was clarified. Retained behavioral trials cover the equivalent package; no new behavioral trial or workplace testing was needed.
+All 17 evaluator tests, manifest/version consistency and whitespace checks passed. An isolated native Copilot install reports Atlas `0.7.0` with six enabled skills; this does not verify the desktop app's update UI or an existing-install upgrade path. Detailed installation and version-history evidence remains in local maintainer research.
 
-Next: review the draft change and merge only with explicit authorization.
+Next: review the draft correction and merge with user authority, then explicitly refresh installed marketplace copies and confirm their reported version. The maintainer version rule is instruction-based, not an automatic release process.
