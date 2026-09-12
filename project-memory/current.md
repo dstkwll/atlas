@@ -1,11 +1,9 @@
 # Current work
 
-Branch: `feat/architecture-coordination`. The user authorized two optional runbooks for architecture design and interdependent work, targeted behavioral validation and a draft PR. Merge is not authorized. Preserve one lead, selective methods, accepted intent, bounded execution and the existing artifact contracts.
+Branch: `feat/copilot-core-preload`. The user authorized native core preload on the Copilot profile and a reviewable change. Merge is not authorized. Preserve one shared Atlas core, selective runbooks, existing file-loading/recovery instructions and host authority. Hooks remain outside this change.
 
-The candidate consolidates technical comparison and coordination detail from existing guides into usable methods, with direct routing. Product guidance should use the real task, not a catalog of canned examples, fixed alternative counts or compulsory stages. Detailed maintainer research and trial histories stay outside the repository.
+The profile declares `skills: [atlas]`; its instructions and shared skill bytes remain unchanged. Setup guidance explains host-dependent core-only preload, the continued availability of the optional skills, and compatibility limits. Detailed experiments remain in local maintainer evidence; the public [compatibility summary](../docs/validation/copilot-core-preload.md) records relevant coverage and unresolved behavior.
 
-Focused native checks exercised architectural constraints, conflicting contributions, deferred evidence and planning-only agreement, paired with ordinary-task controls. See [coverage and limits](../docs/validation/architecture-and-coordination.md); no reliability improvement or live worker/hardware claim is established. Detailed research remains outside the repository.
-
-Fresh independent source and evidence review found no blocking guidance defect. Copilot follow-up guidance and one architectural edge case remained incomplete; the validation note preserves those limits.
+The candidate profile matches retained native preload evidence apart from YAML key order, and all shared skill files match exactly. All 17 evaluator tests, package/link checks and whitespace checks passed. Independent review established no product defect; the test-host description was clarified. Retained behavioral trials cover the equivalent package; no new behavioral trial or workplace testing was needed.
 
 Next: review the draft change and merge only with explicit authorization.

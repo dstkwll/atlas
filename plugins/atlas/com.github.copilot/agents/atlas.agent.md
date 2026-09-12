@@ -1,5 +1,6 @@
 ---
 name: atlas
+skills: [atlas]
 description: Atlas leads exploration, discovery, design, implementation, review, and recovery within the task you authorize.
 user-invocable: true
 disable-model-invocation: true
