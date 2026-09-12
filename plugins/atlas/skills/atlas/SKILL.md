@@ -58,7 +58,7 @@ Select the runbook for the next action, not every possible later activity. These
 | Ongoing work needs durable decisions, open questions or next steps; authority changes, context loss, pause or resumption | [Continuity and decisions](references/continuity-and-decisions.md) |
 | Unfamiliar behavior or code/spec disagreement | [Understand existing behavior](references/understand-behavior.md) |
 | Why a design or constraint exists, or whether its original rationale still applies | [Reconstruct design rationale](references/reconstruct-rationale.md) |
-| Create or repair a repeatable project verification path | [Establish project verification](references/project-verification.md) |
+| Create or repair a repeatable verification path; prepare or reconcile evidence that depends on equipment or an operator event | [Establish project verification](references/project-verification.md) |
 | Evidence needed for a regression, behavioral change or an existing fix | [Test adequacy](references/test-adequacy.md) |
 | Uncertain effects, partial failure, or retries that could duplicate work | [Failure handling](references/failure-handling.md) |
 | Material trust, authorization or sensitive-data boundary | [Security boundaries](references/security-boundaries.md) |

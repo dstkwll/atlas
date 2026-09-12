@@ -16,6 +16,19 @@ class OpenBuffer(io.StringIO):
 
 
 class RunnerFailures(unittest.TestCase):
+    def test_nested_fixture_seeding_precedes_host_start(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d); auth = root/'auth'; auth.mkdir()
+            (auth/'auth.json').write_text('{}')
+            args = argparse.Namespace(model='test', effort='low', timeout=1, auth_home=auth)
+            case = {'id':'seeded-reader','fixture':'seeded-reader','check':'unchanged','turns':['Read the recipe']}
+            fixture = {'planning/station/recipe.md':'Run the existing boundary assertion.\n'}
+            with patch.dict(run.FIXTURES, {'seeded-reader':fixture}), patch('run.Host', side_effect=RuntimeError('host unavailable')), patch('run.subprocess.check_output', return_value='test\n'):
+                self.assertFalse(run.trial(case, args, root/'output'))
+            self.assertEqual((root/'output/workspace/planning/station/recipe.md').read_text(), fixture['planning/station/recipe.md'])
+            before = json.loads((root/'output/before.json').read_text())
+            self.assertIn('planning/station/recipe.md', before)
+
     def test_tail_event_is_retained_and_live_reader_is_rejected(self):
         host = run.Host.__new__(run.Host)
         host.process = Mock(pid=999999)

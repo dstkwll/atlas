@@ -24,6 +24,8 @@ Each normal slice delivers a narrow, integrated observable outcome through the l
 
 Order slices by real prerequisites and useful feedback. Name the output each dependency supplies. Distinguish semantic independence from concurrent-write safety; independent tickets can still collide in shared files. Mark integration ownership when work is split.
 
+Separate prerequisites to implement from prerequisites to establish acceptance. A slice may be executable with offline checks while physical verification remains pending; carry the missing claims, equipment/event dependency and owner if known using [Project verification](project-verification.md#when-evidence-depends-on-equipment-or-an-event). Preserve useful completed work without closing unsupported acceptance or blocking unaffected slices. Unresolved product judgment still blocks the part that depends on it.
+
 Mechanical wide migrations can use expand, migrate in bounded batches, then contract, preserving compatibility and verifying each landing point. If only a final integration can be green, state that explicitly with the agreed integration arrangement; intermediate work is not independently releasable. An uncertainty that prevents design may need a bounded spike with a question, evidence and exit decision rather than a fictional implementation ticket.
 
 Map the whole requested scope. Make currently knowable slices executable; keep later detail conditional when it depends on learning. If a complete breakdown is requested, cover the full scope and expose unresolved details rather than silently omitting later work or claiming certainty.

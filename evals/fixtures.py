@@ -60,3 +60,71 @@ FIXTURES['documentation-design'] = {
     'BRIEF.md': '# Atlas documentation design\nPlanning only; no implementation or publication authorized.\nAccepted: one Atlas lead; shared runbooks; HTML PRD with agent recovery context; architecture shares its visual and diagram guidance when useful; no mandatory separate architecture file.\nDecision now: retain atlas-to-prd alongside a documentation entry point, or replace it with atlas-to-documentation. Candidate modes: prd (default), guide, architecture, reference.\nProposed and unaccepted: guides/reference Markdown by default; automatically reflect after every PRD.\nNext design work after naming: define how each document mode selects its existing guidance, which source owns planning truth, and a few observable acceptance examples. Do not create implementation tickets until asked.\n',
     'planning/inbox/current.md': '# Documentation design\nDesign only. Accepted and open choices: [brief](../../BRIEF.md). This record owns subsequent design decisions. No implementation or publication.\n',
 }
+
+
+FIXTURES['station'] = {
+    'README.md': """# Bench result evaluator
+This project evaluates captured readings offline. It does not acquire data or control equipment.
+Use Python 3 with no extra packages. Run `python3 -m unittest -v test_station`.
+Run `python3 station.py readings.json` to classify a captured batch; stdout is JSON.
+Software build is B18. Accepted inclusive limits are 10.0 through 12.0 units.
+Only finite numeric readings can pass. Missing/invalid readings must be INVALID.
+The checked-in readings are development examples, not physical verification evidence.
+Working documents and retained command output belong under planning/station/.
+Hardware acceptance additionally needs real acquisition, correct channel/units,
+persistence in the station record and repeat-run behavior with the approved fixture.
+No station, acquisition driver or hardware connection is present in this checkout.
+The operator organizes the bench event; the next date is not confirmed. The event
+needs the approved procedure, station and fixture identities, applicable calibration
+status, build identity, permitted samples, operator and authorized operating conditions.
+Do not invent a bench command or infer physical results from these offline examples.
+""",
+    'station.py': """import json
+import math
+import sys
+
+BUILD = 'B18'
+
+def classify(value):
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+        return 'INVALID'
+    return 'PASS' if 10.0 <= value <= 12.0 else 'FAIL'
+
+if __name__ == '__main__':
+    with open(sys.argv[1]) as source:
+        values = json.load(source)
+    print(json.dumps({'build': BUILD, 'results': [classify(value) for value in values]}))
+""",
+    'test_station.py': """import unittest
+from station import classify
+
+class Classification(unittest.TestCase):
+    def test_examples(self):
+        self.assertEqual([classify(x) for x in [9.9, 10.0, 11.0, 12.0, 12.1]],
+                         ['FAIL', 'PASS', 'PASS', 'PASS', 'FAIL'])
+    def test_invalid(self):
+        self.assertEqual([classify(x) for x in [None, '11', True, float('nan')]],
+                         ['INVALID', 'INVALID', 'INVALID', 'INVALID'])
+""",
+    'readings.json': '[9.9, 10.0, 11.0, 12.0, 12.1, null]\n',
+    'EVENT.md': """# Previous bench session
+Record covers software B17, station S2, fixture F4, nominal sample only.
+The operator reported a successful acquisition and saved result. No raw capture,
+channel mapping check, limit-boundary samples, reset/repeat sequence or B18 run
+was supplied. This is previous evidence; the next event is not yet arranged.
+""",
+    'WORK.md': """# Planned change
+Accepted outcome: classify invalid readings explicitly and retain their original
+record for later diagnosis. Change the result evaluator and the station adapter;
+the adapter is maintained in the restricted station environment, unavailable here.
+Keep existing inclusive limits and interfaces. No deployment or fixture changes.
+The local evaluator can be developed and unit tested independently once its result
+contract is agreed. Adapter integration and real acquisition need the operator's event.
+Open decision: where invalid records are retained and who may access them.
+Do not settle that retention policy on the implementer's behalf.
+""",
+}
+
+FIXTURES['station-broken'] = dict(FIXTURES['station'])
+FIXTURES['station-broken']['station.py'] = FIXTURES['station']['station.py'].replace(
+    "return 'PASS' if 10.0 <= value <= 12.0 else 'FAIL'", "return 'PASS'")
