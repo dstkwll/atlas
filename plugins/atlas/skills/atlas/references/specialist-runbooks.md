@@ -12,6 +12,8 @@ Use existing approved project/host tools. Runbooks prescribe no additional tools
 
 | Technical question or trigger | Reference |
 | --- | --- |
+| Consequential structure or interface choices within accepted behavior | [Architecture design](architecture-design.md) |
+| Interdependent contributions, shared resources or integration uncertainty | [Coordinate work](coordinate-work.md) |
 | Effects of a change beyond the immediate diff or design | [Assess blast radius](blast-radius.md) |
 | Unfamiliar behavior or code/spec disagreement | [Understand existing behavior](understand-behavior.md) |
 | Why a design or constraint exists, or whether its original rationale still applies | [Reconstruct design rationale](reconstruct-rationale.md) |

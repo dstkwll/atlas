@@ -20,9 +20,9 @@ For a failing build/startup use [build diagnosis](build-and-runtime-diagnosis.md
 
 ## Use workers selectively
 
-Choose coordination from the actual dependencies. A single lead can deliver a clear slice directly. Independent work can overlap when its shared contract, separate write surfaces, return evidence and integration responsibility are clear. Work awaiting equipment or a decision can be preserved with its exact dependency while unaffected work proceeds. Use [tickets](to-tickets.md) when these assignments need durable handoff; do not turn every decision or prerequisite into a separate worker or mandatory stage.
+A single lead can deliver a clear slice directly. When interdependent contributions, shared resources or asynchronous returns create coordination or integration uncertainty, use [Coordinate work](coordinate-work.md). It guides dependencies, bounded assignments and integrated evidence; a single ordinary worker does not require a separate planning exercise.
 
-A coordination plan is not a launch instruction. Execute only within existing authority and practical resource bounds; accepting a planning-only breakdown does not authorize workers or implementation. When splitting work is useful, the lead remains responsible for reconciling results and checking the integrated outcome rather than accumulating independent success reports.
+A coordination plan is not a launch instruction. Accepting a planning-only breakdown does not authorize workers or implementation. Execute within existing authority and practical resource bounds, retaining responsibility for the integrated outcome.
 
 Give a worker enough context to act without inventing accepted judgment. State outcome, authoritative sources, allowed files/systems, authority, prohibited side effects, evidence and stopping/return conditions. Narrow the brief and permissions for a less capable worker. Avoid concurrent writers on the same work surface unless isolation and integration are clear.
 
