@@ -132,6 +132,7 @@ def trial(case, args, output):
     workspace = output / 'workspace'
     workspace.mkdir()
     for name, content in FIXTURES.get(case.get('fixture'), {}).items():
+        (workspace / name).parent.mkdir(parents=True, exist_ok=True)
         (workspace / name).write_text(content)
     skills = workspace / '.agents/skills'
     shutil.copytree(ROOT / 'plugins/atlas/skills', skills)

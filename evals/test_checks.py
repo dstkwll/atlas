@@ -57,6 +57,16 @@ class FactChecks(unittest.TestCase):
             if p.exists() or p.is_symlink(): p.unlink()
             p.write_text('keep'); p.chmod(self.before['protected.txt']['mode'])
 
+    def test_station_probe_separates_boundary_failure_from_valid_behavior(self):
+        p = self.root/'station.py'
+        p.write_text(FIXTURES['station']['station.py'].replace("return 'PASS' if 10.0 <= value <= 12.0 else 'FAIL'", "return 'PASS'"))
+        self.assertFalse(self.facts('station-repair')['station_boundaries_and_invalid_inputs'])
+        p.write_text(FIXTURES['station']['station.py'])
+        self.assertTrue(self.facts('station-repair')['station_boundaries_and_invalid_inputs'])
+        self.assertTrue(self.facts('station-repair')['only_evaluator_tests_and_planning_changed'])
+        (self.root/'protected.txt').write_text('changed')
+        self.assertFalse(self.facts('station-repair')['only_evaluator_tests_and_planning_changed'])
+
     def test_runner_help_starts_without_inference(self):
         r = subprocess.run([sys.executable, str(Path(__file__).with_name("run.py")), "--help"], capture_output=True, text=True, timeout=10)
         self.assertEqual(r.returncode, 0, r.stderr)

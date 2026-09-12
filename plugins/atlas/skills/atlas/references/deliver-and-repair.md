@@ -4,7 +4,7 @@ Use when implementing a bounded outcome, investigating a defect, coordinating a 
 
 ## Deliver observable increments
 
-Choose the smallest integrated behavior that can be verified. Include the code, data, configuration and interface work that behavior actually needs. Inline enabling work unless an imminent consumer justifies separating it. Match the target project's style, dependencies and checks; do not add preferred tools or unrelated cleanup.
+Choose the smallest integrated behavior with meaningful checks at the level currently feasible. Include the code, data, configuration and interface work that behavior actually needs. Inline enabling work unless an imminent consumer justifies separating it. Match the target project's style, dependencies and checks; do not add preferred tools or unrelated cleanup. When proof depends on unavailable equipment or an operator event, use [Project verification](project-verification.md#when-evidence-depends-on-equipment-or-an-event) to preserve the remaining physical claims while continuing useful authorized work.
 
 Plan the next usable vertical slice in detail and keep later work coarse. Tie it to the intended outcome and acceptance examples in the brief or existing request; demonstrate the result and use evidence or user feedback to choose what comes next. Update the brief and remaining work when learning changes provisional design. Changes to accepted intent still need the applicable judgment. A spec supports this feedback loop; it does not freeze requirements or oblige completion of an obsolete task list. Use the team's cadence where one exists, without imposing sprints, story points or a new backlog system.
 
@@ -19,6 +19,10 @@ When implementation exposes a poor provisional choice, refine it and continue. I
 For a failing build/startup use [build diagnosis](build-and-runtime-diagnosis.md); for hidden or partial failure use [failure handling](failure-handling.md). Choose [test evidence](test-adequacy.md) from the claimed behavior. These references can inform direct work or a bounded worker; they do not create extra stages.
 
 ## Use workers selectively
+
+Choose coordination from the actual dependencies. A single lead can deliver a clear slice directly. Independent work can overlap when its shared contract, separate write surfaces, return evidence and integration responsibility are clear. Work awaiting equipment or a decision can be preserved with its exact dependency while unaffected work proceeds. Use [tickets](to-tickets.md) when these assignments need durable handoff; do not turn every decision or prerequisite into a separate worker or mandatory stage.
+
+A coordination plan is not a launch instruction. Execute only within existing authority and practical resource bounds; accepting a planning-only breakdown does not authorize workers or implementation. When splitting work is useful, the lead remains responsible for reconciling results and checking the integrated outcome rather than accumulating independent success reports.
 
 Give a worker enough context to act without inventing accepted judgment. State outcome, authoritative sources, allowed files/systems, authority, prohibited side effects, evidence and stopping/return conditions. Narrow the brief and permissions for a less capable worker. Avoid concurrent writers on the same work surface unless isolation and integration are clear.
 
