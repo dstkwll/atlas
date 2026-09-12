@@ -127,7 +127,10 @@ For the marketplace-installed CLI plugin:
 ```shell
 copilot plugin marketplace update atlas
 copilot plugin update atlas@atlas
+copilot plugin list
 ```
+
+Check Atlas's reported version after updating. A merge does not itself refresh an installed copy. The CLI's marketplace auto-update does not run in SDK/server sessions, so an SDK-based app needs its own update action or an explicit update in the same configured Copilot environment. See [GitHub's update reference](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-plugin-reference#copilot-plugin-update-options); the desktop app's update UI is host-specific.
 
 In VS Code, use **Extensions: Check for Extension Updates** and review the offered update. Local copied packages are updated by replacing only their package folder after preserving local edits. Start a fresh session after updating.
 
