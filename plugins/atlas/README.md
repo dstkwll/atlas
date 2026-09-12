@@ -12,6 +12,8 @@ make ordinary implementation decisions, and bring me material choices with
 
 The profile directs the main session to load the same canonical skill. It specifies no model or tool override; the host controls tool availability, permissions and project instructions. Atlas remains active for ordinary follow-ups on that task. Asking it to explore, explain, critique, advise or design can be the whole assignment and does not grant permission to implement.
 
+Where the host supports per-agent skill preload, selecting Atlas loads its shared core into context. Runbooks are still consulted as needed. The profile also retains explicit file-loading and recovery instructions for hosts that ignore the preload field. Loading guidance does not guarantee that the model follows it.
+
 If the profile is unavailable, invoke the Atlas plugin's skill from the `/` picker (it may appear as `/atlas` or `/atlas:atlas`) or ask: **Use the Atlas skill from the atlas plugin for this task: [goal].**
 
 Existing organizational/project instructions and tool permissions continue to apply.
