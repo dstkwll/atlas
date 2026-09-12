@@ -50,19 +50,9 @@ Trace the affected behavior through real code, data, configuration and integrati
 
 Ask what the change makes a caller, operator, data owner, or neighboring component adjust. Consider rollout, coexistence, migration, rollback and recovery where they matter. Use [Blast radius](blast-radius.md) when effects beyond the immediate change need focused investigation. Revisit inspection if coding reveals an unexamined dependency or constraint.
 
-When behavior or caller reliance is unclear, use [behavior tracing](understand-behavior.md). For concrete design, identify the few affected interfaces, files, data owners and dependencies needed to deliver a vertical outcome. Prefer cohesion, information hiding and narrow contracts; an abstraction needs a current consumer and a problem it prevents. Preserve existing conventions unless evidence justifies changing them.
+When behavior or caller reliance is unclear, use [behavior tracing](understand-behavior.md). When accepted behavior still leaves consequential choices about responsibilities, interfaces, ownership or dependencies, use [Architecture design](architecture-design.md). It develops and compares coherent technical options against the affected path while preserving caller obligations and accepted constraints. Revisit it when repeated implementation friction challenges the structure; a clear local realization needs no separate architecture exercise.
 
-## Make consequential design explicit
-
-Compare the few genuine options using the same criteria: user outcome, relevant quality attributes, responsibility and data ownership, cohesion/coupling, dependency direction, failure/recovery, operability, compatibility, reversibility, and ongoing cost. Focus on the properties that affect this decision. Respect accepted interfaces and boundaries; internal details can remain provisional.
-
-For a consequential interface choice, compare small usage sketches of the same representative caller task under genuine alternatives, including the existing design when viable. An interface includes everything the caller must know: invariants, ordering, errors, configuration, ownership and relevant performance guarantees. Show what each option hides, what the caller still coordinates, and where verification belongs. Fewer methods or a shorter call sequence is not automatically better if it hides necessary control or loses guarantees. Explore alternatives directly or through bounded workers when useful; no fixed number of designs or agents is required. When independent competing proposals would materially help, offer a bounded [Arena](arena.md); its confirmation rule applies before launching.
-
-When acceptance still permits materially different code shapes, add only enough of a type, ownership, invariant or call-flow sketch to prevent expensive divergence. Make clear which boundary owns a critical rule, where it is enforced and how failure appears to its caller, while leaving local implementation choices provisional. Do not inventory helpers or prescribe extensibility without a current consequence.
-
-Present the exact decision and why it matters now, fixed constraints, remaining uncertainty, recommendation, rationale and strongest counterargument together with the comparison. When judgment belongs to the user, state the practical consequences, what can continue and what must pause. Use plain language and only the visual that helps this choice; no fixed presentation format is required. Do not manufacture options when the constraints determine the answer. Record material accepted choices locally with their rationale and source of authority.
-
-Example: changing an internal lookup structure while preserving behavior is usually provisional refinement. Moving confidential data to a new service changes a trust boundary and requires the applicable decision and authorization.
+Keep unresolved product intent in this discovery conversation. Record accepted choices and distinguish them from recommendations and provisional design. When judgment belongs to the user, explain the practical consequences, what can continue and what must pause. The technical method does not replace discovery readiness or grant implementation authority.
 
 ## Learn through the smallest credible evidence
 
@@ -72,4 +62,4 @@ Test the assumption most likely to invalidate the approach before polishing less
 
 Useful residue is a clear outcome, accepted constraints, provisional design, evidence, unresolved judgment and next action. Update the living brief as learning changes it, and preserve consequential choices through [continuity and decisions](continuity-and-decisions.md). No universal PRD, system design, ticket graph or diagram suite is required.
 
-When the requested outcome is a transferable artifact, use [Produce a PRD](to-prd.md), [Plan executable vertical slices](to-tickets.md), or [Prepare a handoff](handoff.md). These give the artifact a clear completion standard without creating mandatory phases or permission to execute it.
+When the requested outcome is a transferable artifact, use [Produce useful documentation](to-documentation.md), [Plan executable vertical slices](to-tickets.md), or [Prepare a handoff](handoff.md). These give the artifact a clear completion standard without creating mandatory phases or permission to execute it.

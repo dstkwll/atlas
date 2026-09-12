@@ -53,6 +53,8 @@ Select the runbook for the next action, not every possible later activity. These
 | Situation | Reference |
 | --- | --- |
 | Unclear goal, consequential design, or unfamiliar existing system | [Discover and design](references/discover-and-design.md) |
+| Consequential responsibility, interface, ownership or dependency choices; repeated friction challenges the structure | [Architecture design](references/architecture-design.md) |
+| Contributions, shared resources or asynchronous returns need a coherent dependency and integration approach | [Coordinate work](references/coordinate-work.md) |
 | A bounded change, report triage, debugging, delegation, or ordinary repair | [Deliver and repair](references/deliver-and-repair.md) |
 | A claim warrants independent judgment or findings need reconciliation | [Independent review](references/independent-review.md) |
 | Ongoing work needs durable decisions, open questions or next steps; authority changes, context loss, pause or resumption | [Continuity and decisions](references/continuity-and-decisions.md) |
