@@ -49,6 +49,6 @@ The `continuity` and `continuity-no-write` cases cover unprompted task records a
 
 The `partial-agreement` and `notes-to-prd` cases probe acceptance boundaries through tickets and continuity across a PRD amendment. See [planning-transition observations](../docs/validation/guidance-consistency.md) for separate native Copilot profile results, intermediate misses and recovery limits.
 
-See [capability coverage and limits](../docs/validation/documentation-and-reflection.md) for documentation, reflection, impact assessment and Arena checks.
+See [capability coverage and limits](../docs/validation/documentation-and-reflection.md) for documentation, reflection, impact assessment and Arena checks, including [brief alignment through revisions](../docs/validation/documentation-and-reflection.md#arena-brief-alignment).
 
 See [turn-ending guidance checks](../docs/validation/turn-ending-guidance.md) for conversational progression, closing guidance and resumption limits.

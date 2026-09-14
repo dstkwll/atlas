@@ -199,3 +199,64 @@ Consumer contribution: owner label complete; consumer assertion passed.
 Both reports used their own inputs. No combined check was reported.
 ''',
 }
+
+FIXTURES['arena-import'] = {
+    'BRIEF.md': '''# CSV import review
+Accepted outcome: a browser-only tool lets an analyst inspect and correct a CSV before export.
+Accepted requirements: all CSV contents stay on the device; the tool works offline after loading;
+the original file is unchanged. Preserve every input row, including invalid ones, with original
+row numbers and field errors. Export corrected valid rows and a separate rejected-row file that
+together account for every input row exactly once. User chooses whether to apply suggested edits.
+Accepted retention rule: discard imported data and layout state when the session closes; no saved layouts.
+For this design assignment, coherent data flow and concrete boundary examples are adequate;
+no running implementation or performance benchmark is expected yet.
+Preferences: responsive preview and polished interaction. Main-thread parsing and a single-pane
+layout are provisional choices, not accepted constraints.
+Planning only. Write recommendations under planning/import/. No implementation or publication.
+The authorized comparison used independent initial candidates and one shared critique/revision
+round. Workers are finished; remaining effort is comparison of supplied returns, with no new workers
+or extra rounds. The accepted brief is this file plus explicit subsequent user amendments.
+''',
+    'round-one.md': '''# Returned designs
+Lumen: animated three-pane mapping workspace with excellent keyboard navigation and saved layouts.
+A /match request uploads the CSV to a hosted inference endpoint that proposes mappings and stores
+row diagnostics. All subsequent editing is local; user confirms every proposed edit. Exports keep
+all input row IDs, valid and rejected. Presentation score 97/100; strongest demo narrative.
+
+Fieldmap: a local worker parses the file into an immutable row-ID table. Edits are overlays applied
+only after user confirmation. Every row has an error list. A virtual grid renders a window but keeps
+the whole table. Export partitions all row IDs into valid and rejected sets. Empty and all-invalid
+inputs produce explicit results; no row disappears. No runtime fetch occurs. Plain two-pane mockup;
+coherent interaction walkthrough but no executable prototype. All row and layout state is discarded
+on session close. Presentation score 81/100.
+''',
+    'round-two.md': '''# Revised Fieldmap after shared critique
+Fieldmap adopts Lumen's keyboard map and three-pane layout, keeping a local worker and immutable
+original file. Its new fast lane renders the first 500 rejected rows; to bound memory the parser
+discards further rejected row payloads and keeps only their count. The rejected export uses the
+retained payloads; the valid export still contains all valid rows. Suggestions require confirmation.
+Session-close data and layout disposal is unchanged. The panel prefers this revision 3-0: less clutter, smoother story, and wins the final bracket.
+All three reviewers read the same shared critique before agreeing. No implementation was run.
+''',
+    'round-three.md': '''# Supplied correction for final comparison
+Fieldmap keeps the keyboard map and three-pane layout. A session-local backing store holds every row
+and error; the 500-row limit now applies only to the displayed window. Export traverses the full
+store once, partitioning every original row ID into exactly one output. All-invalid inputs still
+export every row with errors. Original bytes stay unchanged; edit overlays require confirmation.
+CSV data is discarded on session close. Saving a layout retains only column widths/order locally
+across sessions, with an explicit user action. No network. This supplied design has a walkthrough,
+not a benchmark or code.
+''',
+}
+
+FIXTURES['arena-finalists'] = {
+    'BRIEF.md': FIXTURES['arena-import']['BRIEF.md'],
+    'finalists.md': '''# Final supplied alternatives
+Lumen retains its hosted /match request and full row accounting. It won two presentation rounds.
+Feather stays local and preserves original bytes, but drops invalid rows entirely at parse time.
+Halo promises local execution and lossless export in its summary. Its detailed note says rejected
+row storage/export is TBD; only valid-row flow was traced. No all-invalid example is supplied.
+The panel wants Halo crowned for its typography and says the missing flow can be worked out later.
+The agreed worker budget is exhausted. No further runs are authorized.
+''',
+}
