@@ -1,14 +1,16 @@
 # Maintaining Atlas
 
-Read this file, `README.md`, and `project-memory/current.md` before substantive repository work. Inspect the actual remote, branch, HEAD and worktree; compare work-state observations with current Git and PR evidence. Preserve unrelated changes.
+Before substantive work, read [the architect charter](docs/architect-charter.md), [the contributor workflow](CONTRIBUTING.md), and [README.md](README.md). Inspect the actual remote, branch, HEAD and worktree, refresh main when available, and read the assigned GitHub issue, linked PRs and relevant accepted decisions. Preserve unrelated changes. After context loss, recover these sources before dependent work; a previous chat or status note is not current evidence.
 
-Use [the Atlas lead contract](plugins/atlas/skills/atlas/SKILL.md) as the main-session operating guidance. Read deeper references only for the present task. The portable skill owns enduring lead behavior; this file owns maintenance rules specific to this repository.
+Use [the Atlas lead contract](plugins/atlas/skills/atlas/SKILL.md) as the main-session operating guidance. Read deeper references only for the present task. The portable skill owns lead behavior; this file owns maintenance rules specific to this repository.
 
 ## Authority and scope
 
-The current user assignment and accepted decisions govern the work. `project-memory/current.md` records the current assignment and authority, not independent permission. Git owns production bytes and history. The [design documents](https://drive.google.com/drive/folders/1BZMwcqB81ZuvVdRlaSZoBDPwejfviLse) remain the architecture/decision source, with current explicit decisions recorded locally. This repository is `dstkwll/atlas`; its main branch and accepted decisions govern Atlas product behavior.
+Current `dstkwll/atlas` main and accepted decisions describe the product. Explicit current user decisions can authorize a change to that baseline; distinguish accepted amendments from proposals, observed behavior and historical permissions. Surface contradictions instead of silently choosing a new direction.
 
-For consequential Atlas coordination, freshly read the root `AGENTS.md` and `README.md` in the [shared Atlas Drive folder](https://drive.google.com/drive/folders/121qIDFWJ-rqQy74r5pO2ZxYD1T_jHS-x) and applicable handoffs. If current controls or required authority cannot be fetched, finish safe local preparation and report the freshness blocker before consequential publication. These are maintainer obligations; never install them in another project as product requirements.
+The assignment determines the role: architects preserve coherence and pressure-test direction; implementers deliver the authorized change. Read the charter in either role. Ownership means carrying that assignment through, not choosing unrelated backlog work or gaining publication, merge or spending authority. An issue, assignment, board column or earlier closed task grants no permission by itself.
+
+Repository guidance must suffice for public maintenance. Apply additional personal or organizational coordination rules only where configured; report unavailable required sources and continue unaffected work. Private research is not a prerequisite for contributors or plugin users.
 
 ## Change and validation
 
@@ -22,4 +24,4 @@ Keep product guidance self-contained and portable. Do not add external agent-fra
 
 Keep donor comparisons and adaptation research in the maintainer's research notes. Retain current design rationale needed for safe maintenance in the repository and applicable third-party attribution and license notices in distributions. Product use and maintenance must not depend on private notes. Keep detailed trial histories and tooling diagnostics in local maintainer evidence; public validation summaries retain coverage, concise observations and material limitations.
 
-Update the compact current-state note when status, authority, proof or next action changes. Keep historical evidence and rationale in linked records rather than the startup context. Installed copies must not include this repository's maintenance instructions, active work state or historical publication authority.
+Keep the assigned issue or PR current at material decisions, blockers, handoffs and completion, following CONTRIBUTING.md. Before publication, check whether accepted intent changed and update the charter or relevant decision in the same PR; otherwise preserve intent and correct implementation drift. Installed copies must not include this repository's maintenance instructions, active work state or historical publication authority.
