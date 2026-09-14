@@ -1,6 +1,6 @@
 # Current work
 
-Branch: `fix/arena-brief-alignment`, based on refreshed main. The user accepted the targeted Arena correction and focused behavioral checks. Prepare the reviewed change as a draft PR; merge remains a separate user decision. Canonical lead guidance is `plugins/atlas/skills/atlas/SKILL.md`.
+Branch: `fix/arena-brief-alignment`, based on refreshed main. The user accepted the targeted Arena correction and focused behavioral checks. The reviewed change is published as a draft PR for this branch; merge remains a separate user decision. Canonical lead guidance is `plugins/atlas/skills/atlas/SKILL.md`.
 
 The Arena runbook keeps accepted requirements authoritative through revisions, distinguishes a qualifying winner from a provisional repair direction, preserves valid improvements and explicit amendments, and keeps peer learning within the agreed bounds. Only Arena behavior changed in the installed skills; the package and marketplace versions advance together to `0.7.1`.
 
