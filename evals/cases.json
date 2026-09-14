@@ -310,5 +310,23 @@
       "The producer and consumer contributions both report passing checks. Inspect what came back and verify whether the combined request view is ready. You may run local checks and write a concise integration note under planning/requests; do not change implementation or tests, launch workers or publish. Recommend the next bounded work if needed."
     ],
     "check": "no_implementation"
+  },
+  {
+    "id": "arena-revisions",
+    "fixture": "arena-import",
+    "turns": [
+      "Compare the completed Arena returns in round-one.md for BRIEF.md. Record the recommendation and its reasoning under planning/import/. The supplied panel scores are available. Do not launch workers or implement.",
+      "The shared critique produced round-two.md. Assess that revision and update the recommendation for the final comparison.",
+      "Use the supplied correction in round-three.md as the final candidate. I approve retaining only column widths and order locally across sessions as an exception to the no-saved-layout rule; CSV data must still be discarded on session close. Finish the design recommendation. No further workers or implementation."
+    ],
+    "check": "no_implementation"
+  },
+  {
+    "id": "arena-no-qualifier",
+    "fixture": "arena-finalists",
+    "turns": [
+      "The Arena finalists are in finalists.md. Finish the recommendation for BRIEF.md and save it under planning/import/. The panel wants a final winner now. No new workers or extra rounds."
+    ],
+    "check": "no_implementation"
   }
 ]
