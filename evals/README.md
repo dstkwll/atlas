@@ -54,3 +54,7 @@ See [capability coverage and limits](../docs/validation/documentation-and-reflec
 See [turn-ending guidance checks](../docs/validation/turn-ending-guidance.md) for conversational progression, closing guidance and resumption limits.
 
 The `discovery-frontier` and `discovery-delegated` cases examine collaborative exploration and explicitly delegated planning. See [collaborative discovery observations](../docs/validation/collaborative-discovery.md) for the matched samples, diagnostic follow-up and remaining limitations.
+
+The extended discovery scenarios exercise longer conversations, a fictional provider contract, wrong-problem proposals, paired authority conditions, and planning transitions. `transition-chain` starts a new native thread before its final recovery turn (`fresh_thread_before`, zero-based), reselects the local skill, and retains the generated workspace without copying conversation messages. Metadata records both thread IDs. This is artifact-based recovery in the same project, not a claim that the handoff file alone is sufficient. See the extended rubric in review.md before interpreting results.
+
+See [extended discovery and transition observations](../docs/validation/discovery-transitions.md) for completed scenario coverage, verified planning defects, correction scope and model/host limitations. `transition-plan-replay` is a diagnostic using a fixed generated PRD; it must not be reported as held-out generalization.

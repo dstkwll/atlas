@@ -29,6 +29,27 @@ class RunnerFailures(unittest.TestCase):
             before = json.loads((root/'output/before.json').read_text())
             self.assertIn('planning/station/recipe.md', before)
 
+    def test_fresh_recovery_uses_new_thread_and_only_current_prompt(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d); auth=root/'auth'; auth.mkdir(); (auth/'auth.json').write_text('{}')
+            args=argparse.Namespace(model='test',effort='low',timeout=1,auth_home=auth)
+            host=Mock(); host.events=[]; host.process.pid=999999; host.process.poll.return_value=0
+            host.request.side_effect=[{}, {'thread':{'id':'old'}}, {'turn':{'id':'one'}}, {'thread':{'id':'new'}}, {'turn':{'id':'two'}}]
+            host.wait.side_effect=[{'params':{'turn':{'id':'one','status':'completed'}}}, {'params':{'turn':{'id':'two','status':'completed'}}}]
+            with patch('run.Host',return_value=host), patch('run.subprocess.check_output',return_value='test\n'):
+                self.assertTrue(run.trial({'id':'fresh','check':'unchanged','turns':['private prior dialogue','Recover from files'],'fresh_thread_before':1},args,root/'output'))
+            calls=[c for c in host.request.call_args_list if c.args[0]=='turn/start']
+            self.assertEqual(calls[1].args[1]['threadId'],'new')
+            self.assertEqual(calls[1].args[1]['input'], [
+                {'type':'skill','name':'atlas','path':str(root/'output/workspace/.agents/skills/atlas/SKILL.md')},
+                {'type':'text','text':'Recover from files'}])
+            starts=[c for c in host.request.call_args_list if c.args[0]=='thread/start']
+            self.assertEqual(len(starts),2)
+            self.assertEqual(starts[0].args[1]['cwd'],str(root/'output/workspace'))
+            self.assertEqual(starts[1].args[1]['cwd'],starts[0].args[1]['cwd'])
+            meta=json.loads((root/'output/metadata.json').read_text())
+            self.assertEqual(meta['fresh_thread'], {'previous_id':'old','id':'new','before_turn':1})
+
     def test_tail_event_is_retained_and_live_reader_is_rejected(self):
         host = run.Host.__new__(run.Host)
         host.process = Mock(pid=999999)

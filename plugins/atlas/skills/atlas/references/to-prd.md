@@ -13,6 +13,8 @@ Include the information a planner actually needs:
 - Constraints, external dependencies, known current behavior and material compatibility or risk boundaries.
 - Acceptance examples tied to the outcomes, with uncertainty and decisions still needed.
 
+Check the attribution of consequential details derived while writing, especially role permissions, visibility, retention and automated actions. Permission needed for one accepted action does not establish broader access for that role or a later workflow. Keep such inferences proposed or unresolved unless accepted context or explicit delegation settles them; a heading such as accepted requirements is not evidence of acceptance. Preserve agent decisions made under delegation as agent decisions, rather than relabeling them as user constraints.
+
 Add technical responsibilities or interface sketches where they encode settled decisions; a PRD need not prescribe internal helpers. Reuse existing terminology. Keep a visual linked to the underlying decisions rather than treating it as a second authority.
 
 Once this topic has a PRD, keep it current at material design decisions, accepted amendments and handoffs. A small unrelated task does not require a PRD. HTML may hold both the readable plan and agent recovery context without a separate Markdown twin; preserve one coherent account of commitments.

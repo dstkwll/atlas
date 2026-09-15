@@ -20,6 +20,45 @@ class FactChecks(unittest.TestCase):
     def facts(self, kind, completed=True):
         return check({'check': kind}, self.root, self.before, completed)['facts']
 
+    def test_retry_and_outbox_fixtures_execute_their_intended_failures(self):
+        for name in ('retry', 'outbox'):
+            for filename, source in FIXTURES[name].items():
+                (self.root / filename).write_text(source)
+        def run_file(name, *args):
+            return subprocess.run([sys.executable, name, *args], cwd=self.root,
+                                  capture_output=True, text=True, timeout=10)
+        attempts = [run_file('status.py') for _ in range(3)]
+        self.assertEqual([r.returncode for r in attempts], [2, 2, 0])
+        self.assertEqual(attempts[-1].stdout.strip(), 'ready')
+        created = run_file('outbox.py', 'create', '--title', 'Release ready')
+        self.assertEqual(created.returncode, 2, created.stderr)
+        listed = run_file('outbox.py', 'list')
+        self.assertEqual(listed.returncode, 0, listed.stderr)
+        self.assertEqual(json.loads(listed.stdout), [{'id': 1, 'title': 'Release ready'}])
+
+    def test_record_validation_checks_behavior_and_change_scope(self):
+        p=self.root/'records.py'
+        p.write_text("def create_record(title):\n    return {'title':title}\n")
+        self.before=snapshot(self.root)
+        self.assertFalse(self.facts('records-repair')['record_title_validation'])
+        p.write_text("def create_record(title):\n    if title == '': raise ValueError('empty')\n    return {'title':title}\n")
+        result=self.facts('records-repair')
+        self.assertTrue(result['record_title_validation'])
+        self.assertTrue(result['only_records_tests_and_planning_changed'])
+        p.write_text("def create_record(title):\n    if not title.strip(): raise ValueError('empty')\n    return {'title':title}\n")
+        self.assertFalse(self.facts('records-repair')['record_title_validation'])
+        (self.root/'protected.txt').write_text('changed')
+        self.assertFalse(self.facts('records-repair')['only_records_tests_and_planning_changed'])
+
+    def test_explicit_unset_retention_is_preserved(self):
+        p=self.root/'records.py'
+        source="def create_record(title):\n    if title == '': raise ValueError('empty')\n    return {'title':title}\ndef retention_days():\n    return "
+        case={'check':'records-repair','fixture':'retention-policy'}
+        p.write_text(source+'None\n')
+        self.assertTrue(check(case,self.root,self.before,True)['facts']['record_validation_and_retention_preserved'])
+        p.write_text(source+'30\n')
+        self.assertFalse(check(case,self.root,self.before,True)['facts']['record_validation_and_retention_preserved'])
+
     def test_no_announcement_can_pass_missing_artifact(self):
         (self.root/'response.txt').write_text('Using PRD. Complete!')
         self.assertFalse(self.facts('prd')['artifact_nonempty'])
