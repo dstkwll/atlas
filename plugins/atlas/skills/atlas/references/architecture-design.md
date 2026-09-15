@@ -2,7 +2,7 @@
 
 Use when accepted behavior still permits materially different responsibilities, interfaces, ownership or dependencies, or repeated implementation friction challenges the structure. A clear local realization can stay in ordinary delivery. Unsettled product intent belongs in [Discover and design](discover-and-design.md).
 
-Develop a coherent design from the actual project. Enter at the unresolved decision, reuse settled work and revisit assumptions when evidence changes. The activities below are reasoning aids, not a sequence to exhaust, a quota of alternatives or a requirement to create another document.
+Develop a coherent design from the actual project. Investigate and compare independently, then develop consequential choices with the user unless that judgment is explicitly delegated. A clear product outcome does not itself settle responsibility, ownership or interface tradeoffs. Enter at the unresolved decision, reuse settled work and revisit assumptions when evidence changes. The activities below are reasoning aids, not a sequence to exhaust, a quota of alternatives or a requirement to create another document.
 
 ## Establish the decision and affected path
 

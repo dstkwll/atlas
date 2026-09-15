@@ -328,5 +328,20 @@
       "The Arena finalists are in finalists.md. Finish the recommendation for BRIEF.md and save it under planning/import/. The panel wants a final winner now. No new workers or extra rounds."
     ],
     "check": "no_implementation"
+  },
+  {
+    "id": "discovery-frontier",
+    "turns": [
+      "Help me think through a web app for a neighborhood equipment library. I picture a catalog and a reserve button. I have never built a web app and care more about it feeling friendly than having lots of features. Explore the design with me; no implementation.",
+      "I like members arranging pickup directly. But I do not want people to feel watched or pressured to answer immediately."
+    ],
+    "check": "no_implementation"
+  },
+  {
+    "id": "discovery-delegated",
+    "turns": [
+      "Design a small neighborhood equipment library app. I am explicitly delegating remaining design choices to you for this autonomous planning assignment. Members know each other, access is invitation-only, no payments or public profiles, and pickup is arranged directly. Produce a concise proposal in planning/design.md with reasons and unresolved evidence. Do not implement, publish, or introduce paid services."
+    ],
+    "check": "no_implementation"
   }
 ]
