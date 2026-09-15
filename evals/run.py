@@ -175,6 +175,16 @@ def trial(case, args, output):
                 metadata.update({'initialize': init, 'thread': thread, 'isolated_home': str(home), 'host_pid': host.process.pid})
                 (output / 'metadata.json').write_text(json.dumps(metadata, indent=2))
                 for i, prompt in enumerate(case['turns']):
+                    if i == case.get('fresh_thread_before'):
+                        # Artifact recovery: a new native thread, with no copied conversation.
+                        thread = host.request('thread/start', {'model': args.model, 'cwd': str(workspace),
+                            'approvalPolicy': 'never', 'sandbox': 'workspace-write', 'ephemeral': False,
+                            'config': {'model_reasoning_effort': args.effort}})
+                        previous_tid, tid = tid, thread['thread']['id']
+                        if tid == previous_tid:
+                            raise RuntimeError('Fresh recovery returned the previous thread')
+                        metadata['fresh_thread'] = {'before_turn': i, 'previous_id': previous_tid, 'id': tid}
+                        (output / 'metadata.json').write_text(json.dumps(metadata, indent=2))
                     if i == case.get('compact_before'):
                         mark = len(host.events)
                         host.request('thread/compact/start', {'threadId': tid})
@@ -183,7 +193,7 @@ def trial(case, args, output):
                         # Wait for the compaction turn to finish before the next ordinary turn.
                         host.wait(lambda e: e.get('method') == 'turn/completed', mark)
                     inputs = [{'type': 'text', 'text': prompt}]
-                    if i == 0:
+                    if i == 0 or i == case.get('fresh_thread_before'):
                         entry = case.get('entry', 'atlas')
                         inputs.insert(0, {'type': 'skill', 'name': entry,
                             'path': str(skills / entry / 'SKILL.md')})

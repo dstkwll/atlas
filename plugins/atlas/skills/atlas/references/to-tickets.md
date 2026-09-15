@@ -28,6 +28,8 @@ Separate prerequisites to implement from prerequisites to establish acceptance. 
 
 Mechanical wide migrations can use expand, migrate in bounded batches, then contract, preserving compatibility and verifying each landing point. If only a final integration can be green, state that explicitly with the agreed integration arrangement; intermediate work is not independently releasable. An uncertainty that prevents design may need a bounded spike with a question, evidence and exit decision rather than a fictional implementation ticket.
 
+Test whether a claimed policy blocker belongs to the ordinary accepted path or only to a later extension. When the ordinary path has clear semantics, define that narrower slice and retain overdue, dispute, historical or other undecided behavior as conditional work; do not require every policy about the same entity before any useful slice can proceed. A missing policy that actually determines the ordinary path still blocks it. Keep semantic readiness separate from unavailable architecture, access or test evidence, and do not silently drop requested scope to manufacture readiness.
+
 Map the whole requested scope. Make currently knowable slices executable; keep later detail conditional when it depends on learning. If a complete breakdown is requested, cover the full scope and expose unresolved details rather than silently omitting later work or claiming certainty.
 
 ## Make each ticket usable
@@ -52,5 +54,7 @@ During planning, specify the intended failing behavior and verification approach
 ## Check the plan as a whole
 
 Trace every accepted outcome to a slice and credible acceptance evidence. Check missing integration, duplicate work, circular or unnecessary dependencies, unreachable test prerequisites and contradictory commitments. Read a representative ticket as a fresh recipient: can it be acted on without inventing product or architecture decisions? Use independent review when scope, ambiguity or worker handoff makes it valuable. Missing independent review stays an evidence limit, not an invented pass.
+
+Before returning, reconcile the index and any handoff against every slice’s actual prerequisites and readiness, not only a representative ticket. A prerequisite added while detailing a slice must reach the summary and affected dependents; a removed prerequisite must not leave a stale blocker elsewhere. Distinguish a missing design decision from a missing implementation or verification environment, and explain which outcome each prerequisite actually blocks. Preserve useful independent work without hiding the remaining dependency.
 
 Return the ordered plan, the actual executable frontier, conditional/blocked work and the recommended next action. Explain what “ready” is based on and what has not been tested. Creating ticket drafts neither authorizes execution nor makes tracker publication implicit. When publication is authorized, verify destinations, existing issues and dependency links and report partial creation honestly; do not close parent issues or apply acceptance labels without authority.
