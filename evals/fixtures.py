@@ -308,3 +308,38 @@ def cleanup(records):
 
 # Synthetic generated PRD retained as a fixed transition replay input.
 FIXTURES['garden-transition'] = {'planning/garden/prd.md': (Path(__file__).parent/'data/garden-prd.md').read_text()}
+
+# Mission/probe fixtures model accepted scope, not evaluator instructions.
+FIXTURES.update({
+    'mission-direct': {'planning/brief.md': """# Local CSV explorer
+Accepted outcome: a local demo importing a CSV, filtering rows, and exporting the visible subset.
+Milestones: 1 import and preview; 2 filter; 3 export; 4 demonstrate with synthetic data.
+Use Python's standard CSV support; fixture columns are name and quantity. No unfamiliar provider or performance requirement.
+Later consideration: packaging for colleagues. Current assignment is planning only.
+"""},
+    'mission-probe': {'planning/brief.md': """# Sensor demo
+Accepted outcome: show live readings from a supplied sensor in a local dashboard.
+Milestones: 1 decode a reading; 2 stream readings; 3 display; 4 demo.
+The device revision may emit either documented frames or a proprietary encrypted format.
+No captured frames or hardware access is available in this planning session. The operator can later capture a small synthetic bench sample safely.
+The choice between using this device and a simulator depends on whether its readings can be decoded. Planning only; no purchases or external access authorized.
+"""},
+    'mission-recovery': {'planning/brief.md': """# Demo roadmap
+Accepted mission: a local document demo that imports synthetic records, searches them, displays a selected record, and exports a report.
+Milestones: 1 import; 2 search; 3 display; 4 export; 5 demo preparation.
+A temporary parser probe precedes milestone 1. Its question: can the bundled library decode the agreed synthetic format?
+Completion: one representative record decoded with fields matching the known sample. Work bound: one local session.
+Packaging and concurrent users are later possibilities, outside current demo acceptance.
+""", 'planning/probe.md': """# Parser probe result
+Representative record decoded successfully; fields match the known sample.
+Review suggestions: randomized stress tests, concurrency tests, retry framework, benchmark dashboard. No evidence that these affect decoding the sample.
+Probe code is disposable. Actual source is not included in this planning fixture.
+"""},
+    'mission-inconclusive': {'planning/brief.md': """# Import demo
+Accepted mission: import synthetic documents, search, display and export them locally.
+Milestones: 1 import; 2 search; 3 display; 4 export.
+Optional accelerated parser could improve performance, but no speed target is accepted. The ordinary bundled parser remains an available implementation option.
+The user authorized at most two setup attempts to test the accelerator. Both attempts failed before decoding: missing compatible binary, then unsupported runtime. No decoding result exists.
+Latest suggestion: build a custom runtime/container pipeline and run extensive benchmarks. No expansion of the setup bound is authorized. Planning only.
+"""}
+})
