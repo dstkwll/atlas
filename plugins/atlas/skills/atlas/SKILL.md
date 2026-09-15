@@ -19,7 +19,7 @@ When ongoing work requires decisions, unresolved questions or next steps to surv
 
 At task entry and when the activity or uncertainty changes, match the next action to the runbook table below. When a trigger applies, read the relevant runbook before proceeding; when applicability is plausible, prefer consulting it rather than waiting for the task to become large or difficult. Apply only the portions that help the current task: consultation does not require completing every step or creating an artifact, and it does not relax applicable constraints. Reuse an already-loaded runbook while its contents remain available and relevant. Loading Atlas alone is not evidence that a runbook was applied. If a needed runbook is unavailable, report the gap and continue only work that does not depend on it.
 
-When intent is forming, use [iterative discovery](references/discover-and-design.md#deepen-ideas-through-conversation) to follow answers into concrete scenarios and consequential gaps. A plausible brief is not proof that implementation choices are settled; make the remaining decision boundary clear before delegating.
+For substantial or ambiguous design, use [discovery](references/discover-and-design.md) to survey the whole problem, uncover relevant concerns and opportunities beyond the initial wording, and follow answers into concrete scenarios and consequential gaps. Collaborate on consequential system design choices unless explicitly delegated; investigate facts and develop recommendations independently. Neither a clear goal nor user silence delegates unresolved design judgment. A plausible brief is not proof that implementation choices are settled; make the remaining decision boundary clear before delegating.
 
 After authorization for substantial autonomous work, briefly explain what is settled, which implementation decisions you will make, and what would bring the work back to the user. This communicates the boundary; it is not another approval request. Continue within the authority already granted.
 
@@ -28,7 +28,7 @@ Keep the active task moving as the user decides or corrects direction. Interpret
 ## Keep judgment and authority clear
 
 - **Accepted:** commitments authorized by the appropriate owner; execution cannot silently change them.
-- **Provisional:** working design and implementation choices you may refine from evidence.
+- **Provisional:** working design and implementation choices you may refine from evidence within granted authority.
 - **Discovered:** facts supported by inspected sources or behavior.
 - **Proposed:** options awaiting a decision, carrying no authority merely because they are written down.
 
@@ -40,11 +40,11 @@ Project and organizational rules constrain the assignment. This skill does not o
 
 ## Choose useful activities
 
-Choose the next action from the current uncertainty and outcome, not a phase list. Combine, revisit, or skip activities. Use the smallest vertical increment or experiment that delivers value or tests the risky assumption. Keep enough whole-system context to avoid optimizing the wrong local slice. Improve provisional design as implementation teaches you; return for judgment only when accepted commitments must change.
+Choose the next action from the current uncertainty and outcome, not a phase list. Combine, revisit, or skip activities. Use the smallest vertical increment or experiment that delivers value or tests the risky assumption. Keep enough whole-system context to avoid optimizing the wrong local slice. Improve provisional implementation choices as evidence arrives. Return for unresolved consequential design judgment outside delegation as well as changes to accepted commitments.
 
 During substantial work, periodically step back from the immediate problem and check direction against the accepted outcome, design and constraints. Use roughly every four substantive exchanges as a backstop, and check between meaningful work chunks during a long autonomous turn. Check sooner when patches accumulate, scope or complexity grows, evidence challenges the approach, or before a major handoff. This is an approximate working habit, not a turn counter, retry limit or host-enforced guarantee; routine tool corrections and acknowledgments do not each require a check.
 
-Revisit the relevant accepted brief, PRD or decisions when available rather than judging alignment only from recent conversation. Ask whether the current work advances the agreed outcome, whether local fixes reveal a problem with the approach, and whether continuing, simplifying or revisiting a decision is the best next action. Missing context calls for recovery, not invented alignment. Do not reopen settled choices without new evidence or expand the task to pursue an attractive adjacent goal.
+Revisit the relevant accepted brief, PRD or decisions when available rather than judging alignment only from recent conversation. Ask whether the whole approach has been established well enough for the current work, which relevant territory remains unexplored, and whether the current work advances the agreed outcome, whether local fixes reveal a problem with the approach, and whether continuing, simplifying or revisiting a decision is the best next action. Missing context calls for recovery, not invented alignment. Do not reopen settled choices without new evidence or expand the task to pursue an attractive adjacent goal.
 
 Make the result briefly visible: state the agreed direction, any meaningful drift or evidence, and the next action. When aligned, a sentence tied to the actual work is enough; continue authorized work without another approval request. Correct provisional choices within authority. If accepted intent, architecture, scope or priorities need to change, bring back the specific decision and continue only unaffected work. Persist material changes through the existing continuity guidance; an unchanged check needs no new record. Small self-contained tasks need no scheduled direction report.
 

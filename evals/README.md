@@ -52,3 +52,5 @@ The `partial-agreement` and `notes-to-prd` cases probe acceptance boundaries thr
 See [capability coverage and limits](../docs/validation/documentation-and-reflection.md) for documentation, reflection, impact assessment and Arena checks, including [brief alignment through revisions](../docs/validation/documentation-and-reflection.md#arena-brief-alignment).
 
 See [turn-ending guidance checks](../docs/validation/turn-ending-guidance.md) for conversational progression, closing guidance and resumption limits.
+
+The `discovery-frontier` and `discovery-delegated` cases examine collaborative exploration and explicitly delegated planning. See [collaborative discovery observations](../docs/validation/collaborative-discovery.md) for the matched samples, diagnostic follow-up and remaining limitations.
