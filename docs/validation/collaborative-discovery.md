@@ -22,7 +22,7 @@ A targeted correction makes the initial survey and return to unresolved territor
 
 The focused follow-up consulted discovery and continuity guidance, made five major design areas visible, and created a linked planning record. However, its second response again bundled proposed policy around one branch, and its note did not preserve the remaining major territory. This is limited evidence of better initial breadth and persistence, with ongoing frontier maintenance still inconsistent. No further tuning was performed on this fixture.
 
-Both delegated planning samples produced the requested local design artifact without another approval gate. They preserved the stated non-goals and planning-only boundary; detailed artifact review accompanies the local evidence.
+Both delegated planning samples produced the requested local design artifact without another approval gate. They preserved the stated non-goals and planning-only boundary. Independent artifact review found that both mixed some agent-selected exclusions into accepted-constraint sections; the candidate also used an imprecise authorization example. These remain proposal-quality limitations, not evidence of implementation readiness or verified security.
 
 ## Limits and next validation
 
