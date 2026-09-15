@@ -42,6 +42,12 @@ Worker completion is a claim. Inspect the actual result and evidence, reconcile 
 
 If a worker is interrupted or its return is unusable, first distinguish a report-only failure from an incorrect implementation, an environment/dependency failure, and execution whose effects are unknown. Establish liveness and effect uncertainty before retrying or cleaning up. Preserve recoverable changes, failure output and proof, and carry already-tried remedies into the correction; a malformed report must not replay a successful mutation, and a failed dependency must not trigger an identical blind retry. Remove an ephemeral workspace only after confirming that needed work and evidence have been retained.
 
+## End investigations and return to delivery
+
+For a substantial probe, use the existing brief or task record to state the decision, sufficient evidence, practical effort bound and next action for each result. Stop when sufficient evidence is obtained or the bound is reached. At a self-selected planning bound, reassess before any continuation: only new evidence may justify a visible revision within existing authority, preserving cumulative effort and the original question. Explicit user, project or host limits cannot be extended locally; sufficient evidence ends the probe even if budget remains. For an inconclusive result, compare proceeding with a stated limitation, changing approach or returning unresolved judgment; do not silently chain another experiment. Preserve cumulative effort across retries, workers and resumed sessions. Material expansion beyond delegated scope or resources requires the applicable user decision.
+
+Assess supporting work against the parent milestone even while individual defects narrow. Once the question is answered, record the result and resume the authorized implementation step, or return its decision if authority is missing. Do not turn disposable probe code into a hardening project merely because review finds additional possible improvements. A short explanation in the existing record suffices; routine commands and small investigations need no new form.
+
 ## Correct without turning every defect into a user decision
 
 Confirm review findings against actual behavior. Repair defects that invalidate the accepted outcome while staying within the existing architecture, authority, risk and strategy. Defer adjacent improvements with enough context to recover them. Disagree with an unsupported finding using evidence rather than treating review as a vote.

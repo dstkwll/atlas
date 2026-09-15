@@ -430,5 +430,39 @@
       "Use planning/garden/prd.md to prepare vertical slice drafts under planning/garden/tickets and a handoff at planning/garden/handoff.md. Next work is further design where needed, with independent slices identified. Do not implement or publish."
     ],
     "check": "no_implementation"
+  },
+  {
+    "id": "mission-direct",
+    "fixture": "mission-direct",
+    "turns": [
+      "Read planning/brief.md and propose a grounded route to implementation, including what we should do next and why. Save useful planning continuity. Do not implement."
+    ],
+    "check": "no_implementation"
+  },
+  {
+    "id": "mission-probe",
+    "fixture": "mission-probe",
+    "turns": [
+      "Read planning/brief.md and propose a grounded route to implementation, including what we should do next and why. Save useful planning continuity. Do not implement."
+    ],
+    "check": "no_implementation"
+  },
+  {
+    "id": "mission-recovery",
+    "fixture": "mission-recovery",
+    "turns": [
+      "Read the planning files and prepare a concise recovery record for another lead to continue this project. Planning only; do not implement.",
+      "Continue from the saved project records. Recommend the next work and explain why; update planning if needed. Do not implement."
+    ],
+    "check": "no_implementation",
+    "fresh_thread_before": 1
+  },
+  {
+    "id": "mission-inconclusive",
+    "fixture": "mission-inconclusive",
+    "turns": [
+      "Read planning/brief.md and recommend how to continue. Save useful planning continuity. Do not implement."
+    ],
+    "check": "no_implementation"
   }
 ]

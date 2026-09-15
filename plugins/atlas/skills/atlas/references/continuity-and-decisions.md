@@ -10,6 +10,8 @@ An existing topic PRD can own planning continuity, including a self-contained HT
 
 The record should let a fresh lead recover the canonical Atlas skill's installed or source location, the active task and bounded scope, the goal/done claim, accepted versus provisional choices, current authority, relevant repository/worktree identity, meaningful evidence or blocker, and next safe action. Link to the decisions and evidence needed at the resume point instead of duplicating them. These locations and pointers make recovery possible; they are not new permission and do not prove that a host will restore guidance automatically. Use ordinary prose, links and headings; exact grammar is not correctness. Commit a state file only when project policy permits its content and location.
 
+For substantial projects, keep the parent mission recoverable alongside the active task: the full outcome and completion criteria, major milestones (later detail may be provisional), current position, consequential unexplored territory and when it matters. Link an investigation to the decision it serves, its stopping condition and the implementation step that follows. Preserve cumulative effort and remaining agreed bounds when they affect continuation; use observed work or time rather than inventing unavailable token or dollar totals. Reuse the existing brief, roadmap or authorized issue hierarchy; no additional ledger, required field schema or tracker publication is implied.
+
 ## Write at meaningful boundaries
 
 The first qualifying decision or unresolved continuation creates the record if none exists; chat summaries and the host's transient todo list are not substitutes for it. Routine continuity is part of the assigned work, including discovery, when file writes are permitted; it does not authorize implementation, a full PRD, tracker publication or a global configuration change. If writes are prohibited or the approved location is unavailable, state the gap and keep a recoverable summary in the conversation without claiming it was saved.
@@ -31,6 +33,8 @@ For periodic direction checks, use the accepted outcome, design constraints and 
 ## Resume from evidence
 
 After compaction, session restoration or another material context loss, reload the canonical Atlas skill from its recorded location, only the references relevant to the next action, and the existing task record when available before doing work that depends on them. If the canonical guidance cannot be recovered, identify the missing source rather than claiming Atlas remains active. Do not reread every reference on every turn.
+
+Reestablish the parent mission and current position before resuming the local checklist. Do not reconstruct project scope from the latest activity alone. If only a subtask or prototype record survived, recover the linked parent plan before substantial dependent work; continue only work whose scope and authority are established. Verify that the probe still needs evidence rather than resuming hardening after its question was answered.
 
 Inspect current project instructions, repository identity, branch/HEAD, worktree and applicable live PR/check state before relying on a note. Treat old status statements as observations to verify. Distinguish stale status from conflicting authority: a merge can obsolete a next-action note but does not grant permission for the next feature. A task record and source pointer preserve recoverable context; the host still controls whether conversation guidance survives compaction or resume.
 
