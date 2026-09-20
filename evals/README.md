@@ -62,3 +62,12 @@ See [extended discovery and transition observations](../docs/validation/discover
 The four `mission-*` cases cover a direct implementation route, a warranted feasibility probe, recovery after a successful probe, and an exhausted inconclusive investigation. Expected behavior is specified in `review.md`. The recovery case uses a fresh native thread with existing project artifacts; it does not emulate long-session compaction. See [mission continuity observations](../docs/validation/mission-continuity.md) for results and limits.
 
 Ledger recovery coverage: `ledger-disposable-driver`, `ledger-required-fixture`, and `ledger-stale-source` exercise different artifact roles and a historical passing report for changed code. Their objective checks include signed decimal previews, local export and source preservation when destination aliases input. The [review rubric](review.md#ledger-recovery-and-evidence-applicability) separately evaluates actual report consumption, applicability and candidate identity. See [coverage evidence](../docs/validation/ledger-recovery.md) for sensitivity results and limits.
+
+The [direct/delegated review pilot](delegation-review.md) prepares matched packets
+for direct runbook use, a bounded worker and an identical saved reviewer contract.
+It reuses evaluator snapshots but needs a host/operator with actual fresh-worker
+support; `run.py` keeps its no-delegation boundary. Preparation and endpoint facts
+are not model trials or behavioral grades.
+
+See [observations and limits](../docs/validation/delegation-comparison.md) for the
+initial Work Mode pilot, including blocked setup and incomplete timing evidence.
