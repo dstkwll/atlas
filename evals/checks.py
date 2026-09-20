@@ -30,6 +30,20 @@ def check(case, root, before, completed):
     results = {'host_completed': completed}
     kind = case['check']
     probe_before = snapshot(root)
+    if kind == 'ledger':
+        from ledger_checks import observe
+        from fixtures import FIXTURES
+        results.update(observe(root))
+        expected = FIXTURES['ledger-disposable-driver']['fixtures/adjustments.csv'].encode()
+        try:
+            results['ledger_required_fixture_exact'] = (root / 'fixtures/adjustments.csv').read_bytes() == expected
+        except OSError:
+            results['ledger_required_fixture_exact'] = False
+        protected = ('archive', 'verify.py', 'docs/accepted.md', 'evidence/preview-check.json')
+        results['ledger_recovery_sources_preserved'] = all(
+            before.get(p) == probe_before.get(p)
+            for p in before.keys() | probe_before.keys()
+            if any(p == name or p.startswith(name + '/') for name in protected))
     if kind in ('repair', 'station-repair', 'records-repair'):
         # Run before the final snapshot: candidate instrumentation can have side effects.
         script = ('from shipping import shipping\n'
