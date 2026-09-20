@@ -34,8 +34,9 @@ This concurrency variation prevents controlled latency comparisons.
 
 All nine cells were attempted: eight returned completed reviews and one had a
 blocked worker setup. Completion of a review does not establish timing compliance;
-see the protocol deviations below. The table is the implementing lead's assessment
-of report content against source, not an independent outcome grade.
+see the protocol deviations below. The table records report-content judgments
+against source, confirmed by the later independent saved-output assessment below.
+It is not a grade of host execution or timing compliance.
 
 | Scenario | Direct | Inline worker contract | Saved reviewer contract |
 | --- | --- | --- | --- |
@@ -61,6 +62,11 @@ alone therefore cannot establish successful routing.
   improvements were incorporated: qualify snapshot exclusions and test the actual
   caller's false completion, not only the delivery function. All 29 evaluator
   tests passed, including the four new fixture/packet/observation tests.
+- Recovery onto main `008aaa1dbcafb976506140c0e2e85303ee96215f` preserved the
+  intervening ledger evaluation additions. All 39 current evaluator tests passed.
+  Only the README's adjacent additions needed reconciliation; executable files
+  were recovered unchanged. The installed package remains 0.7.4. This recovery
+  and the saved-output assessment did not rerun or replace any model trial.
 - The operator observed actual child-session identities for completed delegated
   treatments. Their source/probe reports and lead syntheses support useful
   application of Independent review and Failure handling. Full host tool traces
@@ -79,18 +85,42 @@ alone therefore cannot establish successful routing.
 - Token usage, API cost and separate lead/worker timings were unavailable. The
   observed repeated investigation by leads and workers is not a measured cost
   difference. Operator receipt intervals include launch and notification delays.
-- A fresh independent outcome assessor could not start: the host rejected the
-  launch with `agent thread limit reached`. Resuming the independent implementation
-  reviewer for outcome assessment was also rejected. Outcome grading therefore
-  remains **pending independent assessment**; the implementing lead inspected the
-  reports and source. Reports were copied to shuffled case labels for assessment,
-  but their routing disclosures would make blinding imperfect. The prior code
-  review is not an independent grade of these model outcomes.
+- In the original host, a fresh independent outcome assessor could not start:
+  the host rejected the launch with `agent thread limit reached`. Resuming the
+  independent implementation
+  reviewer for outcome assessment was also rejected. That original limitation is
+  retained; the separate receiving-session assessment below resolves only the
+  pending semantic assessment, not missing execution evidence.
 - One observation per cell, incomplete setup and timing coverage, small seeded
   cases and explicitly cued runbooks prevent reliability or superiority claims.
   This does not test autonomous role selection, spontaneous runbook discovery,
   deep runbook navigation or coupled implementation work. A whole specialist team
   would require a different comparison; these results cannot settle that design.
+
+## Independent saved-output assessment
+
+On 2026-09-20, a fresh context-only Copilot reviewer (gpt-5.6-sol, high reasoning)
+assessed all nine shuffled source/requirements/report packets. The trial mapping,
+prior outcome summary and evaluator rubric were withheld until its judgments were
+recorded. Reports themselves disclosed some routing, so blinding was imperfect.
+The reviewer had no execution tools and did not produce the fixtures or reports.
+
+It supported both defects in all three regression reports, the zero-finding
+conclusions in the two completed control reviews, and the explicit retention
+contract gap in all three uncertain-case reports. It found no material missing
+source-level finding or false semantic claim. All five completed worker returns
+retained their valid findings and uncertainty in the lead syntheses. The blocked
+control packet's lead-only observations were consistent with source, but its
+failure record was not a worker review or a completed delegated treatment.
+
+Severity labels were not independently graded: the packets supplied no severity
+rubric, and review recommendations are not integration authority. The assessor
+also could not verify task-specific routing requirements, reported probes, timing
+or file activity from report prose. The receiving lead subsequently checked the
+mapping against the saved schedule, matched every packet's fixture bytes to the
+recovered generator, and verified that shuffled reports matched their saved trial
+copies. These provenance checks do not recover the missing host traces. The
+original blocked setup and three unverified deadlines remain unchanged.
 
 ## Disposition
 
