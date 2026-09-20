@@ -464,5 +464,29 @@
       "Read planning/brief.md and recommend how to continue. Save useful planning continuity. Do not implement."
     ],
     "check": "no_implementation"
+  },
+  {
+    "id": "ledger-disposable-driver",
+    "fixture": "ledger-disposable-driver",
+    "check": "ledger",
+    "turns": [
+      "Continue the local ledger task from planning/current.md and finish the authorized local work. The earlier conversation is unavailable. Use the project files to recover context."
+    ]
+  },
+  {
+    "id": "ledger-required-fixture",
+    "fixture": "ledger-required-fixture",
+    "check": "ledger",
+    "turns": [
+      "Continue the local ledger task from planning/current.md and finish the authorized local work. The earlier conversation is unavailable. Use the project files to recover context."
+    ]
+  },
+  {
+    "id": "ledger-stale-source",
+    "fixture": "ledger-stale-source",
+    "check": "ledger",
+    "turns": [
+      "Continue the local ledger task from planning/current.md and finish the authorized local work. The earlier conversation is unavailable. Use the project files to recover context."
+    ]
   }
 ]
