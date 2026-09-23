@@ -30,4 +30,12 @@ When behavior surprises you, recheck the build, instance, fixture and relevant s
 
 When a later reader verifies a changed candidate, retain the earlier record and identify the new run separately. Recheck that the recipe still applies and execute the available relevant assertions; a changed identity alone neither proves a defect nor makes the previous pass transferable.
 
+### Diagnose failures across repeated or parallel runs
+
+When a suite passes alone but fails after other tests or under parallel execution, preserve the first failure's trace and identify build, order, worker, account and data. Compare the case alone, after a suspected predecessor, or alongside a suspected competitor only when this separates plausible causes. A single reproducible product failure needs no concurrency investigation by default.
+
+Trace ownership of shared rows, accounts, ports, files, caches and external sandboxes. Separate processes or worktrees do not isolate a shared backend. Choose independent namespaces, exclusive ownership or serialization according to the resource contract. Verify setup preconditions and reset postconditions rather than only command success. Retain failure diagnostics before teardown, and check for background work surviving cleanup.
+
+Follow the earliest meaningful divergence. Distinguish wrong product behavior, invalid fixture state, unavailable environment and failed observation; check readiness and whether each event listener was registered before the event it must observe. For example, two workers resetting one account's cart can erase each other's setup. Test the suspected interference under the implicated conditions rather than increasing sleeps or retries. A passing rerun does not resolve the original failure; use [Test adequacy](test-adequacy.md) for remaining flake and quarantine decisions.
+
 Return the recipe location, checks actually executed, evidence retained, cleanup result and remaining limits. Maintain commands and meaningful setup/reset knowledge when they change; do not require an exhaustive map before new investigation. Confirm the recipe's usefulness from a fresh operator's available context when feasible. Readability and one successful exercise do not prove every feature, host or failure path.

@@ -17,16 +17,16 @@ Use existing approved project/host tools. Runbooks prescribe no additional tools
 | Effects of a change beyond the immediate diff or design | [Assess blast radius](blast-radius.md) |
 | Unfamiliar behavior or code/spec disagreement | [Understand existing behavior](understand-behavior.md) |
 | Why a design or constraint exists, or whether its original rationale still applies | [Reconstruct design rationale](reconstruct-rationale.md) |
-| Create or repair a repeatable project verification path | [Establish project verification](project-verification.md) |
+| Create or repair project verification, including E2E suite setup and parallel-test failures | [Establish project verification](project-verification.md) |
 | Could errors become success, retries duplicate effects or work be lost? | [Failure handling](failure-handling.md) |
-| What evidence would catch a regression or substantiate this change? | [Test adequacy](test-adequacy.md) |
+| Choose regression evidence, test-first work (TDD), or checks for a change | [Test adequacy](test-adequacy.md) |
 | Invalid states, unit/identity confusion or mutation escape paths | [Types and invariants](types-and-invariants.md) |
 | Material trust, authorization or sensitive-data boundary | [Security boundaries](security-boundaries.md) |
 | Persistence correctness, query behavior or deployment migration | [Data and migrations](data-and-migrations.md) |
 | Measured slowness, resource growth, captured profile or performance budget | [Performance](performance.md) |
 | Compiler, dependency, startup or runtime failure | [Build/runtime diagnosis](build-and-runtime-diagnosis.md) |
 | Behavior-preserving simplification or proven obsolete code | [Simplify and clean](simplify-and-clean.md) |
-| Versioned API uncertainty, stale docs or misleading comments | [Documentation and references](documentation-and-references.md) |
+| Versioned API uncertainty, technical alternatives, stale docs or misleading comments | [Documentation and references](documentation-and-references.md) |
 | Lifetime, cancellation, concurrency or language semantics | [Language/runtime checks](language-runtime-checks.md) |
 | Request/ORM/dependency lifecycle depends on framework semantics | [Service/framework checks](service-framework-checks.md) |
 | Reactive state, stale responses, rendering or mobile lifecycle | [Client state checks](client-state-checks.md) |
@@ -34,6 +34,6 @@ Use existing approved project/host tools. Runbooks prescribe no additional tools
 | Substantial explanatory diagram, layout or faithful redraw | [Diagram craft](diagram-craft.md) |
 | Training, inference, retrieval or grounded-answer quality | [Model and retrieval quality](model-and-retrieval-quality.md) |
 | Package distribution or a change in information exposure | [Release preparation](release-preparation.md) |
-| Recurring agent failure or a proposed instruction change | [Guidance improvement](guidance-improvement.md) |
+| Evaluate agent instructions/tools/coordination, or diagnose recurring guidance failures | [Guidance improvement](guidance-improvement.md) |
 
 These are questions to investigate, not automatic findings. Use only applicable checks and return evidence that changes the next decision. A supported zero-finding review is valid. For independent assurance, apply the existing [review contract](independent-review.md); for implementation, apply [delivery and repair](deliver-and-repair.md).
