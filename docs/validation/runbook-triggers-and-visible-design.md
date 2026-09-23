@@ -6,7 +6,7 @@ The routing audit found no orphaned reference among the 36 guides. It did find a
 
 Discovery now explicitly presents credible competing approaches with shared context, meaningful tradeoffs, a recommendation and reasons before collaborative convergence. Architecture links to that comparison method. Follow-up questions should distinguish the approaches and respond to the user's answers. Explicitly delegated choices remain the lead's to decide and explain without an approval stop; constraint-determined choices need no invented alternatives. The charter records the clarified experience.
 
-Selective consultation, proportionate small-task handling, ordinary implementation freedom, read-before-dependent-action, existing runbook notices, Arena confirmation and request-only reflection are retained. There is no new skill, runtime, mandatory menu or workflow stage. Package and marketplace versions advance together to 0.7.5 as a correction to existing behavior.
+Selective consultation, proportionate small-task handling, ordinary implementation freedom, read-before-dependent-action, existing runbook notices, Arena confirmation and request-only reflection are retained. There is no new skill, runtime, mandatory menu or workflow stage. The initial candidate used 0.7.5. After integrating the independently merged 0.8.0 methods, package and marketplace versions advance together to 0.8.1 as a correction to existing behavior.
 
 ## Native observations
 
@@ -36,3 +36,14 @@ The 39 evaluator tests passed. Relative file targets in the core, charter and re
 ## Limits
 
 This correction makes the intended behavior more explicit and demonstrates relevant use in bounded synthetic sessions. It does not establish reliable triggering across all references, long conversations, compaction, other models or workplace hosts. No failing workplace-session trace was available, so unavailable guidance, host loading, selection and poor application remain distinct possible causes. Successful main samples limit improvement claims. Raw prompts, candidate identities, all attempts and tool evidence remain local maintainer evidence.
+
+
+## Reconciliation with the selective coding methods
+
+After the initial trials, PR #34 merged new methods for parallel-test diagnosis, tool-using agent evaluation and evidence-based technical comparison at version 0.8.0. This draft integrates those methods unchanged. The shared specialist index retains their verification, TDD and agent-evaluation triggers, and combines technical choices needing external evidence with documentation impact. The core table also makes test-first work and parallel-test diagnosis explicit so its direct routes agree with the expanded index.
+
+The initial observations above describe the pre-integration guidance; they are not retroactively attributed to the combined candidate. The earlier evidence limits, including policy over-elaboration and missing design records, remain applicable.
+
+For the combined candidate, all 39 evaluator tests passed again, relative file targets resolved and versions aligned at 0.8.1. Direct comparison verified that the three methods added by PR #34 match merged main byte for byte. A fresh independent source review found no concrete integration conflict across parallel-test interference, TDD/ordinary fixes, tier-dependent comparisons, a single API lookup and agent evaluation with missing action traces. These were source consistency scenarios, not executed product workflows.
+
+Two additional native diagnostic samples replayed the visible-design and specialist-activity cases against the combined guidance under the earlier host/model conditions. Both completed within scope. The design sample read discovery, presented competing policies and recommendations, responded to the fairness concern, and saved a planning note through continuity guidance while leaving reservations unaccepted. The specialist sample successfully read Performance and Types and invariants, preserved the no-edit boundary, and distinguished inspection hypotheses from measured evidence. The lead inspected tool records, responses and the planning artifact. The prior continuity omission did not recur in this one replay; policy over-elaboration and unverified fairness judgments still limit the design result. These reused cases are diagnostic checks, not a fresh matched efficacy comparison or proof that PR #34 improved behavior. Native execution of PR #34's three added methods remains outside this diagnostic coverage.
