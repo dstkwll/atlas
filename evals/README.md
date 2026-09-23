@@ -85,3 +85,5 @@ are not model trials or behavioral grades.
 
 See [observations and limits](../docs/validation/delegation-comparison.md) for the
 initial Work Mode pilot, including blocked setup and incomplete timing evidence.
+
+See [specialist integration observations](../docs/validation/specialist-methods.md) for completed native coverage, retained interruptions and pending acceptance.
