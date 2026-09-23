@@ -1,6 +1,6 @@
 # Improve agent guidance from evidence
 
-Use when recurring user corrections, failed tasks or measurable cost/coordination problems suggest the guidance itself needs repair. Start from the original request, actual artifacts and observed result. Frustration, a revert or a low score is a signal to investigate, not proof of a universal rule.
+Use when evaluating changes to an agent's instructions, tools or coordination, or when recurring user corrections, failed tasks or measurable cost/coordination problems suggest the guidance itself needs repair. Start from the original request, actual artifacts and observed result. Frustration, a revert or a low score is a signal to investigate, not proof of a universal rule.
 
 Distinguish an unclear assignment, missing capability, bad guidance, host limitation and implementation mistake. For guidance failures, establish whether the relevant source was unavailable, available but not selected, read but not applied, or applied and incorrect; correctly followed guidance with a failing tool is a different problem. Inspect the actual source and action history before choosing a remedy. Fix selection or placement when that is the cause rather than duplicating the rule. Identify the smallest instruction or routing change that could prevent the demonstrated failure without obstructing valid neighboring tasks. A repeated retry with no new hypothesis does not count as progress. Preserve the full intended outcome when choosing a recovery step.
 
@@ -11,5 +11,15 @@ Compare the candidate against the baseline using realistic raw artifacts and mea
 Use objective measures where useful and qualitative evidence for judgment. Assess the whole task: correctness, unauthorized assumptions, user intervention, review and repair burden, elapsed effort and resource use when available. A cheaper worker call can still make delivery more expensive. Scores, trial counts and cost reductions are supporting observations; they cannot outweigh a broken requirement. Avoid overfitting to a single fixture or turning one user's preference into global policy. Test that an adjacent ordinary task still proceeds without unnecessary ceremony.
 
 Keep the correction and rationale small and reviewable. Preserve source attribution and the previous candidate so a regression can be understood. Do not generate hooks, regex blockers, automatic policy promotion, a scheduler or a new evaluation service merely to implement a guidance correction. Apply existing authority for enduring project rules and external actions.
+
+## Evaluate tool-using agent behavior
+
+Apply the existing comparison method when designing or checking evaluation of an agent's instructions, tools or coordination. Deterministic code changes without agent-behavior implications need no model trial; use [Model and retrieval quality](model-and-retrieval-quality.md) additionally when prediction or retrieval quality is part of the claim.
+
+Give the agent realistic task requirements and operating constraints, but keep evaluator-only expected answers and grader feedback separate. Identify held-out cases before tuning; reuse after inspecting results is diagnostic evidence. Retain candidate identities and a concise evidence record for every evaluation attempt, separating host/model/tool conditions and setup failures from behavioral results. Choose repetition according to observed variability and the decision; do not rerun until the favored condition passes.
+
+Inspect attributable artifacts, tool events and independently observed resulting state. Separate agent effects from setup, evaluator probes and cleanup. A plausible response does not prove the requested operation occurred. A correct final artifact can coexist with a prohibited intermediate action; endpoint equality cannot exclude such actions, and missing traces leave those claims unknown.
+
+Challenge graders with known incorrect outputs and valid alternatives. If a task requires one export while preserving input, test a missing file, duplicate export and source overwrite as well as a correct result. These controls establish sensitivity on those cases, not agent compliance. Use deterministic checks for objective properties and independent judgment for semantic quality, retaining the evidence needed to resolve disagreement. Apply the surrounding guidance's whole-task cost, counterexample and authority criteria rather than a separate scorecard.
 
 Return the diagnosed failure, changed guidance, fresh behavioral evidence, counterexample results and remaining uncertainty. Use the existing continuity record for what a later session needs; no raw transcript vault or compulsory scorecard is required.
