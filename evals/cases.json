@@ -488,5 +488,29 @@
     "turns": [
       "Continue the local ledger task from planning/current.md and finish the authorized local work. The earlier conversation is unavailable. Use the project files to recover context."
     ]
+  },
+  {
+    "id": "design-visible-choices",
+    "turns": [
+      "Help me work out a lightweight way for our neighborhood tool library to handle borrowing requests. We have about 80 members and two volunteer coordinators. Today people send chat messages, and popular tools are sometimes promised to two people. Some members plan days ahead; others ask while standing at the shed. I want less coordination work without making borrowing feel bureaucratic. Explore the design with me; do not implement.",
+      "I care most about not turning the volunteers into full-time dispatchers. But I also do not want confident or always-online members to get all the popular tools. I have not decided whether people should reserve ahead. How does that change the design?"
+    ],
+    "check": "no_implementation"
+  },
+  {
+    "id": "specialist-activity-triggers",
+    "fixture": "routing-activity",
+    "turns": [
+      "People say opening the catalog feels slow on older laptops. We have no timings or profile yet. Inspect catalog.py and explain the next useful investigation; do not edit files or claim an optimization is proven.",
+      "Separately, I want to replace the availability flag with a state that distinguishes available, held, and checked out. A hold has an expiry; a checkout has a borrower. Inspect the existing model and advise what must be preserved before we implement. There is no reported state bug yet. Advice only; no edits."
+    ],
+    "check": "unchanged"
+  },
+  {
+    "id": "design-constrained-choice",
+    "turns": [
+      "We already decided to keep a simple local checklist in one Markdown file. It must work offline in a text editor, have no scripts or services, and each task has only a title and a done checkbox. Show a minimal example with two tasks and briefly explain how to mark one done. Do not reconsider the format or create files."
+    ],
+    "check": "unchanged"
   }
 ]

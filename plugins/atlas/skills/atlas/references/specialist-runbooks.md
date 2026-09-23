@@ -1,6 +1,6 @@
 # Specialist runbooks
 
-Use this index when a concrete technical uncertainty or risk needs more detail than the core activity guides. Select the relevant reference, not the whole library. Ordinary clear work may need none.
+Use this index when a matching activity, changed boundary, observed failure or concrete uncertainty calls for a focused method beyond the core activity guides. Cleanup, distribution, documentation impact and recurring guidance failures can qualify without an already-diagnosed technical defect. Select the relevant reference, not the whole library. Ordinary clear work may need none.
 
 The runbooks can guide the main agent or a bounded worker. Choose delegation for useful isolation, parallelism or independent judgment; a named runbook is not a new role, required handoff or workflow stage. A separate context is needed only when the assignment requires independence; the producer using another checklist remains self-review.
 
@@ -20,13 +20,13 @@ Use existing approved project/host tools. Runbooks prescribe no additional tools
 | Create or repair project verification, including E2E suite setup and parallel-test failures | [Establish project verification](project-verification.md) |
 | Could errors become success, retries duplicate effects or work be lost? | [Failure handling](failure-handling.md) |
 | Choose regression evidence, test-first work (TDD), or checks for a change | [Test adequacy](test-adequacy.md) |
-| Invalid states, unit/identity confusion or mutation escape paths | [Types and invariants](types-and-invariants.md) |
-| Material trust, authorization or sensitive-data boundary | [Security boundaries](security-boundaries.md) |
+| Changed data models, states, units, APIs or mutation ownership; invalid states or mutation escape paths | [Types and invariants](types-and-invariants.md) |
+| Requested security review or material trust, authorization or sensitive-data boundary | [Security boundaries](security-boundaries.md) |
 | Persistence correctness, query behavior or deployment migration | [Data and migrations](data-and-migrations.md) |
-| Measured slowness, resource growth, captured profile or performance budget | [Performance](performance.md) |
+| Reported slowness, measured regression, resource growth, captured profile or performance budget | [Performance](performance.md) |
 | Compiler, dependency, startup or runtime failure | [Build/runtime diagnosis](build-and-runtime-diagnosis.md) |
-| Behavior-preserving simplification or proven obsolete code | [Simplify and clean](simplify-and-clean.md) |
-| Versioned API uncertainty, technical alternatives, stale docs or misleading comments | [Documentation and references](documentation-and-references.md) |
+| Authorized cleanup/refactor or local complexity obstructing the change; behavior-preserving simplification | [Simplify and clean](simplify-and-clean.md) |
+| Versioned API uncertainty, technical choices needing external evidence, stale guidance or misleading comments, or changes affecting what users and maintainers need to know | [Documentation and references](documentation-and-references.md) |
 | Lifetime, cancellation, concurrency or language semantics | [Language/runtime checks](language-runtime-checks.md) |
 | Request/ORM/dependency lifecycle depends on framework semantics | [Service/framework checks](service-framework-checks.md) |
 | Reactive state, stale responses, rendering or mobile lifecycle | [Client state checks](client-state-checks.md) |

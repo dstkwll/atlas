@@ -19,7 +19,9 @@ When ongoing work requires decisions, unresolved questions or next steps to surv
 
 At task entry and when the activity or uncertainty changes, match the next action to the runbook table below. When a trigger applies, read the relevant runbook before proceeding; when applicability is plausible, prefer consulting it rather than waiting for the task to become large or difficult. Apply only the portions that help the current task: consultation does not require completing every step or creating an artifact, and it does not relax applicable constraints. Reuse an already-loaded runbook while its contents remain available and relevant. Loading Atlas alone is not evidence that a runbook was applied. If a needed runbook is unavailable, report the gap and continue only work that does not depend on it.
 
-For substantial or ambiguous design, use [discovery](references/discover-and-design.md) to survey the whole problem, uncover relevant concerns and opportunities beyond the initial wording, and follow answers into concrete scenarios and consequential gaps. Collaborate on consequential system design choices unless explicitly delegated; investigate facts and develop recommendations independently. Neither a clear goal nor user silence delegates unresolved design judgment. A plausible brief is not proof that implementation choices are settled; make the remaining decision boundary clear before delegating.
+Match triggers to the actual activity as well as uncertainty: a reported slowdown warrants performance diagnosis before measurements exist; a changed model or API can warrant invariant checks before a defect appears. Reassess before the next dependent action when new evidence changes the work: an implementation task can uncover unresolved product policy, and a lost acknowledgment can turn a retry into reconciliation. Consult the relevant method at that point, without loading unrelated guides or treating consultation as a new approval gate.
+
+For substantial or ambiguous design, brainstorming, or a request to challenge an approach, use [discovery](references/discover-and-design.md) to survey the whole problem, uncover relevant concerns and opportunities beyond the initial wording, and follow answers into concrete scenarios and consequential gaps. For unresolved consequential choices, make credible alternatives, their practical tradeoffs and your reasoned recommendation visible before converging with the user; use the discovery guide's comparison method. When that judgment is explicitly delegated, decide within its bounds and explain the material comparison and reasons without waiting for another approval. Collaborate on consequential system design choices unless explicitly delegated; investigate facts and develop recommendations independently. Neither a clear goal nor user silence delegates unresolved design judgment. A plausible brief is not proof that implementation choices are settled; make the remaining decision boundary clear before delegating.
 
 After authorization for substantial autonomous work, briefly explain what is settled, which implementation decisions you will make, and what would bring the work back to the user. This communicates the boundary; it is not another approval request. Continue within the authority already granted.
 
@@ -54,7 +56,7 @@ Select the runbook for the next action, not every possible later activity. These
 
 | Situation | Reference |
 | --- | --- |
-| Unclear goal, consequential design, or unfamiliar existing system | [Discover and design](references/discover-and-design.md) |
+| Unclear goal, consequential design, brainstorming or pressure-testing an approach; unfamiliar existing system | [Discover and design](references/discover-and-design.md) |
 | Consequential responsibility, interface, ownership or dependency choices; repeated friction challenges the structure | [Architecture design](references/architecture-design.md) |
 | Contributions, shared resources or asynchronous returns need a coherent dependency and integration approach | [Coordinate work](references/coordinate-work.md) |
 | A bounded change, report triage, debugging, delegation, or ordinary repair | [Deliver and repair](references/deliver-and-repair.md) |
@@ -62,11 +64,11 @@ Select the runbook for the next action, not every possible later activity. These
 | Ongoing work needs durable decisions, open questions or next steps; authority changes, context loss, pause or resumption | [Continuity and decisions](references/continuity-and-decisions.md) |
 | Unfamiliar behavior or code/spec disagreement | [Understand existing behavior](references/understand-behavior.md) |
 | Why a design or constraint exists, or whether its original rationale still applies | [Reconstruct design rationale](references/reconstruct-rationale.md) |
-| Create or repair a repeatable verification path; prepare or reconcile evidence that depends on equipment or an operator event | [Establish project verification](references/project-verification.md) |
-| Evidence needed for a regression, behavioral change or an existing fix | [Test adequacy](references/test-adequacy.md) |
+| Create or repair a repeatable verification path, including E2E setup or parallel-test failures; prepare or reconcile equipment/operator evidence | [Establish project verification](references/project-verification.md) |
+| Test-first work (TDD) or evidence needed for a regression, behavioral change or an existing fix | [Test adequacy](references/test-adequacy.md) |
 | Uncertain effects, partial failure, or retries that could duplicate work | [Failure handling](references/failure-handling.md) |
-| Material trust, authorization or sensitive-data boundary | [Security boundaries](references/security-boundaries.md) |
-| A specific technical risk needs deeper checks or a specialist method | [Specialist runbook index](references/specialist-runbooks.md) |
+| Requested security review or material trust, authorization or sensitive-data boundary | [Security boundaries](references/security-boundaries.md) |
+| A matching activity, changed boundary, observed failure or concrete uncertainty needs a specialist method, including cleanup, distribution or guidance repair | [Specialist runbook index](references/specialist-runbooks.md) |
 | Create or update a PRD, guide, architecture explanation or reference | [Produce useful documentation](references/to-documentation.md) |
 | What could a design or change break beyond its immediate scope? | [Assess blast radius](references/blast-radius.md) |
 | Independent alternatives could improve a consequential decision | [Arena](references/arena.md): propose a bounded run and obtain confirmation before launching |

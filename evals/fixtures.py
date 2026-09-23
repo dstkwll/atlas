@@ -347,3 +347,24 @@ Latest suggestion: build a custom runtime/container pipeline and run extensive b
 
 # Frozen synthetic recovery fixtures; the saved report belongs to the good source.
 FIXTURES.update(json.loads(Path(__file__).with_name('ledger_fixtures.json').read_text()))
+
+
+FIXTURES['routing-activity'] = {
+    'catalog.py': """from dataclasses import dataclass
+
+@dataclass
+class Tool:
+    name: str
+    available: bool = True
+
+# Both the UI and the CSV importer construct Tool directly.
+def import_tool(row):
+    return Tool(row['name'], row.get('available', 'yes') == 'yes')
+
+def catalog_rows(tools, history):
+    return [dict(name=t.name, available=t.available,
+                 loans=sum(1 for loan in history if loan['tool'] == t.name))
+            for t in tools]
+""",
+    'README.md': 'Local catalog prototype. No timing captures or representative device are available. There are no third-party dependencies. Product policy for holds has not been decided.\n',
+}
