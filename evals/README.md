@@ -57,6 +57,18 @@ The `discovery-frontier` and `discovery-delegated` cases examine collaborative e
 
 The `design-visible-choices`, `specialist-activity-triggers` and `design-constrained-choice` cases cover spontaneous visible comparison, activity-based specialist selection and a nearby case that needs no alternatives. Grade actual responses, successful source reads and artifacts with the semantic criteria in `review.md`. See [trigger and design observations](../docs/validation/runbook-triggers-and-visible-design.md) for coverage and remaining limitations.
 
+The twenty-one `specialist-*` cases documented in [the specialist rubric](specialist-review.md)
+exercise product critique, real-user research, feedback evidence, sensitive-data and
+identity lifecycles, recovery, charts, localization, command-line use, post-training,
+model-tool authority, unit cost, retrieval candidates and test-result reconciliation.
+Four nearby negative controls and a two-turn activity transition
+check selectivity as well as coverage. They use the existing native runner and file
+scope observations; their semantic rubric stays outside trial projects. The older
+`specialist-activity-triggers` case remains separate and unchanged.
+The final fixed-text endpoint and caller-selected download cases are diagnostics
+added after source review, separately identified in the rubric; they are not held-out
+evidence from the initial nineteen-case selection.
+
 The extended discovery scenarios exercise longer conversations, a fictional provider contract, wrong-problem proposals, paired authority conditions, and planning transitions. `transition-chain` starts a new native thread before its final recovery turn (`fresh_thread_before`, zero-based), reselects the local skill, and retains the generated workspace without copying conversation messages. Metadata records both thread IDs. This is artifact-based recovery in the same project, not a claim that the handoff file alone is sufficient. See the extended rubric in review.md before interpreting results.
 
 See [extended discovery and transition observations](../docs/validation/discovery-transitions.md) for completed scenario coverage, verified planning defects, correction scope and model/host limitations. `transition-plan-replay` is a diagnostic using a fixed generated PRD; it must not be reported as held-out generalization.

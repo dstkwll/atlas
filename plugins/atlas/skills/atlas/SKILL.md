@@ -57,6 +57,9 @@ Select the runbook for the next action, not every possible later activity. These
 | Situation | Reference |
 | --- | --- |
 | Unclear goal, consequential design, brainstorming or pressure-testing an approach; unfamiliar existing system | [Discover and design](references/discover-and-design.md) |
+| New or substantially revised screen, interface critique, confusing or generic product experience | [Product interface review](references/product-design-review.md) |
+| Research with users, feedback synthesis, or a product decision dependent on user evidence | [User research](references/user-research.md) |
+| Create or interpret a chart, dashboard or quantitative graphic | [Quantitative visualization](references/data-visualization.md) |
 | Consequential responsibility, interface, ownership or dependency choices; repeated friction challenges the structure | [Architecture design](references/architecture-design.md) |
 | Contributions, shared resources or asynchronous returns need a coherent dependency and integration approach | [Coordinate work](references/coordinate-work.md) |
 | A bounded change, report triage, debugging, delegation, or ordinary repair | [Deliver and repair](references/deliver-and-repair.md) |
@@ -67,8 +70,8 @@ Select the runbook for the next action, not every possible later activity. These
 | Create or repair a repeatable verification path, including E2E setup or parallel-test failures; prepare or reconcile equipment/operator evidence | [Establish project verification](references/project-verification.md) |
 | Test-first work (TDD) or evidence needed for a regression, behavioral change or an existing fix | [Test adequacy](references/test-adequacy.md) |
 | Uncertain effects, partial failure, or retries that could duplicate work | [Failure handling](references/failure-handling.md) |
-| Requested security review or material trust, authorization or sensitive-data boundary | [Security boundaries](references/security-boundaries.md) |
-| A matching activity, changed boundary, observed failure or concrete uncertainty needs a specialist method, including cleanup, distribution or guidance repair | [Specialist runbook index](references/specialist-runbooks.md) |
+| Security review; changed or uncertain identity, permissions, credentials, personal-data lifecycle or model/tool authority; untrusted input/reachability affecting a security property | [Security boundaries](references/security-boundaries.md) |
+| Persistence/recovery, performance/cost, interaction/localization/CLI, model quality or another matching activity needs a focused method; also cleanup, distribution and guidance repair | [Specialist runbook index](references/specialist-runbooks.md) |
 | Create or update a PRD, guide, architecture explanation or reference | [Produce useful documentation](references/to-documentation.md) |
 | What could a design or change break beyond its immediate scope? | [Assess blast radius](references/blast-radius.md) |
 | Independent alternatives could improve a consequential decision | [Arena](references/arena.md): propose a bounded run and obtain confirmation before launching |

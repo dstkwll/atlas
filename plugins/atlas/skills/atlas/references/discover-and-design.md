@@ -36,6 +36,8 @@ Before declaring a slice ready for implementation, ask whether two reasonable im
 
 Once a direction is selected, make the route into implementation visible: summarize the whole approach, major milestones, consequential unresolved questions and the next useful slice. Explain why remaining uncertainty can wait or which decision needs evidence now. Keep later detail provisional; this is a useful conclusion to discovery, not a requirement to settle the entire design.
 
+When the decision depends on actual users' needs or behavior, or when feedback needs synthesis, read [User research](user-research.md). It distinguishes participant evidence from owner preferences, expert critique and simulated personas. Read [Product interface review](product-design-review.md) when designing or critiquing a screen's hierarchy, workflow fit or clarity; these methods inform the existing design conversation rather than replacing it.
+
 ## Maintain a living brief or specification
 
 For substantial or ambiguous work, default to a concise agent-readable brief before detailed implementation breakdown. Reuse an existing issue or design document when it already serves that purpose. A small clear fix can use its existing request and acceptance example; a bounded discovery probe need not wait for a finished specification. Create or expand a PRD when requested, required by the project, or useful for stakeholder agreement or handoff. Do not wait for the user to name an artifact when durable shared understanding is needed.
@@ -55,6 +57,8 @@ When co-design is requested and a polished view improves participation, generate
 Choose one source of record. When an existing agent-readable brief owns the design, HTML is its regenerable view; record decisions in the brief and refresh the view when needed. A self-contained [HTML PRD](html-document.md) may instead hold both the readable design and embedded recovery context without a Markdown twin. Keep its visible commitments, diagrams and recovery notes coherent. Distinguish alternatives and uncertain behavior from accepted choices. A visual selection or polished mockup alone does not establish acceptance or permission to build.
 
 Keep the decision, relevant context, comparison and smallest useful visual together so the user can judge without hunting across the artifact. Check rendered readability on the intended device or a representative viewport, including a phone when relevant: labels, accepted/proposed status and consequences must remain legible. State what could not be checked; visual polish alone is not evidence of usability.
+
+Use [Quantitative visualization](data-visualization.md) when charts or dashboard encodings carry a quantitative claim; choosing units, aggregation and scales is part of the reasoning, not merely presentation.
 
 Use [Diagram craft](diagram-craft.md) when a substantial diagram needs deliberate layout, source-preserving simplification or an exportable artifact. It is optional; a clear inline explanation or diagram needs no extra artifact.
 

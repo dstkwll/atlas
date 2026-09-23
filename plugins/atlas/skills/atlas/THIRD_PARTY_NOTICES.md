@@ -1,6 +1,6 @@
 # Third-party notices
 
-Portions of the guidance are adapted from [ECC](https://github.com/affaan-m/ECC), [HumanLayer skills](https://github.com/humanlayer/skills), [Matt Pocock's skills](https://github.com/mattpocock/skills) and [Diagram Design](https://github.com/cathrynlavery/diagram-design). Their contributions cover specialist engineering checks, visual explanation, type contracts, instruction maintenance, refactoring, planning deliverables, test-first techniques and diagram craft. All use the following MIT license; these notices accompany plugin and standalone skill distributions. The diagram starter also carries its applicable notice for standalone copying.
+Portions of the guidance are adapted from [ECC](https://github.com/affaan-m/ECC), [HumanLayer skills](https://github.com/humanlayer/skills), [Matt Pocock's skills](https://github.com/mattpocock/skills) and [Diagram Design](https://github.com/cathrynlavery/diagram-design). Their contributions cover specialist engineering checks, visual explanation, type contracts, instruction maintenance, refactoring, planning deliverables, test-first techniques and diagram craft. Selected product-interface, user-research, quantitative-visualization, lifecycle, recovery and specialist diagnostic methods are adapted from [Agency Agents Collection](https://github.com/collectivestruggle/agency-agents-collection/tree/8ef49232e02431f7ca4792b487e5a85a7939ff3a). All use the following MIT license; these notices accompany plugin and standalone skill distributions. The diagram starter also carries its applicable notice for standalone copying.
 
 MIT License
 
@@ -11,6 +11,8 @@ Copyright (c) 2026 HumanLayer
 Copyright (c) 2026 Matt Pocock
 
 Copyright (c) 2025 Cathryn Lavery
+
+Copyright (c) 2025 AgentLand Contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

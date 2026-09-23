@@ -23,7 +23,7 @@ The lead keeps accepted commitments separate from provisional choices. It can re
 
 For substantial design, Atlas investigates the whole problem, surfaces relevant concerns and opportunities, and develops consequential choices with you unless you explicitly delegate them. It maintains a living brief, challenges its emerging approach, records meaningful decisions and develops the next usable slice in detail. It can expand that brief into a PRD or specification and produce an HTML view for co-design when useful. Small clear changes can proceed directly. Atlas does not require a ticket graph, fixed sequence of specialists or review ceremony for every change. It never grants permission to publish, deploy, spend or merge.
 
-The [specialist library](plugins/atlas/skills/atlas/references/specialist-runbooks.md) adds focused methods for technical questions such as failure handling, types, migrations, runtime bugs, accessibility and release preparation. Atlas decides whether to use a runbook itself or delegate a bounded task. No specialist sequence is mandatory.
+The [specialist library](plugins/atlas/skills/atlas/references/specialist-runbooks.md) adds focused methods for technical questions such as failure handling, types, migrations, runtime bugs, accessibility and release preparation. It also offers product-interface critique, user research and quantitative visualization, with conditional lifecycle, recovery and model-training methods. Atlas decides whether to use a runbook itself or delegate a bounded task. No specialist sequence is mandatory.
 
 ## Finish at a useful artifact
 

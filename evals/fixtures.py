@@ -368,3 +368,7 @@ def catalog_rows(tools, history):
 """,
     'README.md': 'Local catalog prototype. No timing captures or representative device are available. There are no third-party dependencies. Product policy for holds has not been decided.\n',
 }
+
+# Specialist scenarios contain only raw project material; the rubric stays outside.
+from specialist_fixtures import FIXTURES as SPECIALIST_FIXTURES
+FIXTURES.update(SPECIALIST_FIXTURES)

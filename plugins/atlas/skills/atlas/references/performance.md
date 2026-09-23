@@ -1,8 +1,10 @@
 # Performance diagnosis
 
-Use for reported slowness, a measured regression, resource growth, a captured profile or a concrete performance budget. Define the user-visible operation, representative workload/environment and metric before optimizing. Reuse available profiling and measurement tools; missing tooling limits evidence rather than requiring a new observability stack.
+Use for reported slowness, a measured regression, resource growth, a captured profile, a concrete performance budget or a cost regression in a software operation. Define the user-visible operation, representative workload/environment and metric before optimizing. Reuse available profiling and measurement tools; missing tooling limits evidence rather than requiring a new observability stack.
 
 Establish a repeatable baseline and separate warm/cold conditions, input size, concurrency and cache state. Look at distributions or repeated samples when variance matters; one lucky run is not a reliable improvement. Use the project's latency, throughput, memory or bundle budget instead of importing universal thresholds.
+
+For cost questions, connect spend to useful completed work and the measurement window. Separate demand, workload mix, retries, failed work and unit-price changes before attributing an increase to inefficient code. Include relevant egress, storage, model/tool calls and shared overhead without double-counting or multiplying spend through an incorrect join. Compare cost per agreed outcome alongside latency and quality; a cheaper failed operation is not an improvement. Estimates and provider billing evidence have different limits. Diagnosis does not authorize purchases, pricing commitments, destructive cleanup or automatic model/service substitution.
 
 Locate the bottleneck before selecting a technique: CPU/algorithmic work, blocking I/O, query count/plan, network waterfalls, rendering, allocation or retained resources. Trace cardinality and dependencies. Parallelize only independent operations within resource limits; batching can change latency, ordering and failure semantics.
 
