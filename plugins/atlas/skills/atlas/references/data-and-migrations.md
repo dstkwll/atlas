@@ -1,6 +1,6 @@
 # Data, concurrency and migrations
 
-Use when changing persistence, queries, schemas, permissions, transactions or rolling deployment behavior. Identify the actual database/version, dataset shape, read/write callers and production change authority. Inspect schema, migrations, queries and existing operational evidence before recommending database-specific syntax.
+Use when changing persistence, queries, schemas, permissions, transactions, rolling deployment behavior, data retention/deletion or backup/restore; also when assessing a recovery claim. Identify the actual database/version, dataset shape, read/write callers and production change authority. Inspect schema, migrations, queries and existing operational evidence before recommending database-specific syntax.
 
 Locate ownership of integrity: uniqueness, foreign keys, nullability, valid state and precision. Application checks may race; database constraints may protect only some write paths. Trace concurrent updates and transaction isolation rather than assuming a read-then-write sequence is atomic. Keep lock ordering consistent and inspect what happens on retry, deadlock, cancellation or uncertain commit.
 
@@ -9,6 +9,10 @@ Plan coexistence of old and new readers/writers during deployment. Check default
 For query performance, use representative cardinality, selectivity and access patterns. Trace N+1 access and unbounded result growth; inspect query plans using approved facilities. An index has write/storage costs and a sequential scan can be appropriate. Do not demand an index on every column, universal key types or one vendor's row-security convention. Query-plan execution tools may actually execute mutations; inspect their effects before running them.
 
 Examine tenant filters, row policies and privileged connections along the actual path. Check pool exhaustion, connection/session cleanup, transaction duration and external calls while locks are held. Batching, pagination and queue locking must preserve ordering, fairness and consistency obligations as well as throughput.
+
+For retention and deletion, map relevant copies and derived records, ownership of fan-out, failure/retry handling and observable completion. A successful primary-row delete may leave exports, indexes or processors unchanged. Examine how restores respect accepted deletion and retention commitments without inventing an automatic purge or making a backup unusable. Apply [Security boundaries](security-boundaries.md) where identity, access or private-data policy matters.
+
+For a backup or recovery claim, establish agreed recovery time and tolerable data loss, the actual backup boundary and prerequisites such as keys, configuration and dependent services. In an authorized disposable target, restore representative data, check consistency and exercise a meaningful application read/write path before claiming usability. Record elapsed recovery and the recovered point rather than equating a successful backup job with a restore. Where cutover or failback matters, identify the authoritative writer and how obsolete writers are fenced. Separate integrity, service usability and recovery-objective evidence; a static plan leaves execution unverified.
 
 Use disposable representative data for migration/recovery and concurrency checks when authorized. Record engine/version, data assumptions, measured lock/query effects, integrity checks and whether rollback or forward recovery was actually exercised. If only static inspection is possible, bound the claim accordingly.
 

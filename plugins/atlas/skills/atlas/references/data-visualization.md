@@ -1,0 +1,17 @@
+# Quantitative visualization
+
+Use when creating or reviewing a chart, dashboard or quantitative graphic whose representation affects interpretation or a decision. Use [Diagram craft](diagram-craft.md) for nonquantitative relationships and layout; a cosmetic change to an accepted chart need not reopen its analysis unless it alters meaning.
+
+Identify the question, audience and comparison the visual must support. Inspect the available data and how it was collected. Establish units, population, denominator, time window, aggregation and missingness before choosing marks or claiming a trend. Distinguish measured values, forecasts and illustrative data. A polished chart cannot repair an unsupported quantity.
+
+Match representation to the comparison: position can support precise comparisons, a time axis can show change, and a distribution can expose variation hidden by an average. A table may be sufficient. Explain consequential alternatives when several representations serve different decisions; do not choose chart type solely from a column's data type or decoration.
+
+Check that aggregation and denominators preserve the claim. Changes in cohort composition, exposure duration or eligible population can move an aggregate without improving individual outcomes. Preserve relevant groups and uncertainty where collapsing them would mislead. Missing observations are not automatically zero, and a count is not a rate without the population at risk. Establish whether totals, percentages and cumulative values mean what their labels imply.
+
+Inspect axis domain, baseline, scale, ordering and area/size encodings. Bars whose lengths encode magnitude generally need a meaningful zero; a restricted line-chart range can be useful if clear and appropriate to the question. Explain log scales, transformed units, dual axes or omitted ranges when they materially affect interpretation. Comparable panels should use comparable scales or make the difference explicit. Decorative size or color must not imply unsupported quantities.
+
+Show source, units, period and uncertainty at the level necessary to interpret the view. Label directly when it reduces lookup, distinguish series without color alone, and provide a meaningful text summary or accessible data equivalent. Interactive filters, hover-only values or motion must not hide essential meaning from keyboard, touch, reduced-motion or static/export use. Use existing approved plotting or interface tools; this method requires no chart package or service.
+
+Verify displayed values against the data and transformations, including a consequential edge case such as an empty group, missing period, outlier or changed filter. Inspect the rendered view at its intended size and requested export; source correctness does not establish legibility, clipping or interaction. If rendering is unavailable, separate data/encoding findings from unverified presentation claims.
+
+Return the visual or review, the decision it supports, significant transformations and limitations, and checks actually performed. Do not infer causation from visual correlation or claim a treatment effect solely from an attractive before/after chart. Use [User research](user-research.md) for product-experiment interpretation when applicable, or [Model and retrieval quality](model-and-retrieval-quality.md) when model evaluation drives the claim.

@@ -8,6 +8,8 @@ Trace secrets, private data and internal dependencies into the release boundary.
 
 Preserve third-party notices and identify unresolved license/ownership choices for the appropriate owner. Do not select a license or assign copyright on the user's behalf. Reconcile prerequisites, configuration and installation instructions with the actual package. Add only the setup artifacts a new consumer needs; no mandatory setup script, agent instruction file or issue-template suite.
 
+When readiness depends on recovering persistent state or removing access, consult [Data and migrations](data-and-migrations.md) or [Security boundaries](security-boundaries.md) for the relevant restore/revocation evidence. A packaged recovery script or updated credential alone does not demonstrate the operational outcome.
+
 Where independent review is required, give the reviewer the exact staged candidate and distribution boundary, not just the preparer's cleanup report. An authorized fresh-consumer install can verify discoverability, required files and representative usage. Installation success does not prove behavior or authorize release. Use [documentation](documentation-and-references.md) and [security](security-boundaries.md) for focused questions.
 
 Return candidate identity, contents inspected, changes, consumer checks, unresolved exposures and actual review limits. After repairs, refresh evidence for changed artifacts before relying on the old review. Publication, visibility changes and history replacement remain distinct actions requiring applicable authority.

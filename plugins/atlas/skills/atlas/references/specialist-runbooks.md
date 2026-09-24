@@ -10,7 +10,7 @@ Carry the [entrypoint's runbook notice rule](../SKILL.md) into the brief, includ
 
 Use existing approved project/host tools. Runbooks prescribe no additional tools, models or integrations. If a capability is absent, use a valid available method and state what it proves; do not silently substitute static inspection for execution or install tooling merely because a reference mentions it. A runbook grants no additional permissions. Keep work records in the project’s [approved artifact location](artifact-location.md), which may be a configured vault, outside this reusable library.
 
-| Technical question or trigger | Reference |
+| Activity, question or trigger | Reference |
 | --- | --- |
 | Consequential structure or interface choices within accepted behavior | [Architecture design](architecture-design.md) |
 | Interdependent contributions, shared resources or integration uncertainty | [Coordinate work](coordinate-work.md) |
@@ -21,18 +21,22 @@ Use existing approved project/host tools. Runbooks prescribe no additional tools
 | Could errors become success, retries duplicate effects or work be lost? | [Failure handling](failure-handling.md) |
 | Choose regression evidence, test-first work (TDD), or checks for a change | [Test adequacy](test-adequacy.md) |
 | Changed data models, states, units, APIs or mutation ownership; invalid states or mutation escape paths | [Types and invariants](types-and-invariants.md) |
-| Requested security review or material trust, authorization or sensitive-data boundary | [Security boundaries](security-boundaries.md) |
-| Persistence correctness, query behavior or deployment migration | [Data and migrations](data-and-migrations.md) |
-| Reported slowness, measured regression, resource growth, captured profile or performance budget | [Performance](performance.md) |
+| Security review; changed or uncertain identity, permissions, credentials, personal-data lifecycle or model/tool authority; untrusted input/reachability affecting a security property | [Security boundaries](security-boundaries.md) |
+| Persistence, query or migration correctness; backup/restore, deletion/retention or recovery claims | [Data and migrations](data-and-migrations.md) |
+| Slowness, measured regression, resource growth, profile, performance budget or cost per useful operation | [Performance](performance.md) |
 | Compiler, dependency, startup or runtime failure | [Build/runtime diagnosis](build-and-runtime-diagnosis.md) |
 | Authorized cleanup/refactor or local complexity obstructing the change; behavior-preserving simplification | [Simplify and clean](simplify-and-clean.md) |
 | Versioned API uncertainty, technical choices needing external evidence, stale guidance or misleading comments, or changes affecting what users and maintainers need to know | [Documentation and references](documentation-and-references.md) |
 | Lifetime, cancellation, concurrency or language semantics | [Language/runtime checks](language-runtime-checks.md) |
 | Request/ORM/dependency lifecycle depends on framework semantics | [Service/framework checks](service-framework-checks.md) |
 | Reactive state, stale responses, rendering or mobile lifecycle | [Client state checks](client-state-checks.md) |
-| Interactive outcome, accessibility or public-page discoverability | [User journeys](user-journeys.md) |
+| Interactive outcome, accessibility, localization, CLI/script behavior or public-page discoverability | [User journeys](user-journeys.md) |
+| New/revised screen, interface critique or confusing/generic product experience | [Product interface review](product-design-review.md) |
+| User study, feedback synthesis or a decision dependent on actual user evidence | [User research](user-research.md) |
+| Chart, dashboard or quantitative graphic whose encoding affects interpretation | [Quantitative visualization](data-visualization.md) |
 | Substantial explanatory diagram, layout or faithful redraw | [Diagram craft](diagram-craft.md) |
 | Training, inference, retrieval or grounded-answer quality | [Model and retrieval quality](model-and-retrieval-quality.md) |
+| Fine-tuning, preference/reward learning, training-signal diagnosis or checkpoint integrity | [Model post-training](model-post-training.md) |
 | Package distribution or a change in information exposure | [Release preparation](release-preparation.md) |
 | Evaluate agent instructions/tools/coordination, or diagnose recurring guidance failures | [Guidance improvement](guidance-improvement.md) |
 

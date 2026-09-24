@@ -2,6 +2,8 @@
 
 Use when creating or revising a substantial explanatory diagram where layout or simplification can change the reader's understanding. A short explanation, table or inline diagram may already suffice. Use approved existing tools and project styles; no renderer, brand interview or diagram service is required.
 
+When the artifact's quantitative encoding or aggregation can change a conclusion, read [Quantitative visualization](data-visualization.md). This method still applies to layout where needed; a relationship diagram with no quantitative claim does not need a chart audit.
+
 ## Establish meaning
 
 Identify the question, audience and destination from the request and available context. A phone, document and projected slide may need different layouts and detail. Resolve only missing choices that materially affect the result. Reuse the project's language and visual conventions, with restrained defaults when none exist.
