@@ -372,3 +372,6 @@ def catalog_rows(tools, history):
 # Specialist scenarios contain only raw project material; the rubric stays outside.
 from specialist_fixtures import FIXTURES as SPECIALIST_FIXTURES
 FIXTURES.update(SPECIALIST_FIXTURES)
+
+from composition_fixtures import FIXTURES as COMPOSITION_FIXTURES
+FIXTURES.update(COMPOSITION_FIXTURES)

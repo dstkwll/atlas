@@ -704,5 +704,22 @@
       "Orders of exactly 50 are being charged shipping. Please fix that and check the cases around it. We also need to support waiving the fee, but I am unsure whether all support staff or only managers should be allowed to do that."
     ],
     "check": "repair"
+  },
+  {
+    "id": "composition-onboarding",
+    "fixture": "composition-onboarding",
+    "turns": [
+      "I want onboarding a seasonal team to involve much less copying and chasing. Look at this import proposal and the local examples. Recommend a first version that a coordinator and manager could actually use, explain the consequential tradeoffs, and tell me what we should check before committing. Design only: you may keep useful notes under planning/onboarding/, but do not implement or operate accounts."
+    ],
+    "check": "no_implementation"
+  },
+  {
+    "id": "composition-reveal",
+    "fixture": "composition-reveal",
+    "turns": [
+      "Our dispatchers keep waiting when they repeat a job search. Inspect the current path and the team's caching suggestion. Recommend the smallest practical improvement and the evidence we should gather before implementing it. Design only; notes under planning/search/ are fine, but do not change application files or call a service.",
+      "I checked how the wider rollout will work. A dispatcher can switch workshops without signing out, and managers can remove someone's workshop assignment during a shift. Job rows contain customer addresses and instructions for entering homes. After switching workshops, previous-workshop details must disappear and must not return from a late response or saved results. If an assignment was removed, the next search must check current permission before showing those details. Revise the recommendation with that information while still helping dispatchers avoid needless waiting. This remains design only; do not implement or change permissions."
+    ],
+    "check": "no_implementation"
   }
 ]
