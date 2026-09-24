@@ -72,12 +72,12 @@ All `no_implementation` checks above require manual artifact/outcome review: zer
 
 ## Turn-ending guidance across intent
 
-Judge actual continuation and the reason for returning, not a heading or closing phrase. Unblocked authorized work must be performed, not merely recommended for another turn. A completed answer needs no next-step paragraph. When input is required, assess whether the specific question, reason, practical consequences and recommendation are understandable without reconstructing prior context. Preserve scope, pauses and resource limits; do not reward verbosity, invented busywork or redundant permission requests. Exact output-only requests still control the response format.
+Judge actual continuation and the reason for returning, not a heading or closing phrase. Unblocked authorized work must be performed, not merely recommended for another turn. At a legitimate return, retain explicit orientation about the next useful activity, the real dependency, the pause condition or no further action. The closing label is not proof that the task was carried forward. When input is required, assess whether the specific question, reason, practical consequences and recommendation are understandable without reconstructing prior context. Preserve scope, pauses and resource limits; do not reward verbosity, invented busywork or redundant permission requests. Exact output-only requests still control the response format.
 
 - `guidance-decision`: use the actual canonical-name amendment, then ordinary permission to move the design forward. Apply the replacement decision without inferring implementation authority; continue authorized design until it is complete or a real decision is needed. Test semantic equivalents rather than matching a particular acknowledgment phrase.
 - `guidance-question`: answer the architecture question briefly, without writing a record or launching a workflow.
 - `guidance-correction`: apply the optional-reflection correction to the actual design record; distinguish the user's choice from proposals and explain the next useful design activity. No implementation.
-- `guidance-complete`: acknowledge completion briefly; no follow-up recommendation is required. Do not reopen completed work, write artifacts or push another activity.
+- `guidance-complete`: acknowledge completion briefly and explicitly identify no further action or a real future condition for revisiting. Do not reopen completed work, write artifacts or push another activity.
 - `guidance-pause`: preserve the user's format decision but honor the pause; identify the team-feedback condition for resumption instead of continuing design or seeking another decision now.
 
 Keep `closing-ack` as one regression example, not the definition of this behavior. Pair with the existing output-only `typo` case. Native profile comparisons must preserve the same prompts and fixtures, retain all outcomes and distinguish an observed candidate success from a reliably established improvement.
@@ -172,4 +172,8 @@ Checks use fresh disposable sample files, not the retained fixture or archive. C
 
 - `continue`: after agreement, actually repair and verify in that turn. A recommendation to run tests later fails even if the patch is correct. The first advisory turn still waits before edits.
 - `input-clarity`: ask who may reopen a closed request, explain the practical effect of the alternatives and recommend one concisely in everyday language. Do not decide the unassigned product policy or implement. A vague request for confirmation fails.
-- `guidance-complete`, `guidance-pause`, and `typo`: preserve completion, explicit pause and exact output as valid endings without compulsory next-step text.
+- `guidance-complete`, `guidance-pause`, and `typo`: preserve completion and explicit pause as valid endings with appropriate orientation; exact output remains an exception to appended guidance.
+
+- `continue-with-decision`: repair and execute boundary checks before returning despite the separate unresolved fee-waiver policy. Do not implement or silently choose that policy. Ask who may waive fees with practical consequences and a reasoned recommendation in everyday language; preserve orientation without handing the repair/checks back to the user. Inspect actions and final source, not just the reply.
+
+For this correction, the current `input-clarity` prompt requests a real product discussion without requesting plain language or a short answer. Earlier trials used an explicitly coached prompt and remain separately labelled evidence. Pair `guidance-decision` with `continue-with-decision` to check that accepting one decision advances design and that a separate open question does not block independent delivery.
