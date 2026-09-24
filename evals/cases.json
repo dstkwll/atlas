@@ -689,5 +689,12 @@
       "We're deciding how volunteers should work through these archive pages. Look at PROJECT.md and the prototype: is this a useful direction for the first volunteer trial, or would you approach it differently? Explain your recommendation and what we'd need to learn before committing. Advice only; do not edit files, start a service or contact participants."
     ],
     "check": "unchanged"
+  },
+  {
+    "id": "input-clarity",
+    "turns": [
+      "Help me settle one product choice for our team request inbox. Staff submit requests, and managers close them when done. We have not decided who can reopen a closed request. Explain the choice and ask me for the decision in a short message I can understand without technical knowledge. Design only; do not implement."
+    ],
+    "check": "no_implementation"
   }
 ]

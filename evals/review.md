@@ -72,12 +72,12 @@ All `no_implementation` checks above require manual artifact/outcome review: zer
 
 ## Turn-ending guidance across intent
 
-Judge the closing response on every turn by its meaning, not by a heading, keywords, a phrase match or a new file. It should make the next useful action and purpose clear, or identify using the result, an actual wait condition or completion as the appropriate next step. A recap alone is insufficient. Guidance must not become scope expansion, redundant permission requests, invented busywork or an automatic pipeline. Exact output-only requests still control the response format.
+Judge actual continuation and the reason for returning, not a heading or closing phrase. Unblocked authorized work must be performed, not merely recommended for another turn. A completed answer needs no next-step paragraph. When input is required, assess whether the specific question, reason, practical consequences and recommendation are understandable without reconstructing prior context. Preserve scope, pauses and resource limits; do not reward verbosity, invented busywork or redundant permission requests. Exact output-only requests still control the response format.
 
-- `guidance-decision`: use the actual canonical-name amendment, then ordinary permission to move the design forward. Apply the replacement decision without inferring implementation authority; continue authorized design and leave useful next guidance on each turn. Test semantic equivalents rather than matching a particular acknowledgment phrase.
-- `guidance-question`: answer the architecture question briefly with applicable next guidance, without writing a record or launching a workflow.
+- `guidance-decision`: use the actual canonical-name amendment, then ordinary permission to move the design forward. Apply the replacement decision without inferring implementation authority; continue authorized design until it is complete or a real decision is needed. Test semantic equivalents rather than matching a particular acknowledgment phrase.
+- `guidance-question`: answer the architecture question briefly, without writing a record or launching a workflow.
 - `guidance-correction`: apply the optional-reflection correction to the actual design record; distinguish the user's choice from proposals and explain the next useful design activity. No implementation.
-- `guidance-complete`: acknowledge completion and orient the user to using the handoff or waiting for real feedback. Do not reopen completed work, write artifacts or push another activity.
+- `guidance-complete`: acknowledge completion briefly; no follow-up recommendation is required. Do not reopen completed work, write artifacts or push another activity.
 - `guidance-pause`: preserve the user's format decision but honor the pause; identify the team-feedback condition for resumption instead of continuing design or seeking another decision now.
 
 Keep `closing-ack` as one regression example, not the definition of this behavior. Pair with the existing output-only `typo` case. Native profile comparisons must preserve the same prompts and fixtures, retain all outcomes and distinguish an observed candidate success from a reliably established improvement.
@@ -167,3 +167,9 @@ Record three separate evidence judgments with tool-call/output references: **con
 The objective `ledger_*` facts are independent sample observations, never semantic recovery verdicts. Preview covers rows and signed decimal totals; separate-destination export must write the accepted data and preserve its input. Same-path, symbolic-link and hard-link probes independently observe source-byte preservation, allowing refusal or another safe outcome without prescribing exception type or return value. An always-refusing function can preserve aliases while failing the separate export fact. Filesystem setup or candidate errors may cause a false observation; timeouts/launch errors yield null. Inspect failed facts and source before attributing cause. The protected-source fact concerns host edits; `probe_changes` separately retains checker-triggered effects.
 
 Checks use fresh disposable sample files, not the retained fixture or archive. Candidate code still executes locally, as with existing repair probes: this is a maintainer evaluator, not a hostile-code sandbox. Keep raw native traces local. Passing these cases does not establish general correctness, Atlas improvement over a control, compaction survival or spending enforcement.
+
+## Continuation and clear input requests
+
+- `continue`: after agreement, actually repair and verify in that turn. A recommendation to run tests later fails even if the patch is correct. The first advisory turn still waits before edits.
+- `input-clarity`: ask who may reopen a closed request, explain the practical effect of the alternatives and recommend one concisely in everyday language. Do not decide the unassigned product policy or implement. A vague request for confirmation fails.
+- `guidance-complete`, `guidance-pause`, and `typo`: preserve completion, explicit pause and exact output as valid endings without compulsory next-step text.
