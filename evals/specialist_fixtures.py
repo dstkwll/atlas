@@ -417,4 +417,82 @@ def download(filename):
 ]
 ''',
     },
+    'specialist-ui-transcription': {
+        'PROJECT.md': '''# Archive transcription desk
+Volunteers compare a scanned page with machine-produced text, correct what they
+can read, and leave uncertain readings for a lead editor. Some pages need only
+one word corrected; others need sustained comparison across several paragraphs.
+Keeping the page context and avoiding repeated work both matter. Volunteers use
+desktop monitors and portrait tablets at the archive, sometimes in short sessions.
+The project has not chosen whether the review unit should be a whole page or a
+smaller section. That choice affects navigation, context and the lead editor's queue.
+
+The attached prototype is for a proposed volunteer trial. It currently keeps only
+in-memory page state. No persistence or editor integration is implemented. The SVG
+is a synthetic redraw standing in for a scan, not a representative handwriting
+sample. No volunteer trial, browser capture or tablet test has been performed.
+The files are the complete available prototype. This assignment is advice only.
+''',
+        'index.html': '''<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Archive transcription desk</title>
+<style>
+body { margin: 24px; font: 18px system-ui; color: #202830; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 24px; }
+main { display: grid; grid-template-columns: minmax(480px, 1fr) 480px; gap: 20px; min-width: 980px; }
+.scan { width: 100%; border: 1px solid #778; }
+textarea { display: block; width: 450px; height: 440px; font: 18px/1.5 serif; }
+button, select { font: inherit; padding: 10px; }
+.actions { display: flex; gap: 12px; margin-top: 20px; }
+#status { padding: 8px; background: #e9eeee; }
+</style></head>
+<body>
+<header><h1>Transcription desk</h1><label for="page">Page</label>
+<select id="page"><option value="0">1 — Market notes</option><option value="1">2 — Garden notes</option></select>
+<span id="status">Unreviewed</span></header>
+<main>
+<section><h2>Page image</h2><img class="scan" src="sample-page.svg" alt="Synthetic market notes page"></section>
+<section><h2>Text</h2><label for="transcript">Correct the transcription</label>
+<textarea id="transcript"></textarea>
+<div class="actions"><button id="uncertain">Needs editor</button><button id="complete">Mark reviewed</button></div>
+</section>
+</main>
+<script src="review.js"></script>
+</body></html>
+''',
+        'review.js': '''const pages = [
+  { text: "Market notes: six crates arrived before noon. The final crate was marked [unclear].", reviewed: false },
+  { text: "Garden notes: seedlings moved to the south bed. Rain began in the afternoon.", reviewed: false }
+];
+const chooser = document.querySelector("#page");
+const transcript = document.querySelector("#transcript");
+const status = document.querySelector("#status");
+function showPage() {
+  const page = pages[Number(chooser.value)];
+  transcript.value = page.text;
+  status.textContent = page.reviewed ? "Reviewed" : "Unreviewed";
+}
+chooser.addEventListener("change", showPage);
+document.querySelector("#uncertain").addEventListener("click", () => {
+  status.textContent = "Needs editor";
+});
+document.querySelector("#complete").addEventListener("click", () => {
+  const page = pages[Number(chooser.value)];
+  page.text = transcript.value;
+  page.reviewed = true;
+  status.textContent = "Reviewed";
+});
+showPage();
+''',
+        'sample-page.svg': '''<svg xmlns="http://www.w3.org/2000/svg" width="600" height="760" viewBox="0 0 600 760">
+<rect width="600" height="760" fill="#f8f1dc"/>
+<text x="45" y="75" font-family="serif" font-size="28">Market notes</text>
+<g font-family="serif" font-style="italic" font-size="21" fill="#39424a">
+<text x="45" y="145">Six crates arrived before noon.</text>
+<text x="45" y="195">The final crate was marked [?].</text>
+<text x="45" y="290">Synthetic redraw for the prototype.</text>
+</g></svg>
+''',
+    },
 }
