@@ -119,3 +119,13 @@ The later `wayfinding-seed-catalog` scenario compares the same explicit entry
 before and after a prose revision, using a new four-turn catalog conversation.
 Its [rubric](wayfinding-review.md#seed-catalog-revision-scenario) covers a changed
 premise, partial acceptance, a short checkpoint and continued discovery.
+
+
+The `arena-core-calendar` and `arena-core-recovery` cases check connected lead,
+discovery, Wayfinding and continuity behavior during a writing revision. They use
+an existing HTML planning home, changed premises, partial acceptance, a suspended
+authorized correction and fresh-thread recovery followed by narrow delivery. The
+[semantic rubric](core-authoring-review.md) separates preservation and practical
+usefulness from consultation, saved-file presence and host completion. Raw fixture
+material stays separate from reviewer expectations. Reuse of an established
+regression boundary limits claims that these are wholly independent benchmarks.
