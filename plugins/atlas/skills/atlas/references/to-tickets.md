@@ -49,9 +49,11 @@ Avoid dumping the conversation or an entire source tree. Explain why each linked
 
 Use [Test adequacy](test-adequacy.md#test-first-work-when-it-helps) for behavior changes or bug fixes where test-first work gives useful feedback, and whenever the assignment or project requires TDD. Identify the test boundary, accepted expected outcome, fixtures/dependencies and a runner that reaches a relevant assertion. A missing dependency or startup failure is not the red phase.
 
-During planning, specify the intended failing behavior and verification approach; do not claim tests ran or modify implementation merely to call a ticket ready. Check existing test viability when safe and authorized. If setup is needed, make it an explicit prerequisite or an initial bounded step with a stop condition. Distinguish ready now, ready after named prerequisites, and blocked by unresolved judgment or unavailable proof. No blockers in the ticket graph is insufficient evidence of readiness.
+During planning, specify the intended failing behavior and verification approach; do not claim tests ran or modify implementation merely to call a ticket ready. Check existing test viability when safe and authorized. If setup is needed, make it an explicit prerequisite or an initial bounded step with a stop condition.
 
 ## Check the plan as a whole
+
+Distinguish ready now, ready after named prerequisites, and blocked by unresolved judgment or unavailable proof. No blockers in the ticket graph is insufficient evidence of readiness.
 
 Trace every accepted outcome to a slice and credible acceptance evidence. Check missing integration, duplicate work, circular or unnecessary dependencies, unreachable test prerequisites and contradictory commitments. Read a representative ticket as a fresh recipient: can it be acted on without inventing product or architecture decisions? Use independent review when scope, ambiguity or worker handoff makes it valuable. Missing independent review stays an evidence limit, not an invented pass.
 
