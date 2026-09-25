@@ -28,6 +28,12 @@ Wayfinding suspends delivery while that discovery assignment is active, includin
 - One existing approved brief or record owns the map and recovery context. No ticket per question, universal tracker, automatic publication or duplicate ledger is required.
 - The new sibling skill depends on the shared Atlas folder. Package metadata advances from 0.9.2 to 0.10.0 for the added entry and mode; current entry points remain compatible.
 
+## Authoring follow-up
+
+The owner subsequently authorized making the transferable writing guidance available to the installed Atlas lead, as well as refining Wayfinding's conversational loop and adding a worked example. One portable writing runbook owns the craft; the maintainer document points to it, and the existing guidance-improvement reference retains diagnosis and evaluation. Relevant authoring requests reach it through the lead and specialist index without another public skill. Donor research is supporting evidence, not accepted policy or a runtime dependency.
+
+The Wayfinding revision makes answer interpretation, dependency updates and next-question selection explicit. Adaptive pacing, partial acceptance, uncertainty, existing records and deliberate transitions remain in force. This scope does not include auditing or rewriting the rest of the library. The combined draft remains a compatible 0.10.0 addition over main 0.9.2.
+
 ## Evidence boundary
 
 The [validation record](../validation/atlas-wayfinding.md) separates source review, native activation, useful multi-turn behavior and recovery. A named entry removes the user's need to depend on inferred routing for that invocation; it does not guarantee retention or judgment. Prior discovery misses remain relevant. Small synthetic trials and model reviews cannot establish parity with a person's preferred conversational experience or identical behavior in another host.

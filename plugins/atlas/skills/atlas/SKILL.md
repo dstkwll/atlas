@@ -53,6 +53,7 @@ Reconsider selection before the next dependent action when a new concern appears
 | Uncertain effects, partial failure, or retries that could duplicate work | [Failure handling](references/failure-handling.md) |
 | Security review; changed or uncertain identity, permissions, credentials, personal-data lifecycle or model/tool authority; untrusted input/reachability affecting a security property | [Security boundaries](references/security-boundaries.md) |
 | Persistence/recovery, performance/cost, interaction/localization/CLI, model quality or another matching activity needs a focused method; also cleanup, distribution and guidance repair | [Specialist runbook index](references/specialist-runbooks.md) |
+| Create or revise agent-facing instructions, skills or agent runbooks | [Writing agent guidance](references/writing-agent-guidance.md) |
 | Create or update a PRD, guide, architecture explanation or reference | [Produce useful documentation](references/to-documentation.md) |
 | What could a design or change break beyond its immediate scope? | [Assess blast radius](references/blast-radius.md) |
 | Independent alternatives could improve a consequential decision | [Arena](references/arena.md): propose a bounded run and obtain confirmation before launching |

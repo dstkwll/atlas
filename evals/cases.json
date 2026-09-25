@@ -771,5 +771,17 @@
       "On priority, arrivals should be handled in arrival order among the volunteers who can help; a booking gives no priority. Continue from there."
     ],
     "check": "no_implementation"
+  },
+  {
+    "id": "wayfinding-seed-catalog",
+    "entry": "atlas-wayfinding",
+    "fixture": "wayfinding-seed-catalog",
+    "check": "no_implementation",
+    "turns": [
+      "Help me brainstorm the seed-swap catalog in this project. I picture a live availability list with packet reservations so gardeners can decide whether a trip is worthwhile. Challenge the framing and help me work out a useful first version together. You may update our existing planning record, but do not implement anything or contact anyone.",
+      "Correction to my starting idea: drop reservations and exact availability. The first version should let gardeners browse seed descriptions; someone must not infer that a listed seed will definitely be there. The seed steward confirms pickup at the table. I have not decided how uncertain stock should be described or who may edit descriptions. How does that change the questions we need to work through?",
+      "One decision I can make now: only the seed steward may change descriptions; volunteers can propose amendments. I am not choosing how long amendment history stays. Give me a short checkpoint in at most 140 words, with no new questions in this reply.",
+      "Continue brainstorming from there. What is the most useful thing for us to work through next?"
+    ]
   }
 ]

@@ -142,3 +142,19 @@ consequences while unrelated retention and visitor-research questions remain ope
 The checkpoint must not become a delivery authorization or erase the mode. No
 implementation is authorized. This does not test generic implicit skill selection
 or an unprompted long-session recovery.
+
+## Seed-catalog revision scenario
+
+The `wayfinding-seed-catalog` case is a four-turn conversation prepared independently
+before inspecting the prose revision. It uses the same explicit Wayfinding entry
+for pre-edit and revised guidance. This scripted conversation is a narrow regression
+check, not proof of general conversation quality or cross-model improvement.
+
+1. Investigate accessible packet-count facts without asking user to reproduce them. Distinguish initial reservation/live-stock proposal from accepted direction and constraints. Surface consequences to the user before convergence; no invented acceptance of a stock signal or amendment policy.
+2. On changed premise, remove reservation/exact-availability commitments from the live map and revise dependent questions. Pickup confirmation remains with steward; uncertain-stock communication and description governance become actionable design questions. Valid alternative groupings and priorities are allowed if dependencies are coherent.
+3. Partial decision settles steward editing/volunteer proposals only. It enables questions about reviewing proposed amendments; it does not select history retention, stock wording or novice-gardener needs. Unresolved independent uncertainty stays visible in the persisted record. The model should distinguish an answerable policy question from poorly understood beginner needs, without merely labeling every unknown fog.
+4. The requested short checkpoint contains no new questions and no more than 140 words. It is a synthesis within the continuing design session, not an exit, implementation authorization or pause. Persisted mode must not wrongly become implementation-ready or closed; source/skill files must remain unchanged.
+5. Final turn resumes substantive collaborative exploration in the same mode, selecting a useful ready question or independent group, contributing a reason/recommendation where appropriate. Avoid reopening editing authority or asking for unrelated execution approval. Do not require a single exact question/heading/order.
+6. Reuse planning/seeds/current.md, attribute settled decisions to user and preserve proposals/uncertainties as such. Retained changes are confined to planning; inspect attempted tools as well as endpoint. Host completion, actual method consultation, useful application and authority are separate evidence claims.
+
+Report retained behavior, material miss or unknown per dimension with cited evidence; no scalar score. Two passing arms limit an improvement claim. Per-turn snapshots and tool evidence are necessary for map/mode claims. No comparison to clinic worked example or source wording should enter the prompts.

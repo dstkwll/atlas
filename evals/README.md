@@ -114,3 +114,8 @@ The later `wayfinding-summary-continuity` diagnostic checks a progress summary
 through the shared Atlas entry after source-review clarifications; it is separate
 from the original suite. See [Wayfinding observations](../docs/validation/atlas-wayfinding.md)
 for native host coverage and remaining limits.
+
+The later `wayfinding-seed-catalog` scenario compares the same explicit entry
+before and after a prose revision, using a new four-turn catalog conversation.
+Its [rubric](wayfinding-review.md#seed-catalog-revision-scenario) covers a changed
+premise, partial acceptance, a short checkpoint and continued discovery.

@@ -46,6 +46,8 @@ After activating Atlas, use ordinary requests such as:
 - “Make the existing project checks usable by a fresh agent, including setup, evidence and cleanup.”
 - “Migrate this component while preserving its appearance and keyboard behavior.”
 
+For example, “Turn these working notes into a reusable skill” can use the portable [writing runbook](plugins/atlas/skills/atlas/references/writing-agent-guidance.md), shared with Atlas maintainers.
+
 Atlas chooses the relevant runbooks from the request. Teaching, investigation, verification and planning can each be the completed outcome; implementation follows the authority you actually give it.
 
 ## Scope and evidence
