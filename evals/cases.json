@@ -783,5 +783,28 @@
       "One decision I can make now: only the seed steward may change descriptions; volunteers can propose amendments. I am not choosing how long amendment history stays. Give me a short checkpoint in at most 140 words, with no new questions in this reply.",
       "Continue brainstorming from there. What is the most useful thing for us to work through next?"
     ]
+  },
+  {
+    "id": "arena-core-calendar",
+    "entry": "atlas",
+    "fixture": "arena-core-calendar",
+    "check": "no_implementation",
+    "turns": [
+      "Let's use Atlas Wayfinding to work through the neighborhood hall's room-calendar idea. I'd like residents to see when a room is free, so perhaps we show a calendar with a Request this slot button. Help me work out a useful first version. The existing planning document is ours to update; this is design only, not implementation or publication.",
+      "The availability guarantee is not actually the goal. Residents should understand possible options before phoning the caretaker; choosing a slot must not imply a reservation. Volunteers can suggest corrections, and the caretaker makes schedule changes. That's settled, but I haven't decided whether residents should see unconfirmed entries. How does that change where we go next?",
+      "One further decision: yes to showing the last-updated time with a clear note that this is planning information. I haven't settled the unconfirmed-entry question. Keep working through the design with me."
+    ]
+  },
+  {
+    "id": "arena-core-recovery",
+    "entry": "atlas",
+    "fixture": "arena-core-recovery",
+    "check": "records-repair",
+    "fresh_thread_before": 2,
+    "turns": [
+      "Before we carry on with the already accepted label correction, let's use Atlas Wayfinding to explore how naming should work. I worry that tidying labels might break the archive's connection to the original paper sheets. Work through that with me before we return to implementation.",
+      "Let's keep imported labels exactly as they came in, including whitespace. A friendlier new-entry form can be considered later; I am not choosing its behavior today or deciding retention. Give me a checkpoint in at most 120 words, with no new questions.",
+      "Continue from planning/archive/current.md; the earlier conversation is unavailable. Resume the narrow accepted correction, finish it and check it. You may edit the local source and tests, run the regression check and update that existing planning record. The wider naming and retention design is still open."
+    ]
   }
 ]

@@ -4,11 +4,21 @@ Use when ongoing work requires decisions, unresolved questions or next steps to 
 
 ## Keep one useful front door
 
-Prefer the target project's existing work-state convention and reuse an adequate task record. Otherwise use [Artifact location](artifact-location.md) to resolve the topic's approved home and start a compact `current.md` there. A configured planning root applies to this record too; do not create a competing `project-memory/` home merely because no PRD exists. Resolve the home once. Before the first durable write for a task, briefly explain that Atlas saves working notes for recovery, give the actual file path or a usable link (not just “session notes”), and mention that the user can choose another approved folder or vault. Use an established or safe fallback location without adding an approval gate; do not repeat the introduction on ordinary updates. If the location changes, identify the new path. A task-specific destination does not become a persistent preference unless the user requests that scope; offer to save an expressed ongoing preference through the existing project convention or optional configuration. Clarify whether an ambiguous persistent preference applies to this project or across projects before changing settings. Do not overwrite another task's note or store state in the reusable skill. Keep protected state within its approved environment; a public source repository is not automatically an approved location for work evidence.
+Prefer the target project's existing work-state convention and reuse an adequate task record.
 
 An existing topic PRD can own planning continuity, including a self-contained HTML document with embedded recovery context. Use [Artifact location](artifact-location.md) to honor the configured planning root or approved vault. Do not require a separate Markdown state record when the existing artifact already supplies what recovery needs. Keep that PRD current at material decisions and handoffs; do not create one for every small task.
 
-The record should let a fresh lead recover the canonical Atlas skill's installed or source location, the active task and bounded scope, the goal/done claim, accepted versus provisional choices, current authority, relevant repository/worktree identity, meaningful evidence or blocker, and next safe action. Link to the decisions and evidence needed at the resume point instead of duplicating them. These locations and pointers make recovery possible; they are not new permission and do not prove that a host will restore guidance automatically. Use ordinary prose, links and headings; exact grammar is not correctness. Commit a state file only when project policy permits its content and location.
+Only when no existing convention or artifact serves the task, use [Artifact location](artifact-location.md) to resolve the topic's approved home and start a compact `current.md` there. A configured planning root applies to this record too; do not create a competing `project-memory/` home merely because no PRD exists. Resolve the home once. An unavailable configured or established location is a gap to report, not a reason to silently switch destinations.
+
+Before the first durable write for a task, briefly explain that Atlas saves working notes for recovery, give the actual file path or a usable link (not just “session notes”), and mention that the user can choose another approved folder or vault. Use an established or safe fallback location without adding an approval gate; do not repeat the introduction on ordinary updates. If the location changes, identify the new path.
+
+A task-specific destination does not become a persistent preference unless the user requests that scope; offer to save an expressed ongoing preference through the existing project convention or optional configuration. Clarify whether an ambiguous persistent preference applies to this project or across projects before changing settings.
+
+Do not overwrite another task's note or store state in the reusable skill. Keep protected state within its approved environment; a public source repository is not automatically an approved location for work evidence. Commit a state file only when project policy permits its content and location.
+
+### Preserve the task and its parent mission
+
+The record should let a fresh lead recover the canonical Atlas skill's installed or source location, the active task and bounded scope, the goal/done claim, accepted versus provisional choices, current authority, relevant repository/worktree identity, meaningful evidence or blocker, and next safe action. Link to the decisions and evidence needed at the resume point instead of duplicating them. These locations and pointers make recovery possible; they are not new permission and do not prove that a host will restore guidance automatically. Use ordinary prose, links and headings; exact grammar is not correctness.
 
 For substantial projects, keep the parent mission recoverable alongside the active task: the full outcome and completion criteria, major milestones (later detail may be provisional), current position, consequential unexplored territory and when it matters. Link an investigation to the decision it serves, its stopping condition and the implementation step that follows. Preserve cumulative effort and remaining agreed bounds when they affect continuation; use observed work or time rather than inventing unavailable token or dollar totals. Reuse the existing brief, roadmap or authorized issue hierarchy; no additional ledger, required field schema or tracker publication is implied.
 
@@ -20,11 +30,15 @@ Persist authority changes before any downstream action relies on them, including
 
 After a successful material update to a task record, brief, PRD, tickets or handoff, briefly tell the user what changed and link to the actual file (or give a usable path when links are unavailable). Tie the notice to the existing progress or final response, group related file updates, and skip no-op or inconsequential rewrites. Report a failed or unavailable write honestly; an intention to save is not a saved update.
 
+### Preserve decisions and their reasons
+
 Keep the current view compact. Preserve a material superseded commitment and its rationale in an existing decision record or a short decision note when later work relies on it; do not erase it or accumulate a transcript. For a consequential user choice, record context, genuine options, recommendation/reasoning, the user's selected or introduced direction, and any rationale they actually supplied. Do not infer a general preference or taste profile.
 
 Distinguish an option the user chose from those offered, an alternative they introduced, an agent proposal still awaiting judgment, and a choice the agent made under delegated authority. Record who decided and the scope of acceptance; an unanswered recommendation is not consent. Preserve the relevant prompt or option wording when needed to interpret the choice. Do not invent missing options or rationale, or attribute an agent's assumption to the user.
 
 When a material decision depends on a concrete assumption, add a brief reconsideration trigger if it will help later judgment: for example, revisit synchronous processing if measured latency exceeds the agreed response budget. Use actual assumptions and agreed limits, not invented thresholds or a required field on every decision. When the trigger occurs, record the evidence and bring back the affected judgment; it does not itself authorize changing an accepted commitment. Provisional implementation choices remain refinable within delegated authority.
+
+### Keep design and direction coherent
 
 During substantial design, keep the current brief/specification up to date and append short material decision entries in that document or an existing decision log. A progress checkpoint records the meaningful result, what changed, evidence or unresolved questions, and the next action; do not log every tool call. The current-state note links to this design and history rather than duplicating them. Update the affected documents when accepted scope or behavior changes, preserving important superseded decisions and their rationale.
 
@@ -32,13 +46,19 @@ For periodic direction checks, use the accepted outcome, design constraints and 
 
 ## Resume from evidence
 
+### Recover sources and the parent mission
+
 After compaction, session restoration or another material context loss, reload the canonical Atlas skill from its recorded location, only the references relevant to the next action, and the existing task record when available before doing work that depends on them. If the canonical guidance cannot be recovered, identify the missing source rather than claiming Atlas remains active. Do not reread every reference on every turn.
 
 Reestablish the parent mission and current position before resuming the local checklist. Do not reconstruct project scope from the latest activity alone. If only a subtask or prototype record survived, recover the linked parent plan before substantial dependent work; continue only work whose scope and authority are established. Verify that the probe still needs evidence rather than resuming hardening after its question was answered.
 
+### Reconcile current state and authority
+
 Inspect current project instructions, repository identity, branch/HEAD, worktree and applicable live PR/check state before relying on a note. Treat old status statements as observations to verify. Distinguish stale status from conflicting authority: a merge can obsolete a next-action note but does not grant permission for the next feature. A task record and source pointer preserve recoverable context; the host still controls whether conversation guidance survives compaction or resume.
 
 If the task is already complete, report that fact or continue only another currently authorized task. If authority is missing or contradictory, reconstruct it from authorized sources or ask the smallest necessary question; do not make the user retell facts already inspectable. If a material external state cannot be checked, name that limitation and continue only work independent of it.
+
+### Check interrupted execution and applicable evidence
 
 After an interrupted worker or uncertain tool result, preserve the existing authority and correction bound. Before retry or cleanup, recover available work and evidence and establish whether execution is still live or may already have produced effects; use [Deliver and repair](deliver-and-repair.md#use-workers-selectively) for the failure classification. A new session, worktree or report does not by itself prove cancellation, isolation or a clean restart.
 
@@ -48,6 +68,8 @@ Use normal Git conflict handling and host filesystem facilities. Do not silently
 
 ## Pause or finish
 
-Preserve the actual result, decisions/deltas, checks and evidence, accepted risks, deferred candidates only when useful, and the next safe action. Make an unverified claim or blocker explicit. On completion, remove stale active-work instructions from the current view and retain durable decision/evidence pointers. Routine history belongs in Git and existing records, not in the next agent's starting context. When a milestone exposed useful lessons, consider offering [Reflect](reflect.md) with a concrete reason; run it only on request, and link its separate contextual file from the existing record.
+Preserve the actual result, decisions/deltas, checks and evidence, accepted risks, deferred candidates only when useful, and the next safe action. Make an unverified claim or blocker explicit. On completion, remove stale active-work instructions from the current view and retain durable decision/evidence pointers. Routine history belongs in Git and existing records, not in the next agent's starting context.
+
+When a milestone exposed useful lessons, consider offering [Reflect](reflect.md) with a concrete reason; run it only on request, and link its separate contextual file from the existing record.
 
 Repeated corrections or stalled attempts can justify [guidance improvement](guidance-improvement.md). Diagnose the cause before turning a local failure into enduring policy. Preserve the requested outcome and remaining correction boundary; another session or worker does not reset them.
