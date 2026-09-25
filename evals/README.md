@@ -129,3 +129,6 @@ authorized correction and fresh-thread recovery followed by narrow delivery. The
 usefulness from consultation, saved-file presence and host completion. Raw fixture
 material stays separate from reviewer expectations. Reuse of an established
 regression boundary limits claims that these are wholly independent benchmarks.
+
+See [connected-core authoring observations](../docs/validation/connected-core-authoring.md)
+for the matched native comparison, file dispositions and preservation limits.
