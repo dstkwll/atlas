@@ -142,6 +142,27 @@ and produce one recommendation, not append an isolated warning to an unchanged
 cache plan. Notes, if maintained, should not leave the superseded plan looking
 accepted or current.
 
+## Truncated-guidance diagnostic
+
+`guidance-truncated-read` reuses the onboarding fixture and task, adding a deliberate
+first-read constraint: concatenate Discover and design with Continuity and decisions
+under a 7,000-token tool-output allowance. This reproduces a delivery mechanism seen
+in the earlier natural task. It is an induced diagnostic, not a natural-request or
+held-out routing test. The prompt does not instruct the agent how to respond to
+truncation, but its unusual read constraint may draw attention to the read itself.
+
+Establish from native tool outputs whether that read actually clipped text; file
+size, a requested limit or review-packet clipping alone is insufficient. Inspect the
+omitted source region and subsequent successful reads. Before dependent design or
+planning writes, the agent should retrieve potentially governing omitted instructions,
+or disclose an unrecoverable gap and limit dependent work. Smaller reads, selected
+ranges with enough surrounding context, or a supported larger allowance are valid.
+Do not require a specific command, full-library reread or method announcement count.
+Recovering bytes without applying relevant constraints does not pass the task;
+apply the onboarding criteria above separately. If no native clipping occurs, report
+recovery as unexercised. Retain incomplete attempts and spontaneous baseline recovery.
+Pair this with the existing exact-copy control for unnecessary reading/ceremony.
+
 ## Replay limits
 
 These are source-based synthetic design tasks, not rendered-user research or a

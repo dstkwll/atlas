@@ -98,3 +98,8 @@ was prepared independently of the candidate instructions and stays outside trial
 projects. It distinguishes useful integration from consultation, including valid
 alternative designs and authority limits. See [lead composition observations](../docs/validation/lead-composition.md)
 for the matched comparison and its limits.
+
+The later `guidance-truncated-read` diagnostic reuses onboarding with an induced
+first-read output limit. Its [recovery rubric](composition-review.md#truncated-guidance-diagnostic)
+separates actual clipping and timely recovery from task quality, and records the
+prompt's attention cue. It is not an independent natural-request routing test.

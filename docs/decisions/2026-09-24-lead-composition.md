@@ -30,6 +30,8 @@ No standing obligation is intentionally withdrawn. Detailed procedures stay in t
 
 Independent review also clarified three boundaries: a method name alone does not require a worker, but required independence still needs a fresh context or authorized human reviewer; unfinished method-specific constraints need recoverable sources and implications, without a history of every consultation; and the warning about extra workflow machinery concerns procedure failures, not ordinary product schemas or validation.
 
+The owner subsequently authorized a narrow correction after native traces showed clipped guidance reads: check returned output and recover omitted instructions that could govern the next action before dependent work. Smaller reads or a larger supported allowance can recover the gap; sensible output limits remain useful. This does not require rereading unrelated or already-available content. If recovery is unavailable, disclose the limitation and continue independent work. The correction makes partial delivery explicit within the existing read-before-use obligation; it adds no runtime enforcement or fixed reading budget.
+
 ## Evidence boundary
 
 The [validation record](../validation/lead-composition.md) distinguishes source preservation from native task behavior. Method consultation, useful integration, authority compliance and recovery are separate observations. Small synthetic samples cannot establish reliable triggering, long-conversation retention, native-skill superiority or equivalent behavior in another host. Existing application misses remain relevant; this change does not erase them.

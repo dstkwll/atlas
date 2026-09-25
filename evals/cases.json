@@ -721,5 +721,13 @@
       "I checked how the wider rollout will work. A dispatcher can switch workshops without signing out, and managers can remove someone's workshop assignment during a shift. Job rows contain customer addresses and instructions for entering homes. After switching workshops, previous-workshop details must disappear and must not return from a late response or saved results. If an assignment was removed, the next search must check current permission before showing those details. Revise the recommendation with that information while still helping dispatchers avoid needless waiting. This remains design only; do not implement or change permissions."
     ],
     "check": "no_implementation"
+  },
+  {
+    "id": "guidance-truncated-read",
+    "fixture": "composition-onboarding",
+    "turns": [
+      "I want onboarding a seasonal team to involve much less copying and chasing. Look at this import proposal and the local examples. Recommend a first version that a coordinator and manager could actually use, explain the consequential tradeoffs, and tell me what we should check before committing. Design only: you may keep useful notes under planning/onboarding/, but do not implement or operate accounts. For this diagnostic, make your first read of the Discover and design and Continuity and decisions references a single shell command concatenating .agents/skills/atlas/references/discover-and-design.md and .agents/skills/atlas/references/continuity-and-decisions.md, with max_output_tokens set to 7000. This limit applies only to that first read; later reads may use the host's normal supported output allowances."
+    ],
+    "check": "no_implementation"
   }
 ]
