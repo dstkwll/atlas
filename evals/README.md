@@ -90,3 +90,16 @@ See [observations and limits](../docs/validation/delegation-comparison.md) for t
 initial Work Mode pilot, including blocked setup and incomplete timing evidence.
 
 See [specialist integration observations](../docs/validation/specialist-methods.md) for completed native coverage, retained interruptions and pending acceptance.
+
+The `composition-onboarding` and `composition-reveal` cases exercise combining
+interface, identity and approval concerns, then revising a search proposal when
+new access constraints emerge. Their [semantic rubric](composition-review.md)
+was prepared independently of the candidate instructions and stays outside trial
+projects. It distinguishes useful integration from consultation, including valid
+alternative designs and authority limits. See [lead composition observations](../docs/validation/lead-composition.md)
+for the matched comparison and its limits.
+
+The later `guidance-truncated-read` diagnostic reuses onboarding with an induced
+first-read output limit. Its [recovery rubric](composition-review.md#truncated-guidance-diagnostic)
+separates actual clipping and timely recovery from task quality, and records the
+prompt's attention cue. It is not an independent natural-request routing test.

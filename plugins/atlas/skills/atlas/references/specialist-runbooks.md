@@ -2,6 +2,8 @@
 
 Use this index when a matching activity, changed boundary, observed failure or concrete uncertainty calls for a focused method beyond the core activity guides. Cleanup, distribution, documentation impact and recurring guidance failures can qualify without an already-diagnosed technical defect. Select the relevant reference, not the whole library. Ordinary clear work may need none.
 
+Several references may inform one decision. Connect their relevant findings against the task's goal and accepted constraints; return a coherent result rather than a collection of checklists. Revisit selection when new evidence changes the question. The [lead](../SKILL.md#choose-and-combine-useful-methods) owns composition and scope.
+
 The runbooks can guide the main agent or a bounded worker. Choose delegation for useful isolation, parallelism or independent judgment; a named runbook is not a new role, required handoff or workflow stage. A separate context is needed only when the assignment requires independence; the producer using another checklist remains self-review.
 
 For a delegated task, provide the exact outcome/question, relevant source and candidate, accepted constraints, whether it is read-only or allows specified edits, the selected runbook path, permitted capabilities, expected evidence and stop/return boundary. The worker may use its judgment within that assignment. Reviewers report findings; Atlas reconciles them and retains scope/authority decisions. Do not delegate missing product judgment as though it were implementation work.
