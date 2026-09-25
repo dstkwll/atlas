@@ -2,6 +2,8 @@
 
 Use this guide to develop a shared understanding of the problem and a credible approach, including brainstorming or pressure-testing a proposal. Investigate independently and design with the user; scale the depth to the uncertainty and assignment. A bounded probe can proceed before overall discovery is complete.
 
+For a requested sustained brainstorming, grilling or Atlas Wayfinding session, use [Wayfinding](wayfinding.md) for its persistent conversational mode and visible map. It uses the methods here; ordinary design advice does not require that mode.
+
 ## Clarify the outcome
 
 Separate the user's problem from a proposed solution. Identify who needs what behavior, current pain, meaningful constraints, and observable success. Research available facts before asking. Challenge a costly premise if a simpler change can deliver the same outcome.

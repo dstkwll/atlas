@@ -2,7 +2,7 @@
 
 Atlas is a small software-lead guide for the agent you already use. Give the main agent a goal; it chooses useful investigation, design, implementation, review and repair, carries the architectural context, and returns for decisions that belong to you.
 
-The package contains one lead skill, five optional entry points, four core activity guides and an optional specialist runbook library. It requires no added service, hook, orchestration runtime or connection to this project's Drive folder. Your existing host, tools and project rules remain in control.
+The package contains one lead skill, six optional entry points, shared activity guides and a specialist runbook library. It requires no added service, hook, orchestration runtime or connection to this project's Drive folder. Your existing host, tools and project rules remain in control.
 
 ## Use it in your project
 
@@ -24,6 +24,10 @@ The lead keeps accepted commitments separate from provisional choices. It can re
 For substantial design, Atlas investigates the whole problem, surfaces relevant concerns and opportunities, and develops consequential choices with you unless you explicitly delegate them. It maintains a living brief, challenges its emerging approach, records meaningful decisions and develops the next usable slice in detail. It can expand that brief into a PRD or specification and produce an HTML view for co-design when useful. Small clear changes can proceed directly. Atlas does not require a ticket graph, fixed sequence of specialists or review ceremony for every change. It never grants permission to publish, deploy, spend or merge.
 
 The [specialist library](plugins/atlas/skills/atlas/references/specialist-runbooks.md) adds focused methods for technical questions such as failure handling, types, migrations, runtime bugs, accessibility and release preparation. It also offers product-interface critique, user research and quantitative visualization, with conditional lifecycle, recovery and model-training methods. Atlas combines the relevant methods around your goal and revisits them when new evidence changes the problem. It decides whether to use a runbook itself or delegate a bounded task. No specialist sequence is mandatory.
+
+## Explore together
+
+For a deliberate brainstorming or grilling session, select **Atlas Wayfinding** (`atlas-wayfinding`). It keeps a shared map of settled decisions, questions we can address now, blocked questions and the fog we cannot yet frame precisely. The lead follows your answers into consequences, investigates facts and uses relevant Atlas methods. The mode continues through ordinary replies until you finish, pause or clearly move into delivery. It uses your existing planning home; no issue tracker or separate agent is required. See [setup](SETUP.md#atlas-wayfinding).
 
 ## Finish at a useful artifact
 

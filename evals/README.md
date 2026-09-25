@@ -21,7 +21,7 @@ The filesystem is the normal native workspace-write sandbox, not a security isol
 
 ## Evidence and grading
 
-The output retains raw native events, tool-call/output records filtered from the native rollout (no reasoning or instruction messages), stderr, prompts/metadata, candidate and runner file identities, per-turn file snapshots, final artifacts and objective facts. The filtered rollout has a tool-records-status.json recording file/record counts and parse errors; a parse-clean capture does not guarantee the host persisted every event. Without usable tool evidence, missing consultation remains UNKNOWN. File snapshots include content, file kind, permission mode and symlink targets, excluding Git internals and Python bytecode. Final change-scope facts include any effects from the evaluator’s repair probe; probe_changes identifies those separately and must not be attributed to the agent’s native turn. They detect retained mutations to the observed project, not every transient write or effect outside it. The host's process group is terminated before final checks; this does not establish absence of deliberately detached descendants. Inspect tool events for such behavior and mark affected state claims UNKNOWN if quiescence cannot be established.
+The output retains raw native events, tool-call/output records filtered from the native rollout (no reasoning or instruction messages), stderr, prompts/metadata, candidate and runner file identities, per-turn file snapshots, final artifacts and objective facts. The filtered rollout has a tool-records-status.json recording file/record counts and parse errors; a parse-clean capture does not guarantee the host persisted every event. Without usable tool evidence, missing consultation remains UNKNOWN. File snapshots record content hashes, file kind, permission mode and symlink targets, excluding Git internals and Python bytecode. Final change-scope facts include any effects from the evaluator’s repair probe; probe_changes identifies those separately and must not be attributed to the agent’s native turn. They detect retained mutations to the observed project, not every transient write or effect outside it. The host's process group is terminated before final checks; this does not establish absence of deliberately detached descendants. Inspect tool events for such behavior and mark affected state claims UNKNOWN if quiescence cannot be established.
 
 The repair checker runs candidate Python in the synthetic project, under the invoking operator's permissions. This is for trusted local fixtures and bounded non-adversarial trials, not arbitrary hostile code. Do not run it on an untrusted submission. Other checks inspect state without running generated code.
 
@@ -103,3 +103,14 @@ The later `guidance-truncated-read` diagnostic reuses onboarding with an induced
 first-read output limit. Its [recovery rubric](composition-review.md#truncated-guidance-diagnostic)
 separates actual clipping and timely recovery from task quality, and records the
 prompt's attention cue. It is not an independent natural-request routing test.
+
+The three `wayfinding-*` cases cover a changing collaborative design conversation,
+artifact-based recovery followed by an explicit implementation request, and a
+bounded synthesis/pause. Their [independently prepared rubric](wayfinding-review.md)
+requires trace and per-turn artifact review; endpoint checks alone cannot establish
+mode continuity or conversational quality. The candidate uses `atlas-wayfinding`;
+a pre-capability baseline uses `atlas`, with that activation difference disclosed.
+The later `wayfinding-summary-continuity` diagnostic checks a progress summary
+through the shared Atlas entry after source-review clarifications; it is separate
+from the original suite. See [Wayfinding observations](../docs/validation/atlas-wayfinding.md)
+for native host coverage and remaining limits.

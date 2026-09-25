@@ -96,11 +96,21 @@ Choose plugin installation or manual skill installation in each host. Duplicate 
 
 For an optional Codex project default, add the default-guidance paragraph above to the existing root `AGENTS.md`, using `.agents/skills/atlas/SKILL.md` as its source. Codex reads project instructions when starting work; this supplies an entry path independent of an earlier skill invocation. Preserve the project's other instructions. See [Codex project instructions](https://learn.chatgpt.com/docs/agent-configuration/agents-md).
 
+## Atlas Wayfinding
+
+Select `atlas-wayfinding` for a sustained brainstorming or grilling session. In Codex, use `$atlas-wayfinding` or the discovered **Atlas Wayfinding** entry. In Copilot, select the installed skill through its native picker; plugin namespacing can vary. You can also ask the lead to start an Atlas Wayfinding session or read the exact installed entry path.
+
+The entry uses the same Atlas lead and library in the main conversation. It makes discovery the current assignment, including when you enter during delivery. Expect a compact visible map, adaptive questions with useful recommendations, independent investigation of facts, and updates as answers reveal new territory. Precise questions waiting on another answer remain distinct from fog that cannot yet be specified. Planning state stays in the project's existing approved artifact. Ordinary Atlas design advice remains available without this mode.
+
+You can ask for one question at a time, a synthesis, a pause or a handoff. A clear instruction such as “implement the agreed first slice” leaves the mode within the supplied authority; accepting a design alone does not start delivery. No special exit command is required.
+
+Plugin installation includes this entry. For manual installation, copy both `plugins/atlas/skills/atlas-wayfinding/` and `plugins/atlas/skills/atlas/` as sibling folders in the host's skill directory. The shared folder supplies the lead, methods and third-party notices. A copied entry without that dependency is incomplete. As with Atlas itself, recoverable files and explicit invocation do not guarantee identical behavior across hosts or context restoration.
+
 ## PRD, ticket and handoff deliverables
 
 Ask Atlas naturally: **Turn this into a PRD**, **Break this into executable vertical slices**, or **Prepare a handoff for the next agent**. It uses the same shared runbooks as the optional skills `atlas-to-documentation`, `atlas-to-tickets` and `atlas-handoff`. These requests finish at the artifact unless further work is authorized; they do not publish tracker issues or start implementation automatically.
 
-The plugin includes the lead plus documentation, tickets, handoff, blast-radius and reflection entry points. For manual installation of the artifact entry points, copy the complete contents of `plugins/atlas/skills/` into your chosen host's skill directory, keeping all skill folders as siblings. The entry points require the shared `atlas` folder and its notices; copying a wrapper alone is incomplete. Copying only `atlas` still supports these outcomes through its shared runbooks and ordinary conversation.
+The plugin includes the lead plus wayfinding, documentation, tickets, handoff, blast-radius and reflection entry points. For manual installation of all entry points, copy the complete contents of `plugins/atlas/skills/` into your chosen host's skill directory, keeping all skill folders as siblings. The entry points require the shared `atlas` folder and its notices; copying a wrapper alone is incomplete. Copying only `atlas` still supports these outcomes through its shared runbooks and ordinary conversation.
 
 In Codex, select the discovered skill or use `$atlas-to-documentation`, `$atlas-to-tickets` or `$atlas-handoff`. In other hosts, select the corresponding installed skill from the host's skill picker or ask it to read the exact installed entry path; namespacing and picker support vary. The Atlas agent profile stays the same. A skill name identifies the deliverable, not a separate lead or mandatory stage.
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Atlas Wayfinding"
+  short_description: "Map uncertainty and work through design together"
+  default_prompt: "Use $atlas-wayfinding to explore this idea with me, map what we do not yet understand, and pressure-test the important choices."
