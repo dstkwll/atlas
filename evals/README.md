@@ -132,3 +132,11 @@ regression boundary limits claims that these are wholly independent benchmarks.
 
 See [connected-core authoring observations](../docs/validation/connected-core-authoring.md)
 for the matched native comparison, file dispositions and preservation limits.
+
+
+The `atlas-wave1-interrupted-return` case supplies a partially completed local
+integration and unresolved operation evidence with remaining repair/test bounds.
+Its [rubric](wave-authoring-review.md) distinguishes a verified local repair from
+whole-task acceptance, request records from remote effects, and substantive
+changes from truthful bookkeeping. See [wave-1 observations](../docs/validation/wave-1-authoring.md)
+for the matched comparison with `hardware-deferred-repair` and its limits.
