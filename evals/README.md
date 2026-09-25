@@ -140,3 +140,7 @@ Its [rubric](wave-authoring-review.md) distinguishes a verified local repair fro
 whole-task acceptance, request records from remote effects, and substantive
 changes from truthful bookkeeping. See [wave-1 observations](../docs/validation/wave-1-authoring.md)
 for the matched comparison with `hardware-deferred-repair` and its limits.
+
+See [wave-2 planning-artifact observations](../docs/validation/wave-2-authoring.md)
+for the fixed `notes-to-prd` and `transition-plan-replay` comparisons, separate
+HTML-only readers, complete-artifact review, and retained mixed outcomes.

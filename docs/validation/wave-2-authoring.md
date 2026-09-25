@@ -1,0 +1,54 @@
+# Atlas Wave 2: authoring validation
+
+## Scope and disposition
+
+**Disposition: retain the selected three-file authoring revision as source-eligible, with mixed and limited behavioral evidence.** This record describes supplied reviewer reports and verified coordinator evidence; it is not a fresh inspection of raw producer traces or final artifacts. Source eligibility does not turn the ticket outcomes into an unqualified behavioral pass.
+
+The program original was revision `9dcf142d1ecdaac90394df9e9490b1e6e246187c` (package `0.10.1`). Wave 2 compared baseline `4c976595ed468e6d202b360038803ec1e44c8a61`, carried forward from the draft PR, with tested candidate `cdd58f59d2b591ff63e8330a93a1ca4e4b2cef5c` (package `0.10.3`). The ten Wave 2 target bodies in the baseline were identical to the program original. Candidate integration aligned `plugin.json` and both marketplace version fields. No architecture or charter change was accepted.
+
+## What changed, and why this group was selected
+
+Native Copilot Astra/max and Opus 5.5/xhigh each drafted independently, critiqued the other's frozen draft, then revised their own. All six authoring turns completed. Both received complete original/current sources and actual history; coverage distinguished availability from reading. The coordinator selected the complete Astra revision, without writing product wording. Peer-informed convergence is not independent corroboration.
+
+Only three instructional targets changed:
+
+- **Artifact location** now places the distinction between an inaccessible or conflicting destination and *no established destination* beside the repository `.planning/<topic>/` fallback. It explicitly favors reusing an adequate task record, brief or PRD, and links the conditional `current.md` fallback and first-write notice to their existing continuity rule. A configuration value remains a candidate location, not permission to write or export.
+- **Ticket planning** moves the existing “ready now / ready after prerequisites / blocked” distinction, including the warning that an unobstructed dependency graph does not prove readiness, from the test-first subsection to the whole-plan check. The requirement to reconcile the index and handoff with every slice remains intact.
+- **Handoff guidance** adds a conditional route to that whole-plan check when a handoff summarizes existing tickets, so its readiness, blocker and sequencing claims can be checked against their current prerequisites.
+
+The other seven targets—including the three skill wrappers, HTML starter, HTML-document method, documentation method and PRD method—were retained byte-for-byte. In particular, the PRD method’s rule against treating inferred permissions as accepted policy predates Wave 2; its consultation during a trial is not a new Wave 2 benefit.
+
+The selected revision is coherent as a complete group: record reuse and fallback point to one continuity home, general readiness sits with general plan checking, and the handoff route reaches that check without imposing it on handoffs that do not summarize tickets. A credible four-file alternative added an optional starter heading and preserved the obligations, but its denser destination paragraph and placement of the readiness text offered less direct navigation. Repaired draft read gaps in that alternative were not treated as defects in its final source. Selection was neither a minimum-file-count contest nor sentence blending between candidates.
+
+An independent source reviewer recorded requirements before opening the selected candidate, read all ten original and candidate targets, and checked governing and connected sources with bounded history coverage. The reviewer found no blocking lost obligation or broken new anchor. The coordinator separately verified the complete candidate file sets and exact copied product bytes, closing the reviewer’s partial whole-tree hash-comparison limit. The reviewer’s historical and connected-source reads were not exhaustive, and source review alone establishes no loading or behavior.
+
+## Fixed behavioral comparison
+
+Two original tasks were held fixed. **Notes-to-PRD** had three turns: draft a self-contained HTML planning PRD, incorporate owner self-release to the unclaimed queue while leaving manager reassignment undecided, then pause with HTML-only recovery. **Transition-plan-replay** requested garden-tool vertical-slice drafts and a handoff, without implementation or publication. The latter used a frozen synthetic PRD from an earlier trial; it was a diagnostic replay, not a held-out generalization case.
+
+Eight native attempts were scheduled before candidate inference, using the same Astra model at medium effort, a 360-second bound per attempt, and no outcome-driven reruns. “Completed” below means a native turn returned, not that every dimension passed. The compact findings incorporate later complete-artifact assessments rather than allowing an earlier blanket ticket PASS to override them.
+
+| Attempt | Case | Source / host | Observed result |
+| --- | --- | --- | --- |
+| 01 | HTML PRD | Baseline / Codex | Completed. The retained independent assessment found a coherent amended, paused HTML account. Its HTML-only reader recovered the main decisions but imposed an unsupported order—decide manager policy before checking current instructions—and its input receipt was reconstructed retrospectively. |
+| 02 | HTML PRD | Candidate / Copilot | Completed. The retained independent assessment found accepted release and open reassignment propagated through the artifact. The independent reader recovered the bounded account; its event history has a streaming gap. |
+| 03 | HTML PRD | Candidate / Codex | Completed. The retained independent assessment found a consistent final planning and recovery account; the HTML-only reader recovered the accepted/open boundary and pause. |
+| 04 | HTML PRD | Baseline / Copilot | Completed. The retained independent assessment found the same essential fidelity and pause boundary; the HTML-only reader recovered them. |
+| 05 | Ticket replay | Candidate / Codex | Completed with useful slices and handoff. Complete-artifact review found that follow-up delivery needs the return-status contract and a return-before-follow-up integration witness missing from ticket 05 and its index row. Independent reminder design remains possible. |
+| 06 | Ticket replay | Baseline / Copilot | Completed. Full-artifact follow-up found no further consequential issue in the supplied set; this does not prove defect absence. The initial reviewer had read several ticket bodies only partially. |
+| 07 | Ticket replay | Baseline / Codex | Completed. Ticket 04 overstates member-directory non-exposure beyond the PRD’s borrower-privacy decision, and its invitation-audit lifecycle gate lacks a matching decision route. Earlier review also noted minor index omissions. These are draft-planning findings, not an accepted owner policy or observed operational breach. |
+| 08 | Ticket replay | Candidate / Copilot | Timed out at 360.012 seconds after writing and reconciling artifacts, with **no completed conversational return**. Its ticket 03, index and handoff make a post-return lifecycle decision a blanket prerequisite for persisted ordinary return, without tying the gate to the eventual data and logging design. Independent design and synthetic transition evidence remain available. Authority and continuation after the deadline remain unknown. |
+
+Seven producer attempts completed. All four HTML attempts completed, and separate fresh readers returned recovery accounts under a fixed read-only protocol providing only one final HTML document to each. Those accounts generally distinguished manual exclusive claiming, owner self-release, the unclaimed queue, unresolved manager reassignment, planning-only authority and the need to wait after the pause. Reader 01’s ordering addition is not an instruction in its HTML; reader 02’s streaming gap and reader 01’s retrospective input receipt limit provenance claims. These probes test recovery from supplied text, not rendering or actual context compaction.
+
+Ticket artifacts across both sources retained substantial accepted/open distinctions: routine volunteer-recorded borrowing and undisputed return remained available for design, while dispute authority, history retention and other owner judgments remained open. They generally distinguished those semantic questions from missing implementation authorization, selected technology and a runnable verification environment. The complete-artifact reviews, however, establish the qualifications in attempts 05, 07 and 08. Attempt 08’s written plan cannot substitute for its missing return.
+
+## Checks, review coverage and limits
+
+Coordinator checks found **39 evaluator tests passing**, **229 package Markdown local links resolving**, both new anchors present, and a clean `git diff --check`. An initial invocation used the wrong test directory and was corrected *before any test ran*; there was no failed product test followed by a rerun. These are source/package checks, separate from producer behavior and from product execution. No Wave 2 hosted check is claimed.
+
+The HTML producer reviewer saved four individual assessments but timed out before a combined assessment or reader verdict. The initial ticket reviewer completed, but its recorded reads did not cover every final ticket body; later read-only assessments covered every supplied index, ticket and handoff for both ticket host pairs. Those later assessments had complete terminal reports but gaps in incremental event histories. Their originals were supplied together with artifacts, so they do not prove an internal original-first reading order. The coordinator checked the cited findings against the preserved artifacts. None of these reviewers performed a new producer trial or repaired a trial artifact.
+
+Successful native skill provision and observed guidance reads support the exercised routing judgments; they do not establish reliable *implicit* routing in other contexts. Some Copilot reviews relied on native returned-content events rather than a separate tool-record file. Local file-tool restrictions are not an operating-system sandbox, and an SDK stop receipt does not prove every detached descendant exited. There was no browser rendering, real compaction, workplace validation or product implementation test. The two cases, matched hosts and successful baseline controls are too small and heterogeneous to establish improvement, causation or regression freedom.
+
+**Retain the three-file candidate as eligible source with the qualified outcomes above.** Its source changes preserve the relevant contracts, but the observed ticket omissions, unsupported draft policy and overbroad dependency, together with attempt 08’s missing return and the untested environments, remain material limits on behavioral claims.
