@@ -1,18 +1,32 @@
 # Failure handling and recovery
 
-Use when a change can hide failure, duplicate effects, lose work, or leave partially updated state. Inspect the requested path, its callers, error contract and real side-effect boundaries. Review is read-only; a repair assignment permits changes only within its scope.
+Use when a change can hide failure, duplicate effects, lose work, or leave partially updated state, or when your own operation or tool call may have had an uncertain effect. Inspect the requested path, its callers, error contract and real side-effect boundaries. Review is read-only; a repair assignment permits changes only within its scope.
+
+## Trace failure to the observer
 
 Trace a representative failure from origin to the observer who must respond. A thrown exception may be correctly handled upstream; a catch, default or detached task is a question to investigate, not automatically a defect. Determine whether the caller can distinguish success, absence, partial success, cancellation and unavailable service.
 
 Examine fallback semantics. An empty collection after a failed fetch can falsely assert that nothing exists; cached data can conceal staleness or cross a tenant boundary. Identify what makes degradation acceptable and how its status reaches the caller or operator. Preserve error cause and useful context without leaking secrets or private payloads.
 
-For retries, identify the actual effect boundary and how duplicate delivery is detected. A timeout after a remote write may leave the result unknown. Retry only where the operation or its protocol makes that safe, with bounded attempts/deadline and an observable exhausted outcome. Do not erase cancellation by catching it as an ordinary retryable failure. Detached work still needs an owner for errors, lifetime and shutdown.
+## Decide whether repetition is safe
 
-Apply the same effect check when recovering your own tool use. A rejected request known not to have executed can be corrected and retried; an unavailable read can warrant backoff or an authorized alternative. After an uncertain write, establish its terminal outcome through reliable operation or destination evidence, or use the service's established idempotency mechanism to make repetition safe. An absent result is insufficient while the original operation may still complete; do not issue a duplicate-unsafe retry in that state. If effects cannot be reconciled and duplicate execution is unsafe, report that specific blocker and continue unaffected work. Do not bypass an access denial or cancellation as though it were a transient outage. Atlas supplies no universal attempt count: honor applicable explicit limits and use recovery effort proportionate to risk, elapsed effort and a credible chance of progress.
+For retries, identify the actual effect boundary and how duplicate delivery is detected. A timeout after a remote write may leave the result unknown. Retry only where the operation or its protocol makes that safe, with bounded attempts/deadline and an observable exhausted outcome. Do not erase cancellation by catching it as an ordinary retryable failure.
 
-For relevant I/O, trace the effective deadline across callers and framework guards, including time spent acquiring a connection, worker or other finite resource. Check release on success, failure and cancellation; fan-out; input or queue growth; and overload behavior. A dependency that eventually succeeds can still exhaust the available pool or workers. A missing local timeout is not itself a defect when an upstream bound correctly governs the operation; connect the concern to a reachable path and consequence or report the remaining evidence gap.
+Apply the same effect check when recovering your own tool use. Do not bypass an access denial or cancellation as though it were a transient outage.
+
+- **A rejected request known not to have executed** can be corrected and retried.
+- **An unavailable read** can warrant backoff or an authorized alternative.
+- **After an uncertain write,** establish its terminal outcome through reliable operation or destination evidence, or use the service's established idempotency mechanism to make repetition safe. An absent result is insufficient while the original operation may still complete; do not issue a duplicate-unsafe retry in that state. If effects cannot be reconciled and duplicate execution is unsafe, report that specific blocker and continue unaffected work.
+
+Atlas supplies no universal attempt count: honor applicable explicit limits and use recovery effort proportionate to risk, elapsed effort and a credible chance of progress.
+
+## Check resource lifetime and cross-resource effects
+
+Detached work still needs an owner for errors, lifetime and shutdown. For relevant I/O, trace the effective deadline across callers and framework guards, including time spent acquiring a connection, worker or other finite resource. Check release on success, failure and cancellation; fan-out; input or queue growth; and overload behavior. A dependency that eventually succeeds can still exhaust the available pool or workers. A missing local timeout is not itself a defect when an upstream bound correctly governs the operation; connect the concern to a reachable path and consequence or report the remaining evidence gap.
 
 For multi-step mutations, inspect atomicity, rollback and compensation across the real resources. A database rollback does not undo an email or remote charge. Check failures between steps, duplicate requests, concurrent workers and process interruption. Use the existing mechanism that owns consistency; adding generic retry or orchestration infrastructure is not the default repair.
+
+## Demonstrate the failure or bound the finding
 
 Use a focused reproducer or fault injection in an authorized disposable environment when possible. Show the triggering failure, incorrect observable result, why existing guards miss it, and the expected result after repair. Preserve the failing evidence; do not make the test pass by hiding the failure. If reproduction is unavailable, separate a supported code-path finding from unverified runtime effects.
 
