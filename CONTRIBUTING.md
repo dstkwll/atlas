@@ -38,6 +38,8 @@ Historical backfill should link relevant completed PRs and preserve useful decis
 
 Follow the branch, draft-PR, versioning and authorization rules in AGENTS.md. Review the actual diff against the intended behavior, check whether accepted direction requires a charter or decision update, and preserve evidence with its limitations. Run the relevant [evaluations](evals/README.md) for behavioral changes; source loading and infrastructure checks are not adherence proof.
 
+When creating or revising skills and runbooks, use [Writing agent guidance](docs/writing-agent-guidance.md) to make the method's decisions, examples, completion conditions and references clear. Preserve accepted behavior when editing the prose; assess the complete loaded path rather than only the entry file.
+
 If startup guidance changes, check a fresh session can find and apply it. Copilot's standard repository entry is [.github/copilot-instructions.md](.github/copilot-instructions.md); it points to the same maintenance contract. Start the host in the repository and verify its discovered instructions. A conversation created outside this checkout needs an explicit repository pointer in that host's saved project instructions. The [startup validation](docs/validation/maintainer-startup.md) records observed coverage and remaining limits.
 
 For a saved architect project outside the checkout, use a pointer such as:

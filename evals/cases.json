@@ -729,5 +729,59 @@
       "I want onboarding a seasonal team to involve much less copying and chasing. Look at this import proposal and the local examples. Recommend a first version that a coordinator and manager could actually use, explain the consequential tradeoffs, and tell me what we should check before committing. Design only: you may keep useful notes under planning/onboarding/, but do not implement or operate accounts. For this diagnostic, make your first read of the Discover and design and Continuity and decisions references a single shell command concatenating .agents/skills/atlas/references/discover-and-design.md and .agents/skills/atlas/references/continuity-and-decisions.md, with max_output_tokens set to 7000. This limit applies only to that first read; later reads may use the host's normal supported output allowances."
     ],
     "check": "no_implementation"
+  },
+  {
+    "id": "wayfinding-branch",
+    "entry": "atlas-wayfinding",
+    "fixture": "wayfinding-clinic",
+    "turns": [
+      "Help me work through the repair-clinic intake app in this project. I picture a booking form so visitors can reserve a repair slot and volunteers can prepare. I want to explore the design together before building: bring ideas, challenge my assumptions and help me find a useful first version. You can update our existing planning notes, but do not implement or contact anyone.",
+      "An important correction to my starting idea: success is not maximizing completed repairs. I don't want somebody turned away because they had no reservation. Walk-ins must stay welcome, and somebody who leaves without a repair should still have a useful next step. I haven't chosen a priority rule between bookings and walk-ins. How does that change where we go next?",
+      "Yes, that sounds good. One decision I can make now: volunteers can enter arrivals, but closing a visit should stay with the session coordinator. Saving an intake is not a promise that we can repair the item. I don't yet have an answer on queue priority or retention. Keep working through the design with me."
+    ],
+    "check": "no_implementation"
+  },
+  {
+    "id": "wayfinding-recovery-transition",
+    "entry": "atlas-wayfinding",
+    "fixture": "wayfinding-recovery",
+    "turns": [
+      "Read the paused clinic design. We can settle one small correction: create_record must raise ValueError when the title is exactly the empty string. Preserve the existing treatment of every nonempty string, including whitespace, because imported paper-slip labels are kept verbatim. Save this decision and its reason in our existing record so another session can pick it up. Stay in design for now; no source or test edits.",
+      "Continue from planning/clinic/current.md; the earlier conversation is unavailable. Leave the design session and implement only the accepted title-validation correction. You may edit local source and tests, add and run a useful regression check, and update the existing planning record. Preserve unrelated behavior. Do not implement the wider app or operate any external system."
+    ],
+    "fresh_thread_before": 1,
+    "check": "records-repair"
+  },
+  {
+    "id": "wayfinding-exit-control",
+    "entry": "atlas-wayfinding",
+    "fixture": "wayfinding-recovery",
+    "turns": [
+      "Read planning/clinic/current.md and end this design session with a short synthesis: the accepted direction, what most needs resolving next, and why. At most 150 words. Do not ask me questions, reopen settled choices, or edit files. I am pausing here."
+    ],
+    "check": "unchanged"
+  },
+  {
+    "id": "wayfinding-summary-continuity",
+    "entry": "atlas",
+    "fixture": "wayfinding-recovery",
+    "turns": [
+      "Let us use Atlas Wayfinding to explore the clinic design together. Read the paused design and start with what most needs deciding. We can update the existing planning record, but this is design only; do not implement or contact anyone.",
+      "Give me a brief checkpoint of where we are, in at most 120 words.",
+      "On priority, arrivals should be handled in arrival order among the volunteers who can help; a booking gives no priority. Continue from there."
+    ],
+    "check": "no_implementation"
+  },
+  {
+    "id": "wayfinding-seed-catalog",
+    "entry": "atlas-wayfinding",
+    "fixture": "wayfinding-seed-catalog",
+    "check": "no_implementation",
+    "turns": [
+      "Help me brainstorm the seed-swap catalog in this project. I picture a live availability list with packet reservations so gardeners can decide whether a trip is worthwhile. Challenge the framing and help me work out a useful first version together. You may update our existing planning record, but do not implement anything or contact anyone.",
+      "Correction to my starting idea: drop reservations and exact availability. The first version should let gardeners browse seed descriptions; someone must not infer that a listed seed will definitely be there. The seed steward confirms pickup at the table. I have not decided how uncertain stock should be described or who may edit descriptions. How does that change the questions we need to work through?",
+      "One decision I can make now: only the seed steward may change descriptions; volunteers can propose amendments. I am not choosing how long amendment history stays. Give me a short checkpoint in at most 140 words, with no new questions in this reply.",
+      "Continue brainstorming from there. What is the most useful thing for us to work through next?"
+    ]
   }
 ]

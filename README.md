@@ -2,7 +2,7 @@
 
 Atlas is a small software-lead guide for the agent you already use. Give the main agent a goal; it chooses useful investigation, design, implementation, review and repair, carries the architectural context, and returns for decisions that belong to you.
 
-The package contains one lead skill, five optional entry points, four core activity guides and an optional specialist runbook library. It requires no added service, hook, orchestration runtime or connection to this project's Drive folder. Your existing host, tools and project rules remain in control.
+The package contains one lead skill, six optional entry points, shared activity guides and a specialist runbook library. It requires no added service, hook, orchestration runtime or connection to this project's Drive folder. Your existing host, tools and project rules remain in control.
 
 ## Use it in your project
 
@@ -25,6 +25,10 @@ For substantial design, Atlas investigates the whole problem, surfaces relevant 
 
 The [specialist library](plugins/atlas/skills/atlas/references/specialist-runbooks.md) adds focused methods for technical questions such as failure handling, types, migrations, runtime bugs, accessibility and release preparation. It also offers product-interface critique, user research and quantitative visualization, with conditional lifecycle, recovery and model-training methods. Atlas combines the relevant methods around your goal and revisits them when new evidence changes the problem. It decides whether to use a runbook itself or delegate a bounded task. No specialist sequence is mandatory.
 
+## Explore together
+
+For a deliberate brainstorming or grilling session, select **Atlas Wayfinding** (`atlas-wayfinding`). It keeps a shared map of settled decisions, questions we can address now, blocked questions and the fog we cannot yet frame precisely. The lead follows your answers into consequences, investigates facts and uses relevant Atlas methods. The mode continues through ordinary replies until you finish, pause or clearly move into delivery. It uses your existing planning home; no issue tracker or separate agent is required. See [setup](SETUP.md#atlas-wayfinding).
+
 ## Finish at a useful artifact
 
 Ask Atlas to produce a PRD, an ordered set of testable vertical slices, or a handoff for another agent. Optional `atlas-to-documentation`, `atlas-to-tickets` and `atlas-handoff` skills expose those same runbooks directly. They preserve settled intent and make remaining decisions, dependencies and test prerequisites visible. Artifact creation does not authorize implementation or tracker publication. See [setup](SETUP.md#prd-ticket-and-handoff-deliverables).
@@ -41,6 +45,8 @@ After activating Atlas, use ordinary requests such as:
 - “This report links to a proposed fix. Verify whether it addresses the failure before writing another patch.”
 - “Make the existing project checks usable by a fresh agent, including setup, evidence and cleanup.”
 - “Migrate this component while preserving its appearance and keyboard behavior.”
+
+For example, “Turn these working notes into a reusable skill” can use the portable [writing runbook](plugins/atlas/skills/atlas/references/writing-agent-guidance.md), shared with Atlas maintainers.
 
 Atlas chooses the relevant runbooks from the request. Teaching, investigation, verification and planning can each be the completed outcome; implementation follows the authority you actually give it.
 

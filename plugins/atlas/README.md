@@ -1,6 +1,6 @@
 # Atlas
 
-Give your main agent a software goal. Atlas guides discovery, design, implementation, review and recovery as needed, using one lead skill, optional artifact entry points, core activity guides and specialist runbooks. It needs no runtime dependencies, hooks or extra accounts.
+Give your main agent a software goal. Atlas guides discovery, design, implementation, review and recovery as needed, using one lead skill, optional entry points, core activity guides and specialist runbooks. It needs no runtime dependencies, hooks or extra accounts.
 
 In Copilot Agent mode, start a fresh chat and choose the **Atlas** profile from the agent picker, then describe your goal. In Copilot CLI, use `/agent` and select `atlas:atlas`, or start with `copilot --agent atlas:atlas`. For example:
 
@@ -20,6 +20,10 @@ Existing organizational/project instructions and tool permissions continue to ap
 
 See the repository [setup guide](https://github.com/dstkwll/atlas/blob/main/SETUP.md) for installation, updates, manual skill use and continuity. All operational guidance is contained in [the skill](skills/atlas/SKILL.md) and its relative references; the profile is only a native entrypoint. No access to the Atlas repository or Drive is required during work.
 
-For a concrete planning deliverable, ask Atlas to turn the discussion into a PRD, executable vertical slices or a recipient-oriented handoff. Optional `atlas-to-documentation`, `atlas-to-tickets` and `atlas-handoff` entry points load those same runbooks. Keep all sibling skill folders together when copying the full package; the wrappers depend on `skills/atlas/`. Producing the artifact does not authorize publishing tickets or starting implementation.
+Select **Atlas Wayfinding** (`atlas-wayfinding`) for an interactive brainstorming or grilling session. It uses the same lead and library, keeps a visible map of decisions, questions and poorly understood territory, and follows your answers into consequences. A progress summary keeps the mode active; a clear instruction to begin or resume delivery changes the assignment. Its [shared method](skills/atlas/references/wayfinding.md) remains available through ordinary Atlas too.
+
+For a concrete planning deliverable, ask Atlas to turn the discussion into a PRD, executable vertical slices or a recipient-oriented handoff. Optional `atlas-to-documentation`, `atlas-to-tickets` and `atlas-handoff` entry points load those same runbooks. Keep all sibling skill folders together when copying the full package; the wrappers, including Wayfinding, depend on `skills/atlas/`. Producing the artifact does not authorize publishing tickets or starting implementation.
 
 `atlas-to-documentation` defaults to PRD and also supports guides, architecture documents and references. `atlas-blast-radius` assesses wider effects; `atlas-reflect` runs a requested retrospective and writes a separate contextual file. Arena is a confirmed, bounded runbook only.
+
+When creating or revising agent-facing instructions, skills or agent runbooks, Atlas can use [Writing agent guidance](skills/atlas/references/writing-agent-guidance.md). It covers clear decisions, useful examples, completion evidence and reference placement. [Guidance improvement](skills/atlas/references/guidance-improvement.md) supports diagnosis and behavioral evaluation when needed; neither requires another skill selection.
