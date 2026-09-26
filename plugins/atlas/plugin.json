@@ -2,7 +2,7 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "atlas",
   "description": "Software delivery guidance for your main agent: one lead with wayfinding, documentation, ticket, handoff, impact and reflection skills plus shared runbooks.",
-  "version": "0.10.5",
+  "version": "0.10.6",
   "repository": "https://github.com/dstkwll/atlas",
   "keywords": [
     "skills",
