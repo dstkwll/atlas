@@ -60,7 +60,7 @@ If the task is already complete, report that fact or continue only another curre
 
 ### Check interrupted execution and applicable evidence
 
-After an interrupted worker or uncertain tool result, preserve the existing authority and correction bound. Before retry or cleanup, recover available work and evidence and establish whether execution is still live or may already have produced effects; use [Deliver and repair](deliver-and-repair.md#use-workers-selectively) for the failure classification. A new session, worktree or report does not by itself prove cancellation, isolation or a clean restart.
+After an interrupted worker or uncertain tool result, preserve the existing authority and correction bound. Before retry or cleanup, recover available work and evidence and establish whether execution is still live or may already have produced effects; use [Deliver and repair](deliver-and-repair.md#inspect-and-recover-worker-returns) for the failure classification. A new session, worktree or report does not by itself prove cancellation, isolation or a clean restart.
 
 Verify that cited proof still applies after edits. Record an exact commit/tree or other candidate identity when later review or delivery relies on exact bytes, including relevant dirty-worktree changes. Avoid a self-referential demand that a file contain the hash of the commit that includes that file: record the checked candidate, then explain any subsequent checkpoint-only change and verify it separately.
 

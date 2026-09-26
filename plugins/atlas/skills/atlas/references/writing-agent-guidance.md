@@ -42,7 +42,7 @@ Prefer a clear action over a collection of prohibitions. Retain explicit prohibi
 
 ## Put guidance where it is used
 
-Keep common operating instructions on the common path. Put substantial conditional detail behind a pointer naming the condition and target. Keep a concept's definition, rules and caveats together. A simple method may fit in one file; splitting is useful when it separates real branches or reusable responsibilities.
+Keep common operating instructions on the common path. Put substantial conditional detail behind a pointer naming the condition and target. Keep a concept's definition, rules and caveats together. Headings and links set scope for a selective reader: place guidance that applies across branches, such as a general return, outside a narrower conditional heading, and point a link at the section that owns the rule its sentence names. A simple method may fit in one file; splitting is useful when it separates real branches or reusable responsibilities.
 
 Review the full loaded path: entry point, shared lead, method and required references. A tiny wrapper can depend on substantial guidance. Moving the same required material to another file changes packaging, not the total information the agent needs.
 
