@@ -130,27 +130,17 @@ usefulness from consultation, saved-file presence and host completion. Raw fixtu
 material stays separate from reviewer expectations. Reuse of an established
 regression boundary limits claims that these are wholly independent benchmarks.
 
-See [connected-core authoring observations](../docs/validation/connected-core-authoring.md)
-for the matched native comparison, file dispositions and preservation limits.
-
-
 The `atlas-wave1-interrupted-return` case supplies a partially completed local
 integration and unresolved operation evidence with remaining repair/test bounds.
 Its [rubric](wave-authoring-review.md) distinguishes a verified local repair from
 whole-task acceptance, request records from remote effects, and substantive
-changes from truthful bookkeeping. See [wave-1 observations](../docs/validation/wave-1-authoring.md)
-for the matched comparison with `hardware-deferred-repair` and its limits.
+changes from truthful bookkeeping. Its matched `hardware-deferred-repair`
+comparison has a separate physical-acceptance limit.
 
-See [wave-2 planning-artifact observations](../docs/validation/wave-2-authoring.md)
-for the fixed `notes-to-prd` and `transition-plan-replay` comparisons, separate
-HTML-only readers, complete-artifact review, and retained mixed outcomes.
-
-See [wave-3 technical-method observations](../docs/validation/wave-3-authoring.md)
-for source selection, the fixed architecture/composition trials, and their limitations.
-
-See [wave-4 specialist-method observations](../docs/validation/wave-4-authoring.md)
-for source selection, the fixed activity/chart/post-training comparisons, and their limitations.
-
-See [wave-5 cumulative authoring observations](../docs/validation/wave-5-authoring.md)
-for the fixed calendar, recovery, Arena and exact-output comparisons,
-final source dispositions, and cumulative coverage and limitations.
+The fixed `notes-to-prd` and `transition-plan-replay` comparisons include separate
+HTML-only readers and complete-artifact review. Architecture/composition,
+activity/chart/post-training, and later calendar/recovery/Arena/exact-output cases
+exercise different bounded claims; do not pool them as a performance rate. See
+[guidance-authoring observations](../docs/validation/guidance-authoring.md) for
+the connected-core pilot and Waves 1–5, their source-preservation judgment,
+observed behavior, adverse findings and remaining limits.

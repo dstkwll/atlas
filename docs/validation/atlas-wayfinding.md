@@ -39,7 +39,7 @@ The evaluator's 39 correctness tests passed. The new skill passed frontmatter va
 
 Detailed attempts, source hashes, tool traces, per-turn change observations and independent reviews remain local maintainer evidence. Codex snapshots contain hashes; actual writes and saved decisions were inspected through tool records and retained artifacts. The reusable synthetic cases and review criteria are public; trial histories and host diagnostics are not installed with the product.
 
-Not established: donor parity; generic implicit selection; long-session compaction; every exit or prototype transition; an unscripted human session reaching readiness; Copilot IDE or workplace-host behavior; other model families; or automatic installation and update behavior. The installed stable package is separate from this draft. No merge, release or installation of the unmerged candidate is part of this validation.
+Not established: donor parity; generic implicit selection; long-session compaction; every exit or prototype transition; an unscripted human session reaching readiness; Copilot IDE or workplace-host behavior; other model families; or automatic installation and update behavior. No merge, release or installation of the candidate was part of this validation.
 
 ## Portable authoring and prose revision
 

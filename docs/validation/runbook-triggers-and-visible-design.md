@@ -6,7 +6,7 @@ The routing audit found no orphaned reference among the 36 guides. It did find a
 
 Discovery now explicitly presents credible competing approaches with shared context, meaningful tradeoffs, a recommendation and reasons before collaborative convergence. Architecture links to that comparison method. Follow-up questions should distinguish the approaches and respond to the user's answers. Explicitly delegated choices remain the lead's to decide and explain without an approval stop; constraint-determined choices need no invented alternatives. The charter records the clarified experience.
 
-Selective consultation, proportionate small-task handling, ordinary implementation freedom, read-before-dependent-action, existing runbook notices, Arena confirmation and request-only reflection are retained. There is no new skill, runtime, mandatory menu or workflow stage. The initial candidate used 0.7.5. After integrating the independently merged 0.8.0 methods, package and marketplace versions advance together to 0.8.1 as a correction to existing behavior.
+Selective consultation, proportionate small-task handling, ordinary implementation freedom, read-before-dependent-action, existing runbook notices, Arena confirmation and request-only reflection are retained. There is no new skill, runtime, mandatory menu or workflow stage. The final tested package and marketplace versions were aligned at 0.8.1.
 
 ## Native observations
 
@@ -40,7 +40,7 @@ This correction makes the intended behavior more explicit and demonstrates relev
 
 ## Reconciliation with the selective coding methods
 
-After the initial trials, PR #34 merged new methods for parallel-test diagnosis, tool-using agent evaluation and evidence-based technical comparison at version 0.8.0. This draft integrates those methods unchanged. The shared specialist index retains their verification, TDD and agent-evaluation triggers, and combines technical choices needing external evidence with documentation impact. The core table also makes test-first work and parallel-test diagnosis explicit so its direct routes agree with the expanded index.
+The combined candidate integrates PR #34's methods for parallel-test diagnosis, tool-using agent evaluation and evidence-based technical comparison unchanged. The shared specialist index retains their verification, TDD and agent-evaluation triggers, and combines technical choices needing external evidence with documentation impact. The core table also makes test-first work and parallel-test diagnosis explicit so its direct routes agree with the expanded index.
 
 The initial observations above describe the pre-integration guidance; they are not retroactively attributed to the combined candidate. The earlier evidence limits, including policy over-elaboration and missing design records, remain applicable.
 

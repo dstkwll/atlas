@@ -18,21 +18,7 @@ These observations support bounded behavior claims, not a guarantee across hosts
 
 ## Superseded initial candidate, 2026-09-24
 
-The initial PR #38 candidate removed the mandatory closing paragraph. Historical reconstruction showed that this was an unsupported interpretation of the feedback: consistent orientation and authorized continuation were both intended. The candidate is superseded, not evidence of an accepted intent change. Its trials remain below for provenance.
-
-Three matched native scenarios ran once per condition on Codex Desktop 0.153.4 with `gpt-5.6-sol`, low effort and a 120-second per-trial limit. Baseline was main `1c0e2d6`; candidate was the same source with this PR's continuation section. Raw traces, snapshots and setup failures remain in local maintainer evidence.
-
-| Scenario | Baseline observation | Candidate observation |
-| --- | --- | --- |
-| Approved repair | Waited before approval, then edited and ran boundary assertions in the second turn | Same; recovered from a missing `python` command with `python3` and completed verification before returning |
-| Completed assignment | Acknowledgment plus mandatory next-action paragraph | Brief acknowledgment with no follow-up work or closing ritual |
-| Product decision | Plain options and recommendation, ending with a Next paragraph | Direct question, two practical alternatives and a short recommendation; no policy decision or implementation |
-
-Both conditions completed all three scenarios. Action traces and resulting artifacts support the repair observation; the read-only cases produced no file changes. Baseline also succeeded at continuation and clear language, so this small comparison does not establish improved persistence or general clarity. The question prompt explicitly requested plain language; spontaneous clarity, longer tasks, explicit limits, access failures, pauses and other hosts were not exercised in this comparison.
-
-Three earlier candidate attempts were rejected before model execution because `gpt-6-sol` was unavailable to the CLI account. One baseline setup attempt failed because an archive lacked Git metadata. These are retained setup failures, not behavior failures or passing trials.
-
-An independent Copilot source review using Claude Sonnet 5/high found no blocking instruction defects. The lead verified its caution about preserving decisions/check results and restored those words in that candidate’s reporting sentence; the behavioral samples preceded this small reporting clarification. Its stale-link check also found the Copilot profile still pointing to the removed mandatory-close section; that pointer now names continuation and clear input requests. Native profile behavior was not rerun. The reviewer did not inspect runtime evidence. Its coverage questions remain explicit limits above. The evaluator's 39 correctness tests and diff checks passed; those checks do not establish behavioral reliability.
+The initial PR #38 proposal withdrew mandatory Next without accepted authority and was superseded. Three matched native scenarios ran once per condition on Codex Desktop 0.153.4 with `gpt-5.6-sol`, low effort and a 120-second per-trial limit. Its trials compared main `1c0e2d6` with that earlier candidate, not the revised guidance below. The baseline samples supported authorized repair, completion orientation and a plain product decision; the earlier candidate completed repair and a product-decision response but omitted Next at completion. These trials do not validate the restored guidance. Baseline also succeeded at continuation and clear language, so this small comparison does not establish improved persistence or general clarity. The question prompt explicitly requested plain language; spontaneous clarity, longer tasks, explicit limits, access failures, pauses and other hosts were not exercised in this comparison. Attempts rejected before model execution because the requested model was unavailable, and a baseline archive lacking Git metadata, were setup failures, not behavior samples. Later reporting and profile-pointer clarifications were not rerun in the native profile. Detailed history remains in PR records, Git history and local maintainer evidence.
 
 
 ## Revised candidate: preserve orientation

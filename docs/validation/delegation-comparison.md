@@ -62,11 +62,8 @@ alone therefore cannot establish successful routing.
   improvements were incorporated: qualify snapshot exclusions and test the actual
   caller's false completion, not only the delivery function. All 29 evaluator
   tests passed, including the four new fixture/packet/observation tests.
-- Recovery onto main `008aaa1dbcafb976506140c0e2e85303ee96215f` preserved the
-  intervening ledger evaluation additions. All 39 current evaluator tests passed.
-  Only the README's adjacent additions needed reconciliation; executable files
-  were recovered unchanged. The installed package remains 0.7.4. This recovery
-  and the saved-output assessment did not rerun or replace any model trial.
+- All 39 current evaluator tests passed. Subsequent reconciliation and the
+  saved-output assessment did not rerun or replace any model trial.
 - The operator observed actual child-session identities for completed delegated
   treatments. Their source/probe reports and lead syntheses support useful
   application of Independent review and Failure handling. Full host tool traces

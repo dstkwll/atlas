@@ -7,10 +7,12 @@ Start with [AGENTS.md](AGENTS.md) and [the architect charter](docs/architect-cha
 | Information | Home |
 | --- | --- |
 | Product intent, architect responsibility and accepted architecture | Charter and relevant `docs/decisions/` records |
+| Consequential accepted documentation policy and rationale | [Documentation boundaries](docs/decisions/2026-09-26-documentation-boundaries.md) |
 | A substantive task's outcome, acceptance, decisions, blockers and continuation | Its [GitHub issue](https://github.com/dstkwll/atlas/issues) |
 | Implementation, review, checks and completed-change history | Linked pull requests and Git |
+| Public behavioral findings and material limits | Topic summaries in `docs/validation/`, including [guidance-authoring observations](docs/validation/guidance-authoring.md) |
 | Optional overview of work | A [GitHub Project](https://github.com/dstkwll/atlas/projects) containing those same issues and PRs |
-| Detailed trial traces and personal donor research | Maintainer evidence outside the installed package; public summaries retain material findings and limits |
+| Detailed trial traces and personal donor research | Maintainer evidence outside the installed package; public maintenance does not depend on private notes |
 
 Use an issue when meaningful decisions or unfinished work must survive sessions. A small self-contained fix can use its PR directly. Search existing work before creating another record. Creating or updating GitHub records requires the assignment's applicable authority; routine local continuity does not itself authorize publication. Keep protected information in its approved environment.
 

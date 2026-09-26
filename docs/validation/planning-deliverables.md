@@ -23,14 +23,14 @@ An independent Copilot reviewer, gpt-5.6-sol/high, received the three runbooks, 
 
 No workplace host, VS Code picker, live tracker publishing, cross-host transfer, unavailable-source model session or actual TDD implementation was exercised. Native CLI discovery does not prove the model loads and follows every skill. The forward exercise used candidate source files in an independent agent context, not the installed Copilot runtime. No personal installed copy was updated. Broader multi-ticket projects and recipient reliability remain unmeasured.
 
-Synthetic PRD, ticket, handoff and independent-review artifacts are retained in the sibling workspace directory research/2026-09-09-planning-deliverables. Reusable skills contain no donor runtime dependency.
+Synthetic PRD, ticket, handoff and independent-review artifacts are retained in local maintainer evidence. Reusable skills contain no donor runtime dependency.
 
 ## Configured location and recoverable HTML extension
 
-The initial forward exercise above predates the HTML default. The extension preserves existing canonical formats and resolves the configured planning root before creating artifacts. The local personal configuration was read to verify that `artifacts.planning_root` exists; no personal vault artifacts were written. Configuration is a candidate destination, not export authority. Real workplace routing was not exercised.
+The initial forward exercise above predates the HTML default. The extension preserves existing canonical formats and resolves the configured planning root before creating artifacts. Configuration is a candidate destination, not export authority. Real workplace routing was not exercised.
 
 A fresh independent agent received only the synthetic starter HTML. It reconstructed accepted intent, proposed realization, open choices, planning-only authority, unverified supplied facts and the next safe read-only activity. It correctly declined to infer implementation permission or runtime proof. Primary comparison found no lost material commitment. This is one bounded recovery example, not proof of recovery from every PRD or host.
 
 Chromium rendered the self-contained starter at 1280px and 390px with network requests blocked. Navigation targets resolved, the recovery disclosure opened, no page overflow or script errors occurred, and source contained no scripts. Desktop/mobile screenshots were inspected; narrow diagrams scroll within their region to retain readable labels. A three-page PDF generated with recovery collapsed retained its recovery text, verified by PDF text extraction. Other browsers, complete accessibility conformance and workplace HTML preview restrictions were not tested.
 
-A second gpt-5.6-sol/high Copilot text review found no blocking defects. Its suggested clarification that a configured path does not authorize exporting material was adopted. Primary inspection checked the referenced starter and relative links separately. Evidence is retained alongside the earlier exercise under `html/`.
+A second gpt-5.6-sol/high Copilot text review found no blocking defects. Its suggested clarification that a configured path does not authorize exporting material was adopted. Evidence is retained with the earlier exercise.

@@ -6,7 +6,7 @@ Date: 2026-09-06. Disposition: bounded local delivery and the other listed check
 
 Source baseline: `d877080ae3c6492176babc038cabcfea7936457a`. The portable product is five Markdown files totaling 21,969 bytes: one 999-word entrypoint and four conditionally loaded references (3,048 words total). No scripts, hooks, dependencies, services, worker roster or global settings are shipped.
 
-The skill was copied unchanged into isolated synthetic projects before independent evaluation. SHA-256 bindings are listed below; later changes to repository documentation do not change those evaluated product bytes. The product was committed as `02e6732379f1892c99e63665772926a58fe9a095`. [PR #4](https://github.com/dstkwll/atlas-successor/pull/4) binds the full repository candidate, including the later documentation checkpoint recording publication. The download's `SOURCE.txt` identifies its exact source commit.
+The skill was copied unchanged into isolated synthetic projects before independent evaluation. Later changes to repository documentation do not change those evaluated product bytes. The product was committed as `02e6732379f1892c99e63665772926a58fe9a095`. [PR #4](https://github.com/dstkwll/atlas-successor/pull/4) binds the full repository candidate, including the later documentation checkpoint recording publication. The download's `SOURCE.txt` identifies its exact source commit.
 
 ## Checks and observations
 
@@ -39,27 +39,10 @@ Repository resume request: a fresh read-only agent, without prior conversation h
 
 ## Reproduction surfaces
 
-The checks used `quick_validate.py`, a local-link traversal, `copilot skill list --json` in a clean target, file-byte comparisons, `git diff --check`, and Python standard-library checks. Synthetic fixture baselines were:
-
-- Direct: `d3b09ff295d457a00a823c9e4cdfbba2c5588591`.
-- Delivery: `3835ed8f97731a2d5cb5e6200fa924c293a8cc36`.
-- Boundary: `e17a73f231ef23b5eb3fd8faa1ea3af8b7fb764c`.
-- Review: `3f5998ae03fe30d31b209f00d0907da686f0ce16`.
-
-These are local disposable fixture identities, not remote product commits. They make the exercised inputs identifiable; they do not imply a hosted reproducible test service. Detailed local execution records are retained with the delivery artifacts. No work code, credentials, personal Drive contents or private production traces were used as fixtures.
-
-The completed delivery fixture's SHA-256 values are `382d121ccca9519e899fc4e319e5e14c3ce9600ca2a1167bd83174a5633a98a5` for `bookmarks.py` and `9aee08354817effac3abd505befb4e884badbf1b8cfb17341941e2fba7c223d7` for `test_bookmarks.py`. These bind the exercised changes even though the disposable fixture was not committed or published.
+The checks used `quick_validate.py`, a local-link traversal, `copilot skill list --json` in a clean target, file-byte comparisons, `git diff --check`, and Python standard-library checks. The direct, delivery, boundary and review fixtures were local and disposable; no hosted reproducible test service is implied. Detailed local execution records are retained with the delivery artifacts. No work code, credentials, personal Drive contents or private production traces were used as fixtures.
 
 ## Remaining limits
 
 No authenticated Copilot model run or VS Code UI session was completed here. Enterprise policies and installed host versions remain environment-specific. Independent Codex-agent exercises are evidence about the guidance, not interchangeable proof of every host/model combination.
 
 An actual correction-and-fresh-review cycle remains unverified: the completed feature exercise did not expose a defect requiring that cycle. The boundary exercise reconstructed a prepared durable record; it was not a live process-kill test of a newly persisted authority transition. No long-running, concurrent, multi-repository or production workflow was tested. No workplace feedback loop is required to install and use the guide; refine it during authorized real work.
-
-## Portable file identities
-
-- `SKILL.md`: `2b018e376a34fd5d390b83f32b73178f587d1902c4181aebabf19127f9c513d6`.
-- `references/continuity-and-decisions.md`: `0ac7fddb0c29e1b72970841d2147ae2256c0a18618c5da8545241c343a2fd364`.
-- `references/deliver-and-repair.md`: `5254e53eb950a4a7dda207a02c5a7763170aadbc6daf176edb80761f24da4823`.
-- `references/discover-and-design.md`: `e4643bbaa304e1794a99e824d147d531a9a95f1e65d5cbb66bf842149808d3e5`.
-- `references/independent-review.md`: `b166c5294940dd3b2784db843ebe6fa4f9da214d8c151d743f4578af04ef3ee9`.
