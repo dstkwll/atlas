@@ -26,4 +26,6 @@ Inspect resource owner, lifetime, aliasing, iterator/reference validity and copy
 
 Inspect actor isolation and invariants across reentrant awaits, task cancellation, main-thread work and ARC cycles. Choose weak or unowned capture according to actual lifetime. A sendability annotation or nonisolated declaration needs a supported safety argument; it cannot manufacture one. Distinguish a justified programmer assertion from failure reachable through ordinary external input.
 
+## Ground and report the result
+
 Return concrete triggering states, violated contracts, contextual guards and useful checks. Check language-version details against authoritative evidence when uncertain. Use [types and invariants](types-and-invariants.md) for representation design and [failure handling](failure-handling.md) for shared error/recovery behavior.

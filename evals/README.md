@@ -144,3 +144,6 @@ for the matched comparison with `hardware-deferred-repair` and its limits.
 See [wave-2 planning-artifact observations](../docs/validation/wave-2-authoring.md)
 for the fixed `notes-to-prd` and `transition-plan-replay` comparisons, separate
 HTML-only readers, complete-artifact review, and retained mixed outcomes.
+
+See [wave-3 technical-method observations](../docs/validation/wave-3-authoring.md)
+for source selection, the fixed architecture/composition trials, and their limitations.

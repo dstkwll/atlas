@@ -1,6 +1,6 @@
 # Service and framework boundaries
 
-Use the applicable section when a service change depends on framework lifecycle, ORM behavior, request binding or test wiring. First identify the actual framework/version and configured path; filenames are clues, not proof. Combine with [security](security-boundaries.md) or [data](data-and-migrations.md) only when those risks matter.
+Use the applicable framework sections when a service change depends on framework lifecycle, ORM behavior, request binding or test wiring. First identify the actual framework/version and configured path; filenames are clues, not proof. Combine with [security](security-boundaries.md) or [data](data-and-migrations.md) only when those risks matter.
 
 ## Django and DRF
 
@@ -25,5 +25,7 @@ Trace validated fields into mass assignment, route-model binding into authorizat
 ## Node services
 
 Trace middleware order, input parsing, error propagation and request/task lifetime. Confirm authentication and object authorization run on the actual route. Check bounded query/result sizes and cleanup after aborted requests. Detached logging or background work may be intentional but still needs owned failure behavior.
+
+## Report framework evidence
 
 Return the relevant framework assumption, evidence that it holds or fails, observable impact and tests actually run. Framework-specific findings need version evidence; missing access stays an uncertainty, not permission to upgrade or replace dependencies.
