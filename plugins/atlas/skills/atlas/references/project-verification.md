@@ -40,4 +40,6 @@ Follow the earliest meaningful divergence. Distinguish wrong product behavior, i
 
 When reconciling test reports, identify the build, suite, shard and attempt behind each result. Deduplicate retries or repeated imports without dropping an original failure, and distinguish missing/aborted shards from completed passing coverage. A green summary with incomplete underlying results leaves those claims unverified.
 
+## Return what was established
+
 Return the recipe location, checks actually executed, evidence retained, cleanup result and remaining limits. Maintain commands and meaningful setup/reset knowledge when they change; do not require an exhaustive map before new investigation. Confirm the recipe's usefulness from a fresh operator's available context when feasible. Readability and one successful exercise do not prove every feature, host or failure path.
