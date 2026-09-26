@@ -17,7 +17,7 @@ Primary inspection confirmed those authority and cadence distinctions against th
 
 Skill format validation, all 90 relative plugin file links, matching manifest versions and whitespace checks passed. The final diff preserves the existing no-default-retry-limit rule and uses existing records for material changes only. No separate skill, counter or direction log was introduced.
 
-These checks do not establish exact timing, adherence after compaction, actual tool recovery, or behavior in workplace hosts. Raw independent output is retained in the sibling workspace research/2026-09-09-direction-checks/review.md.
+These checks do not establish exact timing, adherence after compaction, actual tool recovery, or behavior in workplace hosts. Raw independent output is retained in local maintainer evidence.
 
 ## Runbook selection extension
 
@@ -27,7 +27,7 @@ Both agents reported reading and applying Discover and design and Failure handli
 
 The baseline also passed. This exercise therefore does not reproduce the workplace omission or establish an adherence improvement rate. It supports selection and useful application in a fresh file-reading agent context, not native Copilot profile activation, long-session retention, every specialist trigger or behavior across models. Earlier text-only scenarios remain separate evidence. The candidate change makes selection explicit and removes a broad routine-work exception; it adds no hooks, services, required hierarchy or new reporting system.
 
-Final skill validation, 95 relative links, matching manifests and whitespace checks passed. Profile wiring still resolves to the shared skill; no profile policy was duplicated. Raw outcomes are retained in the sibling workspace research/2026-09-09-direction-checks/selection/.
+Final skill validation, 95 relative links, matching manifests and whitespace checks passed. Profile wiring still resolves to the shared skill; no profile policy was duplicated. Raw outcomes are retained in local maintainer evidence.
 
 ## Relevance-based selection wording
 

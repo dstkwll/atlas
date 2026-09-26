@@ -121,12 +121,11 @@ single matched samples do not show that the added guides were necessary or super
 
 ## Interrupted attempts and limits
 
-Six attempts were interrupted by storage errors while capturing evidence. Three
+Six attempts were interrupted by storage errors during evidence capture. Three
 more failed during host startup; one explicitly reported inability to initialize
-SQLite state. This does not establish the cause of every startup error. After space
-was freed, all 15 remaining prepared cases and three UI follow-ups completed with
-retained traces; no new host failure occurred. Original attempts remain alongside
-their replacements rather than being removed from the count.
+SQLite state, but the cause of every startup error is unknown. All 15 remaining
+prepared cases and three UI follow-ups completed with retained traces after
+recovery; the original attempts remain counted alongside their replacements.
 
 These synthetic tasks do not establish rendered UI behavior, actual participant
 research, database restore, live account administration, training or production
@@ -136,6 +135,4 @@ or real conversations. The preselected bounded evaluation is complete, with the
 misses above. It supports review of the selective-method integration, not a claim
 that all relevant runbooks always fire or that visible design comparison is reliable.
 Broader [trigger/design acceptance](https://github.com/dstkwll/atlas/issues/33)
-remains open. This change remains a
-draft for owner review; no merge, release or installed-copy update follows from these
-observations.
+remains open. No merge, release or installed-copy update follows from these observations.
