@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "Atlas guidance for your main coding agent",
-    "version": "0.10.3"
+    "version": "0.10.4"
   },
   "plugins": [
     {
       "name": "atlas",
       "source": "./plugins/atlas",
       "description": "Software delivery guidance for your main agent: one lead with wayfinding, documentation, ticket, handoff, impact and reflection skills plus shared runbooks.",
-      "version": "0.10.3"
+      "version": "0.10.4"
     }
   ]
 }

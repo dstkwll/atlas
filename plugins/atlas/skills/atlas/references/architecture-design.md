@@ -16,7 +16,11 @@ An interface includes what its caller must know: invariants, ordering, errors, c
 
 Consider keeping or simplifying the existing structure alongside other viable approaches when there is a real choice. For each, make the consequential responsibility and data ownership, dependencies, failure/recovery and verification boundaries clear. Prefer cohesion, information hiding and narrow contracts; an abstraction needs a current consumer and a problem it prevents. Preserve conventions unless evidence justifies changing them.
 
-Compare options against the same task-specific criteria. Relevant questions include the user outcome, caller burden, duplicated knowledge, shared mutable state, temporal coupling, compatibility, operability, reversibility, access for verification and ongoing maintenance. Use small sketches of the same caller task when that exposes a consequential interface difference. Fewer methods or a shorter call sequence is not automatically better if it hides necessary control or loses guarantees. Make the comparison visible before synthesis using [discovery's comparison method](discover-and-design.md#deepen-ideas-through-conversation); a single recommended architecture does not expose the choices still belonging to the user. Do not manufacture alternatives when the constraints determine the answer.
+Compare options against the same task-specific criteria. Relevant questions include the user outcome, caller burden, duplicated knowledge, shared mutable state, temporal coupling, compatibility, operability, reversibility, access for verification and ongoing maintenance. Use small sketches of the same caller task when that exposes a consequential interface difference.
+
+A **deep module** provides substantial useful behavior while requiring comparatively little caller knowledge. For the same caller task, compare what callers must know and coordinate with the complexity each option hides. A small-looking interface can still push sequencing, configuration or error handling into every caller. Fewer methods or a shorter call sequence is not automatically better if it hides necessary control or loses guarantees. Implementation size alone does not establish depth.
+
+Make the comparison visible before synthesis using [discovery's comparison method](discover-and-design.md#compare-credible-approaches); a single recommended architecture does not expose the choices still belonging to the user. Do not manufacture alternatives when the constraints determine the answer.
 
 Use [Types and invariants](types-and-invariants.md) when rule enforcement or ownership is uncertain, [Blast radius](blast-radius.md) when effects reach beyond the immediate change, and other specialists for their specific uncertainties. These do not require a panel of agents.
 
@@ -24,7 +28,7 @@ Use [Types and invariants](types-and-invariants.md) when rule enforcement or own
 
 Choose evidence that can discriminate between viable designs: source inspection, a contract check, an authorized bounded probe or independent comparison. Name the uncertainty, what observation would change the recommendation, and the practical effort and side-effect bounds before a probe. An executable prototype is useful only when it answers the question; unavailable hardware or a failed setup does not establish architectural failure or success.
 
-When independent competing proposals would materially help, offer [Arena](arena.md) with its existing confirmation and bounds before launching. For equipment-dependent claims, [Project verification](project-verification.md) separates available evidence from what remains to be established. Do not make an unavailable proof a blanket stop on unrelated authorized design work.
+When independent competing proposals would materially help, offer [Arena](arena.md) with its existing confirmation and bounds before launching. For equipment-dependent claims, [Project verification](project-verification.md#when-evidence-depends-on-equipment-or-an-event) separates available evidence from what remains to be established. Do not make an unavailable proof a blanket stop on unrelated authorized design work.
 
 ## Reconcile one design and its decision boundary
 

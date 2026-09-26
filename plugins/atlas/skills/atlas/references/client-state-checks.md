@@ -1,6 +1,6 @@
 # Client state and lifecycle
 
-Use for reactive UI changes where state identity, asynchronous updates, rendering or lifecycle can invalidate behavior. Inspect the actual framework/version, user journey and project state-management approach. Apply only the relevant section; no separate reviewer per framework is required.
+Use for reactive UI changes where state identity, asynchronous updates, rendering or lifecycle can invalidate behavior. Inspect the actual framework/version, user journey and project state-management approach. Apply only the relevant framework sections; no separate reviewer per framework is required.
 
 ## React and TypeScript UI
 
@@ -18,6 +18,8 @@ Inspect widget identity, state ownership and the project's chosen state manager.
 
 ## Native/declarative mobile
 
-For Compose/Kotlin, check lifecycle-aware collection, state stability, effect keys and coroutine scopes. For Swift UI, check observed state ownership and actor/main-thread boundaries. For HarmonyOS/ArkUI, establish API/device level, observation semantics and navigation/resource compatibility from current project evidence. Do not migrate the app to another state model simply because the donor prefers it.
+For Compose/Kotlin, check lifecycle-aware collection, state stability, effect keys and coroutine scopes. For Swift UI, check observed state ownership and actor/main-thread boundaries. For HarmonyOS/ArkUI, establish API/device level, observation semantics and navigation/resource compatibility from current project evidence. Do not migrate the app to another state model simply because another guide prefers it.
+
+## Validate the affected transitions
 
 Exercise transitions users actually encounter: repeated submission, navigation away during a request, rapid input changes, retry after failure and returning to an existing screen. Static source review can identify hazards but does not prove interactive behavior. Use [user journeys](user-journeys.md) for live validation and [performance](performance.md) for measured rendering problems. Return the state sequence and concrete result supporting each finding.
