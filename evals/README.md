@@ -150,3 +150,7 @@ for source selection, the fixed architecture/composition trials, and their limit
 
 See [wave-4 specialist-method observations](../docs/validation/wave-4-authoring.md)
 for source selection, the fixed activity/chart/post-training comparisons, and their limitations.
+
+See [wave-5 cumulative authoring observations](../docs/validation/wave-5-authoring.md)
+for the fixed calendar, recovery, Arena and exact-output comparisons,
+final source dispositions, and cumulative coverage and limitations.
