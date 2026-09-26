@@ -147,3 +147,6 @@ HTML-only readers, complete-artifact review, and retained mixed outcomes.
 
 See [wave-3 technical-method observations](../docs/validation/wave-3-authoring.md)
 for source selection, the fixed architecture/composition trials, and their limitations.
+
+See [wave-4 specialist-method observations](../docs/validation/wave-4-authoring.md)
+for source selection, the fixed activity/chart/post-training comparisons, and their limitations.
