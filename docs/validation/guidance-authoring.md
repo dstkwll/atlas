@@ -1,6 +1,6 @@
 # Guidance authoring: evidence and limitations
 
-2026-09-26. This is a public, behavior-focused account of the connected-core writing pilot and the subsequent five-wave authoring program. It separates **source preservation** from **native behavior**. The reusable cases and review expectations remain in [the evaluator](../../evals/README.md), including the [connected-core rubric](../../evals/core-authoring-review.md) and [wave rubric](../../evals/wave-authoring-review.md). No result here establishes general improvement.
+2026-09-26. This is a public, behavior-focused account of the connected-core writing pilot and the subsequent five-wave authoring program. It separates **source preservation** from **native behavior**. The reusable cases and review expectations remain in [the evaluator](../../evals/README.md), including the [connected-core rubric](../../evals/core-authoring-review.md) and [interrupted-integration rubric](../../evals/interrupted-integration-review.md). No result here establishes general improvement.
 
 ## Scope and source identity
 

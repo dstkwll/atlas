@@ -382,5 +382,5 @@ FIXTURES.update(WAYFINDING_FIXTURES)
 from core_authoring_fixtures import FIXTURES as CORE_AUTHORING_FIXTURES
 FIXTURES.update(CORE_AUTHORING_FIXTURES)
 
-# Wave authoring synthetic recovery data; semantic expectations stay outside fixtures.
-FIXTURES.update(json.loads((Path(__file__).parent / "wave_authoring_fixtures.json").read_text()))
+# Interrupted integration recovery data; semantic expectations stay outside fixtures.
+FIXTURES.update(json.loads((Path(__file__).parent / "interrupted_integration_fixtures.json").read_text()))
