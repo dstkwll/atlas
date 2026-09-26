@@ -13,6 +13,7 @@ Classify the observed failure using actual examples and intermediate artifacts. 
 - **Reward-based updates:** inspect sampled responses, reward parsing, verifier behavior, grouping and reward variance. Working throughput with a degenerate advantage signal proves execution, not learning. Distinguish absent response diversity from a parser or reward-definition failure before scaling.
 - **Reward exploitation or drift:** compare held-out task quality with response length, reward and relevant update diagnostics. A reward increase with flat useful quality can warrant a controlled length-matched or otherwise discriminating comparison. Correlation alone does not identify the optimizer cause.
 - **Mixture-of-experts divergence:** when routing is implicated, compare model/configuration identity and equivalent token sequences across the relevant paths before attributing quality changes to aggregate expert counts. Collect only the bounded routing evidence necessary to discriminate the cause.
+- **Apparent stalls:** use [Build/runtime diagnosis](build-and-runtime-diagnosis.md) to locate the last active phase and compare bounded process, log and resource observations. A process that exists is not proof of progress; missing telemetry is not proof it is dead. Reconcile task status before another launch or cleanup.
 
 Start with the weakest sufficient experiment for the available trusted signal. Establish what a preflight or small run must demonstrate and what stops progression. A named gate or completed job is not evidence by itself. If the evaluator is invalid, repair it and reestablish a comparable baseline rather than preserving an invalid comparison or mixing incompatible results.
 
@@ -22,6 +23,6 @@ Derive the required inventory from the actual framework and save format: shards 
 
 Exercise a clean load in an authorized bounded environment before claiming the checkpoint usable for its intended resume or inference path. A directory, exit code or hashes alone do not prove loadability; a clean load does not prove model quality. Preserve evidence before replacing or cleaning an incomplete artifact. Do not register, resume from or publish a candidate whose required integrity remains unresolved.
 
-For apparent stalls, use [Build/runtime diagnosis](build-and-runtime-diagnosis.md) to locate the last active phase and compare bounded process, log and resource observations. A process that exists is not proof of progress; missing telemetry is not proof it is dead. Reconcile task status before another launch or cleanup.
+## Return the diagnostic result
 
 Return observed facts, plausible cause, the smallest discriminating next test or completed correction, preserved evidence and the progression boundary. Use held-out behavior under matched conditions for quality claims and disclose data/evaluator limits. No scalar, successful load, diagnostic outcome or runbook verdict supplies release authority.

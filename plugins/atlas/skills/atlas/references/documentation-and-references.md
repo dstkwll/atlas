@@ -20,4 +20,6 @@ Compare the same required scenario, deployment constraints and relevant versions
 
 Resolve consequential contradictions or identify a bounded compatibility/failure-path probe that separates alternatives. Include migration and operational obligations when relevant. Return the decisive evidence, tradeoffs and unresolved facts that could reverse the recommendation. Stop when remaining uncertainty would not change the decision or next useful slice. Use [Discover and design](discover-and-design.md) for probe boundaries and product judgment; no source quota or general market survey is required.
 
+## Return the answer or change with its evidence
+
 Return the answer or focused documentation change with supporting sources/versions, verified examples and remaining uncertainty. Include enough context for another agent to act without inheriting a required tool or another skill.

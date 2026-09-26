@@ -24,4 +24,6 @@ Deduplicate repeated tickets, forwarded comments and multiple channels for the s
 
 Compare explanations and proposed interventions against the evidence. Retain counterexamples that could change the decision. Explain which recommendation is supported, which remains a hypothesis, and what focused observation would resolve the remaining uncertainty. Preserve accepted product judgment separately from the researcher's interpretation; new findings do not silently change commitments.
 
+## Return the plan or synthesis
+
 Return a study plan or evidence synthesis suited to the assignment, with the decision it informs, source limitations, actionable implications and next evidence step. A plan is not a completed study, an expert critique is not usability validation, and proposed changes have no measured benefit until checked. Use [Product interface review](product-design-review.md) for design critique and [User journeys](user-journeys.md) for implemented interaction checks when those activities become relevant.

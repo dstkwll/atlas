@@ -22,4 +22,6 @@ Use representative queries and a baseline when changing chunking, embeddings, fi
 
 For production changes, inspect artifact/configuration binding, canary or rollout evidence, rollback to a known artifact, and how delayed labels or drift make failures visible. Reuse existing operational mechanisms; a bounded experiment need not create a promotion service or monitoring platform. Clinical or other specialized acceptance criteria come from the project's authorized domain owners, not this general runbook.
 
+## Report what was evaluated
+
 Return the tested dataset/query scope, candidate/baseline, reproducibility information, observed metrics/errors, failure slices and untested deployment claims. No single score supplies release authority.
