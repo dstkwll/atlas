@@ -1,146 +1,46 @@
-# Atlas behavior evaluation pilot
+# Atlas behavior evaluations
 
-This is a small maintainer tool, outside the installed plugin. It measures what current Atlas guidance does in actual native Codex sessions. It does not enforce a workflow in Atlas or prove reliability across hosts/models.
+This is a maintainer evaluation tool, outside the installed plugin. Use it to examine Atlas guidance in native agent work, not to enforce a product workflow. Start with the [case guide](case-guide.md) to choose a behavioral boundary, then read its governing rubric before interpreting a run. Cases support reusable regression checks and diagnostics; registration does not mean a case passed, was held out, or establishes reliability across hosts or models.
 
-The initial twelve tasks in cases.json separate ordinary work from nearby cases requiring diagnosis, caution or deeper discovery. They include actual PRD, ticket, handoff and repair artifacts, multi-turn agreement, uncertain local writes and native compaction. Expected behavior lives in review.md, never in the trial project. The model receives only the raw task, synthetic fixture, local operating boundaries and the selected skill. No hidden assertions or grader feedback are supplied to the model.
+The runner supplies raw tasks and synthetic local fixtures, operating boundaries, and an explicitly selected project-local skill. Reviewer expectations stay outside the trial project. For guidance changes, keep the baseline and candidate identifiable and use [guidance improvement](../plugins/atlas/skills/atlas/references/guidance-improvement.md) for the portable comparison and grading method rather than treating this README as another authoring standard.
 
-## Run
+## Run a selected case
 
-Prerequisites: Python 3.11+, the Codex CLI, an existing authenticated account with local auth.json, and the selected model available to that account. Native trials consume account usage. No extra packages, login, plugin installation or workplace access is performed. The checked host is recorded in each trial's metadata; the app-server protocol is experimental, so an incompatible host is a setup failure, not an Atlas failure.
+Prerequisites are Python 3.11+, a compatible Codex CLI, an existing authenticated account with local `auth.json`, and a model available to that account. Native trials consume account usage. They do not require extra packages, a new login, plugin installation, or workplace access. The app-server protocol is experimental: record the checked host from trial metadata and classify an incompatible host as a setup failure, not an Atlas failure.
 
 ```sh
 python3 -m unittest discover -s evals -p 'test_*.py' -v
 python3 evals/run.py --case repair --case continue --model gpt-5.6-sol --effort low --output /tmp/atlas-trial
 ```
 
-Use a new output directory for every invocation. Repeat --case to choose tasks; --repeat accepts 1–3. Default native time limit is 300 seconds per trial, with an explicit maximum of 600. The pilot schedule is one run per case plus two additional repair and continue runs, regardless of their behavioral results, after the runner is operational. Extra runs after harness repairs are diagnostic/replacement runs and must be labeled rather than silently dropped. A later `continue-ack` variant tests the shorter “Agreed! Thanks!” follow-up against authority supplied in the first turn; report it separately from the preselected schedule. No pass-rate or causal improvement claim is intended from these small counts.
+Use a new output directory per invocation. Repeat `--case` to select cases; `--repeat` accepts 1–3. The native time limit defaults to 300 seconds per trial and has an explicit maximum of 600. The initial twelve-case [pilot](../docs/validation/behavior-evals.md) had a prespecified run schedule, with additional repair and continuation runs; the later `continue-ack` follow-up was reported separately. Neither is a mandatory schedule for current case selection.
 
-Each trial gets a new workspace, CODEX_HOME, app-server process and fresh thread in that disposable home. Only existing authentication is copied into the temporary home; it is removed after the host stops, and never copied into evidence. Host configuration/history, installed user skills and MCP integrations are not copied. Standard Codex model instructions remain active. Every initial turn selects a project-local skill using native skill input; subsequent turns are plain conversation. This tests explicit skill activation, not automatic discovery from an unadorned prompt, a native Copilot profile or an IDE picker.
+Each trial receives a new workspace, `CODEX_HOME`, app-server process, and initial thread in that disposable home. Only existing authentication is copied there; it is removed after the host stops and never copied into evidence. Host configuration and history, installed user skills, and MCP integrations are not copied. Standard Codex model instructions remain active. The first turn of each fresh thread selects the local skill through native skill input. For cases with `fresh_thread_before`, the runner starts a new thread before the designated turn, retains the workspace and reselects the skill without copying the previous conversation. Other follow-up turns are ordinary conversation. This observes explicit top-level entry activation, **not** automatic entry selection from an unadorned request, native Copilot profile loading, or an IDE picker. Internal method selection after entry is still assessed on the raw tasks.
 
-The filesystem is the normal native workspace-write sandbox, not a security isolation experiment. The project instruction excludes other projects, user-profile sources, network operations, software installation, delegation and background services. External-write behavior is modeled by a local outbox. Attempts outside authority are failures even if blocked. No personal or work data belongs in fixtures.
+The normal native workspace-write sandbox is not a security-isolation experiment. Project instructions rule out other projects, user-profile sources, network operations, installation, delegation, and background services. A local outbox models external-write uncertainty. An unauthorized attempt is a failure even when blocked; fixtures must contain no personal or work data. The runner executes candidate Python only in trusted, bounded, non-adversarial local fixtures under the operator's permissions. Do not use its repair checker on hostile submissions.
+
+The [direct/delegated review pilot](delegation-review.md) is **separate**: it prepares matched packets for direct runbook use, a bounded worker, and a saved reviewer contract, and requires a host/operator with real fresh-worker support. `run.py` retains its no-delegation boundary. Packet preparation and endpoint facts are not behavioral grades; see the [separate-host pilot observations](../docs/validation/delegation-comparison.md).
 
 ## Evidence and grading
 
-The output retains raw native events, tool-call/output records filtered from the native rollout (no reasoning or instruction messages), stderr, prompts/metadata, candidate and runner file identities, per-turn file snapshots, final artifacts and objective facts. The filtered rollout has a tool-records-status.json recording file/record counts and parse errors; a parse-clean capture does not guarantee the host persisted every event. Without usable tool evidence, missing consultation remains UNKNOWN. File snapshots record content hashes, file kind, permission mode and symlink targets, excluding Git internals and Python bytecode. Final change-scope facts include any effects from the evaluator’s repair probe; probe_changes identifies those separately and must not be attributed to the agent’s native turn. They detect retained mutations to the observed project, not every transient write or effect outside it. The host's process group is terminated before final checks; this does not establish absence of deliberately detached descendants. Inspect tool events for such behavior and mark affected state claims UNKNOWN if quiescence cannot be established.
+A run retains raw native events; tool-call/output records filtered from the rollout, without reasoning or instruction messages; stderr; prompts and metadata; candidate and runner file identities; per-turn snapshots; final artifacts; and objective facts. `tool-records-status.json` reports capture counts and parse errors. A parse-clean capture does not prove that the host persisted every event. Without usable tool evidence, an unobserved consultation is **UNKNOWN**, not a demonstrated omission. Snapshots include content hashes, kind, permission mode, and symlink targets, excluding Git internals and Python bytecode.
 
-The repair checker runs candidate Python in the synthetic project, under the invoking operator's permissions. This is for trusted local fixtures and bounded non-adversarial trials, not arbitrary hostile code. Do not run it on an untrusted submission. Other checks inspect state without running generated code.
+Read `result.json`, actual artifacts, and attributable tool events, then apply [review.md](review.md) and any case-specific rubric linked in the [case guide](case-guide.md). Judge activation, routing, application/outcome, and authority/continuation separately. The `behavior_verdict` and `routing_verdict` fields in `result.json` are deliberately `UNREVIEWED` pending review. Exit 0 means native turns completed; exit 2 means a host trial was blocked. Neither means behavioral success. An `artifact_nonempty` fact does not establish useful content. Zero changes satisfies a narrow `no_implementation` fact, **not** the planning or conversational task. A passing evaluator probe is not evidence that the agent ran a test.
 
-Exit 0 means native turns completed; exit 2 means one or more host trials were blocked. Neither is a behavioral pass. Inspect result.json facts, then apply review.md to completed events and actual artifacts with independent judgment. Failed setup, unavailable traces and unreviewed behavior remain explicit. There is intentionally no keyword-based routing grader, numeric quality score or automatic behavioral PR gate.
+Final scope facts can include evaluator repair-probe effects: use `probe_changes` to distinguish those from the native turn. Snapshots detect retained mutations on observed paths, not every transient write or effect elsewhere. The host process group is terminated before final checks; that does not establish the absence of deliberately detached descendants. Inspect events and mark affected state claims UNKNOWN when quiescence or an outcome cannot be established. Request records likewise show a request, not a remote effect.
 
-The fast tests challenge the objective checks with a real failing boundary, valid alternative repairs, missing/empty-quality artifacts, duplicate writes and forbidden edits/deletion/mode/symlink changes. They test evaluator sensitivity, not model adherence. The separate calibration examples challenge the judgment rubric. Agent assertions and the evaluator's own successful test do not prove that the agent ran that test.
+For a compact evidence packet, use `python3 evals/review_packet.py /tmp/atlas-trial/repair-1`. It cites raw event lines and marks clipped output; resolve claims depending on omitted material against the raw evidence. The fast unittests challenge objective checks with failing boundaries, valid alternative repairs, missing or poor artifacts, duplicate writes, and forbidden edits, deletions, mode changes, and symlink changes. Calibration examples in [review.md](review.md#evaluator-calibration) challenge semantic judgment. These establish checker sensitivity on their examples, not agent adherence. There is no keyword routing grader, numeric quality score, automatic behavioral CI, or behavioral PR gate.
 
-For comparisons, hold task/fixture, host, model, effort, initial instruction source and tooling constant; retain both candidate identities and individual results. Do not feed prior trial outcomes into fresh sessions. A comparative/causal claim requires a suitable baseline; this initial pilot is descriptive. Add held-out task variants before tuning routing on these examples. Test additional models or Copilot only as separately identified conditions, not pooled successes.
+## Select evidence and limit claims
 
-Raw runs are local-only and ignored under evals/runs/. They can contain host metadata, local paths or unexpected content; review and sanitize any excerpts before publishing. Keep a concise sanitized result report under docs/validation/. Synthetic reusable cases, runner, assertions and rubric belong in this repository because maintainers need reproducible proof; private donor research does not.
+Choose a case for the decision at hand, including a nearby ordinary task or negative control when over-routing is a risk. The [case guide](case-guide.md) names the reusable boundaries and distinguishes fixed or post-hoc diagnostics. A diagnostic may help explain a failure or check a correction; reuse after inspecting outcomes is not held-out evidence. Freeze fresh, independently prepared cases **before** tuning when independence matters. Keep task, fixture, host, model, effort, instruction source, and tooling comparable; retain both candidate identities, every attempt, setup problem, adverse result, and baseline. Do not feed prior results into a supposedly fresh session or rerun until a favored condition passes. Repeat when observed variability and the decision warrant it.
 
-For a compact review packet, run `python3 evals/review_packet.py /tmp/atlas-trial/repair-1`. It cites raw event lines and marks clipped outputs; inspect raw evidence before resolving claims that depend on omitted content.
+Grade against human-anchored requirements and valid alternatives, using artifacts, tool events, and independently observed state. Record whole-task usefulness, unnecessary user interventions, consultation and authority, not just an endpoint or a passing check. Report unavailable traces, rendering, physical work, remote effects, and independent review as unverified. In particular, the [interrupted integration return rubric](interrupted-integration-review.md) distinguishes a bounded local repair and its tests from terminal-operation effects and whole-task acceptance. Its fixture is [interrupted_integration_fixtures.json](interrupted_integration_fixtures.json). Earlier receipts call that case `atlas-wave1-interrupted-return`; those receipts retain their original IDs. Do not infer alias support or rename historical results.
 
-## Pull request checks
+The frozen [garden PRD input](data/garden-prd.md) comes from the **actual flawed output** of the initial transition trial. Its [provenance note](data/README.md) records the limited predecessor-pointer replacement made before the replay input was frozen; the recorded defect remains. The downstream planning replay actively uses that fixed input to examine tickets and handoff; it is neither a gold-standard PRD nor a provenance-detection test. Use the full transition-chain case to review attribution against the original user decisions.
 
-The **Evaluator correctness** GitHub Actions check runs the fast unittest command on every pull request and pushes to main, using Python 3.11 on Ubuntu. It needs no Codex installation, model authentication or inference. A green check establishes evaluator correctness for the tested cases, not Atlas adherence. The workflow does not configure repository rules requiring the check before merge; maintainers can enable that once it is established.
+The main evidence gap is the ordinary lead journey: an unadorned request after intended Atlas activation, followed through realistic multi-file delivery, debugging, review, and messy human follow-ups. Select those tasks before tuning, alongside narrow regression cases; evaluate native Codex and Copilot configurations separately rather than pooling results. Retain baselines and assess whether the whole task became more useful without unnecessary intervention. These are next-evidence priorities, not a quota or promise of a new evaluation program.
 
-Behavioral trials remain optional, local maintainer evidence. Choose relevant cases before running: routing changes warrant activation and trivial-task cases; discovery changes warrant agreement and scope-boundary cases; ticket guidance warrants artifact and accepted-decision review; recovery changes warrant retry and uncertain-write cases. For consequential guidance changes, compare main and the candidate under matching conditions as described above. Retain every attempt, including failures and setup problems, rather than rerunning until a case passes.
+The **Evaluator correctness** GitHub Actions check runs fast unittests on pull requests and pushes to main with Python 3.11 on Ubuntu. It needs no Codex authentication or inference and is not configured here as a required merge rule. A green check supports evaluator correctness only for tested checks. Behavioral trials remain optional local maintainer evidence; hosting them in Actions would need a separate authentication and isolation design.
 
-Keep exact revisions, candidate differences, host/model settings, repetition counts, raw prompts, setup diagnostics and review history in local maintainer evidence. Public PR descriptions and `docs/validation/` summaries should state the behavior covered, concise observed results and material limitations; include environment details only when needed to interpret compatibility. Separate executed checks from source review and unverified claims. Later changes affecting tested behavior require fresh evidence or a clear qualification of what remains untested. Do not copy trial logs, personal conversation excerpts or machine-specific paths into public documentation, and do not make product use depend on private records.
-
-Native trials currently depend on local account authentication and execute synthetic project code. Hosting them in Actions would require a separate authentication and isolation design. There is no credentialed model workflow or automatic behavioral merge gate in this pilot.
-
-The `continuity` and `continuity-no-write` cases cover unprompted task records and the explicit write prohibition. See [native Copilot continuity evidence](../docs/validation/continuity.md) for separate profile activation trials, source revisions and observed limits. The rubric requires actual record content and update notices; planning-only change facts alone cannot establish success.
-
-The `partial-agreement` and `notes-to-prd` cases probe acceptance boundaries through tickets and continuity across a PRD amendment. See [planning-transition observations](../docs/validation/guidance-consistency.md) for separate native Copilot profile results, intermediate misses and recovery limits.
-
-See [capability coverage and limits](../docs/validation/documentation-and-reflection.md) for documentation, reflection, impact assessment and Arena checks, including [brief alignment through revisions](../docs/validation/documentation-and-reflection.md#arena-brief-alignment).
-
-See [turn-ending guidance checks](../docs/validation/turn-ending-guidance.md) for conversational progression, closing guidance and resumption limits.
-
-The `discovery-frontier` and `discovery-delegated` cases examine collaborative exploration and explicitly delegated planning. See [collaborative discovery observations](../docs/validation/collaborative-discovery.md) for the matched samples, diagnostic follow-up and remaining limitations.
-
-The `design-visible-choices`, `specialist-activity-triggers` and `design-constrained-choice` cases cover spontaneous visible comparison, activity-based specialist selection and a nearby case that needs no alternatives. Grade actual responses, successful source reads and artifacts with the semantic criteria in `review.md`. See [trigger and design observations](../docs/validation/runbook-triggers-and-visible-design.md) for coverage and remaining limitations.
-
-The twenty-two `specialist-*` cases documented in [the specialist rubric](specialist-review.md)
-exercise product critique, real-user research, feedback evidence, sensitive-data and
-identity lifecycles, recovery, charts, localization, command-line use, post-training,
-model-tool authority, unit cost, retrieval candidates and test-result reconciliation.
-Four nearby negative controls and a two-turn activity transition
-check selectivity as well as coverage. They use the existing native runner and file
-scope observations; their semantic rubric stays outside trial projects. The older
-`specialist-activity-triggers` case remains separate and unchanged.
-The fixed-text endpoint and caller-selected download cases are diagnostics
-added after source review, separately identified in the rubric; they are not held-out
-evidence from the initial nineteen-case selection.
-The archive-transcription UI variant was prepared independently after a prior UI
-failure without reading the revised design method. It is a fresh diagnostic scenario,
-not fully blinded or held-out evidence; the prior twenty-one cases are unchanged.
-
-The extended discovery scenarios exercise longer conversations, a fictional provider contract, wrong-problem proposals, paired authority conditions, and planning transitions. `transition-chain` starts a new native thread before its final recovery turn (`fresh_thread_before`, zero-based), reselects the local skill, and retains the generated workspace without copying conversation messages. Metadata records both thread IDs. This is artifact-based recovery in the same project, not a claim that the handoff file alone is sufficient. See the extended rubric in review.md before interpreting results.
-
-See [extended discovery and transition observations](../docs/validation/discovery-transitions.md) for completed scenario coverage, verified planning defects, correction scope and model/host limitations. `transition-plan-replay` is a diagnostic using a fixed generated PRD; it must not be reported as held-out generalization.
-
-The four `mission-*` cases cover a direct implementation route, a warranted feasibility probe, recovery after a successful probe, and an exhausted inconclusive investigation. Expected behavior is specified in `review.md`. The recovery case uses a fresh native thread with existing project artifacts; it does not emulate long-session compaction. See [mission continuity observations](../docs/validation/mission-continuity.md) for results and limits.
-
-Ledger recovery coverage: `ledger-disposable-driver`, `ledger-required-fixture`, and `ledger-stale-source` exercise different artifact roles and a historical passing report for changed code. Their objective checks include signed decimal previews, local export and source preservation when destination aliases input. The [review rubric](review.md#ledger-recovery-and-evidence-applicability) separately evaluates actual report consumption, applicability and candidate identity. See [coverage evidence](../docs/validation/ledger-recovery.md) for sensitivity results and limits.
-
-The [direct/delegated review pilot](delegation-review.md) prepares matched packets
-for direct runbook use, a bounded worker and an identical saved reviewer contract.
-It reuses evaluator snapshots but needs a host/operator with actual fresh-worker
-support; `run.py` keeps its no-delegation boundary. Preparation and endpoint facts
-are not model trials or behavioral grades.
-
-See [observations and limits](../docs/validation/delegation-comparison.md) for the
-initial Work Mode pilot, including blocked setup and incomplete timing evidence.
-
-See [specialist integration observations](../docs/validation/specialist-methods.md) for completed native coverage, retained interruptions and pending acceptance.
-
-The `composition-onboarding` and `composition-reveal` cases exercise combining
-interface, identity and approval concerns, then revising a search proposal when
-new access constraints emerge. Their [semantic rubric](composition-review.md)
-was prepared independently of the candidate instructions and stays outside trial
-projects. It distinguishes useful integration from consultation, including valid
-alternative designs and authority limits. See [lead composition observations](../docs/validation/lead-composition.md)
-for the matched comparison and its limits.
-
-The later `guidance-truncated-read` diagnostic reuses onboarding with an induced
-first-read output limit. Its [recovery rubric](composition-review.md#truncated-guidance-diagnostic)
-separates actual clipping and timely recovery from task quality, and records the
-prompt's attention cue. It is not an independent natural-request routing test.
-
-The three `wayfinding-*` cases cover a changing collaborative design conversation,
-artifact-based recovery followed by an explicit implementation request, and a
-bounded synthesis/pause. Their [independently prepared rubric](wayfinding-review.md)
-requires trace and per-turn artifact review; endpoint checks alone cannot establish
-mode continuity or conversational quality. The candidate uses `atlas-wayfinding`;
-a pre-capability baseline uses `atlas`, with that activation difference disclosed.
-The later `wayfinding-summary-continuity` diagnostic checks a progress summary
-through the shared Atlas entry after source-review clarifications; it is separate
-from the original suite. See [Wayfinding observations](../docs/validation/atlas-wayfinding.md)
-for native host coverage and remaining limits.
-
-The later `wayfinding-seed-catalog` scenario compares the same explicit entry
-before and after a prose revision, using a new four-turn catalog conversation.
-Its [rubric](wayfinding-review.md#seed-catalog-revision-scenario) covers a changed
-premise, partial acceptance, a short checkpoint and continued discovery.
-
-
-The `arena-core-calendar` and `arena-core-recovery` cases check connected lead,
-discovery, Wayfinding and continuity behavior during a writing revision. They use
-an existing HTML planning home, changed premises, partial acceptance, a suspended
-authorized correction and fresh-thread recovery followed by narrow delivery. The
-[semantic rubric](core-authoring-review.md) separates preservation and practical
-usefulness from consultation, saved-file presence and host completion. Raw fixture
-material stays separate from reviewer expectations. Reuse of an established
-regression boundary limits claims that these are wholly independent benchmarks.
-
-The `atlas-wave1-interrupted-return` case supplies a partially completed local
-integration and unresolved operation evidence with remaining repair/test bounds.
-Its [rubric](wave-authoring-review.md) distinguishes a verified local repair from
-whole-task acceptance, request records from remote effects, and substantive
-changes from truthful bookkeeping. Its matched `hardware-deferred-repair`
-comparison has a separate physical-acceptance limit.
-
-The fixed `notes-to-prd` and `transition-plan-replay` comparisons include separate
-HTML-only readers and complete-artifact review. Architecture/composition,
-activity/chart/post-training, and later calendar/recovery/Arena/exact-output cases
-exercise different bounded claims; do not pool them as a performance rate. See
-[guidance-authoring observations](../docs/validation/guidance-authoring.md) for
-the connected-core pilot and Waves 1–5, their source-preservation judgment,
-observed behavior, adverse findings and remaining limits.
+Raw runs under ignored `evals/runs/` are local-only and may contain host metadata, paths, or unexpected content. Sanitize excerpts before publication. Public PR descriptions and concise [validation summaries](../docs/validation/) should distinguish executed observations, source review, adverse findings, and untested scope without making private traces a prerequisite for maintenance. Later changes to tested behavior need fresh evidence or an explicit qualification. Do not pool heterogeneous cases or cross-host observations into a performance rate.
