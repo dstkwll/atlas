@@ -106,11 +106,17 @@ You can ask for one question at a time, a synthesis, a pause or a handoff. A cle
 
 Plugin installation includes this entry. For manual installation, copy both `plugins/atlas/skills/atlas-wayfinding/` and `plugins/atlas/skills/atlas/` as sibling folders in the host's skill directory. The shared folder supplies the lead, methods and third-party notices. A copied entry without that dependency is incomplete. As with Atlas itself, recoverable files and explicit invocation do not guarantee identical behavior across hosts or context restoration.
 
+## Atlas Show Me
+
+Select `atlas-show-me` when you want the current topic explained visually. In Codex, invoke `$atlas-show-me`; in other hosts, select the installed skill or ask the agent to read its exact installed path. Picker namespacing varies by host. The skill preserves HumanLayer's explicit-invocation metadata; Atlas's ordinary visual explanation guidance remains available through the lead without invoking this entry.
+
+The skill is included in the plugin and is also independently installable: copy the complete `plugins/atlas/skills/atlas-show-me/` folder, including `LICENSE` and `agents/`, into the host's skill directory. It requires no sibling `atlas` folder or additional service. It keeps prose brief, selects only the views that help, and uses the host's available viewer for HTML. Invoking it asks for an explanation; it does not authorize implementation or publication.
+
 ## PRD, ticket and handoff deliverables
 
 Ask Atlas naturally: **Turn this into a PRD**, **Break this into executable vertical slices**, or **Prepare a handoff for the next agent**. It uses the same shared runbooks as the optional skills `atlas-to-documentation`, `atlas-to-tickets` and `atlas-handoff`. These requests finish at the artifact unless further work is authorized; they do not publish tracker issues or start implementation automatically.
 
-The plugin includes the lead plus wayfinding, documentation, tickets, handoff, blast-radius and reflection entry points. For manual installation of all entry points, copy the complete contents of `plugins/atlas/skills/` into your chosen host's skill directory, keeping all skill folders as siblings. The entry points require the shared `atlas` folder and its notices; copying a wrapper alone is incomplete. Copying only `atlas` still supports these outcomes through its shared runbooks and ordinary conversation.
+The plugin includes the lead plus show-me, wayfinding, documentation, tickets, handoff, blast-radius and reflection entry points. For manual installation of all entry points, copy the complete contents of `plugins/atlas/skills/` into your chosen host's skill directory, keeping all skill folders as siblings. The lead-based entry points require the shared `atlas` folder and its notices; copying a wrapper alone is incomplete. `atlas-show-me` is self-contained. Copying only `atlas` still supports visual explanations and the planning outcomes through its shared runbooks and ordinary conversation.
 
 In Codex, select the discovered skill or use `$atlas-to-documentation`, `$atlas-to-tickets` or `$atlas-handoff`. In other hosts, select the corresponding installed skill from the host's skill picker or ask it to read the exact installed entry path; namespacing and picker support vary. The Atlas agent profile stays the same. A skill name identifies the deliverable, not a separate lead or mandatory stage.
 

@@ -2,7 +2,7 @@
 
 Atlas is a small software-lead guide for the agent you already use. Give the main agent a goal; it chooses useful investigation, design, implementation, review and repair, carries the architectural context, and returns for decisions that belong to you.
 
-The package contains one lead skill, six optional entry points, shared activity guides and a specialist runbook library. It requires no added service, hook, orchestration runtime or connection to this project's Drive folder. Your existing host, tools and project rules remain in control.
+The package contains one lead skill, seven optional entry points, shared activity guides and a specialist runbook library. It requires no added service, hook, orchestration runtime or connection to this project's Drive folder. Your existing host, tools and project rules remain in control.
 
 ## Use it in your project
 
@@ -30,6 +30,8 @@ The [specialist library](plugins/atlas/skills/atlas/references/specialist-runboo
 For a deliberate brainstorming or grilling session, select **Atlas Wayfinding** (`atlas-wayfinding`). It keeps a shared map of settled decisions, questions we can address now, blocked questions and the fog we cannot yet frame precisely. The lead follows your answers into consequences, investigates facts and uses relevant Atlas methods. The mode continues through ordinary replies until you finish, pause or clearly move into delivery. It uses your existing planning home; no issue tracker or separate agent is required. See [setup](SETUP.md#atlas-wayfinding).
 
 ## Finish at a useful artifact
+
+Select `atlas-show-me` to explain the current topic with the smallest useful visual: pseudocode, a call/component/file tree, a structural diff, Mermaid or a focused HTML artifact. It closely preserves HumanLayer's `show-me` examples and works on its own without loading the Atlas lead. See [setup](SETUP.md#atlas-show-me).
 
 Ask Atlas to produce a PRD, an ordered set of testable vertical slices, or a handoff for another agent. Optional `atlas-to-documentation`, `atlas-to-tickets` and `atlas-handoff` skills expose those same runbooks directly. They preserve settled intent and make remaining decisions, dependencies and test prerequisites visible. Artifact creation does not authorize implementation or tracker publication. See [setup](SETUP.md#prd-ticket-and-handoff-deliverables).
 

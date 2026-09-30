@@ -43,7 +43,7 @@ Reconsider selection before the next dependent action when a new concern appears
 | Create or interpret a chart, dashboard or quantitative graphic | [Quantitative visualization](references/data-visualization.md) |
 | Consequential responsibility, interface, ownership or dependency choices; repeated friction challenges the structure | [Architecture design](references/architecture-design.md) |
 | Contributions, shared resources or asynchronous returns need a coherent dependency and integration approach | [Coordinate work](references/coordinate-work.md) |
-| A bounded change, report triage, debugging, delegation, or ordinary repair | [Deliver and repair](references/deliver-and-repair.md) |
+| A bounded change, report triage, debugging, delegation, ordinary repair, or PR preparation | [Deliver and repair](references/deliver-and-repair.md) |
 | A claim warrants independent judgment or findings need reconciliation | [Independent review](references/independent-review.md) |
 | Ongoing work needs durable decisions, open questions or next steps; authority changes, context loss, pause or resumption | [Continuity and decisions](references/continuity-and-decisions.md) |
 | Unfamiliar behavior or code/spec disagreement | [Understand existing behavior](references/understand-behavior.md) |

@@ -18,6 +18,25 @@ When implementation exposes a poor provisional implementation choice within dele
 
 For a failing build/startup use [build diagnosis](build-and-runtime-diagnosis.md); for hidden or partial failure use [failure handling](failure-handling.md). Choose [test evidence](test-adequacy.md) from the claimed behavior. These references can inform direct work or a bounded worker; they do not create extra stages.
 
+## Prepare a reviewable pull request
+
+When preparing or updating a PR description, inspect the complete task diff and enough surrounding code, accepted intent and validation evidence to explain the final change. Follow the repository's template and publication authority. Preparing a description does not itself authorize committing, pushing or creating/updating a remote PR.
+
+Lead with the concrete problem and resulting behavior, usually in one sentence. Surface reviewer-relevant migrations, compatibility constraints, deliberate omissions and surprising decisions. Scale the description to the change; a small correction may need only a sentence and its validation.
+
+For a change whose shape helps a reviewer understand it, include a compact visual outline beside the text it supports. Choose only useful views: changed API or SQL contracts, key types, a shallow file tree showing responsibilities, a component tree with relevant hooks/state, or a call/data/control-flow sketch. Prefer a `diff` block for a change to an existing shape; show the complete target shape when most of it is new or omitted context would hide ownership or order. For example, this schematic sketch explains a save-path change:
+
+```diff
+ saveDocument
++  return if content is unchanged
+   persistContent
++  invalidatePreview
+```
+
+Ground the view in the actual diff and label a schematic sketch when it is not literal code. Preserve failure branches, ordering and boundaries that matter to review. Use the [visual explanation guidance](discover-and-design.md#explain-and-co-design-through-a-useful-visual) when choosing a representation; a file-by-file changelog or a mandatory diagram suite is unnecessary.
+
+Keep actual checks/results, unverified behavior and material risks alongside the outline. Link relevant issues or decisions when available. Rewrite a stale title or description around the final scope, then verify any authorized remote update succeeded. A clear visual explains the change; it is not validation evidence.
+
 ## Use workers selectively
 
 A single lead can deliver a clear slice directly. When interdependent contributions, shared resources or asynchronous returns create coordination or integration uncertainty, use [Coordinate work](coordinate-work.md). It guides dependencies, bounded assignments and integrated evidence; a single ordinary worker does not require a separate planning exercise.
