@@ -2,6 +2,8 @@
 
 Portions of the guidance are adapted from [ECC](https://github.com/affaan-m/ECC), [HumanLayer skills](https://github.com/humanlayer/skills), [Matt Pocock's skills](https://github.com/mattpocock/skills) and [Diagram Design](https://github.com/cathrynlavery/diagram-design). Their contributions cover specialist engineering checks, visual explanation, type contracts, instruction authoring and maintenance, refactoring, planning deliverables, collaborative questioning and wayfinding, test-first techniques and diagram craft. Selected product-interface, user-research, quantitative-visualization, lifecycle, recovery and specialist diagnostic methods are adapted from [Agency Agents Collection](https://github.com/collectivestruggle/agency-agents-collection/tree/8ef49232e02431f7ca4792b487e5a85a7939ff3a). All use the following MIT license; these notices accompany plugin and standalone skill distributions. The diagram starter also carries its applicable notice for standalone copying.
 
+The visual PR description guidance in `references/deliver-and-repair.md` is adapted from HumanLayer's [visual-pr skill](https://github.com/humanlayer/skills/tree/ca7c8088db69e315a8b2deea43820270457f8f3c/plugins/visual-pr). Its concise change outlines are integrated with Atlas's existing repository-format, validation and publication boundaries.
+
 MIT License
 
 Copyright (c) 2026 Affaan Mustafa
