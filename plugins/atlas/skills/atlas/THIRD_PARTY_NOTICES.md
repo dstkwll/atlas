@@ -4,6 +4,8 @@ Portions of the guidance are adapted from [ECC](https://github.com/affaan-m/ECC)
 
 The visual PR description guidance in `references/deliver-and-repair.md` is adapted from HumanLayer's [visual-pr skill](https://github.com/humanlayer/skills/tree/ca7c8088db69e315a8b2deea43820270457f8f3c/plugins/visual-pr). Its concise change outlines are integrated with Atlas's existing repository-format, validation and publication boundaries.
 
+The package's sibling `atlas-show-me` skill closely preserves HumanLayer's [show-me skill](https://github.com/humanlayer/skills/tree/ca7c8088db69e315a8b2deea43820270457f8f3c/plugins/show-me), with an Atlas name, portable HTML opening and explicit assignment boundaries. Its own `LICENSE` retains the HumanLayer MIT notice for independent distribution.
+
 MIT License
 
 Copyright (c) 2026 Affaan Mustafa

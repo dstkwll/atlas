@@ -18,7 +18,9 @@ If the profile is unavailable, invoke the Atlas plugin's skill from the `/` pick
 
 Existing organizational/project instructions and tool permissions continue to apply.
 
-See the repository [setup guide](https://github.com/dstkwll/atlas/blob/main/SETUP.md) for installation, updates, manual skill use and continuity. All operational guidance is contained in [the skill](skills/atlas/SKILL.md) and its relative references; the profile is only a native entrypoint. No access to the Atlas repository or Drive is required during work.
+See the repository [setup guide](https://github.com/dstkwll/atlas/blob/main/SETUP.md) for installation, updates, manual skill use and continuity. Shared lead guidance is contained in [the skill](skills/atlas/SKILL.md) and its relative references; the profile is only a native entrypoint. No access to the Atlas repository or Drive is required during work.
+
+Select [`atlas-show-me`](skills/atlas-show-me/SKILL.md) for a concise visual explanation of the current topic, from a small call tree or structural diff to focused HTML when needed. It closely preserves HumanLayer's `show-me` examples and explicit-invocation metadata. This entry is self-contained: for standalone use, copy its complete folder with its license and metadata; it does not load or require the Atlas lead.
 
 Select **Atlas Wayfinding** (`atlas-wayfinding`) for an interactive brainstorming or grilling session. It uses the same lead and library, keeps a visible map of decisions, questions and poorly understood territory, and follows your answers into consequences. A progress summary keeps the mode active; a clear instruction to begin or resume delivery changes the assignment. Its [shared method](skills/atlas/references/wayfinding.md) remains available through ordinary Atlas too.
 
