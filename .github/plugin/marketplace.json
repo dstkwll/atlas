@@ -13,6 +13,12 @@
       "source": "./plugins/atlas",
       "description": "Software delivery guidance for your main agent: one lead with visual explanation, wayfinding, documentation, ticket, handoff, impact and reflection skills plus shared runbooks.",
       "version": "0.11.0"
+    },
+    {
+      "name": "toolbox",
+      "source": "./plugins/toolbox",
+      "description": "Standalone skills for clearer explanations, agent instructions, questionnaires, evidence checks and learning.",
+      "version": "0.1.0"
     }
   ]
 }

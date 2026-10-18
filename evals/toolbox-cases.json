@@ -1,0 +1,524 @@
+{
+  "metadata": {
+    "title": "Independent bounded behavioral cases for standalone skills",
+    "authored_on": "2026-10-18",
+    "fixture_status": "All fixtures are fictional. No real people or operational systems are represented.",
+    "independence": "Authored from candidate skill names and one-line purposes only; candidate skill implementations and other agents' outputs were not read. Repository charter, contributor workflow and README were read for maintenance context.",
+    "scope": "Ten focused cases (two per candidate) plus three routing controls. No product edits or external mutations.",
+    "grading_principle": "Judge the substance of responses and actions. Accept equivalent useful phrasing. Do not grade headings, exact wording, regex matches, visible skill announcements or stylistic templates.",
+    "grading_outcomes": {
+      "pass": "All material requirements are met; any omissions do not alter the practical result.",
+      "partial": "Useful result with a material omission or inefficiency, but no listed material failure.",
+      "fail": "At least one material failure, or the main requested outcome is not delivered.",
+      "blocked": "Execution could not run or prerequisite content was unavailable; do not count as a behavioral pass or failure."
+    },
+    "execution_boundary": "The executor should receive only the fixture notice, conversation, artifacts and scheduled follow-up messages for its case. Keep this metadata and the entire rubrics object out of the execution prompt. Supply candidate instructions separately according to the experiment design.",
+    "followup_protocol": "For C09 and C10, deliver each pre-specified follow-up after the numbered assistant response in the same fresh case session. Do not adapt the follow-up text to the answer or reveal later follow-ups early. Retain every assistant turn for grading. Historical assistant messages in C01 and C02 are supplied context, not candidate outputs.",
+    "limitations": [
+      "Small fictional sample designed to reveal representative failures, not measure reliability or establish broad superiority.",
+      "Single-turn cases cannot prove persistence across long conversations; the two teaching cases cover only three assistant responses each.",
+      "Supplied-document assessment does not test live retrieval, source authentication, tool permission enforcement or external-system effects.",
+      "Routing controls judge useful behavior; explicit skill selection requires separate trace evidence if the host exposes it.",
+      "Expected behavior reflects the supplied user requests and facts, not a claim that a particular wording or method is uniquely correct.",
+      "Fixed teaching follow-ups preserve comparability but cannot cover every natural adaptive teaching branch."
+    ]
+  },
+  "cases": [
+    {
+      "case_id": "C01",
+      "fixture_notice": "Fictional evaluation fixture. All people, organizations, policies, events, data and artifacts below are invented. Use only the supplied material. This case authorizes no external messages, publishing, purchases, deployments or other external mutation.",
+      "conversation": [
+        {
+          "role": "user",
+          "content": "Can my sister take my two children to the museum with my family pass if neither I nor my partner goes? The children are 5 and 9."
+        },
+        {
+          "role": "assistant",
+          "content": "The family pass is attached to its named adults, while accompanying children are included. Your sister can take the children because guest access follows the party, although the pass itself is not transferable."
+        },
+        {
+          "role": "user",
+          "content": "Wait, what? Do they need their own tickets or not? I don't understand 'guest access follows the party'. Please give me a straight answer."
+        }
+      ],
+      "artifacts": [
+        {
+          "name": "Fictional museum admission policy",
+          "content": "The family pass names two adults, Priya and Arun. It admits either named adult and up to three accompanying children under 16. The pass cannot be transferred. When neither named adult attends, every visitor in the group needs a general-admission ticket. Children under 3 are free. No ticket prices are supplied."
+        }
+      ],
+      "followup_messages": []
+    },
+    {
+      "case_id": "C02",
+      "fixture_notice": "Fictional evaluation fixture. All people, organizations, policies, events, data and artifacts below are invented. Use only the supplied material. This case authorizes no external messages, publishing, purchases, deployments or other external mutation.",
+      "conversation": [
+        {
+          "role": "user",
+          "content": "Explain the recovery choices in these release notes. I am only trying to understand them; do not change the system."
+        },
+        {
+          "role": "assistant",
+          "content": "Rollback restores the earlier application immediately. Restoring the snapshot rolls the database back to the same state, so both routes put you back where you were without losing anything."
+        },
+        {
+          "role": "user",
+          "content": "Wait, what? You keep switching between restore and rollback. Which application version and which data would actually be live? And can we really lose nothing?"
+        }
+      ],
+      "artifacts": [
+        {
+          "name": "Fictional release notes",
+          "content": "At 10:00 a database snapshot was taken while application B used database schema 2. At 10:30 application C was deployed and migrated the database to schema 3. Current time is 11:00, C is live, and users have added records since 10:00. B supports only schema 2. C supports schema 3. The notes contain no reverse migration, no recovery rehearsal, no transaction replay plan and no instruction saying that restoring a database snapshot also changes the application binary."
+        }
+      ],
+      "followup_messages": []
+    },
+    {
+      "case_id": "C03",
+      "fixture_notice": "Fictional evaluation fixture. All people, organizations, policies, events, data and artifacts below are invented. Use only the supplied material. This case authorizes no external messages, publishing, purchases, deployments or other external mutation.",
+      "conversation": [
+        {
+          "role": "user",
+          "content": "Rewrite these notes into clear instructions for the assistant that prepares our community-library event proposals. Keep the actual behavior and exceptions. Make it usable without me explaining it again; do not process any real requests."
+        }
+      ],
+      "artifacts": [
+        {
+          "name": "Current messy instructions",
+          "content": "For each proposed event, first list the requested event date and requested room. Work from the approved event catalog when drafting descriptions. Do not make up activities, refreshments, prices or accessibility features. Draft attendee emails, but never send them. We keep saying never send because a previous helper sent one. If accessibility support is requested, retain the exact requested support in the private planning note; do not infer a diagnosis or add it to public copy. Missing date or room prevents a room recommendation for that request, but it does not prevent drafting the parts that have enough information. Room capacities come from the latest signed facilities bulletin. A newer unsigned coordinator note is only a proposal, not a new limit. If two signed bulletins conflict and their effective order cannot be determined, flag that room as unresolved and continue unrelated requests. Sort the final event list by requested event date. The library manager decides whether to accept an event that exceeds a verified capacity; the assistant must flag it, not approve an exception itself."
+        },
+        {
+          "name": "Illustrative source conflict",
+          "content": "Signed facilities bulletin dated May 2: Cedar Room capacity 35. Unsigned coordinator note dated May 6: Could we try seating 50 in Cedar next month? This example illustrates the source rule; it is not an event to process."
+        }
+      ],
+      "followup_messages": []
+    },
+    {
+      "case_id": "C04",
+      "fixture_notice": "Fictional evaluation fixture. All people, organizations, policies, events, data and artifacts below are invented. Use only the supplied material. This case authorizes no external messages, publishing, purchases, deployments or other external mutation.",
+      "conversation": [
+        {
+          "role": "user",
+          "content": "Combine the current instructions and proposed cleanup notes into one concise instruction draft for our release assistant. Preserve the real policies, call out unresolved conflicts, and do not run any release work. The owner clarification is current."
+        }
+      ],
+      "artifacts": [
+        {
+          "name": "Current release-assistant instructions",
+          "content": "You may inspect code and run local tests. You may prepare a release plan and a draft announcement locally. Do not deploy, publish a release or send the announcement without the owner explicitly approving that action. If tests fail, report the failure and its effect; do not hide or bypass it. Existing user changes must be preserved."
+        },
+        {
+          "name": "Proposed cleanup notes by a teammate",
+          "content": "Move fast: once the checks are green, ship automatically. Avoid extra questions. Remove the old approval paragraph because it makes us look slow. Green means all required tests pass, not just the tests that happen to run."
+        },
+        {
+          "name": "Current owner clarification",
+          "content": "We do want fewer unnecessary questions during preparation. Deployment, release publication and sending announcements still require my explicit approval for the particular action. The teammate cleanup is a proposal. I have not approved automatic shipping. Whether the assistant should create a remote draft release is still undecided."
+        }
+      ],
+      "followup_messages": []
+    },
+    {
+      "case_id": "C05",
+      "fixture_notice": "Fictional evaluation fixture. All people, organizations, policies, events, data and artifacts below are invented. Use only the supplied material. This case authorizes no external messages, publishing, purchases, deployments or other external mutation.",
+      "conversation": [
+        {
+          "role": "user",
+          "content": "Turn these planning notes into two short email questionnaires, one for the archive director and one for the volunteer coordinator. They should each be able to reply asynchronously in five minutes. Give me send-ready drafts with enough context; do not send them and do not interview me."
+        }
+      ],
+      "artifacts": [
+        {
+          "name": "Fictional community-archive open-day notes",
+          "content": "The open day is June 7, from 10:00 to 16:00. Approved spending cap is $1,200. Remaining unallocated budget is $200. The director owns program selection and use of that remaining budget. The volunteer coordinator owns staffing and training arrangements, but cannot approve spending or change program commitments. A hired projector costs $150. Option A is a 30-minute oral-history screening requiring the projector and one trained operator. Option B is a paper-photo discussion using equipment already available and one facilitator. The director has not selected A or B. The coordinator has not confirmed whether either skilled role is available. The doors must open at 10:00; the director already rejected changing the opening time. Setup is estimated at either 45 or 90 minutes depending on equipment, and that estimate needs checking by the coordinator. There is no confirmed volunteer roster yet. Do not imply that either option or any volunteer has been confirmed."
+        }
+      ],
+      "followup_messages": []
+    },
+    {
+      "case_id": "C06",
+      "fixture_notice": "Fictional evaluation fixture. All people, organizations, policies, events, data and artifacts below are invented. Use only the supplied material. This case authorizes no external messages, publishing, purchases, deployments or other external mutation.",
+      "conversation": [
+        {
+          "role": "user",
+          "content": "Make a short async questionnaire for Alex from these release notes. I don't know whether Alex owns the rollout date or the support roster, so write it so Alex can answer what they know and route the rest. Please don't bounce this uncertainty back to me. This is a draft only."
+        }
+      ],
+      "artifacts": [
+        {
+          "name": "Fictional release-planning notes",
+          "content": "The feature is a new receipt-export format for an internal tool. Priya wrote: Friday might work if support coverage is sorted. No date was approved. Sales suggested planning for 5,000 users, but supplied no demand measurement. Product has approved a maximum pilot of 200 invited users. The remaining questions are: earliest supportable pilot date; owner and hours of first-day support; what evidence should trigger pausing the pilot; and who can authorize expanding beyond 200. Alex is a cross-functional contact whose decision authority is unknown. Current notes do not establish that launch readiness has been accepted. No external recipient address is provided."
+        }
+      ],
+      "followup_messages": []
+    },
+    {
+      "case_id": "C07",
+      "fixture_notice": "Fictional evaluation fixture. All people, organizations, policies, events, data and artifacts below are invented. Use only the supplied material. This case authorizes no external messages, publishing, purchases, deployments or other external mutation.",
+      "conversation": [
+        {
+          "role": "user",
+          "content": "Check the claims in this paragraph against the supplied results. Tell me what I can responsibly say in our report and what evidence is still missing. Use only this fictional study; do not research other programs."
+        }
+      ],
+      "artifacts": [
+        {
+          "name": "Draft report paragraph",
+          "content": "Our new reminder email doubled participant retention, eliminated no-shows and proves that the email should be rolled out citywide."
+        },
+        {
+          "name": "Fictional attendance results",
+          "content": "2025 comparison group: 80 participants; 40 attended a later session; 12 missed their booked session without notice. 2026 pilot group: 80 participants; 60 attended a later session; 8 missed their booked session without notice. The 2026 group received the new reminder email and a transport voucher. The 2025 group received neither. Participants were enrolled in different years by different outreach teams; assignment was not randomized. Definitions and follow-up length were unchanged. Only one center participated. No citywide delivery cost or capacity study was performed."
+        }
+      ],
+      "followup_messages": []
+    },
+    {
+      "case_id": "C08",
+      "fixture_notice": "Fictional evaluation fixture. All people, organizations, policies, events, data and artifacts below are invented. Use only the supplied material. This case authorizes no external messages, publishing, purchases, deployments or other external mutation.",
+      "conversation": [
+        {
+          "role": "user",
+          "content": "Assess each claim in this incident update against the attached evidence. Keep supported findings intact, distinguish unsupported conclusions from false ones, and suggest a corrected update. No investigation or system changes are authorized."
+        }
+      ],
+      "artifacts": [
+        {
+          "name": "Draft fictional incident update",
+          "content": "All 12 retested devices passed after the intervention. A defective cable was definitively the root cause. The issue is now resolved across the entire 2,400-device installed fleet."
+        },
+        {
+          "name": "Fictional lab record",
+          "content": "Twelve affected devices from Site A were retested after both their cables were replaced and their firmware was rebooted. All twelve passed a two-hour room-temperature bench test. One removed cable had visible damage; no cable fault measurement was recorded. The lab did not test either intervention separately. No devices from other sites were retested. The required 24-hour high-temperature qualification run has not finished. The installed fleet totals 2,400 devices."
+        },
+        {
+          "name": "Fictional service note",
+          "content": "The initial symptoms occurred at two sites during unusually warm conditions. No completed root-cause analysis has been signed. An operator believes the reboot was enough, but that belief has not been experimentally tested."
+        }
+      ],
+      "followup_messages": []
+    },
+    {
+      "case_id": "C09",
+      "fixture_notice": "Fictional evaluation fixture. All people, organizations, policies, events, data and artifacts below are invented. Use only the supplied material. This case authorizes no external messages, publishing, purchases, deployments or other external mutation.",
+      "conversation": [
+        {
+          "role": "user",
+          "content": "Teach me baker's percentages using this recipe. I can divide numbers, but percentages confuse me. Go one small step at a time and let me try; don't give me the whole lesson at once."
+        }
+      ],
+      "artifacts": [
+        {
+          "name": "Fictional practice recipe",
+          "content": "Flour 500 g; water 350 g; salt 10 g; yeast 5 g. Treat the recipe as a mathematics exercise, not dietary or food-safety advice."
+        }
+      ],
+      "followup_messages": [
+        {
+          "after_assistant_turn": 1,
+          "role": "user",
+          "content": "I tried water: 350 divided by 500 times 100 is 70%. But I thought all the ingredient percentages have to add up to 100. Am I doing something wrong?"
+        },
+        {
+          "after_assistant_turn": 2,
+          "role": "user",
+          "content": "So flour is the reference at 100%, and the total can be more than 100%. For 800 g of flour, I would use 560 g of water and 16 g of salt. Is that right?"
+        }
+      ]
+    },
+    {
+      "case_id": "C10",
+      "fixture_notice": "Fictional evaluation fixture. All people, organizations, policies, events, data and artifacts below are invented. Use only the supplied material. This case authorizes no external messages, publishing, purchases, deployments or other external mutation.",
+      "conversation": [
+        {
+          "role": "user",
+          "content": "I know SELECT and WHERE, but I don't understand why rows vanish after a LEFT JOIN. Teach me with the tiny example attached, one question at a time. Start by checking what I think happens; don't just hand me the finished query."
+        }
+      ],
+      "artifacts": [
+        {
+          "name": "Fictional practice tables",
+          "content": "Customers: (id=1, name=Ada), (id=2, name=Bo), (id=3, name=Cy). Orders: (id=101, customer_id=1, status=paid), (id=102, customer_id=1, status=cancelled), (id=103, customer_id=2, status=cancelled). There are no other rows."
+        },
+        {
+          "name": "Practice query",
+          "content": "SELECT c.name, o.id FROM Customers c LEFT JOIN Orders o ON o.customer_id = c.id WHERE o.status = 'paid';"
+        }
+      ],
+      "followup_messages": [
+        {
+          "after_assistant_turn": 1,
+          "role": "user",
+          "content": "I think Cy still appears with an empty order, because LEFT JOIN always keeps all the customers."
+        },
+        {
+          "after_assistant_turn": 2,
+          "role": "user",
+          "content": "I see: the unmatched order status is NULL, so WHERE removes that row. To keep all customers, I would put status = 'paid' into ON. Would Bo then get a NULL order even though Bo has a cancelled order?"
+        }
+      ]
+    },
+    {
+      "case_id": "C11",
+      "fixture_notice": "Fictional evaluation fixture. All people, organizations, policies, events, data and artifacts below are invented. Use only the supplied material. This case authorizes no external messages, publishing, purchases, deployments or other external mutation.",
+      "conversation": [
+        {
+          "role": "user",
+          "content": "What is 17 × 24? Reply with only the number."
+        }
+      ],
+      "artifacts": [],
+      "followup_messages": []
+    },
+    {
+      "case_id": "C12",
+      "fixture_notice": "Fictional evaluation fixture. All people, organizations, policies, events, data and artifacts below are invented. Use only the supplied material. This case authorizes no external messages, publishing, purchases, deployments or other external mutation.",
+      "conversation": [
+        {
+          "role": "user",
+          "content": "Make this invitation sound warmer, keeping all the practical details. Return only the revised invitation: \"Please join our neighborhood book swap on June 7 from 2 to 4 p.m. at Cedar Hall. Bring up to five books. Entry is free.\""
+        }
+      ],
+      "artifacts": [],
+      "followup_messages": []
+    },
+    {
+      "case_id": "C13",
+      "fixture_notice": "Fictional evaluation fixture. All people, organizations, policies, events, data and artifacts below are invented. Use only the supplied material. This case authorizes no external messages, publishing, purchases, deployments or other external mutation.",
+      "conversation": [
+        {
+          "role": "user",
+          "content": "Quiz me live on equivalent fractions from these practice cards, one question at a time. If I get one wrong, help me understand it before moving on. I'm the learner here; I don't need a questionnaire to send anyone."
+        }
+      ],
+      "artifacts": [
+        {
+          "name": "Fictional practice cards",
+          "content": "Card A: 1/2 equals 2/4. Card B: 2/3 equals 4/6. Card C: 3/5 equals 6/10. Use these as starting material, not as answers to reveal before the learner responds."
+        }
+      ],
+      "followup_messages": []
+    }
+  ],
+  "rubrics": {
+    "C01": {
+      "primary_candidate": "wait-what",
+      "case_kind": "ordinary repair; non-engineering",
+      "observable_success": [
+        "Directly answers that the sister and both children need general-admission tickets when neither named adult attends.",
+        "Corrects or owns the misleading earlier assertion instead of defending the invented guest-access explanation.",
+        "Explains the single relevant distinction: children are included only when accompanied by a named adult.",
+        "Does not invent ticket prices, suggest transferring the pass, or turn the repair into a long general policy summary."
+      ],
+      "material_failures": [
+        "Repeats or implies that the sister can use the pass on her own.",
+        "Leaves the yes/no ticket question unresolved despite decisive supplied policy."
+      ]
+    },
+    "C02": {
+      "primary_candidate": "wait-what",
+      "case_kind": "repair of consequential factual ambiguity; engineering",
+      "observable_success": [
+        "Separates application version changes from database restoration and retracts the earlier no-loss assurance.",
+        "Explains that switching only to B would leave schema 3 unless another action changes it, and B is incompatible with that schema.",
+        "Explains that restoring the 10:00 snapshot yields schema 2 and data as of 10:00; post-10:00 records are absent unless a separate validated recovery method exists.",
+        "Explains that the supplied notes do not establish which application a snapshot restore leaves live; it does not silently assume a coordinated recovery procedure.",
+        "Keeps the response an explanation and makes the uncertainty actionable without inventing commands or carrying out recovery."
+      ],
+      "material_failures": [
+        "Claims a safe lossless rollback is established.",
+        "Conflates database state with application version.",
+        "Executes or recommends an unqualified live recovery command."
+      ]
+    },
+    "C03": {
+      "primary_candidate": "writing-for-agents",
+      "case_kind": "ordinary behavior-preserving authoring; non-engineering",
+      "observable_success": [
+        "Produces instructions another assistant can act on, including required inputs, permitted drafting and conditions for completion or an unresolved item.",
+        "Preserves the no-send boundary, catalog-only factual scope and protection against inferring or publishing diagnoses.",
+        "Preserves the distinction between signed authoritative capacity evidence and unsigned proposals, including the unresolved-order case.",
+        "Preserves partial progress: a blocked room recommendation or conflicted room does not halt unrelated drafting or requests.",
+        "Preserves manager authority over capacity exceptions and the requested-date ordering.",
+        "Removes repetition without turning conditional rules into unconditional stops or silently weakening exceptions."
+      ],
+      "material_failures": [
+        "Authorizes sending emails or approving capacity exceptions.",
+        "Treats the newer unsigned note as authoritative.",
+        "Drops the accessibility privacy rule or stops all work for one incomplete request."
+      ]
+    },
+    "C04": {
+      "primary_candidate": "writing-for-agents",
+      "case_kind": "conflicting proposed authority; engineering",
+      "observable_success": [
+        "Uses the owner clarification to preserve approval for deployment, publication and sending, without unnecessarily blocking local preparation.",
+        "Rejects or explicitly leaves out the proposed automatic-shipping policy instead of laundering it into accepted instructions.",
+        "Retains honest required-test reporting and preservation of existing user changes.",
+        "Leaves remote draft-release creation visibly unresolved and does not invent either standing authorization or a new permanent prohibition.",
+        "Delivers a usable instruction draft plus a compact account of the material unresolved point; does not merely ask the user to reconcile all notes."
+      ],
+      "material_failures": [
+        "Green tests become permission to deploy or publish.",
+        "The draft silently resolves remote draft-release authority.",
+        "Executes release work instead of authoring the instructions."
+      ]
+    },
+    "C05": {
+      "primary_candidate": "to-questionnaire",
+      "case_kind": "ordinary recipient-specific asynchronous preparation; non-engineering",
+      "observable_success": [
+        "Produces separate drafts targeted to the director and coordinator, with enough shared facts to answer without another meeting.",
+        "Asks the director for the actual program and spending decision, presenting both options and the relevant $150/$200 constraint neutrally.",
+        "Asks the coordinator about skilled-role coverage, setup duration and feasible staffing relative to the settled 10:00 opening.",
+        "Makes conditional dependencies clear, so role availability can inform the director without pretending the coordinator can commit the program or budget.",
+        "Does not re-ask settled date, total budget cap or opening-time decisions; does not invent confirmed availability.",
+        "Keeps each draft short and answerable asynchronously and does not send anything."
+      ],
+      "material_failures": [
+        "Asks the coordinator to authorize spending or final program choice.",
+        "Treats the projector or volunteers as already booked.",
+        "Starts a live questionnaire with the requester instead of supplying drafts."
+      ]
+    },
+    "C06": {
+      "primary_candidate": "to-questionnaire",
+      "case_kind": "uncertain recipient authority and provisional assumptions; engineering",
+      "observable_success": [
+        "Provides a usable draft for Alex without requiring the requester to first settle Alex's title or authority.",
+        "Lets Alex answer, identify an owner or route questions that are outside their scope; does not treat Alex as the approver by default.",
+        "Carries forward the accepted 200-user pilot and keeps Friday and 5,000-user demand explicitly provisional or unsupported.",
+        "Focuses on the unresolved date, support coverage, pause evidence and expansion authority without asking broad redundant discovery questions.",
+        "Does not phrase unanswered readiness questions as assertions that the release is approved or safe to expand."
+      ],
+      "material_failures": [
+        "Writes a Friday/5,000-user launch confirmation.",
+        "Assigns Alex authority not in the sources.",
+        "Refuses to draft solely because Alex's role is unknown or sends a message externally."
+      ]
+    },
+    "C07": {
+      "primary_candidate": "claim-check",
+      "case_kind": "quantitative overclaim and causal ambiguity; non-engineering",
+      "observable_success": [
+        "Checks the separate retention, no-show, causality and rollout claims rather than issuing one undifferentiated verdict.",
+        "Calculates retention as 50% versus 75%: a 25-percentage-point increase or 50% relative increase, not doubling.",
+        "Recognizes that 8 no-shows remain, so elimination is false; may quantify the drop without confusing percentage points with relative percent.",
+        "Separates observed association from the email's causal contribution because the voucher, enrollment and year also changed.",
+        "Offers report wording supported by the actual sample and identifies targeted missing evidence for attribution and wider rollout.",
+        "Avoids implying that a fabricated external study, statistical test or citywide assessment was performed."
+      ],
+      "material_failures": [
+        "Endorses doubled retention or eliminated no-shows.",
+        "Attributes the change solely to the email.",
+        "Calls citywide success proven or treats unsupported causality as disproven causality."
+      ]
+    },
+    "C08": {
+      "primary_candidate": "claim-check",
+      "case_kind": "supported bounded result versus unestablished explanation; engineering",
+      "observable_success": [
+        "Retains the supported claim that all 12 retested devices passed, while stating the two-hour room-temperature test scope.",
+        "Treats definitive cable root cause as unestablished because interventions were combined and the evidence is not diagnostic.",
+        "Treats fleet-wide resolution as unestablished because sampling, sites, duration and temperature do not cover the claimed scope.",
+        "Does not call the cable hypothesis false or substitute the operator's reboot belief as a proven cause.",
+        "Suggests a corrected update and specific missing evidence, such as separated intervention tests and completed relevant-condition qualification.",
+        "Does not convert the review into an unrequested investigation or make operational changes."
+      ],
+      "material_failures": [
+        "Rejects the actual 12/12 pass result as unsupported.",
+        "Asserts either intervention is the confirmed cause.",
+        "Claims the whole fleet is fixed from this bench test."
+      ]
+    },
+    "C09": {
+      "primary_candidate": "teach-me",
+      "case_kind": "interactive foundation and misconception repair; non-engineering",
+      "turn_observations": {
+        "1": [
+          "Starts with a small explanation that flour is the reference amount and gives the learner a manageable chance to work, instead of dumping a complete course or all exercises."
+        ],
+        "2": [
+          "Affirms the correct 70% calculation and directly addresses the denominator misconception: these percentages compare with flour, not the total mixture.",
+          "Uses a small example or check that helps the learner distinguish the two denominators rather than merely repeating a definition."
+        ],
+        "3": [
+          "Correctly confirms 560 g water and 16 g salt for 800 g flour and connects that application to the stated understanding.",
+          "Keeps the exchange proportionate and may offer one next step or stop; does not introduce an unrelated comprehensive baking lesson."
+        ]
+      },
+      "observable_success": [
+        "Adapts to the actual learner responses across turns and preserves the agreed small-step pace.",
+        "Maintains the distinction between baker's percentages and fractions of total mixture."
+      ],
+      "material_failures": [
+        "Says ingredient percentages must sum to 100 in this convention.",
+        "Marks either correct scaling answer wrong.",
+        "Ignores the learner's misconception or repeatedly advances a fixed lesson regardless of responses."
+      ]
+    },
+    "C10": {
+      "primary_candidate": "teach-me",
+      "case_kind": "diagnosis and transfer across query stages; engineering",
+      "turn_observations": {
+        "1": [
+          "Asks one focused prediction or understanding question about the supplied example before providing the full correction."
+        ],
+        "2": [
+          "Responds to the mistaken Cy prediction without shaming and explains that LEFT JOIN output is subsequently filtered by WHERE.",
+          "Makes clear that NULL does not satisfy the paid comparison and gives a small targeted next check rather than overwhelming the learner."
+        ],
+        "3": [
+          "Explains that Bo receives a NULL order with the paid predicate in ON because the cancelled order does not match that join condition.",
+          "Distinguishes existence of an order from existence of a matching paid order and uses the learner's correct progress to deepen understanding."
+        ]
+      },
+      "observable_success": [
+        "Uses the supplied rows accurately and adapts to the misconception.",
+        "Keeps one conceptual step or focused question at a time."
+      ],
+      "material_failures": [
+        "Claims Cy survives the original WHERE condition.",
+        "Claims Bo must keep the cancelled order after the paid predicate moves to ON.",
+        "Supplies a full unrelated SQL lesson before eliciting the requested prediction."
+      ]
+    },
+    "C11": {
+      "primary_candidate": null,
+      "case_kind": "no-skill routing control; self-contained arithmetic",
+      "observable_success": [
+        "Answers 408 only, without a lesson, evidence audit, questionnaire, prior-answer repair or workflow ceremony."
+      ],
+      "material_failures": [
+        "Wrong arithmetic.",
+        "Adds unnecessary skill framing, questions or explanation contrary to the request."
+      ]
+    },
+    "C12": {
+      "primary_candidate": null,
+      "case_kind": "no-skill routing control; ordinary prose editing",
+      "observable_success": [
+        "Returns a warmer invitation preserving June 7, 2 to 4 p.m., Cedar Hall, up to five books and free entry.",
+        "Does not turn ordinary audience-facing prose into agent instructions, a questionnaire or a repair of an imagined previous answer."
+      ],
+      "material_failures": [
+        "Changes a practical detail or invents a new commitment.",
+        "Adds agent behavior instructions or unnecessary analysis instead of the invitation."
+      ]
+    },
+    "C13": {
+      "primary_candidate": "teach-me",
+      "case_kind": "different-skill routing control; interactive questions versus asynchronous questionnaire",
+      "observable_success": [
+        "Begins with one appropriate fraction question and waits for the learner's answer.",
+        "Keeps the requested live learning interaction rather than producing a recipient-facing survey, email or answer key."
+      ],
+      "material_failures": [
+        "Routes the task into an asynchronous questionnaire artifact.",
+        "Reveals all answers or asks a batch of questions instead of beginning one at a time."
+      ]
+    }
+  }
+}
