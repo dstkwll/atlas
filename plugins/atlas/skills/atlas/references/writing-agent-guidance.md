@@ -8,7 +8,7 @@ Lead with the outcome and the situation that calls for this method. Make the fir
 
 Choose a familiar concept when it gives the agent something precise to reason with. Define its recognition test beside it, then use the name consistently. A **blocked question** can already be stated, but needs another answer, source or investigation; **fog** is territory whose questions are not yet clear. Those definitions guide classification. A label such as “thoughtful discovery” supplies much less direction.
 
-The term earns its place through that decision, not through a claim that a particular word reliably activates a model. Use ordinary language where no special concept is needed.
+The term earns its place through that decision, not through a claim that a particular word reliably activates a model. Use ordinary language where no special concept is needed. Before replacing several instructions with one compact term, check what obligations, exceptions or distinctions it loses and what role, intensity or authority it might imply. Retain the separate requirements when the term cannot carry them faithfully.
 
 ## Put decisions and their consequences together
 
@@ -28,7 +28,11 @@ Set the bar relative to the task. For a bounded code change, explicit affected c
 
 If a later action repeatedly tempts the agent to declare an earlier one complete, first clarify the earlier completion condition. Moving later instructions behind an ordinary file link does not remove them from a context that already loaded them. A separate agent or session is a different architectural choice, not a prose cleanup.
 
-## Use examples to resolve ambiguity
+## Check meaning and use examples
+
+Where competing readings could change behavior, check the literal actor, action and completion condition; implied or excluded meanings and qualifier scope; and what a reader can understand without the preceding conversation. Keep indispensable context beside the action or through a clear governing pointer.
+
+When preserving behavior, do not settle a consequential interpretation inside the rewritten instructions unless deciding it is within the assignment. For interpretations outside that authority, retain the source's wording or scope and report the proposed interpretation separately. A definition, recognition test, example or stricter reading can change an obligation, permission, exception, responsible actor, data-handling rule or completion condition. Writing that new rule and then asking for confirmation does not preserve the old behavior. Ordinary editorial choices that preserve these meanings need no additional approval step.
 
 Add a compact example where two reasonable readings would lead to different behavior. Show the consequential distinction, with enough context to understand it. An example should help the agent recognize a class of case; its incidental names, layout or tool choices do not become requirements.
 
@@ -69,4 +73,3 @@ For consequential changes to agent behavior, such as authority, routing or share
 Return the requested guidance with a concise account of the behavior retained or changed, how it is reached, what was checked and what remains unverified. Follow the active assignment, project rules and existing authority. Studying a donor or observing a preference does not authorize changing accepted policy or auditing unrelated guidance. This method introduces no required execution sequence, scoring system or permission boundary.
 
 Attribution for adapted material is in the [third-party notices](../THIRD_PARTY_NOTICES.md); using this method requires no external research or donor installation.
-
