@@ -35,6 +35,8 @@ For a change whose shape helps a reviewer understand it, include a compact visua
 
 Ground the view in the actual diff and label a schematic sketch when it is not literal code. Preserve failure branches, ordering and boundaries that matter to review. Use the [visual explanation guidance](discover-and-design.md#explain-and-co-design-through-a-useful-visual) when choosing a representation; a file-by-file changelog or a mandatory diagram suite is unnecessary.
 
+For behavior changes, show comparable before/after evidence when available: captured screenshots for visual changes or the relevant test/command and its observed output. Identify the revisions, inputs and conditions that matter to the comparison; distinguish execution from source inspection or expected behavior. If one side was not observed or conditions differ materially, say so and limit the claim rather than presenting a verified improvement. Use the project's existing validation and permissions; this reporting guidance does not require a new testing workflow or recreating an unavailable baseline.
+
 Keep actual checks/results, unverified behavior and material risks alongside the outline. For consequential changes, explain what reverting the code would restore, what data or external effects would remain, and whether recovery is verified or still unknown. Link relevant issues or decisions when available. Rewrite a stale title or description around the final scope, then verify any authorized remote update succeeded. A clear visual explains the change; it is not validation evidence.
 
 ## Use workers selectively
