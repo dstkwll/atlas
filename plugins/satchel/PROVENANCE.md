@@ -1,6 +1,6 @@
 # Satchel provenance
 
-`claim-check` is an original synthesis. The other skills adapt the sources below. Original licenses remain in each adapted skill folder so they accompany standalone copies.
+`claim-check` is an original synthesis. The entries below distinguish each skill’s origin from later contributions. Original licenses remain in each adapted skill folder so they accompany standalone copies.
 
 ## define-goal
 
@@ -8,7 +8,7 @@ Modified for Satchel from [OpenAI's define-goal](https://github.com/openai/skill
 
 ## reorient
 
-Adapted from Lauren Tan's [Ketchup](https://github.com/cursor/plugins/blob/978ca6e9c0e012047cd5058b8e829240336e704e/pstack/skills/ketchup/SKILL.md), including the [later pending-item clarification](https://github.com/cursor/plugins/blob/8838150c6b4829ea3c01782631213776d86df14a/pstack/skills/ketchup/SKILL.md). Modified for normal discovery and concise catch-up, with new advice only on request; no sibling skill or hard word limit is required. The original [MIT license](skills/reorient/LICENSE) is included.
+Reorient began as the project owner's original synthesis. The Satchel revision incorporates guidance from Lauren Tan's [Ketchup](https://github.com/cursor/plugins/blob/978ca6e9c0e012047cd5058b8e829240336e704e/pstack/skills/ketchup/SKILL.md) for the recap window and pending decisions, including the [later pending-item clarification](https://github.com/cursor/plugins/blob/8838150c6b4829ea3c01782631213776d86df14a/pstack/skills/ketchup/SKILL.md). It uses normal discovery and concise catch-up, with new advice only on request; no sibling skill or hard word limit is required. The original [MIT license](skills/reorient/LICENSE) is retained for the Ketchup contribution.
 
 ## teach-me
 
