@@ -4,7 +4,7 @@ Use when creating or revising agent-facing instructions, skills or agent runbook
 
 ## Give the method a clear job
 
-Lead with the outcome and the situation that calls for this method. Make the first useful action easy to find. A skill description or a link from the lead is part of the instruction: it must say when to reach the material, not merely name an attractive capability. Distinct triggers should correspond to distinct cases, rather than a list of synonyms.
+Lead with the outcome and the situation that calls for this method. Make the first useful action easy to find. A skill description or a link from the lead is part of the instruction: it must say when to reach the material, not merely name an attractive capability. Distinct triggers should correspond to distinct cases, rather than a list of synonyms. Keep procedure in the body. In a description, include exclusions only to prevent a likely mismatch; descriptions spend context whenever the host exposes them, even without invocation.
 
 Choose a familiar concept when it gives the agent something precise to reason with. Define its recognition test beside it, then use the name consistently. A **blocked question** can already be stated, but needs another answer, source or investigation; **fog** is territory whose questions are not yet clear. Those definitions guide classification. A label such as “thoughtful discovery” supplies much less direction.
 
@@ -55,6 +55,10 @@ Consider the human's burden too. Moving guidance out of the default context can 
 Give each rule one authoritative home. Brief reminders can connect a local action to that rule without creating a second definition. Before deleting apparent duplication, check that the relevant entry paths actually reach the surviving source and that the wording carries no additional obligation. Avoid both competing copies and essential instructions hidden behind weak pointers.
 
 Use the host's actual loading mechanism. A host without a native skill tool may need an explicit file path; another host may provide skill invocation. Invocation flags, tool names, hidden descriptions and context isolation are host capabilities to verify, not portable properties of prose. A referenced skill or runbook is not automatically a separate worker.
+
+Preserve the existing invocation policy unless changing it is within the assignment. Automatic discovery and permission to act are separate: selecting a skill does not authorize its consequential actions. For independently installable guidance, verify required references from the complete distributed folder, without relying on the author's checkout, sibling skills or donor installation. Shared references are valid when their availability is part of the supported installation.
+
+Preserve source credits in every supported distribution, including standalone skill copies, along with applicable licenses and modification notices. Place credits and adaptation history outside loaded task instructions unless an in-file notice is required. Package-level provenance does not replace required license files.
 
 ## Save state for its next reader
 

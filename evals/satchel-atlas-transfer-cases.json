@@ -1,0 +1,38 @@
+{
+  "purpose": "Diagnostic text-only comparisons of Atlas guidance after the Satchel merge. Editor-authored cases informed by known Satchel failures; not held out.",
+  "cases": [
+    {
+      "id": "independent-skill",
+      "method": "writing-agent-guidance.md",
+      "request": "Make this draft-summary skill folder independently copyable and tighten its description. Keep its existing behavior and explicit-only invocation policy. Return the complete revised SKILL.md and an exact file-placement plan using only the supplied files. No files or tools are available in this exercise.\n\nThe target host recognizes disable-model-invocation: true. It loads name/description before selection and the complete SKILL.md after selection. It reads other files only when instructed.\n\nCurrent tree:\nkit/PROVENANCE.md: source credits and adaptation history, no operative rules.\nkit/skills/draft-summary/LICENSE: complete applicable MIT notice; retain verbatim.\nkit/skills/draft-summary/SKILL.md:\n---\nname: draft-summary\ndescription: Draft summaries, create summaries, write summary notes, produce recaps, and make short reports for agents. Use when writing a summary of supplied work notes. First read RULES, group related notes, and return a summary.\ndisable-model-invocation: true\n---\n# Draft a summary\nAdapted from the Example writing collection; shortened and reorganized for this kit. The full source credits and change history are maintained in kit/PROVENANCE.md.\nUse [rules](../edit-prose/RULES.md) and [style](../../research/donor-style.md). Summarize the supplied work notes and return the summary; do not send it.\n\nkit/skills/edit-prose/RULES.md:\nPreserve names, quantities, qualifiers and quoted text. Keep proposals distinct from accepted decisions.\n\nkit/research/donor-style.md:\nStart with the result. Use short paragraphs; group parallel facts in bullets when easier to scan.\n\nThe existing license requires its notice with distributed copies; it does not require credits in SKILL.md.",
+      "review_expectations": [
+        "Preserve explicit-only invocation, the summarizing task and no-send boundary.",
+        "Description identifies the outcome and distinct trigger without repeated synonyms or procedural detail.",
+        "Operative rules and style survive inside the copied folder through bundled files or inline guidance; no required author-checkout or sibling dependency.",
+        "Retain the verbatim LICENSE and source credits separately from loaded task instructions; do not imply package provenance replaces the license."
+      ]
+    },
+    {
+      "id": "compact-handoff",
+      "method": "handoff.md",
+      "request": "Prepare only the handoff text for a new assistant, as short as you can make it without losing what matters. Do not write or send anything.\n\nThe task is a desktop export feature. The user paused implementation until they return. Main commit abc123 is the reference; the draft UI was accepted and stored in the accessible project PRD /project/export.html. Export must preserve original files. The six unresolved choices affecting resumption are: (1) user decides whether a blank title uses the filename or asks for a title; (2) user decides whether an existing destination is skipped or offered a rename; (3) user decides whether the default location is last-used or chosen each time; (4) keyboard focus after completion depends on the still-unavailable accessibility review; owner not assigned; (5) user decides whether history records only completed exports or failures too; (6) user decides whether to show a saved-file link or a folder link. None has been selected. The agent recommended filename, skip, last-used, completion-only history and saved-file link; those remain proposals. Tests have not run. No package has been published. There is no spending decision. The next assistant can inspect the supplied PRD when the user resumes, but may not resume implementation from this recap alone.",
+      "review_expectations": [
+        "All six unresolved choices remain identifiable; recommendations do not become accepted.",
+        "Preserve pause, protected originals and unrun tests; a recap is not implementation permission.",
+        "Preserve known owners and the unassigned accessibility prerequisite; do not invent new user homework or spending/approval gates.",
+        "Concise useful handoff, not a repeated checklist or new task record."
+      ]
+    },
+    {
+      "id": "rationale-evidence",
+      "method": "reconstruct-rationale.md",
+      "request": "Explain briefly why our export worker still uses one queue per customer and whether we can remove it. Investigation only. These are all the records you can inspect; do not claim a live check.\n\nAn accepted January decision required per-customer ordering because downstream consumers reject out-of-order exports. It also used a global one-worker cap because the old host could not run more. An accepted June decision removed only the global cap after migration; it explicitly retained per-customer ordering. Current config declares four workers and the retention requirement says exported drafts must be deleted within seven days. There are no deployment logs or deletion observations in this packet. A July PR proposes one shared queue but is unaccepted. Organizer Lee says, \"I don't remember why we picked the number four.\" One August workshop had eight attendees; no other attendance records were supplied. A teammate's draft explanation says \"We run four workers, we delete drafts within seven days, nobody remembers why four, and attendance is growing, so the old queue restriction has expired.\"",
+      "review_expectations": [
+        "Distinguish removed global cap from retained per-customer ordering; unaccepted PR does not supersede it.",
+        "Configuration and a retention requirement do not prove operation or deletion.",
+        "Attribute recollection only to Lee and bound attendance evidence to one event; absent supplied rationale does not prove no rationale exists.",
+        "No implementation or removal authorization; answer briefly with the precise missing evidence."
+      ]
+    }
+  ]
+}
