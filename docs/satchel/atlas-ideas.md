@@ -1,6 +1,6 @@
 # Atlas ideas from the Satchel work
 
-These were the original proposals from the standalone-skills work. The owner subsequently authorized their assessment in [issue #52](https://github.com/dstkwll/atlas/issues/52), delivered separately in [draft PR #53](https://github.com/dstkwll/atlas/pull/53). That follow-up records their dispositions and bounded Atlas changes; this table preserves the initial rationale, not current task status. [Issue #50](https://github.com/dstkwll/atlas/issues/50) owns the Satchel delivery, which leaves `plugins/atlas/`, the Atlas marketplace entry and Atlas's behavior unchanged.
+These proposals arose during the standalone-skills work. Their assessment is tracked separately in [issue #52](https://github.com/dstkwll/atlas/issues/52) and [PR #53](https://github.com/dstkwll/atlas/pull/53). This table preserves their initial rationale; those records hold the follow-up dispositions. [Issue #50](https://github.com/dstkwll/atlas/issues/50) owns Satchel. Its branch includes the latest Atlas main, and the Satchel changes leave Atlas's package and marketplace fields identical to that main.
 
 | Idea | Current evidence and possible benefit | Cost / evidence needed before changing Atlas |
 | --- | --- | --- |

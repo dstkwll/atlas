@@ -58,8 +58,12 @@ The package is intended for ordinary software work, with risk-linked assurance. 
 
 Validation results and limits accompany each pull request. Work-environment details do not need to be exported to use or improve the guide locally.
 
-## Maintain this package
+## Standalone utilities with Satchel
 
-Read [AGENTS.md](AGENTS.md), [the architect charter](docs/architect-charter.md), and [the contributor workflow](CONTRIBUTING.md), then the assigned [issue](https://github.com/dstkwll/atlas/issues) and linked PRs. The reusable product is `plugins/atlas/`; its one canonical skill lives at `plugins/atlas/skills/atlas/`. Deeper runbooks load only when relevant; the repository's coordination history is not part of the installed product.
+The same marketplace also contains [Satchel](plugins/satchel/README.md), a separate collection of skills for explanations, writing, decision history, questionnaires, evidence checks, learning, goals and session catch-up. Each complete skill folder works independently. Satchel and Atlas can be installed together, and neither requires the other. See [Satchel's setup instructions](plugins/satchel/README.md#install) for plugin installation or copying individual skills.
+
+## Maintain this repository
+
+Read [AGENTS.md](AGENTS.md), [the architect charter](docs/architect-charter.md), and [the contributor workflow](CONTRIBUTING.md), then the assigned [issue](https://github.com/dstkwll/atlas/issues) and linked PRs. Installable packages live in `plugins/atlas/` and `plugins/satchel/`. Atlas's canonical lead lives at `plugins/atlas/skills/atlas/`, with deeper runbooks loaded only when relevant. Repository maintenance instructions and work history are excluded from both packages.
 
 For maintainer behavior checks, use the [evaluation pilot](evals/README.md) and read its [observations and limits](docs/validation/behavior-evals.md). The evaluator and fixtures are not installed with Atlas.

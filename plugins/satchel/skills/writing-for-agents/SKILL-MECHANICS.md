@@ -1,12 +1,12 @@
 # Skill mechanics
 
-The skill-specific branch of [`writing-for-agents`](SKILL.md): what changes when the document is a skill (frontmatter, the invocation choice, and router skills). Everything else about writing it is the universal reference in `SKILL.md`.
+The skill-specific branch of [`writing-for-agents`](SKILL.md): what changes when the document is a skill (frontmatter, the invocation choice, and router skills). The general writing guidance is in [this folder's SKILL.md](SKILL.md).
 
 ## Invocation
 
 Two intended discovery patterns can shift the two loads. Their actual behavior is a host capability to verify:
 
-- A **model-invoked** skill can be selected automatically when its description matches the request. It may also be explicitly selectable by the user or reachable from other guidance. Write the description as the skill's top-level context pointer, carrying its purpose and trigger branches (the pointer-writing rules in `SKILL.md` apply in full). A model-invoked skill whose content is all reference can hold shared guidance if its callers can reliably reach it.
+- A **model-invoked** skill can be selected automatically when its description matches the request. It may also be explicitly selectable by the user or reachable from other guidance. Write the description as the skill's top-level context pointer, carrying its purpose and trigger branches (the [pointer-writing rules](SKILL.md#context-pointers) apply in full). A model-invoked skill whose content is all reference can hold shared guidance if its callers can reliably reach it.
 - A **user-invoked** skill reserves starting the method for the human's explicit choice where the host supports that policy. This spends cognitive load: the user must know it exists. It does not inherently remove its metadata from context, hide its files or enforce an authority boundary.
 
 Keep normal automatic discovery unless the user requests explicit-only invocation; preserve an existing invocation policy unless asked to change it. Invocation policy and permission to perform an action are separate: discovering a skill does not authorize publication or another consequential mutation.
@@ -21,7 +21,7 @@ Use a concise name and a description stating both what the skill does and when t
 
 ## Splitting by invocation
 
-The invocation cut of splitting (the sequence cut lives in `SKILL.md`): consider a separate skill when a distinct capability should be discoverable on its own, or another method needs that reusable behavior. A leading word you actually use in requests can help name it; demonstrate the independent use case. Additional discovery metadata and a new human choice have costs, so independent reach has to be worth them.
+Consider a separate skill when a distinct capability should be discoverable on its own, or another method needs that reusable behavior. For splitting by sequence, see [When to split](SKILL.md#when-to-split). A leading word you actually use in requests can help name it; demonstrate the independent use case. Additional discovery metadata and a new human choice have costs, so independent reach has to be worth them.
 
 ## Router skills
 

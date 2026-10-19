@@ -2,7 +2,7 @@
 
 This report separates source review, package discovery and behavioral evidence for the independently installable Satchel skills. [Adaptations](../satchel/adaptations.md) identifies sources and deliberate changes; [issue #50](https://github.com/dstkwll/atlas/issues/50) owns delivery. The observations below are bounded evidence, not a claim of improved reliability over the base model.
 
-Satchel was developed and evaluated under the provisional name **Toolbox** through commit `8e4bea37fd6d5a7eb97c9b4954601ece674da0d8`. The historical observations below retain that name, its commands and its recorded source identities. Renaming the package changes its installation identifier and documentation pointers; the five skill bodies, conditional mechanics reference, case definitions and bundled license text are unchanged.
+Satchel was developed and evaluated under the provisional name **Toolbox** through commit `8e4bea37fd6d5a7eb97c9b4954601ece674da0d8`. The historical observations below retain that name, its commands and its recorded source identities. At the rename, the installation identifier and documentation pointers changed; the five skill bodies, conditional mechanics reference, case definitions and bundled license text were unchanged. Later sections identify subsequent candidates and the checks that apply to them.
 
 ## Source review and structural checks
 
@@ -55,7 +55,7 @@ The reviewer called all 18 real transcript groups passing, with qualifications. 
 
 The successful baselines limit any incremental-value claim. No general reliability or superiority claim is supported by this small fictional sample. Final revisions also clarify source-versus-recall, offer optional practice without an extra interaction gate, preserve all requested questionnaire items, and keep original-source preference within the requested evidence boundary. Those source-review repairs are distinct from the observed behavioral defect in C03.
 
-## Final candidate checks
+## Five-skill follow-up checks
 
 Seven follow-up actor jobs completed: diagnostic rechecks C03 and C05, new task fixtures H01–H03, and a second C03 recheck after the first writing correction remained insufficient. They use separate frozen source snapshots. H02 has a second turn that declines exercises. The [new fixture definitions](../../evals/satchel-heldout-cases.json) disclose that their author had seen the original skills while executing the initial study and knew the revision brief, but had not read revised implementations or outcome grading. They are new tasks, not fully blind test design. Rechecks do not replace initial findings. All seven completed on the requested model/effort without observed actor gaps or truncated results, and prompt/transcript/source integrity checks passed.
 
@@ -75,7 +75,7 @@ These are reviews of returned artifacts and teaching responses. The rewritten in
 
 ## Satchel rename verification
 
-The owner selected **Satchel** before release; version `0.1.0` is unchanged. The five skill bodies, writing's mechanics reference, four upstream licenses and two case-definition files match the Toolbox commit `8e4bea37` byte for byte. The remaining package edits change the name, installation identifier and documentation links. All 60 Atlas files, its marketplace entry and the marketplace metadata remain unchanged.
+The owner selected **Satchel** before release and retained version `0.1.0`. At that rename checkpoint, the five skill bodies, writing's mechanics reference, four upstream licenses and two case-definition files matched Toolbox commit `8e4bea37` byte for byte. The other package edits changed the name, installation identifier and documentation links. All 60 Atlas files, its marketplace entry and the marketplace metadata were unchanged against the then-current main `57225e6`.
 
 An isolated offline check on macOS arm64 used the same cached Copilot CLI **1.0.91** runtime with fresh temporary configuration/cache. Three native commands registered the renamed local marketplace, installed `satchel@atlas` and listed its skills. All three exited successfully with empty stderr. Exactly the five expected plugin skills were enabled, each under `plugins/satchel/skills/`; the 17 package files remained unchanged during the check. Their aggregate identity, using the compact sorted-JSON method above, is `10fa4a1a6dcee29581cd39533d67463c860b7207f22d8ccf9af3c5e63978b264`.
 
@@ -105,7 +105,7 @@ A fresh reviewer assessed the full outputs with treatment labels hidden, plus on
 
 Successful baselines limit added-value claims. These actors had no callable tools, files or network: returned objectives and intended operations do not establish actual goal persistence, conflict handling, external effects or downstream execution of the drafted goals.
 
-### Bounded repair and final package
+### Bounded repair and seven-skill candidate
 
 The first focused repair attempted to reduce Reorient's reporting overhead while retaining every pending choice, and to avoid converting an action outside agent authority into an automatic user assignment. Define-goal now offers separate goal-backed work only when supported, preserving a text objective otherwise. The [new completed-task fixture](../../evals/satchel-additions-followup-case.json) was authored before the repair was inspected, but after its author saw the initial results and knew the verbosity concern. It is a new neighboring task, not a fully blind test design.
 
@@ -115,6 +115,37 @@ A fresh Opus 5.5/xhigh review assessed those four outputs and the current source
 
 Those final diagnostics tested Reorient hash `7ab909cc97d0c210b937093a33725b55f1202bd451f46c0ebaf6779a08e949f1`. The source review also required preserving explicit known running work, scope and timing facts, the notification window, general task boundaries and host-required formats. Those corrections were applied and checked against the review, producing shipped Reorient hash `190f28b03ebb128a10d284a9e0fc05565cf191f196002e3c4bb485aab3868690`. A one-clause clarification that unrelated active goals also need conflict handling produces shipped define-goal hash `13859279e5a13348e0943ccb69bdc919b316faab79392d86cb59c40f6822c944`. These last preservation/clarity edits received source/diff and package checks, **not another actor run**. The addition study contains sixteen actor calls in total; all attempts remain part of the evidence.
 
-The repaired package passes seven skill validators, six exact upstream-license comparisons, thirteen internal-reference checks, and preservation checks for all fifteen files in the original five skill folders and all sixty Atlas files. Atlas's marketplace entry and metadata also remain unchanged against main `57225e63ee31b8e477dcdd9d6eacd89cf5a45095`.
+The seven-skill candidate at `05eced03311ec5fa662b3b8966501624012d0285` passed seven skill validators, six exact upstream-license comparisons, thirteen internal-reference checks, and preservation checks for all fifteen files in the original five skill folders and all sixty Atlas files. Atlas's marketplace entry and metadata were also unchanged against main `57225e63ee31b8e477dcdd9d6eacd89cf5a45095`.
 
-Five native commands in isolated temporary configuration/cache on Copilot CLI **1.0.91** registered the local marketplace, installed `satchel@atlas`, discovered seven Satchel skills and discovered each new complete folder independently. Two host-provided builtin skills also appeared. All commands exited successfully with empty stderr, and candidate bytes remained unchanged. The final 24-file package identity is `d95d00a495aca17d7b784c153f4822b6a453c557d101d63cd7a865a90d1e65f5`, using the compact sorted-JSON method above. This repeats structure and local discovery, not co-installation, native inference or other hosts. User installations and settings were untouched.
+Five native commands in isolated temporary configuration/cache on Copilot CLI **1.0.91** registered the local marketplace, installed `satchel@atlas`, discovered seven Satchel skills and discovered each new complete folder independently. Two host-provided builtin skills also appeared. All commands exited successfully with empty stderr, and candidate bytes remained unchanged. That 24-file package's identity is `d95d00a495aca17d7b784c153f4822b6a453c557d101d63cd7a865a90d1e65f5`, using the compact sorted-JSON method above. These checks repeated structure and local discovery, not co-installation, native inference or other hosts. User installations and settings were untouched.
+
+## Why, Unslop and the complete writing pass
+
+The nine-skill candidate integrates Atlas main `58abf6a6dd779635dabd668f879e6d426a6d6098` (0.11.2). All 60 Atlas package files and its marketplace fields match that main. Satchel remains an unreleased 0.1.0. The writing pass covered the complete PR, including the authoring guide, source notices, documentation and PR description. The original seven skill bodies remain unchanged from `05eced0`; writing's mechanics reference now links explicitly to its own parent guide and sections. Historical findings above remain tied to their original candidates.
+
+A fresh Copilot Claude Opus 5.5/xhigh source review found two wording issues in Unslop. Before its actor calls, “Edit the text itself” became “Provide revised wording rather than only listing problems,” and quotation preservation was broadened from attributed quotations to all quotations. These changes clarify the intended editing task without adding an approval gate for already-authorized edits. Why's reviewed source was unchanged.
+
+### Observed behavior
+
+[Four fictional cases](../../evals/satchel-writing-history-cases.json) were authored before their author read either implementation. Six fresh calls completed on **Claude Opus 5.5/xhigh**: four candidate responses and matched ordinary-prompt baselines for the seed-swap explanation and newsletter edit. Actors received only the raw request, records and candidate guidance where applicable; grading expectations were withheld. Each call had a 300-second bound. No retries, event gaps or result truncation were observed. Prompt/source and raw-fixture equality checks passed.
+
+The actor sources match the delivered files: Why SHA-256 `a8fea9408c796869b9d56314945877f11edaaf469404654b649263f917dc4821`; Unslop `5c503ede97049b25ec30747bc3c37ea65aca231ed427d6d8aefab755f84ffd2c`.
+
+A fresh Opus 5.5/xhigh reviewer assessed all six responses with treatment labels hidden. It accepted two constructed valid alternatives and rejected two seeded errors: invented historical motives and permission to send messages based only on rota approval. These four controls check grader sensitivity, not actor behavior. The brief explicitly emphasized evidence scope and authority; masking does not make this independent discovery of those defect classes. The reviewer judged both WY02 arms partial and the other responses as meeting their rubrics, with qualifications. Primary inspection retains the WY01 overclaims below despite that overall grade. A separate review of the revised Unslop source found no required repairs; exact source/diff preservation was checked locally.
+
+| Case | Observed outcome and limitation |
+| --- | --- |
+| WY01: export-service history | Correctly separated the superseded global hosting limit from the retained per-customer staging constraint, and rejected the newer unaccepted proposal. Some wording promoted the accepted historical design and inspected concurrency capability into claims about actual operation. A heading also mislabeled the superseding decision as “Superseded.” The main explanation was useful; the stronger execution claims were not established by the supplied records. |
+| WY02: seed-swap history | Both arms distinguished the documented schedule change from unverified cost-saving hearsay. Both then overstated whose knowledge was checked: one organizer's uncertainty became “nobody.” The candidate also generalized one Thursday's attendance and concluded that the reason “wasn't recorded,” beyond absence from the supplied records. Both were lengthy for the requested short explanation. These are partial outcomes, not evidence that the skill improved the answer. |
+| US01: newsletter edit | Both arms removed padding while preserving quantities, comparison periods, attribution, incomplete wait measurements, the untested explanation, the exact quotation and conditional November plans. This successful ordinary-prompt baseline limits any added-value claim. |
+| US02: instruction edit | Preserved the exact status labels, coordinator approval as a necessary publication condition, separate authorization for each message, ordinary missing-number handling, the date-specific emergency-contact waiver, unrelated preparation and original-note protection. This checks the rewritten text; no downstream rota assistant executed it. |
+
+The actors had no tools, files or network. These results do not test native routing, independent source retrieval, real external actions or reliable performance across tasks. Why already directs the agent to retain evidence limits and follow the requested format; its observed failures remain adherence limitations rather than a reason to add duplicate warnings. No result was rerun to obtain a preferred outcome.
+
+### Final packaging checks
+
+The final **30-file** package passed nine skill validators, eight byte-for-byte upstream-license comparisons, 19 local reference/anchor checks and separate complete-folder copy comparisons for all nine skills. Of the original seven folders' 22 files, 21 are unchanged; only the reviewed mechanics navigation edit differs. Source inspection found no required sibling skill, donor installation or external instruction file. Attribution and maintenance links are not execution dependencies.
+
+Eight native commands ran offline with fresh temporary configuration/cache on macOS arm64 and cached Copilot CLI **1.0.91**. They registered the local marketplace, installed Satchel, listed its nine skills, installed Atlas, listed nine Satchel plus eight Atlas skills, and discovered isolated complete copies of Why, Unslop and writing-for-agents. All exited successfully with empty stderr. Two builtin skills were counted separately. Source bytes remained unchanged throughout.
+
+The package identity is `ec0dcbb6a59ea7b9a952a74f34044bce4412eb28a447aa9b02c3c0cb37ebf65e`, using the compact sorted-JSON method above. The repository's 39 evaluator unit tests also passed; they test evaluation infrastructure, not skill judgment. Native discovery does not establish useful model selection or invocation in other hosts. No user installation or settings changed.

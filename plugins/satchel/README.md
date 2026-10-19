@@ -6,6 +6,8 @@ A collection of standalone skills for everyday work with an agent. Each skill wo
 | --- | --- |
 | [wait-what](skills/wait-what/SKILL.md) | Re-explain something confusing with the context needed to understand it. |
 | [writing-for-agents](skills/writing-for-agents/SKILL.md) | Write or revise instructions for agents, including skills. |
+| [unslop](skills/unslop/SKILL.md) | Edit wordy or formulaic prose while preserving its meaning and voice. |
+| [why](skills/why/SKILL.md) | Reconstruct why a decision was made from the available records. |
 | [to-questionnaire](skills/to-questionnaire/SKILL.md) | Turn unresolved questions into a questionnaire someone can answer. |
 | [claim-check](skills/claim-check/SKILL.md) | Assess claims against available evidence and identify uncertainty. |
 | [teach-me](skills/teach-me/SKILL.md) | Learn a topic through explanation, examples and practice. |
@@ -14,7 +16,9 @@ A collection of standalone skills for everyday work with an agent. Each skill wo
 
 Choose the skill that fits the current request. The host keeps control of tools, permissions and project instructions. Invoking a skill does not authorize publishing, sending messages or changing unrelated files.
 
-`reorient` catches you up on task progress; `wait-what` repairs a confusing explanation. `define-goal` can prepare a copyable objective on hosts without native goal tools. Defining an objective does not itself start the underlying work.
+`reorient` catches you up on task progress; `wait-what` repairs a confusing explanation. `why` reconstructs a decision's history; `claim-check` assesses whether evidence supports a claim. `unslop` edits prose; `writing-for-agents` helps author agent instructions. Each can be used without the others.
+
+`define-goal` can prepare a copyable objective on hosts without native goal tools. Defining an objective does not itself start the underlying work.
 
 ## Install
 

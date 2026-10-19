@@ -1,6 +1,6 @@
 # Contributing to Atlas
 
-Start with [AGENTS.md](AGENTS.md) and [the architect charter](docs/architect-charter.md). They govern work on Atlas itself. The installable product is `plugins/atlas/`; maintaining this repository does not impose GitHub tracking or private coordination on projects using the plugin.
+Start with [AGENTS.md](AGENTS.md) and [the architect charter](docs/architect-charter.md). They govern repository maintenance and Atlas's product direction. Installable packages live in `plugins/atlas/` and `plugins/satchel/`; maintaining this repository does not impose GitHub tracking or private coordination on projects using either plugin.
 
 ## One home for each kind of information
 

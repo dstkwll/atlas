@@ -1,8 +1,8 @@
-# Satchel sources, adaptations and candidate choices
+# Satchel sources and adaptations
 
-Satchel 0.1.0 is a collection of independently usable skills. The owner authorized a broader toolkit on October 18, 2026, with particular care for Matt Pocock's choice of language and with ideas and implementations reviewed through Copilot Claude Opus 5.5 at xhigh. The owner selected Satchel as its name; it was originally developed under the provisional name Toolbox through commit `8e4bea37fd6d5a7eb97c9b4954601ece674da0d8`. [Issue #50](https://github.com/dstkwll/atlas/issues/50) owns implementation progress; this document owns the source and adaptation account.
+Satchel 0.1.0 contains nine independently usable skills. This document explains their sources, retained methods and deliberate changes. [Issue #50](https://github.com/dstkwll/atlas/issues/50) owns current work; the [validation report](../validation/satchel.md) owns observed results and their limits. Earlier development used the provisional name Toolbox through commit `8e4bea37fd6d5a7eb97c9b4954601ece674da0d8`.
 
-The skills do not activate Atlas, invoke one another, or establish a common workflow. Copying one complete skill folder is sufficient. Existing Atlas guidance remains unchanged. In particular, Satchel's writing skill is a deliberate adaptation of Matt's current source, not an extraction or replacement of Atlas's authoring method. A future consolidation is only an [Atlas idea](atlas-ideas.md).
+Each complete folder contains the instructions and notices that skill needs. The skills neither activate Atlas nor require one another. Satchel's writing skill adapts Matt's pinned source; Atlas retains its separate authoring method. A future consolidation remains an [Atlas idea](atlas-ideas.md).
 
 ## Sources and attribution
 
@@ -17,6 +17,8 @@ All Matt Pocock sources are pinned to [`49dd158d1076134a641b33efb035946536778336
 | `claim-check` | Original Satchel synthesis | No third-party skill text copied; rationale below |
 | `reorient` | [Lauren Tan's Ketchup](https://github.com/cursor/plugins/blob/978ca6e9c0e012047cd5058b8e829240336e704e/pstack/skills/ketchup/SKILL.md), plus its [later pending-item clarification](https://github.com/cursor/plugins/blob/8838150c6b4829ea3c01782631213776d86df14a/pstack/skills/ketchup/SKILL.md) | Compact human catch-up adaptation, with the unchanged Lauren Tan MIT license |
 | `define-goal` | [OpenAI's define-goal](https://github.com/openai/skills/blob/b0401f07213a66414d84a65cb50c1d226f99485a/skills/.curated/define-goal/SKILL.md) | Retained upstream goal-definition method with a portable fallback; unchanged Apache 2.0 license and UI metadata |
+| `why` | [Lauren Tan's why](https://github.com/cursor/plugins/blob/8838150c6b4829ea3c01782631213776d86df14a/pstack/skills/why/SKILL.md) and its evidence/investigation references | Bounded decision-history research without required workers, sibling skills or integrations; unchanged MIT license |
+| `unslop` | [Lauren Tan's unslop](https://github.com/cursor/plugins/blob/8838150c6b4829ea3c01782631213776d86df14a/pstack/skills/unslop/SKILL.md) | Prose-editing patterns with meaning preservation and no blanket word or punctuation bans; unchanged MIT license |
 
 [Anthropic's skill-authoring best practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices), retrieved October 18, 2026, informs discovery descriptions, direct reference paths, navigation for long references, representative evaluation and model/host limits. Those ideas are expressed in new prose; no passages are copied. It is a supplementary authoring source, not a runtime dependency. The supplied [Reddit post](https://www.reddit.com/r/claudeskills/comments/1x55vua/anthropics_official_agent_skills_guide_6_insights/) summarizes that guide; it contributes no additional copied text or independent evaluation evidence. Its reference to the first “100 chars” should not replace the primary guide's discussion of partial line reads.
 
@@ -25,7 +27,7 @@ The existing [Atlas authoring method](../../plugins/atlas/skills/atlas/reference
 ## Shared adaptation choices
 
 - **Language carries decisions.** Retain useful source terms and distinguish their intended meanings from nearby misreadings. Do not replace a precise term with a bland synonym just for a uniform voice. Definitions and examples should preserve the decision a term enables.
-- **Normal discovery.** The descriptions state when each method applies. Upstream `wait-what`, `to-questionnaire` and `teach` specify `disable-model-invocation: true`; the new versions omit that field and allow ordinary host discovery. This is an intentional invocation-policy change, not a claim that a host flag is portable. `wait-what` targets failure to understand the previous explanation, not surprise alone. Existing user-installed skills and host settings are untouched.
+- **Normal discovery.** Descriptions state when each method applies. The upstream Matt skills `wait-what`, `to-questionnaire` and `teach`, and Poteto's `ketchup`, `why` and `unslop`, specify `disable-model-invocation: true`. Satchel omits that field and allows ordinary host discovery. This is an intentional invocation-policy change, not a claim that a host flag is portable. `wait-what` targets failure to understand the previous explanation, not surprise alone. Existing user-installed skills and host settings are untouched.
 - **Independent distribution.** Required references and licenses stay inside each skill folder. The only additional instruction file is writing's conditional mechanics reference. Notices link maintenance records but do not tell an executing agent to load them.
 - **Scope remains local to the request.** A method can improve a draft or explanation without authorizing messages, publication, persistent learning records or unrelated work. These boundaries are placed beside the relevant actions rather than supplied by a shared controller.
 - **Source claims are not guarantees.** Terms can be useful without proving a causal theory about pretraining or attention. Formatting, discovery and source preservation are checked separately from behavior; the package makes no general performance claim.
@@ -73,6 +75,8 @@ Retained: the two-file structure and Matt's conceptual sequence; context pointer
 These additions are authoring guidance, not an asserted improvement over Matt's source or Atlas. Atlas retains its separate existing method for this release. The divergence is visible for a later owner decision rather than concealed behind a supposed shared source.
 
 Two smaller wording changes are deliberate: the donor's preference for existing terms becomes choosing a fitting term while making coined terms earn their learning cost; its assumption that every document contains restatements becomes looking for them without presuming they exist. Concrete `disable-model-invocation` instructions are replaced by checking the chosen host's actual metadata and behavior, not by an equivalent universal flag.
+
+The final writing pass makes the mechanics file's parent references explicit links to this folder's `SKILL.md` and its relevant sections. They identify the writing guide rather than the new skill the agent may be authoring. This is a navigation clarification; its writing and invocation rules are retained.
 
 ## to-questionnaire
 
@@ -159,6 +163,22 @@ Ketchup's first shipped revision, `978ca6e9c0e012047cd5058b8e829240336e704e`, su
 Starts from OpenAI's public source at `b0401f07213a66414d84a65cb50c1d226f99485a`, including its unchanged Apache 2.0 license and `agents/openai.yaml`. It preserves outcome, evidence, scope and stopping criteria; honest metrics; explicit goal intent; existing-goal handling; and user-supplied token budgets. It does not force a goal workflow onto ordinary implementation requests.
 
 The adaptation conditions native goal-tool steps on actual availability and creation intent. Definition or refinement alone returns a copyable objective on any host. Without goal tools it does the same, without claiming a persistent goal was saved or beginning execution without separate authorization. A creation request reports its actual outcome, including reuse, unavailable tools, an unresolved conflict or unconfirmed execution; missing acknowledgment does not justify blind retry. This makes the utility usable outside a particular host without replacing the upstream method. Install either Satchel's copy or an existing standalone copy in a given host to avoid duplicate entries and version drift; no installed copy is changed by this repository work.
+
+## why
+
+Why reconstructs the reasons behind an existing decision. It retains the donor's distinction between mechanics and motivation, precise citations, explicit inference, competing accounts and missing evidence. The adaptation covers ordinary decisions as well as code and keeps the accepted choice separate from proposals, later summaries and current implementation.
+
+The method follows relevant accessible records within the task's source scope. It distinguishes the original reason from a later reason for keeping or changing the choice, and recorded rationale from proof of every participant's motive. Repeated summaries do not become independent corroboration. Present usefulness or a lower price alone does not establish historical intent.
+
+The useful evidence guidance is expressed in one instruction file. Satchel removes the `poteto-mode` dependency, companion-skill directions, model registry/defaults, Cursor-specific APIs, mandatory investigator/synthesizer roles, seven-category search and fixed report sections. The agent stops at a supported answer of the requested depth, or identifies the specific gap when needed evidence is unavailable or the investigation reaches its bound. No connector setup, external analysis or record change is implied by a research request.
+
+## unslop
+
+Unslop edits existing prose for clarity while preserving the writer's meaning, audience and voice. It retains the donor's concrete patterns: filler, vague claims, repetitive framing, synonym cycling, unhelpful jargon, dense sentences, over-compression, redundant qualification and distracting presentation.
+
+The adaptation groups those patterns into eight editing clues. It removes the claim that they identify AI authorship, stable rule numbers used by other skills, and blanket bans on words, punctuation or typography. A useful list, deliberate image, technical term or meaningful caveat can remain. There is no requirement to change a passage that already works.
+
+Concrete replacements must come from the supplied material. The skill preserves quantities, units, comparison scope, attribution and verbatim quotations; a requested paraphrase is labeled. It can report missing support without inventing a fact or requiring a separate research workflow. When editing agent instructions, it preserves obligations, permissions, scope and exceptions and leaves unresolved consequential interpretations outside the operative text. The method fits in one instruction file and calls no other writing or research skill.
 
 ## Other candidates considered
 
