@@ -35,7 +35,7 @@ For a change whose shape helps a reviewer understand it, include a compact visua
 
 Ground the view in the actual diff and label a schematic sketch when it is not literal code. Preserve failure branches, ordering and boundaries that matter to review. Use the [visual explanation guidance](discover-and-design.md#explain-and-co-design-through-a-useful-visual) when choosing a representation; a file-by-file changelog or a mandatory diagram suite is unnecessary.
 
-Keep actual checks/results, unverified behavior and material risks alongside the outline. Link relevant issues or decisions when available. Rewrite a stale title or description around the final scope, then verify any authorized remote update succeeded. A clear visual explains the change; it is not validation evidence.
+Keep actual checks/results, unverified behavior and material risks alongside the outline. For consequential changes, explain what reverting the code would restore, what data or external effects would remain, and whether recovery is verified or still unknown. Link relevant issues or decisions when available. Rewrite a stale title or description around the final scope, then verify any authorized remote update succeeded. A clear visual explains the change; it is not validation evidence.
 
 ## Use workers selectively
 
