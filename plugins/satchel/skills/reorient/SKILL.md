@@ -1,6 +1,6 @@
 ---
 name: reorient
-description: Catches the user up on overall progress and pending decisions in the current conversation. Use when they have lost track of the work or ask for a general catch-up, rather than a single item's status, a confusing answer's explanation or a handoff to another agent.
+description: Catch the user up on overall progress and pending decisions in the current conversation. Use for a general catch-up, not a single-item status, explanation repair or agent handoff.
 ---
 
 # Reorient
@@ -14,3 +14,5 @@ Summarize established progress and choices, including newly observed material fa
 For each pending choice, give the options and the material tradeoff already established, usually in one sentence. Related choices may share an explanation if each item's differences stay visible. Preserve relevant known scope changes, running or unconfirmed work, blockers, prerequisites, irreversible effects, deadlines, costs of waiting and uncertainty. Carry forward an existing recommendation when useful; new recommendations, speculative consequences and further exploration belong only in a request for advice. Do not invent choices, approvals or chores to fill a format.
 
 Use more space when necessary to make every choice answerable. Never replace pending items with a count or hide them behind links to meet a length target. Do not impose fixed headings, nested status templates or drill-down menus; follow any user- or host-required format. If nothing changed and nothing needs the user, say so and stop. Expand history or reasoning on request.
+
+Adapted from Lauren Tan's [Ketchup](https://github.com/cursor/plugins/blob/978ca6e9c0e012047cd5058b8e829240336e704e/pstack/skills/ketchup/SKILL.md), including the [later pending-item clarification](https://github.com/cursor/plugins/blob/8838150c6b4829ea3c01782631213776d86df14a/pstack/skills/ketchup/SKILL.md). Modified for normal discovery and concise catch-up, with new advice only on request; no sibling skill or hard word limit is required. The original [MIT license](LICENSE) is included.

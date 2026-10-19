@@ -24,3 +24,5 @@ Use their response as feedback: identify what works, locate the specific misconc
 Distinguish **fluency** in the present exchange from **retention** or transfer to a new situation. One correct response supports a narrower conclusion than lasting mastery. When continued practice is wanted, suggest a later retrieval attempt or a changed example that tests the same idea. Create a schedule only when requested; do not promise long-term retention from this session.
 
 Finish at the requested depth with the central idea and a useful next application, if wanted. A chat lesson needs no workspace setup. Create lessons, reference sheets or learning records only when the user requests those artifacts, using their chosen format and home.
+
+Adapted from Matt Pocock's [teach](https://github.com/mattpocock/skills/tree/49dd158d1076134a641b33efb035946536778336/skills/productivity/teach). Modified for normal discovery and focused conversational learning with optional practice; automatic course workspaces and their format references are omitted. The original [MIT license](LICENSE) is included.

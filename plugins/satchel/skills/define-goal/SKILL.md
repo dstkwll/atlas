@@ -1,11 +1,11 @@
 ---
 name: define-goal
-description: Help the user define a concrete, measurable goal before starting work, especially when they ask to use the goal tool, create a goal, set an objective, clarify success criteria, or turn a fuzzy intention into a quantitative outcome. Use this skill for goal creation and goal refinement only; it does not manage durable snapshots, decision logs, or long-running execution artifacts.
+description: Define or refine a measurable goal, its scope and success criteria. Use for goal drafting or requested goal-tool creation, not task execution or progress tracking.
 ---
 
 # Define Goal
 
-Modified for Satchel to support hosts without native goal tools. See [NOTICE.md](NOTICE.md).
+Modified for Satchel from [OpenAI's define-goal](https://github.com/openai/skills/tree/b0401f07213a66414d84a65cb50c1d226f99485a/skills/.curated/define-goal): adds portable drafting, explicit native-creation intent and truthful outcome reporting; preserves an unfinished conflicting goal and offers separate goal-backed work only where supported. The upstream UI metadata is unchanged. The [Apache 2.0 license](LICENSE.txt) is included.
 
 ## Overview
 

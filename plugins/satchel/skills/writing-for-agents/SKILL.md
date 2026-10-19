@@ -100,4 +100,4 @@ Scale behavioral checks to the change's consequence and uncertainty. For a new m
 
 Keep mechanical checks narrow: valid frontmatter, resolving bundled paths, complete output and no unfinished placeholders. They do not establish judgment or improved behavior. An ordinary clarification may need only a focused reading review. Return the requested guidance with the material behavior retained or changed, checks performed and remaining uncertainty.
 
-Adapted from Matt Pocock's MIT-licensed `writing-for-agents`; the copyright and permission notice is included in [LICENSE](LICENSE).
+Adapted from Matt Pocock's [writing-for-agents](https://github.com/mattpocock/skills/tree/49dd158d1076134a641b33efb035946536778336/skills/productivity/writing-for-agents), including its mechanics reference. Modified to preserve authority and exceptions, qualify model/host claims and compare behavior proportionately. The original [MIT license](LICENSE) is included. Additional authoring ideas from [Anthropic](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices) are expressed in new prose.

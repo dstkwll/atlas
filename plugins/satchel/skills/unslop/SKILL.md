@@ -27,3 +27,5 @@ If editing agent instructions, preserve obligations, permissions, authority, sco
 - **Distracting presentation.** Simplify repeated bold labels, decorative headings, excessive emphasis and punctuation that interrupts reading. Keep useful lists, punctuation and typography; follow the requested house style. Formatting is a readability choice, not an authorship test.
 
 Read the revision against the original for lost meaning or an altered voice. Return the edited prose in the requested form, with only material unresolved issues or requested explanations. Do not add a routine checklist, score or claim that the text is now "human-written."
+
+Adapted from Lauren Tan's [unslop](https://github.com/cursor/plugins/blob/8838150c6b4829ea3c01782631213776d86df14a/pstack/skills/unslop/SKILL.md). Modified for normal discovery and meaning-preserving edits; authorship claims, blanket style bans and sibling-skill rule identifiers are omitted. The original [MIT license](LICENSE) is included.

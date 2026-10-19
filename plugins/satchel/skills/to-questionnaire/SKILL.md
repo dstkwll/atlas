@@ -1,6 +1,6 @@
 ---
 name: to-questionnaire
-description: Drafts a questionnaire for another person or group to supply missing facts or decisions, asynchronously or in a meeting. Use when the user needs questions someone else can answer, rather than a live interview with the user.
+description: Draft a questionnaire for another person or group to supply missing facts or decisions, asynchronously or in a meeting; not a live interview with the user.
 ---
 
 Turn something the user cannot answer alone into a **questionnaire**: a document they can hand to someone who holds the missing knowledge or decision. Aim at the **gap** between what that recipient knows and what the user needs back.
@@ -24,3 +24,5 @@ Adapt the shape to the user's requested format. A short questionnaire can be a s
 - **Anything else?** Invite missing context that could change the decision.
 
 Return the draft in the requested place and format; without a requested destination, return it in the response. If the user wants a saved Markdown file and no location is established, use `to-questionnaire-<topic-slug>.md` in the working directory and report its path. Drafting does not itself authorize sending the questionnaire or collecting responses.
+
+Adapted from Matt Pocock's [to-questionnaire](https://github.com/mattpocock/skills/tree/49dd158d1076134a641b33efb035946536778336/skills/productivity/to-questionnaire). Modified for normal discovery, supplied context, multiple recipients, provisional assumptions and drafting within the requested scope. The original [MIT license](LICENSE) is included.

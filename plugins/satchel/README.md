@@ -51,6 +51,8 @@ Choose plugin installation or manual copying for a skill in each host. Keeping b
 
 ## Sources and evidence
 
-The package includes source attribution and applicable licenses with each adapted skill. The public [adaptation record](https://github.com/dstkwll/atlas/blob/main/docs/satchel/adaptations.md) explains what changed and why. The [validation summary](https://github.com/dstkwll/atlas/blob/main/docs/validation/satchel.md) distinguishes observed behavior from untested conditions. [Atlas ideas](https://github.com/dstkwll/atlas/blob/main/docs/satchel/atlas-ideas.md) records proposals for later discussion.
+Each adapted skill carries a pinned source credit and modification note in its `SKILL.md`, plus the original license in its folder. The sources are Matt Pocock, Lauren Tan and OpenAI; `claim-check` is an original synthesis. Keep those credits and licenses when copying a skill.
 
-The published links above resolve after merge; draft reviewers can read the same paths in their checkout or PR. These records support maintenance; using the skills requires only their installed folders. The package adds no service, hooks, scripts or MCP servers.
+All nine skills allow normal model discovery. Each has a distinct task and contains its own required instructions; Satchel adds no lead, required sequence, service, hooks, scripts or MCP servers. The authoring skill retains Matt's conceptual vocabulary and two-file structure. The teaching skill serves conversational learning rather than maintaining a course workspace. Atlas retains its separate software-lead and authoring methods.
+
+The public [validation summary](https://github.com/dstkwll/atlas/blob/main/docs/validation/satchel.md) records observed behavior and limits; draft reviewers can read that path in their checkout or PR. Using a skill requires only its installed folder. Research history and deferred ideas belong in the project's issues and PRs.
