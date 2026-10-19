@@ -84,7 +84,7 @@ For a Copilot CLI session using the local package:
 copilot --plugin-dir /absolute/path/to/atlas
 ```
 
-This mounts the plugin for that session. The native CLI also currently supports `copilot plugins install /absolute/path/to/atlas`, but warns that direct installs are deprecated; prefer the marketplace for ongoing installation. Local directory marketplaces have a discovery limitation in the tested CLI; see [validation](docs/validation/copilot-plugin.md).
+This mounts the plugin for that session. Prefer the marketplace for ongoing installation; direct local installs emitted a deprecation warning in the earlier CLI 1.0.82 check. Local directory marketplaces registered and discovered Atlas successfully in CLI 1.0.91, which listed those plugins as live from the checkout rather than copied installations. Keep that source directory available. The two checks used different CLI versions and fixtures; see [validation](docs/validation/copilot-plugin.md).
 
 ## Manual skill installation, Codex and Claude Code
 

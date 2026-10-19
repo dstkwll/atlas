@@ -4,11 +4,11 @@ Use when creating or revising agent-facing instructions, skills or agent runbook
 
 ## Give the method a clear job
 
-Lead with the outcome and the situation that calls for this method. Make the first useful action easy to find. A skill description or a link from the lead is part of the instruction: it must say when to reach the material, not merely name an attractive capability. Distinct triggers should correspond to distinct cases, rather than a list of synonyms.
+Lead with the outcome and the situation that calls for this method. Make the first useful action easy to find. A skill description or a link from the lead is part of the instruction: it must say when to reach the material, not merely name an attractive capability. Distinct triggers should correspond to distinct cases, rather than a list of synonyms. Keep procedure in the body. In a description, include exclusions only to prevent a likely mismatch; descriptions spend context whenever the host exposes them, even without invocation.
 
 Choose a familiar concept when it gives the agent something precise to reason with. Define its recognition test beside it, then use the name consistently. A **blocked question** can already be stated, but needs another answer, source or investigation; **fog** is territory whose questions are not yet clear. Those definitions guide classification. A label such as “thoughtful discovery” supplies much less direction.
 
-The term earns its place through that decision, not through a claim that a particular word reliably activates a model. Use ordinary language where no special concept is needed.
+The term earns its place through that decision, not through a claim that a particular word reliably activates a model. Use ordinary language where no special concept is needed. Before replacing several instructions with one compact term, check what obligations, exceptions or distinctions it loses and what role, intensity or authority it might imply. Retain the separate requirements when the term cannot carry them faithfully.
 
 ## Put decisions and their consequences together
 
@@ -28,7 +28,11 @@ Set the bar relative to the task. For a bounded code change, explicit affected c
 
 If a later action repeatedly tempts the agent to declare an earlier one complete, first clarify the earlier completion condition. Moving later instructions behind an ordinary file link does not remove them from a context that already loaded them. A separate agent or session is a different architectural choice, not a prose cleanup.
 
-## Use examples to resolve ambiguity
+## Check meaning and use examples
+
+Where competing readings could change behavior, check the literal actor, action and completion condition; implied or excluded meanings and qualifier scope; and what a reader can understand without the preceding conversation. Keep indispensable context beside the action or through a clear governing pointer.
+
+When preserving behavior, do not settle a consequential interpretation inside the rewritten instructions unless deciding it is within the assignment. For interpretations outside that authority, retain the source's wording or scope and report the proposed interpretation separately. A definition, recognition test, example or stricter reading can change an obligation, permission, exception, responsible actor, data-handling rule or completion condition. Writing that new rule and then asking for confirmation does not preserve the old behavior. Ordinary editorial choices that preserve these meanings need no additional approval step.
 
 Add a compact example where two reasonable readings would lead to different behavior. Show the consequential distinction, with enough context to understand it. An example should help the agent recognize a class of case; its incidental names, layout or tool choices do not become requirements.
 
@@ -52,6 +56,10 @@ Give each rule one authoritative home. Brief reminders can connect a local actio
 
 Use the host's actual loading mechanism. A host without a native skill tool may need an explicit file path; another host may provide skill invocation. Invocation flags, tool names, hidden descriptions and context isolation are host capabilities to verify, not portable properties of prose. A referenced skill or runbook is not automatically a separate worker.
 
+Preserve the existing invocation policy unless changing it is within the assignment. Automatic discovery and permission to act are separate: selecting a skill does not authorize its consequential actions. For independently installable guidance, verify required references from the complete distributed folder, without relying on the author's checkout, sibling skills or donor installation. Shared references are valid when their availability is part of the supported installation.
+
+Preserve source credits in every supported distribution, including standalone skill copies, along with applicable licenses and modification notices. Place credits and adaptation history outside loaded task instructions unless an in-file notice is required. Package-level provenance does not replace required license files.
+
 ## Save state for its next reader
 
 Describe what an ongoing task must preserve, what changes it and how it is recovered. Reuse the project's approved artifact where it serves that purpose. Save current intent, decisions and their reasons, relevant uncertainty and evidence pointers; link existing detail instead of accumulating a transcript or a parallel ledger.
@@ -69,4 +77,3 @@ For consequential changes to agent behavior, such as authority, routing or share
 Return the requested guidance with a concise account of the behavior retained or changed, how it is reached, what was checked and what remains unverified. Follow the active assignment, project rules and existing authority. Studying a donor or observing a preference does not authorize changing accepted policy or auditing unrelated guidance. This method introduces no required execution sequence, scoring system or permission boundary.
 
 Attribution for adapted material is in the [third-party notices](../THIRD_PARTY_NOTICES.md); using this method requires no external research or donor installation.
-

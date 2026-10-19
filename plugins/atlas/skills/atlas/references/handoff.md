@@ -14,6 +14,8 @@ Include the minimum context needed to resume:
 - Next safe action and expected return evidence.
 - Accessible sources with a short explanation of why each matters; relevant runbooks only when useful.
 
+When shortening the packet, preserve every accepted decision and unresolved choice that affects resumption, with the owner of an unresolved choice if known and any prerequisite. Group related choices instead of dropping them to meet a length target. Keep a paused task paused, and do not turn a recommendation or an informational recap into a new user assignment or approval gate.
+
 Use [Continuity and decisions](continuity-and-decisions.md) for authoritative state and [Deliver and repair](deliver-and-repair.md) for bounded worker briefs. For a planning handoff, link the PRD or tickets rather than duplicate them. When a handoff summarizes existing tickets, check its readiness, blocker and sequencing claims against those tickets' current prerequisites, using [the whole-plan check](to-tickets.md#check-the-plan-as-a-whole). Preserve enough binding context inline if the recipient cannot access a source; unresolved inaccessible authority must stay a blocker. Name where the recipient can load required guidance and verify availability when possible. Do not promise a host capability or skill that was not checked.
 
 Protect environment boundaries. Do not move protected work data to a personal destination or treat redacting obvious secrets as sufficient export approval. If needed, prepare an approved local handoff or a safe abstract summary, clearly stating what the recipient cannot verify.
