@@ -17,7 +17,7 @@
     {
       "name": "satchel",
       "source": "./plugins/satchel",
-      "description": "Standalone skills for clearer explanations, agent instructions, questionnaires, evidence checks and learning.",
+      "description": "Standalone skills for explanations, agent instructions, questionnaires, evidence checks, learning, goal definition and session catch-up.",
       "version": "0.1.0"
     }
   ]

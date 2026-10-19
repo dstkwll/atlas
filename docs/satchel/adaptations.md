@@ -6,7 +6,7 @@ The skills do not activate Atlas, invoke one another, or establish a common work
 
 ## Sources and attribution
 
-All Matt Pocock sources are pinned to [`49dd158d1076134a641b33efb035946536778336`](https://github.com/mattpocock/skills/tree/49dd158d1076134a641b33efb035946536778336), dated October 9, 2026. Each adapted skill includes the unchanged upstream [MIT license](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/LICENSE), copyright 2026 Matt Pocock, and a source notice that travels with a standalone copy.
+All Matt Pocock sources are pinned to [`49dd158d1076134a641b33efb035946536778336`](https://github.com/mattpocock/skills/tree/49dd158d1076134a641b33efb035946536778336), dated October 9, 2026. Each of those four adaptations includes the unchanged upstream [MIT license](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/LICENSE), copyright 2026 Matt Pocock, and a source notice that travels with a standalone copy. The two additional donors and their licenses are identified below.
 
 | Satchel skill | Source | Relationship |
 | --- | --- | --- |
@@ -15,6 +15,8 @@ All Matt Pocock sources are pinned to [`49dd158d1076134a641b33efb035946536778336
 | `to-questionnaire` | [Matt's to-questionnaire](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/skills/productivity/to-questionnaire/SKILL.md) | Retains recipient/gap method; broadens output and incomplete-context handling |
 | `teach-me` | [Matt's teach](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/skills/productivity/teach/SKILL.md), read with its three linked format files | Substantial scope adaptation: focused conversational teaching |
 | `claim-check` | Original Satchel synthesis | No third-party skill text copied; rationale below |
+| `reorient` | [Lauren Tan's Ketchup](https://github.com/cursor/plugins/blob/978ca6e9c0e012047cd5058b8e829240336e704e/pstack/skills/ketchup/SKILL.md), plus its [later pending-item clarification](https://github.com/cursor/plugins/blob/8838150c6b4829ea3c01782631213776d86df14a/pstack/skills/ketchup/SKILL.md) | Compact human catch-up adaptation, with the unchanged Lauren Tan MIT license |
+| `define-goal` | [OpenAI's define-goal](https://github.com/openai/skills/blob/b0401f07213a66414d84a65cb50c1d226f99485a/skills/.curated/define-goal/SKILL.md) | Retained upstream goal-definition method with a portable fallback; unchanged Apache 2.0 license and UI metadata |
 
 [Anthropic's skill-authoring best practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices), retrieved October 18, 2026, informs discovery descriptions, direct reference paths, navigation for long references, representative evaluation and model/host limits. Those ideas are expressed in new prose; no passages are copied. It is a supplementary authoring source, not a runtime dependency. The supplied [Reddit post](https://www.reddit.com/r/claudeskills/comments/1x55vua/anthropics_official_agent_skills_guide_6_insights/) summarizes that guide; it contributes no additional copied text or independent evaluation evidence. Its reference to the first “100 chars” should not replace the primary guide's discussion of partial line reads.
 
@@ -132,6 +134,32 @@ This is original guidance rather than a port. Its additions each support the req
 
 No autonomous research service, source database, mandatory web search, publication action or professional-certification claim is introduced.
 
+## reorient
+
+The owner requested a shorter human catch-up after a previous reorientation method became too verbose. The implementation adapts public Ketchup sources rather than distributing the private archived text. It is distinct from `wait-what` (explanation repair) and Atlas handoff (preparing another worker to continue).
+
+Ketchup's first shipped revision, `978ca6e9c0e012047cd5058b8e829240336e704e`, supplies the core method. Revision `8838150c6b4829ea3c01782631213776d86df14a` supplies the explicit instruction not to hide pending items behind counts or links to meet a length target. The upstream author's [reported failure of a strict brevity cap](https://github.com/cursor/plugins/pull/692) motivates that choice; it is not independent Satchel evaluation evidence.
+
+| Retained or changed | Reason |
+| --- | --- |
+| Retains the previous-user-message window, with a user-specified starting point taking precedence | Limits the recap while letting the user request a broader one |
+| Retains older unresolved user decisions and self-contained choices | Recent progress must not hide something still waiting on the user |
+| Retains the distinction between user action items and agent-finishable work | Catch-up should not manufacture approvals or return ordinary work to the user |
+| Keeps read-only catch-up; handles separately requested actions under their own authority | Summarizing work does not itself authorize resuming or mutating it |
+| Replaces checking every touched PR, job and agent with a narrow read when missing or stale evidence changes the next action or a pending decision | Avoids turning a quick refresher into a fresh audit; unverified status stays explicitly last-observed |
+| Removes `bro` and other sibling dependencies, mandatory counts/headings/visuals, per-item risk labels and word quotas | Each folder must work independently and the reply should fit its actual decisions |
+| Uses normal discovery with an explicit task-state trigger | A natural catch-up request can select the method without a required slash command |
+| Adds unavailable-history handling and optional deeper history | Missing context must remain visible; detail should follow the user's need |
+| Defaults to one short progress paragraph and concise individual choices, without a total word cap | Reduces routine reporting overhead while keeping every pending decision answerable |
+| Does not turn an action outside the agent's authority into an automatic assignment for the user | Keeps the catch-up focused on what the current task actually needs |
+| Summarizes established tradeoffs and recommendations; adds new advice only when requested | Catch-up should restore context without reopening deliberation or manufacturing prerequisites |
+
+## define-goal
+
+Starts from OpenAI's public source at `b0401f07213a66414d84a65cb50c1d226f99485a`, including its unchanged Apache 2.0 license and `agents/openai.yaml`. It preserves outcome, evidence, scope and stopping criteria; honest metrics; explicit goal intent; existing-goal handling; and user-supplied token budgets. It does not force a goal workflow onto ordinary implementation requests.
+
+The adaptation conditions native goal-tool steps on actual availability and creation intent. Definition or refinement alone returns a copyable objective on any host. Without goal tools it does the same, without claiming a persistent goal was saved or beginning execution without separate authorization. A creation request reports its actual outcome, including reuse, unavailable tools, an unresolved conflict or unconfirmed execution; missing acknowledgment does not justify blind retry. This makes the utility usable outside a particular host without replacing the upstream method. Install either Satchel's copy or an existing standalone copy in a given host to avoid duplicate entries and version drift; no installed copy is changed by this repository work.
+
 ## Other candidates considered
 
 | Candidate | Disposition and reason | Revisit when |
@@ -139,6 +167,6 @@ No autonomous research service, source database, mandatory web search, publicati
 | Audience rewrite | Deferred. Ordinary requests already specify audience and tone; no distinct repeatable method was established beyond preserving meaning. | A recurring audience/format problem demonstrates useful additional guidance |
 | Context handoff | Deferred. Atlas already exposes a handoff; a general standalone version may be useful but needs a clear non-engineering continuation case and preservation criteria. | Repeated cross-session work outside Atlas establishes what a separate entry must preserve |
 | Grilling / decision check | Deferred. No sufficiently distinct bounded standalone method was established for this release. Atlas Wayfinding is an existing option for Atlas users; questionnaire addresses a different, asynchronous task. | A bounded, standalone decision review is needed without a sustained exploration mode |
-| Shared lead/router | Excluded from this release. The accepted product is independent skills, and a five-item catalog is sufficient. | Users demonstrate a discovery problem that a catalog alone cannot solve |
+| Shared lead/router | Excluded from this release. The accepted product is independent skills, and the small catalog is sufficient. | Users demonstrate a discovery problem that a catalog alone cannot solve |
 
-The required concept review supported the five-skill collection, subject to full source inspection and final implementation review. Reviewer recommendations were checked against the sources; model agreement is not evidence of behavioral reliability. [Validation](../validation/satchel.md) records the completed coverage and remaining limits.
+The initial concept review supported the first five skills. A subsequent completed Opus 5.5/xhigh design review supported the distinct purposes of `reorient` and `define-goal`, highlighting the catch-up window, bounded reads and potential duplicate installation. The owner then authorized both additions. Reviewer recommendations are checked against sources; model agreement is not evidence of behavioral reliability. [Validation](../validation/satchel.md) records the completed implementation coverage and remaining limits.
