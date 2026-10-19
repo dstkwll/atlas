@@ -1,6 +1,6 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
-  "name": "toolbox",
+  "name": "satchel",
   "description": "Standalone skills for clearer explanations, agent instructions, questionnaires, evidence checks and learning.",
   "version": "0.1.0",
   "repository": "https://github.com/dstkwll/atlas",
@@ -8,6 +8,6 @@
     "skills",
     "writing",
     "learning",
-    "toolbox"
+    "satchel"
   ]
 }

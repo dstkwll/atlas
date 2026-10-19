@@ -15,8 +15,8 @@
       "version": "0.11.0"
     },
     {
-      "name": "toolbox",
-      "source": "./plugins/toolbox",
+      "name": "satchel",
+      "source": "./plugins/satchel",
       "description": "Standalone skills for clearer explanations, agent instructions, questionnaires, evidence checks and learning.",
       "version": "0.1.0"
     }

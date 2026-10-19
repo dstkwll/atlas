@@ -1,6 +1,8 @@
-# Toolbox validation
+# Satchel validation
 
-This report separates source review, package discovery and behavioral evidence for the independently installable Toolbox skills. [Adaptations](../toolbox/adaptations.md) identifies sources and deliberate changes; [issue #50](https://github.com/dstkwll/atlas/issues/50) owns delivery. The observations below are bounded evidence, not a claim of improved reliability over the base model.
+This report separates source review, package discovery and behavioral evidence for the independently installable Satchel skills. [Adaptations](../satchel/adaptations.md) identifies sources and deliberate changes; [issue #50](https://github.com/dstkwll/atlas/issues/50) owns delivery. The observations below are bounded evidence, not a claim of improved reliability over the base model.
+
+Satchel was developed and evaluated under the provisional name **Toolbox** through commit `8e4bea37fd6d5a7eb97c9b4954601ece674da0d8`. The historical observations below retain that name, its commands and its recorded source identities. Renaming the package changes its installation identifier and documentation pointers; the five skill bodies, conditional mechanics reference, case definitions and bundled license text are unchanged.
 
 ## Source review and structural checks
 
@@ -20,13 +22,13 @@ On October 18, 2026, isolated offline Copilot CLI **1.0.91** checks exercised th
 - Copying each complete Toolbox skill folder into an otherwise empty project's skill directory exposed exactly that one skill.
 - Thirteen native commands completed successfully, with empty stderr and unchanged candidate bytes during the run.
 
-The check used separate temporary configuration/cache and no inference or user-install changes. It called a verified 1.0.91 executable directly: the installed launcher's `--no-auto-update` path selected bundled 1.0.83 instead, which had different command/discovery behavior. Reproduction must verify the executable version rather than assume the launcher and cached runtime match.
+The check used separate temporary configuration/cache and no inference or user-install changes. It invoked the cached 1.0.91 runtime directly with `node <runtime>/index.js --no-auto-update`; the recorded version check used that same launch path. Reproduction must verify the executable version.
 
 The native operations were `plugin marketplace add <temporary-local-marketplace>`, `plugin install toolbox@atlas`, `plugin list --json` and `skill list --json`, followed by co-installation and individual-folder checks. The local host described these plugins as **live**. This proves local registration and discovery, not Git-backed transfer, VS Code UI, Claude Code invocation, Codex skill selection, policy enforcement or useful application of instructions. No current user installation was refreshed. README paths and invocation syntax for Codex and Claude Code are documented installation routes, not exercised host sessions. Remote installation requires the new entry on the marketplace default branch; draft reviewers use the local checkout.
 
 ## Behavioral protocol
 
-[Reusable fictional cases](../../evals/toolbox-cases.json) contain raw requests separately from qualitative rubrics. They were authored from one-line candidate purposes before reading implementations: two cases per skill and three routing controls. They cover non-engineering and engineering work, mistaken explanations, authority-preserving rewrites, asynchronous recipient roles, quantitative and causal overclaims, and two three-turn teaching exchanges. The controls include exact-output arithmetic, ordinary prose editing and an interactive quiz that should not become an asynchronous questionnaire.
+[Reusable fictional cases](../../evals/satchel-cases.json) contain raw requests separately from qualitative rubrics. They were authored from one-line candidate purposes before reading implementations: two cases per skill and three routing controls. They cover non-engineering and engineering work, mistaken explanations, authority-preserving rewrites, asynchronous recipient roles, quantitative and causal overclaims, and two three-turn teaching exchanges. The controls include exact-output arithmetic, ordinary prose editing and an interactive quiz that should not become an asynchronous questionnaire.
 
 Actors receive the actual candidate instruction files and only their raw case material. Expected answers, prior reviews and grading criteria are withheld. All actors use authenticated Copilot Claude Opus 5.5 at xhigh with at most two concurrent jobs. The same model and case protocol run without skills for five pre-specified baseline cases, one per skill. Completed outputs are retained; they are not rerun to obtain preferred results.
 
@@ -55,11 +57,11 @@ The successful baselines limit any incremental-value claim. No general reliabili
 
 ## Final candidate checks
 
-Seven follow-up actor jobs completed: diagnostic rechecks C03 and C05, new task fixtures H01–H03, and a second C03 recheck after the first writing correction remained insufficient. They use separate frozen source snapshots. H02 has a second turn that declines exercises. The [new fixture definitions](../../evals/toolbox-heldout-cases.json) disclose that their author had seen the original skills while executing the initial study and knew the revision brief, but had not read revised implementations or outcome grading. They are new tasks, not fully blind test design. Rechecks do not replace initial findings. All seven completed on the requested model/effort without observed actor gaps or truncated results, and prompt/transcript/source integrity checks passed.
+Seven follow-up actor jobs completed: diagnostic rechecks C03 and C05, new task fixtures H01–H03, and a second C03 recheck after the first writing correction remained insufficient. They use separate frozen source snapshots. H02 has a second turn that declines exercises. The [new fixture definitions](../../evals/satchel-heldout-cases.json) disclose that their author had seen the original skills while executing the initial study and knew the revision brief, but had not read revised implementations or outcome grading. They are new tasks, not fully blind test design. Rechecks do not replace initial findings. All seven completed on the requested model/effort without observed actor gaps or truncated results, and prompt/transcript/source integrity checks passed.
 
 The first C03 recheck again put a stricter privacy interpretation inside the instructions and requested confirmation afterward. The second preserved the ambiguous source clause and placed alternative readings outside the instruction block. This supports a narrow diagnostic repair, not general authority preservation. The second C03's writing snapshot is SHA-256 `04a13676b637c47911cdba05fc7fd5fd121db23df00f6cdad207db8a65ec53f2`. The shipped text then received the two source-reviewed clarifications described above; it was not subjected to another actor run. H01 remains evidence for the earlier writing snapshot, not a rerun of shipped bytes.
 
-Final package discovery passed again for **17 files / 13 native commands**, with empty stderr. Its identity is `01ce4f147ef968942662fd0cb4e15c4fb510724bfb00c580340e25fd78cfe7fe`: SHA-256 of compact JSON with sorted relative-path keys and each file's SHA-256 value. The tested native package bytes match the delivered package. Atlas files and its existing marketplace fields remain unchanged against refreshed main `57225e63ee31b8e477dcdd9d6eacd89cf5a45095`.
+Final package discovery passed again for **17 files / 13 native commands**, with empty stderr. Its identity is `01ce4f147ef968942662fd0cb4e15c4fb510724bfb00c580340e25fd78cfe7fe`: SHA-256 of compact JSON with sorted relative-path keys and each file's SHA-256 value. The tested native package bytes matched the Toolbox package at commit `8e4bea37`; this identity does not describe the renamed Satchel package. Atlas files and its existing marketplace fields remain unchanged against refreshed main `57225e63ee31b8e477dcdd9d6eacd89cf5a45095`.
 
 A fresh Opus 5.5/xhigh reviewer assessed seven version-masked groups: the original C03, both C03 rechecks, C05, and H01–H03. This diagnostic brief explicitly emphasized comparing operative rules with source obligations after the earlier grader missed that pattern; it is not independent discovery of the defect. The reviewer classified the two earlier C03 outputs as partial and the latest as passing, consistent with primary inspection. It also found the following bounded outcomes:
 
@@ -70,3 +72,11 @@ A fresh Opus 5.5/xhigh reviewer assessed seven version-masked groups: the origin
 - **Latest C03:** the key privacy ambiguity remained unresolved outside the operative instructions; its added completion check was less complete than the body. The narrow successful recheck does not prove every completion condition or future rewrite is correct.
 
 These are reviews of returned artifacts and teaching responses. The rewritten instructions were not subsequently exercised by a downstream operational assistant. All original attempts and adverse findings remain part of the evidence; the last two source clarifications received diff review, not an additional behavioral run.
+
+## Satchel rename verification
+
+The owner selected **Satchel** before release; version `0.1.0` is unchanged. The five skill bodies, writing's mechanics reference, four upstream licenses and two case-definition files match the Toolbox commit `8e4bea37` byte for byte. The remaining package edits change the name, installation identifier and documentation links. All 60 Atlas files, its marketplace entry and the marketplace metadata remain unchanged.
+
+An isolated offline check on macOS arm64 used the same cached Copilot CLI **1.0.91** runtime with fresh temporary configuration/cache. Three native commands registered the renamed local marketplace, installed `satchel@atlas` and listed its skills. All three exited successfully with empty stderr. Exactly the five expected plugin skills were enabled, each under `plugins/satchel/skills/`; the 17 package files remained unchanged during the check. Their aggregate identity, using the compact sorted-JSON method above, is `10fa4a1a6dcee29581cd39533d67463c860b7207f22d8ccf9af3c5e63978b264`.
+
+This verifies the renamed installation entry and local discovery. It does not repeat the historical co-installation, individual-copy or behavioral trials. No inference ran and no user installation or settings changed.

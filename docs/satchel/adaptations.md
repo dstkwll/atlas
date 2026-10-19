@@ -1,24 +1,24 @@
-# Toolbox sources, adaptations and candidate choices
+# Satchel sources, adaptations and candidate choices
 
-Toolbox 0.1.0 is a collection of independently usable skills. The owner authorized a broader toolkit on October 18, 2026, with particular care for Matt Pocock's choice of language and with ideas and implementations reviewed through Copilot Claude Opus 5.5 at xhigh. `toolbox` is a provisional package name. [Issue #50](https://github.com/dstkwll/atlas/issues/50) owns implementation progress; this document owns the source and adaptation account.
+Satchel 0.1.0 is a collection of independently usable skills. The owner authorized a broader toolkit on October 18, 2026, with particular care for Matt Pocock's choice of language and with ideas and implementations reviewed through Copilot Claude Opus 5.5 at xhigh. The owner selected Satchel as its name; it was originally developed under the provisional name Toolbox through commit `8e4bea37fd6d5a7eb97c9b4954601ece674da0d8`. [Issue #50](https://github.com/dstkwll/atlas/issues/50) owns implementation progress; this document owns the source and adaptation account.
 
-The skills do not activate Atlas, invoke one another, or establish a common workflow. Copying one complete skill folder is sufficient. Existing Atlas guidance remains unchanged. In particular, Toolbox's writing skill is a deliberate adaptation of Matt's current source, not an extraction or replacement of Atlas's authoring method. A future consolidation is only an [Atlas idea](atlas-ideas.md).
+The skills do not activate Atlas, invoke one another, or establish a common workflow. Copying one complete skill folder is sufficient. Existing Atlas guidance remains unchanged. In particular, Satchel's writing skill is a deliberate adaptation of Matt's current source, not an extraction or replacement of Atlas's authoring method. A future consolidation is only an [Atlas idea](atlas-ideas.md).
 
 ## Sources and attribution
 
 All Matt Pocock sources are pinned to [`49dd158d1076134a641b33efb035946536778336`](https://github.com/mattpocock/skills/tree/49dd158d1076134a641b33efb035946536778336), dated October 9, 2026. Each adapted skill includes the unchanged upstream [MIT license](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/LICENSE), copyright 2026 Matt Pocock, and a source notice that travels with a standalone copy.
 
-| Toolbox skill | Source | Relationship |
+| Satchel skill | Source | Relationship |
 | --- | --- | --- |
 | `wait-what` | [Matt's wait-what](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/skills/productivity/wait-what/SKILL.md) | Small explanation-repair adaptation |
 | `writing-for-agents` | [Matt's writing-for-agents](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/skills/productivity/writing-for-agents/SKILL.md) and [SKILL-MECHANICS.md](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/skills/productivity/writing-for-agents/SKILL-MECHANICS.md) | Original files copied first, then selectively revised |
 | `to-questionnaire` | [Matt's to-questionnaire](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/skills/productivity/to-questionnaire/SKILL.md) | Retains recipient/gap method; broadens output and incomplete-context handling |
 | `teach-me` | [Matt's teach](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/skills/productivity/teach/SKILL.md), read with its three linked format files | Substantial scope adaptation: focused conversational teaching |
-| `claim-check` | Original Toolbox synthesis | No third-party skill text copied; rationale below |
+| `claim-check` | Original Satchel synthesis | No third-party skill text copied; rationale below |
 
 [Anthropic's skill-authoring best practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices), retrieved October 18, 2026, informs discovery descriptions, direct reference paths, navigation for long references, representative evaluation and model/host limits. Those ideas are expressed in new prose; no passages are copied. It is a supplementary authoring source, not a runtime dependency. The supplied [Reddit post](https://www.reddit.com/r/claudeskills/comments/1x55vua/anthropics_official_agent_skills_guide_6_insights/) summarizes that guide; it contributes no additional copied text or independent evaluation evidence. Its reference to the first “100 chars” should not replace the primary guide's discussion of partial line reads.
 
-The existing [Atlas authoring method](../../plugins/atlas/skills/atlas/references/writing-agent-guidance.md) informed preservation review, especially source authority, exceptions and evidence limits. Its instructions are not required to run Toolbox. Detailed research packets and review traces remain maintainer evidence; the public [validation summary](../validation/toolbox.md) preserves material findings and limits.
+The existing [Atlas authoring method](../../plugins/atlas/skills/atlas/references/writing-agent-guidance.md) informed preservation review, especially source authority, exceptions and evidence limits. Its instructions are not required to run Satchel. Detailed research packets and review traces remain maintainer evidence; the public [validation summary](../validation/satchel.md) preserves material findings and limits.
 
 ## Shared adaptation choices
 
@@ -66,7 +66,7 @@ Retained: the two-file structure and Matt's conceptual sequence; context pointer
 | Mechanics: invocation | Removes universal flag, invisible-description, zero-context and cross-skill claims. Uses verified host behavior, normal discovery by default and preservation of existing user policies. Separates discovery from authority. |
 | Mechanics: frontmatter/paths | Adds concise purpose-plus-trigger metadata and explicit distinction between installed-reference paths and task-output paths. |
 | Mechanics: shared reference and splitting | Requires complete packaging when independent installation is intended, while allowing co-shipped shared references or verified declared dependencies. Requires a demonstrated independent use case for a split. Reading a file is not context isolation. |
-| Mechanics: router | Retains the idea as an optional response to demonstrated discovery difficulty; host abilities decide whether it can invoke anything. Toolbox itself has no router. |
+| Mechanics: router | Retains the idea as an optional response to demonstrated discovery difficulty; host abilities decide whether it can invoke anything. Satchel itself has no router. |
 
 These additions are authoring guidance, not an asserted improvement over Matt's source or Atlas. Atlas retains its separate existing method for this release. The divergence is visible for a later owner decision rather than concealed behind a supposed shared source.
 
@@ -95,7 +95,7 @@ The invocation-field change is described above. The source's single-person frami
 
 ## teach-me
 
-This is the largest adaptation. Matt's `teach` assumes a stateful teaching workspace. Toolbox's `teach-me` serves a focused conversational learning request. It retains the source's **mission**, tightly scoped **lesson**, **zone of proximal development**, **retrieval practice**, feedback, and distinction between present fluency and lasting retention. These terms define decisions: what to teach next, how much help to give and what an answer can establish.
+This is the largest adaptation. Matt's `teach` assumes a stateful teaching workspace. Satchel's `teach-me` serves a focused conversational learning request. It retains the source's **mission**, tightly scoped **lesson**, **zone of proximal development**, **retrieval practice**, feedback, and distinction between present fluency and lasting retention. These terms define decisions: what to teach next, how much help to give and what an answer can establish.
 
 | Source area | Change and reason |
 | --- | --- |
@@ -141,4 +141,4 @@ No autonomous research service, source database, mandatory web search, publicati
 | Grilling / decision check | Deferred. No sufficiently distinct bounded standalone method was established for this release. Atlas Wayfinding is an existing option for Atlas users; questionnaire addresses a different, asynchronous task. | A bounded, standalone decision review is needed without a sustained exploration mode |
 | Shared lead/router | Excluded from this release. The accepted product is independent skills, and a five-item catalog is sufficient. | Users demonstrate a discovery problem that a catalog alone cannot solve |
 
-The required concept review supported the five-skill collection, subject to full source inspection and final implementation review. Reviewer recommendations were checked against the sources; model agreement is not evidence of behavioral reliability. [Validation](../validation/toolbox.md) records the completed coverage and remaining limits.
+The required concept review supported the five-skill collection, subject to full source inspection and final implementation review. Reviewer recommendations were checked against the sources; model agreement is not evidence of behavioral reliability. [Validation](../validation/satchel.md) records the completed coverage and remaining limits.

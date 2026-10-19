@@ -1,6 +1,6 @@
-# Toolbox
+# Satchel
 
-A collection of standalone skills for everyday work with an agent. Each skill works on its own, including without Atlas. Toolbox is a working name.
+A collection of standalone skills for everyday work with an agent. Each skill works on its own, including without Atlas.
 
 | Skill | Use it to |
 | --- | --- |
@@ -17,17 +17,17 @@ Choose the skill that fits the current request. The host keeps control of tools,
 For a draft checkout, load the local package for a Copilot CLI session:
 
 ```shell
-copilot --plugin-dir /absolute/path/to/atlas/plugins/toolbox
+copilot --plugin-dir /absolute/path/to/atlas/plugins/satchel
 ```
 
-Once Toolbox is merged into the marketplace's default branch, add the marketplace if needed, then install it:
+Once Satchel is merged into the marketplace's default branch, add the marketplace if needed, then install it:
 
 ```shell
 copilot plugin marketplace add dstkwll/atlas
-copilot plugin install toolbox@atlas
+copilot plugin install satchel@atlas
 ```
 
-Start a fresh session and select the skill through the host's skill picker, or ask the agent to use the named skill. Picker names and plugin prefixes vary by host. Toolbox has no agent profile to select.
+Start a fresh session and select the skill through the host's skill picker, or ask the agent to use the named skill. Picker names and plugin prefixes vary by host. Satchel has no agent profile to select.
 
 To install just one skill, copy its **complete folder** from `skills/`, including references and license notices, into your host's skill directory:
 
@@ -43,6 +43,6 @@ Choose plugin installation or manual copying for a skill in each host. Keeping b
 
 ## Sources and evidence
 
-The package includes source attribution and applicable licenses with each adapted skill. The public [adaptation record](https://github.com/dstkwll/atlas/blob/main/docs/toolbox/adaptations.md) explains what changed and why. The [validation summary](https://github.com/dstkwll/atlas/blob/main/docs/validation/toolbox.md) distinguishes observed behavior from untested conditions. [Atlas ideas](https://github.com/dstkwll/atlas/blob/main/docs/toolbox/atlas-ideas.md) records proposals for later discussion.
+The package includes source attribution and applicable licenses with each adapted skill. The public [adaptation record](https://github.com/dstkwll/atlas/blob/main/docs/satchel/adaptations.md) explains what changed and why. The [validation summary](https://github.com/dstkwll/atlas/blob/main/docs/validation/satchel.md) distinguishes observed behavior from untested conditions. [Atlas ideas](https://github.com/dstkwll/atlas/blob/main/docs/satchel/atlas-ideas.md) records proposals for later discussion.
 
 The published links above resolve after merge; draft reviewers can read the same paths in their checkout or PR. These records support maintenance; using the skills requires only their installed folders. The package adds no service, hooks, scripts or MCP servers.
