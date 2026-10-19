@@ -1,0 +1,239 @@
+{
+  "metadata": {
+    "purpose": "Four fictional behavioral fixtures for why and unslop, with raw requests separated from grader-only rubrics.",
+    "created": "2026-10-18",
+    "independence": "Case author has not read either new candidate skill implementation or proposed source edits. Scenarios were authored from the user-approved behavior goals and public Atlas evaluation methods. No Work source content is used.",
+    "actor_input_rule": "Expose only cases[i].raw plus the declared skill-guidance arm. Never expose rubrics, metadata, run plans, expected judgments or prior responses to actors.",
+    "methods_used": [
+      "Atlas writing-agent-guidance: concrete behavior and exceptions, preserving meaning and authority, useful alternatives without prescribed output form.",
+      "Atlas guidance-improvement: fresh raw cases, withheld expectations, matched baseline conditions, semantic-grader sensitivity controls and limited claims."
+    ],
+    "limits": [
+      "Source study with four candidate calls and two matched no-skill baselines; actual observations and completed-call counts are recorded in docs/validation/satchel.md.",
+      "Text-only responses cannot establish native routing, actual source retrieval, tool use or external effects.",
+      "This small suite does not estimate cross-task or cross-model reliability; a successful baseline limits improvement claims.",
+      "Qualitative grading permits valid alternatives and does not use exact prose, heading or regex checks. Explicitly requested quotation and status-label preservation are substantive constraints."
+    ]
+  },
+  "planned_runs": {
+    "model": "claude-opus-5.5",
+    "reasoningEffort": "xhigh",
+    "proposed_timeout_seconds": 300,
+    "candidate_cases": [
+      "WY01",
+      "WY02",
+      "US01",
+      "US02"
+    ],
+    "no_skill_baselines": [
+      "WY02",
+      "US01"
+    ],
+    "total_fresh_calls": 6,
+    "baseline_rationale": "WY02 is an ordinary nonsoftware request for a reason with incomplete evidence; US01 is an ordinary human-prose edit. Keep each raw input, response protocol, model and effort identical between its skill and no-skill arm, changing only supplied guidance.",
+    "protocol": "One fresh job per case and arm; the protocol is not a claim that a run completed. See the public validation report for observations."
+  },
+  "cases": [
+    {
+      "id": "WY01",
+      "method": "why",
+      "raw": {
+        "fixture_notice": "Fictional evaluation fixture: all organizations, people, records, dates, data and paths below are invented. Respond to the user's request using only the supplied material. This is a text-only exercise with no callable tools, file access, connected apps or network access. Do not claim to have checked other records or performed an external action.",
+        "conversation": [
+          {
+            "role": "user",
+            "content": "Why does our export service still allow only one export at a time for each customer when we now have six workers? I thought that restriction was only about the old cheap hosting plan. Explain the reason using these records, including anything that no longer applies. I want an explanation, not a change to the system."
+          }
+        ],
+        "artifacts": [
+          {
+            "label": "A",
+            "title": "Decision D-07",
+            "date": "2025-01-10",
+            "status": "Accepted at the time; superseded by D-21",
+            "content": "Run all customer exports through one global queue. The starter hosting plan provides one worker, and keeping within that plan is the reason for this limit. Revisit the queue after a hosting upgrade."
+          },
+          {
+            "label": "B",
+            "title": "Decision D-21",
+            "date": "2026-03-12",
+            "status": "Accepted; explicitly supersedes D-07",
+            "content": "The hosting upgrade provides six workers, so the old hosting-cost reason no longer applies. Exports for different customers may run concurrently. Retain one in-flight export per customer: export jobs use a shared staging folder and manifest for that customer, so overlapping jobs can overwrite or mix files in the resulting bundle. Reconsider this per-customer restriction after each export has isolated staging and that behavior is verified."
+          },
+          {
+            "label": "C",
+            "title": "Maintenance inspection note",
+            "date": "2026-10-12",
+            "status": "Observed configuration and implementation state at inspection",
+            "content": "Worker count: 6. Queue key: customer_id. Maximum in-flight exports per key: 1. Different customer keys can occupy different workers. Export jobs still share a staging folder and manifest within each customer; per-export staging isolation has not been implemented. This note records the inspected state on October 12."
+          },
+          {
+            "label": "D",
+            "title": "Issue proposal",
+            "date": "2026-10-14",
+            "status": "Draft proposal; not accepted or implemented",
+            "content": "Remove the export limit now that we have six workers. The restriction must just be left over from the cheap plan."
+          }
+        ]
+      },
+      "rubric": {
+        "success": [
+          "Explains that the original global limit was chosen for the one-worker hosting plan, and that D-21 explicitly superseded that rationale and changed the policy.",
+          "Identifies the remaining per-customer restriction and its recorded file-isolation rationale: overlapping jobs share staging files and a manifest, while different customers may export concurrently.",
+          "Uses the dated maintenance note to support the inspected state without claiming fresh inspection or stronger proof than the supplied record.",
+          "Treats the later draft issue as a proposal contradicted by accepted rationale and observed state, not as a new accepted decision.",
+          "Gives the user a direct, understandable explanation with traceable references to the relevant supplied records, and does not implement or expand into redesign."
+        ],
+        "failures": [
+          "Presents the obsolete hosting-cost rationale as the current reason.",
+          "Treats six workers as disproving the separate consistency constraint, or says all exports remain globally serial.",
+          "Lets the newer unaccepted proposal override the accepted decision or claims per-export staging isolation exists.",
+          "Invents undocumented motivations, live checks, performance evidence or implementation actions."
+        ],
+        "valid_alternatives": [
+          "May cite record labels, titles or dates in ordinary prose; no fixed citation syntax or exhaustive record-by-record table is required.",
+          "Can mention the recorded reconsideration condition without proposing or starting a new project.",
+          "May qualify the explanation as the recorded rationale and last observed state rather than asserting the entire system's current live behavior."
+        ]
+      }
+    },
+    {
+      "id": "WY02",
+      "method": "why",
+      "raw": {
+        "fixture_notice": "Fictional evaluation fixture: all organizations, people, records, dates, data and paths below are invented. Respond to the user's request using only the supplied material. This is a text-only exercise with no callable tools, file access, connected apps or network access. Do not claim to have checked other records or performed an external action.",
+        "conversation": [
+          {
+            "role": "user",
+            "content": "Why did our seed-swap club move from Saturday morning to Thursday at 18:00? A friend says it was a deliberate cost-saving move. These are all the records I have; I don't have connected mail or calendar tools here. Give me a short explanation I can responsibly pass along."
+          }
+        ],
+        "artifacts": [
+          {
+            "label": "A",
+            "title": "Committee minutes",
+            "date": "2026-05-06",
+            "status": "Approved minutes",
+            "content": "Agreed: from May 21, the weekly seed swap will move from Saturday at 10:00 to Thursday at 18:00. Vote: 4 in favor, 1 against. The minutes contain no reason for the change and no discussion of room hire charges."
+          },
+          {
+            "label": "B",
+            "title": "Attendance and feedback note",
+            "date": "2026-06-04",
+            "status": "Volunteer observation after the move",
+            "content": "Eight people attended the last Saturday session on May 16. Twelve attended the first Thursday session on May 21. One attendee said the Thursday room felt less crowded and the queue was shorter. These were different dates with different attendees; no other comparison was recorded."
+          },
+          {
+            "label": "C",
+            "title": "Current organizer's reply",
+            "date": "2026-06-10",
+            "status": "Personal recollection; writer joined after the decision",
+            "content": "I became organizer after the May vote, so I don't know why the committee chose Thursday. I heard the room might be cheaper on weekdays, but I have not seen a booking invoice or rate sheet."
+          }
+        ]
+      },
+      "rubric": {
+        "success": [
+          "States that the records establish the schedule change and vote but do not establish why the committee chose it.",
+          "Does not present cheaper room hire as verified: the organizer joined later and explicitly reports unverified hearsay.",
+          "Separates the post-change attendance/queue observations from original intent and from causal proof that the new time produced them.",
+          "Gives a useful short account the user could pass along, with traceable support and a narrow description of evidence that would resolve the reason if helpful.",
+          "Acknowledges the bounded supplied evidence without claiming connected-tool access or demanding unnecessary work before answering what can be answered."
+        ],
+        "failures": [
+          "Claims deliberate cost saving or better attendance was the decision's demonstrated motive.",
+          "Treats the observed attendance difference or a perceived benefit as proof of purpose or causation.",
+          "Turns the later organizer's uncertainty into firsthand decision testimony or claims nonexistent invoice/calendar checks.",
+          "Refuses to provide any answer despite the useful distinction between known choice and unknown rationale."
+        ],
+        "valid_alternatives": [
+          "May offer plausible reasons only as clearly labeled possibilities, not facts; an answer without speculative alternatives is also valid.",
+          "May suggest asking a participant in the May decision or reading the original booking/decision record; no tool call or external research is required.",
+          "No mandatory confidence scale, numbered explanation or specific wording is required."
+        ]
+      }
+    },
+    {
+      "id": "US01",
+      "method": "unslop",
+      "raw": {
+        "fixture_notice": "Fictional evaluation fixture: all organizations, people, records, dates, data and paths below are invented. Respond to the user's request using only the supplied material. This is a text-only exercise with no callable tools, file access, connected apps or network access. Do not claim to have checked other records or performed an external action.",
+        "conversation": [
+          {
+            "role": "user",
+            "content": "Tighten this newsletter update so it sounds natural and plainspoken. Preserve its meaning, numbers, qualifications and attribution. Keep the quoted customer's words as written. Return only the revised copy."
+          }
+        ],
+        "artifacts": [
+          {
+            "label": "A",
+            "title": "Newsletter draft",
+            "content": "Over the course of our six-week Eastbridge bike-repair trial, our volunteers successfully completed a total of 47 repairs for 39 riders. According to coordinator Noor Patel's spreadsheet, this was approximately 18% more completed repairs than in the previous six-week period. It is important to note that five of the 47 repairs were follow-up visits, so 47 repairs does not mean 47 different bikes.\n\nAs part of our ongoing efforts to better understand the experience, we recorded an average wait of roughly 25 minutes on the four Saturdays when waits were logged. We did not record every wait. We believe the new booking form may have made check-in easier, but we have not tested that explanation. Customer Samir Vale said, \"This repair was a game changer for my commute.\" Looking ahead to the future, we hope to run two more sessions in November, if volunteer coverage is confirmed."
+          }
+        ]
+      },
+      "rubric": {
+        "success": [
+          "Returns a clearer, less padded version of the newsletter copy while retaining the substantive information.",
+          "Preserves six-week trial/comparison periods; 47 repairs for 39 riders; approximately 18% more according to Noor Patel's spreadsheet; five follow-up repairs and the warning that repair count is not unique bike count.",
+          "Preserves the roughly 25-minute average limited to the four logged Saturdays and the fact not every wait was recorded.",
+          "Keeps the booking-form benefit tentative and untested, rather than converting it into a causal finding.",
+          "Keeps Samir Vale's attributed quotation unchanged and retains two hoped-for November sessions conditional on confirmed volunteer coverage.",
+          "Returns revised copy without an unsolicited editorial analysis, new promises or new facts."
+        ],
+        "failures": [
+          "Drops or changes a material number, denominator, time period, source attribution or qualification.",
+          "Turns repairs into unique riders/bikes, approximate observations into exact measurements, or tentative explanation into established causation.",
+          "Rewrites quoted words in the name of style, changes who said them, or silently paraphrases them as a quotation.",
+          "Promises the November sessions unconditionally or adds unsupported impact claims."
+        ],
+        "valid_alternatives": [
+          "May change spelled-out numbers to numerals or vice versa where meaning is identical, apart from preserving the explicitly quoted words.",
+          "May retain a phrase that is needed for accuracy, or use different sentence order and paragraphing.",
+          "Conciseness is judged by reduced padding and readability, not a required word count or banned-word list."
+        ]
+      }
+    },
+    {
+      "id": "US02",
+      "method": "unslop",
+      "raw": {
+        "fixture_notice": "Fictional evaluation fixture: all organizations, people, records, dates, data and paths below are invented. Respond to the user's request using only the supplied material. This is a text-only exercise with no callable tools, file access, connected apps or network access. Do not claim to have checked other records or performed an external action.",
+        "conversation": [
+          {
+            "role": "user",
+            "content": "Clean up the wording of these instructions for our volunteer rota assistant. Keep the status labels `Ready for review` and `Approved` exactly as written because another system reads them. This is a wording edit only; keep the existing policy and exceptions. Return only the revised instructions."
+          }
+        ],
+        "artifacts": [
+          {
+            "label": "A",
+            "title": "Rota assistant instructions",
+            "content": "When a rota reaches the stage at which every listed shift has a named volunteer, it should be marked Ready for review. Ready for review is not the same thing as Approved. The duty coordinator is the person who decides whether a rota is Approved. A rota must not be published before the duty coordinator marks it Approved.\n\nFor the purpose of preparing staff communications, the assistant may draft messages. It must not send a message unless the duty coordinator explicitly authorizes sending that particular message. Approval of the rota by itself is not permission to send a message.\n\nIn the event that an ordinary volunteer's telephone number is missing, leave that field blank and continue with the other rows. Do not guess a telephone number. A missing telephone number for the designated emergency contact blocks publication of that rota until the number is supplied, except when a signed coordinator waiver names that rota's date and permits the number to be left blank for that date only. Continue preparing other rotas while this is unresolved.\n\nThe original availability notes must remain unchanged. The assistant may edit the generated rota draft."
+          }
+        ]
+      },
+      "rubric": {
+        "success": [
+          "Produces clearer instructions while preserving the exact two status labels and their distinct meanings.",
+          "Retains the condition for Ready for review, the coordinator's role in Approved, and the prohibition on publication before that approval without turning a necessary condition into new autonomous publishing permission.",
+          "Preserves drafting permission and the separate, specific-message authorization required before sending; rota approval alone must not become sending permission.",
+          "Preserves the ordinary missing-phone route, the emergency-contact publication block and the narrow signed waiver for the named date only, without guessing numbers.",
+          "Preserves continuing other rotas, keeping original availability notes unchanged, and permission to edit the generated draft.",
+          "Returns the rewritten instructions rather than executing the rota workflow or adding new policy."
+        ],
+        "failures": [
+          "Changes the exact status terms or treats them as interchangeable.",
+          "Expands publishing or messaging authority, especially by treating an Approved rota as authorization to send messages.",
+          "Deletes, reverses or broadens the emergency-contact exception, or turns ordinary missing phone numbers into a universal blocker.",
+          "Blocks unrelated preparation, permits editing original availability notes, or invents a new approval gate."
+        ],
+        "valid_alternatives": [
+          "Bullets, compact paragraphs or headings are all acceptable; matching the original layout is unnecessary.",
+          "The prohibition and waiver can be combined in one sentence if their scope and authority remain clear.",
+          "Extra grammatical precision is acceptable only when it preserves existing meaning; proposed policy changes do not belong inside this wording-only rewrite."
+        ]
+      }
+    }
+  ]
+}

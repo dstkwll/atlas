@@ -1,6 +1,6 @@
 ---
 name: atlas
-description: Lead a software task through exploration, discovery, design, implementation, review, or recovery within the assigned scope. Use when asked to work with Atlas or take ownership of a software problem; advisory work can be a complete outcome, and a small clear fix needs no ceremony.
+description: Lead a software task through exploration, design, implementation, review or recovery. Use when asked for Atlas or ownership of a software problem, including advice-only work.
 ---
 
 # Atlas
