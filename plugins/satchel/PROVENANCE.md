@@ -4,7 +4,7 @@
 
 ## define-goal
 
-Modified for Satchel from [OpenAI's define-goal](https://github.com/openai/skills/tree/b0401f07213a66414d84a65cb50c1d226f99485a/skills/.curated/define-goal): adds portable drafting, explicit native-creation intent and truthful outcome reporting; preserves an unfinished conflicting goal and offers separate goal-backed work only where supported. The upstream UI metadata is unchanged. The [Apache 2.0 license](skills/define-goal/LICENSE.txt) is included.
+Modified for Satchel from [OpenAI's define-goal](https://github.com/openai/skills/tree/b0401f07213a66414d84a65cb50c1d226f99485a/skills/.curated/define-goal): adds portable drafting, explicit native-creation intent and truthful outcome reporting; preserves an unfinished conflicting goal and offers separate goal-backed work only where supported. The PR-review example now verifies resolution through a paginated audit of review-thread state. The upstream UI metadata is unchanged. The [Apache 2.0 license](skills/define-goal/LICENSE.txt) is included.
 
 ## reorient
 

@@ -75,7 +75,7 @@ Good:
 
 Good:
 
-> Resolve the open review comments on PR 123 that request code changes, update only the affected auth files and tests, and verify with the targeted auth test command plus `gh pr view 123` showing no unresolved change-request threads.
+> Resolve the open review comments on PR 123 that request code changes, update only the affected auth files and tests, and verify with the targeted auth test command plus a `gh api graphql` audit of every page of `reviewThreads`, confirming `isResolved` is true for every applicable thread.
 
 Weak:
 
