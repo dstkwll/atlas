@@ -37,7 +37,7 @@ copilot plugin install satchel@atlas
 
 Start a fresh session and select the skill through the host's skill picker, or ask the agent to use the named skill. Picker names and plugin prefixes vary by host. Satchel has no agent profile to select.
 
-To install just one skill, copy its **complete folder** from `skills/`, including references and license notices, into your host's skill directory:
+To install just one skill, copy its **complete folder** from `skills/`, including references and licenses, into your host's skill directory:
 
 | Host | Project directory | Personal directory |
 | --- | --- | --- |
@@ -51,7 +51,7 @@ Choose plugin installation or manual copying for a skill in each host. Keeping b
 
 ## Sources and evidence
 
-Each adapted skill carries a pinned source credit and modification note in its `SKILL.md`, plus the original license in its folder. The sources are Matt Pocock, Lauren Tan and OpenAI; `claim-check` is an original synthesis. Keep those credits and licenses when copying a skill.
+The package records source credits and modification details in [PROVENANCE.md](PROVENANCE.md), separate from the task instructions. The sources are Matt Pocock, Lauren Tan and OpenAI; `claim-check` is an original synthesis. Each adapted skill retains its original license. Keep that license when copying a standalone skill.
 
 All nine skills allow normal model discovery. Each has a distinct task and contains its own required instructions; Satchel adds no lead, required sequence, service, hooks, scripts or MCP servers. The authoring skill retains Matt's conceptual vocabulary and two-file structure. The teaching skill serves conversational learning rather than maintaining a course workspace. Atlas retains its separate software-lead and authoring methods.
 
