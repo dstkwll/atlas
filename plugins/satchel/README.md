@@ -51,7 +51,7 @@ Choose plugin installation or manual copying for a skill in each host. Keeping b
 
 ## Sources and evidence
 
-The package records source credits and modification details in [PROVENANCE.md](PROVENANCE.md), separate from the task instructions. The sources are Matt Pocock, Lauren Tan and OpenAI; `claim-check` is an original synthesis. Reorient began as the project owner’s original synthesis, with Ketchup guidance incorporated in the Satchel revision. Each skill with an upstream contribution retains its applicable license. Keep that license when copying a standalone skill.
+The package records source credits and modification details in [PROVENANCE.md](PROVENANCE.md), separate from the task instructions. The adapted skills draw from Matt Pocock, Lauren Tan and OpenAI, with additional writing ideas from Sushruth; `claim-check` is an original synthesis. Reorient began as the project owner’s original synthesis, with Ketchup guidance incorporated in the Satchel revision. Each skill with an upstream contribution retains its applicable license. Keep that license when copying a standalone skill.
 
 All nine skills allow normal model discovery. Each has a distinct task and contains its own required instructions; Satchel adds no lead, required sequence, service, hooks, scripts or MCP servers. The authoring skill retains Matt's conceptual vocabulary and two-file structure. The teaching skill serves conversational learning rather than maintaining a course workspace. Atlas retains its separate software-lead and authoring methods.
 

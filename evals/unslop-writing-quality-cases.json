@@ -1,0 +1,544 @@
+{
+  "metadata": {
+    "purpose": "Nine fictional content cases and four catalog-only selection controls for a bounded unslop writing-quality diagnostic.",
+    "created": "2026-10-21",
+    "independence": "The case author has not read the current unslop skill or candidate wording. Cases were prepared from the assigned behavior boundaries, existing case-file style and public Atlas evaluation methods. All scenario content is fictional; no workplace source material is used. The primary editor added UQ09 before any actor calls to cover removing unsupported factual uncertainty while preserving a voice hedge; that supplementary case is editor-authored, not held out.",
+    "actor_input_rule": "Expose only cases[i].raw plus the declared arm and its neutral response protocol. Never expose case IDs, kind, rubrics, metadata, evaluation plans, expected judgments or prior actor responses. Content actors receive only their declared guidance arm. Catalog-selection actors receive only the relevant name/description catalog, not skill bodies or content-case outputs.",
+    "methods_used": [
+      "Atlas guidance-improvement: realistic raw artifacts, withheld grader expectations, valid neighboring tasks, comparable arms and limited claims.",
+      "Atlas writing-agent-guidance: preserve actors, conditions, uncertainty and context-independent meaning; allow valid alternative wording and avoid exact-prose grading.",
+      "evals/README: distinguish content outcomes from selection observations and native invocation evidence; retain every attempted run and setup limitation."
+    ],
+    "limits": [
+      "The completed schedule, findings and unsuccessful attempts are recorded in docs/validation/satchel.md; preparing these cases alone is not behavioral evidence.",
+      "These small fictional cases are a diagnostic suite, not evidence of operational effectiveness, cross-task reliability or host-wide behavior.",
+      "Catalog-only judgments test whether a description makes a skill eligible; they do not prove native discovery, invocation, useful application or absence of over-routing in a live host.",
+      "Text-only content responses cannot prove source retrieval, tool use, repository changes, publication or other external effects.",
+      "The supplied-context and missing-context pair intentionally share a draft. Run them in separate fresh contexts; they are not independent samples of broad task coverage.",
+      "After outcomes have been inspected or cases used for tuning, report subsequent reuse as diagnostic rather than held-out evidence.",
+      "The planned compact run bundles unrelated cases within a prompt. Outcomes in a bundle share context and are not independent trials; the supplied/missing-context pair is kept in separate prompts."
+    ]
+  },
+  "evaluation_plan": {
+    "status": "Frozen before actor calls: four content calls and two catalog calls on Claude Opus 5.5/high, comparing current main with the candidate.",
+    "content_cases": [
+      "UQ01",
+      "UQ02",
+      "UQ03",
+      "UQ04",
+      "UQ05",
+      "UQ06",
+      "UQ07",
+      "UQ08",
+      "UQ09"
+    ],
+    "catalog_selection_controls": [
+      "UQS01",
+      "UQS02",
+      "UQS03",
+      "UQS04"
+    ],
+    "comparison": "Keep raw input, model, effort, tool availability and response protocol identical across guidance arms; vary only the skill source or catalog description. Use a fresh context for each prompt group and arm. Group UQ01, UQ02, UQ03, UQ05, UQ06, UQ07, UQ08 and UQ09 together; run UQ04 alone so missing context cannot be recovered from UQ03. Run the four catalog controls together in separate fresh calls. Retain source identities and every attempt; bundled outcomes are diagnostic, not independent samples.",
+    "catalog_protocol": "Given the supplied catalog and raw task, state which listed skills, if any, are relevant to load and briefly why. Do not load skill bodies or perform the underlying task. Use this same neutral protocol for every catalog arm.",
+    "grading": "Use the withheld qualitative rubric and supplied facts, allowing alternative edits that preserve claims, genuine conditions and user intent. Assess semantic correctness and usefulness separately from selection. Challenge grading with a known invalid transformation and a valid alternative before relying on it; exact prose, banned-word checks and required heading checks are not behavioral evidence."
+  },
+  "cases": [
+    {
+      "id": "UQ01",
+      "kind": "content",
+      "raw": {
+        "fixture_notice": "Fictional evaluation fixture: all organizations, people, records, dates, data and paths below are invented. Respond using only the supplied material. This is a text-only exercise with no callable tools, file access, connected apps or network access. Do not claim to have checked other records or performed an external action.",
+        "context": {
+          "audience": "Customers reading a help-center article after seeing an export status."
+        },
+        "conversation": [
+          {
+            "role": "user",
+            "content": "Please tighten this help-center paragraph. Return only the revised copy."
+          }
+        ],
+        "artifacts": [
+          {
+            "title": "Export status draft",
+            "content": "A Queued export is waiting to start, not a failed export. Failed means all three attempts ended in errors. If an export stays Queued for more than 15 minutes, contact support with its job ID. In order to help us investigate effectively, please include that ID in your message."
+          }
+        ]
+      },
+      "rubric": {
+        "success": [
+          "Makes the paragraph clear without losing the distinction between a waiting export and an export whose three attempts ended in errors.",
+          "Retains the more-than-15-minute condition and the instruction to provide the job ID when contacting support.",
+          "Reduces repetition where useful and returns usable help-center copy."
+        ],
+        "failures": [
+          "Deletes or reverses the status distinction in a way that could make a waiting export seem failed.",
+          "Changes three attempts, the time threshold, or the conditional support instruction.",
+          "Adds unsupported retry, cancellation, completion-time or recovery promises."
+        ],
+        "valid_alternatives": [
+          "May retain the original contrast or express both status meanings in separate sentences.",
+          "May keep the status names as plain text or apply light formatting.",
+          "No required word count, sentence pattern or ban on negative wording applies."
+        ]
+      }
+    },
+    {
+      "id": "UQ02",
+      "kind": "content",
+      "raw": {
+        "fixture_notice": "Fictional evaluation fixture: all organizations, people, records, dates, data and paths below are invented. Respond using only the supplied material. This is a text-only exercise with no callable tools, file access, connected apps or network access. Do not claim to have checked other records or performed an external action.",
+        "context": {
+          "audience": "Engineers reviewing a proposed import design; they have not attended the design discussion."
+        },
+        "conversation": [
+          {
+            "role": "user",
+            "content": "Make this design-note paragraph clearer for the reviewers. Return only the revised paragraph."
+          }
+        ],
+        "artifacts": [
+          {
+            "title": "Import design draft",
+            "content": "This isn't about moving faster. It's about building confidence. We propose processing the 12,000-row import in batches of 200 rows. A failed batch can then be rerun without restarting the whole import. At the end of the day, the overarching goal is to make failure recovery more manageable."
+          }
+        ]
+      },
+      "rubric": {
+        "success": [
+          "Centers the concrete proposal and its supplied recovery reason: batches of 200 within a 12,000-row import allow rerunning a failed batch without restarting the whole import.",
+          "Removes or replaces vague rhetorical framing when it adds no useful explanation beyond the supplied reason.",
+          "Preserves that this is a proposal and does not claim a demonstrated speed or reliability gain."
+        ],
+        "failures": [
+          "Keeps the paragraph chiefly about abstract confidence while obscuring the actionable proposal and reason.",
+          "Invents a new rationale, performance measurement, implementation result or guarantee.",
+          "Changes batch size, import size, proposal status or the scope of the rerun."
+        ],
+        "valid_alternatives": [
+          "May combine the rationale with the proposal or place it in a following sentence.",
+          "May mention confidence or recovery manageability if the concrete explanation remains clear and the wording earns its place.",
+          "A concise paragraph and a slightly fuller explanation can both satisfy the task."
+        ]
+      }
+    },
+    {
+      "id": "UQ03",
+      "kind": "content",
+      "raw": {
+        "fixture_notice": "Fictional evaluation fixture: all organizations, people, records, dates, data and paths below are invented. Respond using only the supplied material. This is a text-only exercise with no callable tools, file access, connected apps or network access. Do not claim to have checked other records or performed an external action.",
+        "context": {
+          "audience": "Repository maintainers who need to review and later find the change, without access to the planning chat."
+        },
+        "conversation": [
+          {
+            "role": "user",
+            "content": "Prepare this PR description for maintainers who were not in our planning chats. Keep it short."
+          }
+        ],
+        "artifacts": [
+          {
+            "title": "PR draft",
+            "content": "Larch (`IMPT-317`) is the restart-gap fix from Tuesday. Amber (`IMPT-422`) is still parked. The fast lane stays behind `import_lock_v2`."
+          },
+          {
+            "title": "Planning notes",
+            "content": "Larch is the change tracked as IMPT-317: persist each account import lock so a worker restart does not lose the lock and allow another worker to start an overlapping import. Amber is the separate automatic retry proposal tracked as IMPT-422; it is deferred and is not part of this PR. The fast lane is the nickname for the new lock path. That path is controlled by the import_lock_v2 feature flag, which remains off by default. Tuesday refers to the October 13 review; no test results or rollout results are recorded here."
+          }
+        ]
+      },
+      "rubric": {
+        "success": [
+          "Replaces or explains the private nicknames using the supplied change, deferred-scope and flag facts so a maintainer can understand the PR.",
+          "Preserves the exact searchable identifiers IMPT-317, IMPT-422 and import_lock_v2.",
+          "Keeps automatic retries outside this PR and the new lock path disabled by default.",
+          "Does not require the reader to reconstruct the planning chat to understand the restart problem."
+        ],
+        "failures": [
+          "Invents behavior, tests, rollout, performance evidence or approval that the notes do not supply.",
+          "Drops or changes the exact issue or flag identifiers needed to find the work.",
+          "Treats the deferred retry proposal as implemented or changes the flag default.",
+          "Leaves private nicknames as the only explanation despite available definitions."
+        ],
+        "valid_alternatives": [
+          "May omit the nicknames entirely or retain them alongside clear explanations.",
+          "May omit the incidental Tuesday reference or replace it with the supplied review date if useful.",
+          "Bullets or a short paragraph are both acceptable; exact wording is not prescribed."
+        ]
+      }
+    },
+    {
+      "id": "UQ04",
+      "kind": "content",
+      "raw": {
+        "fixture_notice": "Fictional evaluation fixture: all organizations, people, records, dates, data and paths below are invented. Respond using only the supplied material. This is a text-only exercise with no callable tools, file access, connected apps or network access. Do not claim to have checked other records or performed an external action.",
+        "context": {
+          "audience": "Repository maintainers who need to review and later find the change, without access to the planning chat."
+        },
+        "conversation": [
+          {
+            "role": "user",
+            "content": "Prepare this PR description for maintainers who were not in our planning chats. Keep it short."
+          }
+        ],
+        "artifacts": [
+          {
+            "title": "PR draft",
+            "content": "Larch (`IMPT-317`) is the restart-gap fix from Tuesday. Amber (`IMPT-422`) is still parked. The fast lane stays behind `import_lock_v2`."
+          }
+        ]
+      },
+      "rubric": {
+        "success": [
+          "Recognizes that the supplied draft does not establish what Larch, Amber, the restart gap or the fast lane actually mean.",
+          "Preserves the exact searchable identifiers IMPT-317, IMPT-422 and import_lock_v2 without inventing their definitions.",
+          "Provides a useful partial edit with specific unresolved points, or asks a focused question for the missing change and deferred-scope context.",
+          "Does not represent the description as fully understandable to outside maintainers while leaving essential private references unexplained."
+        ],
+        "failures": [
+          "Invents account locking, retry behavior, a feature-flag default, a review date or any other absent implementation detail.",
+          "Expands or renames the exact IDs based on guesses.",
+          "Treats the ambiguous nicknames as adequate public explanation with no indication of missing context.",
+          "Demands unrelated repository access or broad investigation before identifying the narrow information needed."
+        ],
+        "valid_alternatives": [
+          "A concise clarification question is valid when the missing meaning prevents a responsible final rewrite.",
+          "May return a partial draft with clearly marked placeholders and a short list of missing facts.",
+          "May preserve unresolved source wording as quoted draft material, provided it is not presented as a completed explanation."
+        ]
+      }
+    },
+    {
+      "id": "UQ05",
+      "kind": "content",
+      "raw": {
+        "fixture_notice": "Fictional evaluation fixture: all organizations, people, records, dates, data and paths below are invented. Respond using only the supplied material. This is a text-only exercise with no callable tools, file access, connected apps or network access. Do not claim to have checked other records or performed an external action.",
+        "context": {
+          "audience": "Members of a small garden club reading a first-person newsletter."
+        },
+        "conversation": [
+          {
+            "role": "user",
+            "content": "Give this a light edit before I put it in the garden club newsletter. I like the relaxed tone. Return only the copy."
+          }
+        ],
+        "artifacts": [
+          {
+            "title": "Newsletter draft",
+            "content": "We planted the last onions before the rain. June called it excellent timing; I called it luck. Either way, the beds are ready. Bring a mug on Saturday, October 24, at 10 a.m. We'll make tea in the shed and sort the seed envelopes. If the path is flooded, we'll meet at the library instead."
+          }
+        ]
+      },
+      "rubric": {
+        "success": [
+          "Preserves the relaxed first-person voice and the small joke about timing and luck.",
+          "Retains the event date and time, mug request, tea and seed-sorting activities, and the flooded-path condition for moving to the library.",
+          "Keeps an already clear draft usable without imposing substantial generic rewriting."
+        ],
+        "failures": [
+          "Flattens the personal voice into promotional or corporate copy without a task-based reason.",
+          "Drops practical event information, changes the weather condition or makes the library the unconditional venue.",
+          "Invents logistics, attendance expectations or claims about the garden."
+        ],
+        "valid_alternatives": [
+          "Returning the draft unchanged is valid if the actor judges that no edit improves it.",
+          "Small punctuation, rhythm or wording edits are valid when they retain meaning and voice.",
+          "No requirement to replace a minimum number of words or reduce length applies."
+        ]
+      }
+    },
+    {
+      "id": "UQ06",
+      "kind": "content",
+      "raw": {
+        "fixture_notice": "Fictional evaluation fixture: all organizations, people, records, dates, data and paths below are invented. Respond using only the supplied material. This is a text-only exercise with no callable tools, file access, connected apps or network access. Do not claim to have checked other records or performed an external action.",
+        "context": {
+          "audience": "On-call engineers using an import-client handoff note during an incident."
+        },
+        "conversation": [
+          {
+            "role": "user",
+            "content": "Clean up this handoff note so it is easier to scan. Keep it as a short paragraph."
+          }
+        ],
+        "artifacts": [
+          {
+            "title": "Import client handoff draft",
+            "content": "In the event that /imports returns 429 with a Retry-After header, the client waits for the interval in that header before retrying, with up to two retries. Requests typically finish within 90 seconds. If a request times out after the upload, we may not know whether the import was created. Before submitting again, check the request ID in the import log. A timeout on its own does not establish that the import failed."
+          }
+        ]
+      },
+      "rubric": {
+        "success": [
+          "Preserves the joint condition of a 429 response with a Retry-After header, the header-specified wait, and the limit of two retries.",
+          "Retains 90 seconds as a typical duration rather than a timeout, deadline or guaranteed completion bound.",
+          "Preserves uncertainty about whether a timed-out upload created an import and the need to check its request ID before submitting again.",
+          "Improves readability without removing meaningful conditions or uncertainty as mere hedging."
+        ],
+        "failures": [
+          "Applies automatic retries to every failure or invents behavior when no Retry-After header exists.",
+          "Changes two retries into two total attempts, removes the limit or invents a fixed retry interval.",
+          "Turns typically into a guarantee or 90 seconds into an instruction to time out.",
+          "Assumes a timeout proves failure or permits resubmission without checking the import log."
+        ],
+        "valid_alternatives": [
+          "May express typical duration with equivalent language such as usually or most requests.",
+          "May combine the uncertainty and timeout explanation if the resulting operational meaning is preserved.",
+          "Technical identifiers may be formatted as code or plain text."
+        ]
+      }
+    },
+    {
+      "id": "UQ07",
+      "kind": "content",
+      "raw": {
+        "fixture_notice": "Fictional evaluation fixture: all organizations, people, records, dates, data and paths below are invented. Respond using only the supplied material. This is a text-only exercise with no callable tools, file access, connected apps or network access. Do not claim to have checked other records or performed an external action.",
+        "context": {
+          "audience": "Future operations hires consulting an archived rollout note months after it was written."
+        },
+        "conversation": [
+          {
+            "role": "user",
+            "content": "Edit this paragraph for the operations handbook archive. Use the attached notes where helpful, and flag anything you cannot settle from them."
+          }
+        ],
+        "artifacts": [
+          {
+            "title": "Rollout paragraph",
+            "date": "2026-10-21",
+            "content": "Yesterday we ran the retry test against that build and it passed. We will use the same limit from next Friday, once this is signed off."
+          },
+          {
+            "title": "Test log excerpt",
+            "content": "2026-10-20: HTTP 429 retry checks passed on shipper-2.8.1-rc2. The rollout note was drafted on October 21. The team has not yet recorded the rollout approval."
+          }
+        ]
+      },
+      "rubric": {
+        "success": [
+          "Makes the confirmed test date, build and tested HTTP 429 scope recoverable for a future reader.",
+          "Distinguishes the passed test from the still-unrecorded rollout approval.",
+          "Flags the unresolved limit and the ambiguous next-Friday rollout date instead of guessing a value or date.",
+          "Retains rollout as conditional on approval and makes useful progress on the supported portion."
+        ],
+        "failures": [
+          "Supplies an unsupported retry limit, rollout date, approver or approval status.",
+          "Claims comprehensive retry validation when the supplied record covers HTTP 429 checks.",
+          "Leaves all relative dates and references untouched while presenting the paragraph as self-contained archival copy.",
+          "Converts the conditional rollout into an approved commitment."
+        ],
+        "valid_alternatives": [
+          "May produce an edited paragraph plus concise editorial questions, or a draft with marked placeholders.",
+          "May ask for the intended rollout date rather than choose between October 23 and October 30.",
+          "No specific date format or wording is required; the test date and build must be unambiguous."
+        ]
+      }
+    },
+    {
+      "id": "UQ08",
+      "kind": "content",
+      "raw": {
+        "fixture_notice": "Fictional evaluation fixture: all organizations, people, records, dates, data and paths below are invented. Respond using only the supplied material. This is a text-only exercise with no callable tools, file access, connected apps or network access. Do not claim to have checked other records or performed an external action.",
+        "context": {
+          "audience": "Storage engineers who maintain replication and use WAL and LSN in their daily work."
+        },
+        "conversation": [
+          {
+            "role": "user",
+            "content": "Tighten this paragraph for the storage-engineering design note. Return only the revised paragraph."
+          }
+        ],
+        "artifacts": [
+          {
+            "title": "Checkpoint draft",
+            "content": "The follower reads the WAL until it reaches the checkpoint LSN. It then flushes the replayed pages before acknowledging the checkpoint. At this point in time, the leader can retire WAL segments below that LSN."
+          }
+        ]
+      },
+      "rubric": {
+        "success": [
+          "Preserves the follower reading to the checkpoint LSN, flushing replayed pages before acknowledgment, and the leader retiring lower WAL segments only after that acknowledgment.",
+          "Removes padding where useful while keeping the paragraph appropriate for the stated expert audience.",
+          "Keeps referents understandable without turning familiar acronyms or an already clear pronoun into a tutorial."
+        ],
+        "failures": [
+          "Changes which component reads, flushes, acknowledges or retires segments.",
+          "Allows retirement before acknowledgment or changes the relevant LSN boundary.",
+          "Adds a lengthy explanation of common terms that overwhelms the requested compact design paragraph.",
+          "Invents protocol guarantees or implementation behavior absent from the draft."
+        ],
+        "valid_alternatives": [
+          "May retain It where its antecedent remains clear, or name the follower again if the revised sentence needs it.",
+          "May retain WAL and LSN unexpanded; a brief accurate expansion is not by itself a failure.",
+          "May replace the padded final transition with a shorter time relation without using a prescribed phrase."
+        ]
+      }
+    },
+    {
+      "id": "UQ09",
+      "kind": "content",
+      "raw": {
+        "fixture_notice": "Fictional evaluation fixture: all organizations, people, records, dates, data and paths below are invented. Respond using only the supplied material. This is a text-only exercise with no callable tools, file access, connected apps or network access. Do not claim to have checked other records or performed an external action.",
+        "context": {
+          "audience": "Engineering teammates reading a short rollout recommendation."
+        },
+        "conversation": [
+          {
+            "role": "user",
+            "content": "Polish this short note using the implementation note. Keep my conversational tone."
+          }
+        ],
+        "artifacts": [
+          {
+            "title": "Draft",
+            "content": "The uploader might typically retry failed uploads. I think we should hold the rollout until the weekend - thoughts?"
+          },
+          {
+            "title": "Inspected current implementation",
+            "content": "The uploader retries HTTP 503 failures up to three times. It does not automatically retry other failures. No rollout date has been agreed."
+          }
+        ]
+      },
+      "rubric": {
+        "success": [
+          "States the supplied retry behavior with the HTTP 503 condition and limit, without unwarranted uncertainty about that implementation.",
+          "Preserves the writer's tentative rollout recommendation and invitation to respond, without turning either into a settled commitment."
+        ],
+        "failures": [
+          "Generalizes retries to all failures or promises all uploads succeed.",
+          "Removes or strengthens the tentative rollout recommendation, invents an agreed date, or drops the retry limit."
+        ],
+        "valid_alternatives": [
+          "May use different phrasing for the retry condition and conversational invitation.",
+          "May keep a voice qualifier without preserving uncertainty about an established technical rule."
+        ]
+      }
+    },
+    {
+      "id": "UQS01",
+      "kind": "catalog_selection",
+      "raw": {
+        "fixture_notice": "Fictional evaluation fixture: all organizations, people, records, dates, data and paths below are invented. Respond using only the supplied material. This is a text-only exercise with no callable tools, file access, connected apps or network access. Do not claim to have checked other records or performed an external action.",
+        "context": {
+          "audience": "Maintainers reviewing a pull request; they have not seen the working chat."
+        },
+        "conversation": [
+          {
+            "role": "user",
+            "content": "Prepare the final PR title and description from these notes for the team to review."
+          }
+        ],
+        "artifacts": [
+          {
+            "title": "PR notes",
+            "content": "Search filters were lost when the user changed pages. The patch carries the selected filters into each pagination request. The existing filter and pagination tests pass, and a new regression test covers moving to page 2 with an active status filter. No API shape changes."
+          }
+        ]
+      },
+      "rubric": {
+        "success": [
+          "Recognizes unslop as eligible for reviewing the clarity of the final shared PR prose.",
+          "Keeps the selection proportionate to the short writing task without treating selection as permission to publish the PR."
+        ],
+        "failures": [
+          "Declares unslop ineligible solely because the task asks for new final prose rather than edits to a supplied finished draft.",
+          "Selects unrelated software implementation or deployment work based only on the presence of PR notes."
+        ],
+        "valid_alternatives": [
+          "May select unslop as a brief final writing pass alongside ordinary drafting.",
+          "Other genuinely relevant listed skills may also be eligible; no exclusive routing hierarchy is required."
+        ]
+      }
+    },
+    {
+      "id": "UQS02",
+      "kind": "catalog_selection",
+      "raw": {
+        "fixture_notice": "Fictional evaluation fixture: all organizations, people, records, dates, data and paths below are invented. Respond using only the supplied material. This is a text-only exercise with no callable tools, file access, connected apps or network access. Do not claim to have checked other records or performed an external action.",
+        "context": {
+          "audience": "Teammates reading a short chat update."
+        },
+        "conversation": [
+          {
+            "role": "user",
+            "content": "Please clean up this one sentence before I paste it in team chat: \"At this point in time we are still currently waiting for the vendor to send the file.\""
+          }
+        ],
+        "artifacts": []
+      },
+      "rubric": {
+        "success": [
+          "Recognizes unslop as eligible for the explicit wording-cleanup request despite its short length.",
+          "Treats the requested action as a local wording edit, with no implied sending authority."
+        ],
+        "failures": [
+          "Rejects unslop solely because the target is one sentence or a chat message.",
+          "Routes to vendor follow-up, messaging or investigation rather than the requested edit."
+        ],
+        "valid_alternatives": [
+          "A very small edit remains a valid use; selection does not require a long workflow.",
+          "The selection can explain relevance in one sentence."
+        ]
+      }
+    },
+    {
+      "id": "UQS03",
+      "kind": "catalog_selection",
+      "raw": {
+        "fixture_notice": "Fictional evaluation fixture: all organizations, people, records, dates, data and paths below are invented. Respond using only the supplied material. This is a text-only exercise with no callable tools, file access, connected apps or network access. Do not claim to have checked other records or performed an external action.",
+        "context": {
+          "audience": "The user checking a multiplication."
+        },
+        "conversation": [
+          {
+            "role": "user",
+            "content": "What is 18 times 7? Just the number."
+          }
+        ],
+        "artifacts": []
+      },
+      "rubric": {
+        "success": [
+          "Chooses direct answering without loading unslop for a simple exact arithmetic response."
+        ],
+        "failures": [
+          "Routes to unslop solely because any answer is written text.",
+          "Adds an editing or explanation workflow to the requested number."
+        ],
+        "valid_alternatives": [
+          "May express the selection as no skill, direct answer, or the catalog protocol's equivalent.",
+          "This control grades selection, not the arithmetic answer."
+        ]
+      }
+    },
+    {
+      "id": "UQS04",
+      "kind": "catalog_selection",
+      "raw": {
+        "fixture_notice": "Fictional evaluation fixture: all organizations, people, records, dates, data and paths below are invented. Respond using only the supplied material. This is a text-only exercise with no callable tools, file access, connected apps or network access. Do not claim to have checked other records or performed an external action.",
+        "context": {
+          "audience": "The user needs an expression to paste into Python code."
+        },
+        "conversation": [
+          {
+            "role": "user",
+            "content": "Return only a Python expression that sorts the list named values in descending order without modifying it. No explanation."
+          }
+        ],
+        "artifacts": []
+      },
+      "rubric": {
+        "success": [
+          "Chooses direct answering without loading unslop for a code-only response with no prose-editing request."
+        ],
+        "failures": [
+          "Selects unslop merely because it applies to final responses or output quality in general.",
+          "Turns the code-only request into a prose explanation or writing workflow."
+        ],
+        "valid_alternatives": [
+          "May express the selection as no skill, direct answer, or the catalog protocol's equivalent.",
+          "The case does not require or test code execution; this is a selection control."
+        ]
+      }
+    }
+  ]
+}
