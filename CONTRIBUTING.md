@@ -42,6 +42,8 @@ Follow the branch, draft-PR, versioning and authorization rules in AGENTS.md. Re
 
 When creating or revising skills and runbooks, use [Writing agent guidance](docs/writing-agent-guidance.md) to make the method's decisions, examples, completion conditions and references clear. Preserve accepted behavior when editing the prose; assess the complete loaded path rather than only the entry file.
 
+Before publishing or materially revising a PR title or description, read and apply [Unslop](plugins/satchel/skills/unslop/SKILL.md) to the finished draft for its intended reviewers.
+
 If startup guidance changes, check a fresh session can find and apply it. Copilot's standard repository entry is [.github/copilot-instructions.md](.github/copilot-instructions.md); it points to the same maintenance contract. Start the host in the repository and verify its discovered instructions. A conversation created outside this checkout needs an explicit repository pointer in that host's saved project instructions. The [startup validation](docs/validation/maintainer-startup.md) records observed coverage and remaining limits.
 
 For a saved architect project outside the checkout, use a pointer such as:
