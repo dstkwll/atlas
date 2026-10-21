@@ -18,6 +18,8 @@ Prefer cohesive behavior behind a useful interface. Add a boundary, adapter or p
 
 Record settled interface/ownership decisions and what the implementer may refine. A relevant type, state or call-flow sketch can remove ambiguity; do not prescribe every helper or assume fewer methods prove a better design.
 
+When a rule has different meanings at existing call sites, state the accepted assignment rule and known exceptions. Include the affected-site inventory, or a bounded step to establish it, when needed to verify coverage. Uniform mechanical changes can remain with the implementer.
+
 ## Slice and sequence
 
 Each normal slice delivers a narrow, integrated observable outcome through the layers it actually needs, including verification. Do not require a UI for an API-only change or split database, service and tests into unrelated completion claims. Size for a credible implementation and review effort with the intended recipient, not an invented universal ticket count or context-window promise.
@@ -36,7 +38,7 @@ Map the whole requested scope. Make currently knowable slices executable; keep l
 
 Use the project's ticket shape; absent one, use the separate files and index above. Supply:
 - Outcome and scope exclusions; source requirements or acceptance examples it serves.
-- Current behavior and relevant source locations, distinguished from proposed file changes. Tell the recipient to recheck stale paths/baselines before relying on them.
+- Current behavior and relevant source locations, distinguished from proposed file changes. Name known conflicts with the new requirement on the touched path and how the slice addresses them; unresolved conflicts limit readiness or acceptance. Tell the recipient to recheck stale paths/baselines before relying on them.
 - Prerequisites and dependency outputs; readiness and any exact blocker.
 - Accepted responsibilities, contracts and risk boundaries; allowed implementation choices and return conditions.
 - Ordered implementation guidance sufficient to navigate the slice, including integration and meaningful failure behavior, without freezing routine realization.
@@ -44,6 +46,8 @@ Use the project's ticket shape; absent one, use the separate files and index abo
 - Expected return evidence, relevant review and delivery/rollback considerations where consequence warrants them.
 
 Avoid dumping the conversation or an entire source tree. Explain why each linked source matters. Tests must derive expected outcomes from accepted behavior, not encode a worker's new policy.
+
+For acceptance that existing tests cannot reach, identify a viable production entry point, allowed extraction or integration/harness step, with any material constraints. A test of copied logic does not establish the production behavior. Use [Test adequacy](test-adequacy.md) to choose evidence that distinguishes a plausible wrong result; leave routine test construction to the implementer.
 
 ## TDD prerequisites and execution guidance
 
