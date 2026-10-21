@@ -1,11 +1,11 @@
 ---
 name: unslop
-description: Edits existing prose to remove filler, repetitive framing and awkward phrasing while preserving meaning and voice. Use when the user asks to tighten or de-slop writing, rather than create new content, check its facts or identify AI authorship.
+description: Edits existing prose for clarity while preserving meaning and voice. Use for requested prose cleanup or to polish your own draft before delivery. Not for drafting from scratch, fact checking or identifying AI authorship.
 ---
 
 # Unslop
 
-Make the supplied writing clearer and more direct for its intended audience. Use the requested tone and format; otherwise retain the writer's voice. Provide revised wording rather than only listing problems. The patterns below are clues to unhelpful writing, not evidence of AI authorship or a list of forbidden words and punctuation. Leave a passage alone when it already works.
+Make existing writing, whether supplied by the user or drafted by you, clearer and more direct for its intended audience. Use the requested tone and format; otherwise retain the writer's voice. Provide revised wording rather than only listing problems. The patterns below are clues to unhelpful writing, not evidence of AI authorship or a list of forbidden words and punctuation. Leave a passage alone when it already works; ordinary replies need no separate editing ritual.
 
 ## Preserve what the text says
 
@@ -19,11 +19,19 @@ If editing agent instructions, preserve obligations, permissions, authority, sco
 
 - **Filler and ceremony.** Shorten phrases such as "in order to" to "to" and remove empty openings, praise and closing offers. Keep warmth or formality that serves the audience. Keep a summary when it helps the reader use information already in the draft.
 - **Inflated or vague claims.** Check promotional adjectives, generic conclusions and trailing phrases such as "highlighting" or "ensuring" for actual information. State the supported action or result directly. Cut only what adds no material meaning; do not delete an inconvenient caveat or turn "experts suggest" into an unattributed fact.
-- **Stock framing.** Replace a repetitive "not just X, but Y" construction with the actual point. Use the natural number of items instead of forcing groups of three. Replace a "from X to Y" range when its endpoints do not describe a meaningful scale, while preserving the topics or comparison it carries.
-- **Unhelpful jargon and metaphor.** Prefer "use" to "utilize" when they mean the same thing. Replace abstract or mannered language with the concrete meaning available in the draft. Keep domain terms, identifiers, deliberate imagery and distinctions that matter to this writer and audience.
+- **Stock framing.** Replace a stock contrast frame, such as "not just X, but Y", "X, not Y", "X rather than Y", "X instead of Y" or "it isn't X, it's Y", with the actual point, including any real distinction the contrast carries. Use the natural number of items instead of forcing groups of three. Replace a "from X to Y" range when its endpoints do not describe a meaningful scale, while preserving the topics or comparison it carries.
+- **Unhelpful jargon and metaphor.** Prefer "use" to "utilize" when they mean the same thing. Replace abstract or mannered language with the concrete meaning available in the draft. Keep domain terms, identifiers, deliberate imagery and distinctions that matter to this writer and audience. Replace private labels the audience has not seen, such as session codenames or nicknames from the writer's notes, with an established name or plain description supported by the supplied context. Preserve searchable ticket IDs, branch names and code identifiers, explaining them when needed. Flag labels the context cannot resolve.
 - **Unnecessary variation.** Use a consistent name for the same thing instead of cycling through synonyms. Do not merge terms that refer to different concepts. Prefer "is" or "has" to an elaborate substitute when the relationship is unchanged.
 - **Dense or over-compressed sentences.** Split clauses where the reader must backtrack. Restore missing articles, verbs or connective words when fragments and symbols obscure the relationship. Prefer active voice when the actor is known and relevant; do not invent an actor to avoid the passive.
-- **Redundant qualification.** Reduce stacked hedges and adverbs while keeping their evidentiary force: "could potentially possibly" can become "could". Keep qualifiers that express real limits. Replace a vague degree with a measured value only when that value is supplied and applies to the same claim.
+- **Redundant qualification.** Reduce stacked hedges and adverbs while keeping their evidentiary force: "could potentially possibly" can become "could". Remove an uncertainty hedge only when the supplied material establishes the same claim with the same scope. Words such as "typically" or "usually" can express frequency or conditions; retain them unless the evidence supports removal. Keep qualifiers that express real limits, genuine uncertainty, an invitation to disagree or the writer's voice. Replace a vague degree with a measured value only when that value is supplied and applies to the same claim.
 - **Distracting presentation.** Simplify repeated bold labels, decorative headings, excessive emphasis and punctuation that interrupts reading. Keep useful lists, punctuation and typography; follow the requested house style. Formatting is a readability choice, not an authorship test.
+
+## Check references for the intended reader
+
+Read the revision without relying on this conversation. Find material references, labels or relative dates whose meaning the intended reader cannot recover from the draft or their expected knowledge. Resolve them from the supplied context with a name, date, description or link; flag what remains unresolved without inventing details. Leave clear pronouns and familiar domain terms alone.
+
+For important outward-facing or durable text, an optional fresh reader can help if the host supports one within existing permissions. Give it only the draft and a short audience description, and ask which references it cannot resolve. Use your judgment to fix or flag material gaps for that audience. Your own cold read is sufficient when a fresh reader is unavailable or would add little.
+
+## Check and return
 
 Read the revision against the original for lost meaning or an altered voice. Return the edited prose in the requested form, with only material unresolved issues or requested explanations. Do not add a routine checklist, score or claim that the text is now "human-written."

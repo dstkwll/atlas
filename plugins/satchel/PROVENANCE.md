@@ -20,7 +20,7 @@ Adapted from Matt Pocock's [to-questionnaire](https://github.com/mattpocock/skil
 
 ## unslop
 
-Adapted from Lauren Tan's [unslop](https://github.com/cursor/plugins/blob/8838150c6b4829ea3c01782631213776d86df14a/pstack/skills/unslop/SKILL.md). Modified for normal discovery and meaning-preserving edits; authorship claims, blanket style bans and sibling-skill rule identifiers are omitted. The original [MIT license](skills/unslop/LICENSE) is included.
+Adapted from Lauren Tan's [unslop](https://github.com/cursor/plugins/blob/8838150c6b4829ea3c01782631213776d86df14a/pstack/skills/unslop/SKILL.md). Modified for normal discovery and meaning-preserving edits; authorship claims, blanket style bans and sibling-skill rule identifiers are omitted. Later revisions explicitly cover the agent's own drafts and express ideas from Sushruth's [human-narrative](https://github.com/sushruth/human-narrative-skill/tree/d211f762201e0035b302fcf3c9d2f53b349606d3) skill in new prose: broader contrast examples, cold-read reference checks, private-label clarification and evidence-grounded hedge removal. The adaptation preserves meaningful contrasts, searchable identifiers, frequency and scope, and writer voice; fresh-reader assistance is optional. The original Lauren Tan [MIT license](skills/unslop/LICENSE) is retained; no human-narrative text is copied.
 
 ## wait-what
 
