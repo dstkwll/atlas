@@ -101,3 +101,22 @@ Separate fresh Copilot **Claude Sonnet 5 / high** source and output reviews comp
 The output review found mostly ties. Primary inspection retained one minor candidate overclaim: the production-proof response said the sample distinguishes the old offset, although the old layout was not supplied. Two other findings were rejected: prospective use of the project's test stack did not claim that it had been inspected, and the candidate Arena response already explicitly forbade assuming another fix round. No product wording changed after these reviews. The responses demonstrate useful planning on these packets while retaining this factual qualification, not regression freedom.
 
 The existing 39 evaluator tests, 233 package-local Markdown link destinations, aligned Atlas versions and diff checks passed. Satchel remains at 0.1.0. These checks support their stated structural properties, not instruction adherence.
+
+## October 22, 2026: commitment ownership and timing
+
+The 0.11.6 candidate adds the accepted commitment and dependency-request rule to continuity guidance, with pointers from the lead and coordination method. It preserves agreed owners, actions, timing and completion conditions; proposed ownership remains proposed, and consequential gaps prompt a context check before a question. Existing continuation and authority boundaries remain in force. This clarifies the current charter's intent without a new skill, required record schema or communication permission.
+
+Two [fictional diagnostic cases](../../evals/commitment-clarity-cases.json) compare main `e9a5e5a` (0.11.5) with candidate lead `5a1bac1`, continuity `e4b6130` and coordination `eacfbc0`. A separate agent prepared the cases from the accepted requirement before actor dispatch, without inspecting the candidate. Each case ran once per source in a fresh context-only Copilot **GPT-6 Sol / medium** session, with a 240-second bound; all four completed. Both arms received the same task and all three guidance files in full, with review expectations withheld.
+
+| Case | Observed result |
+| --- | --- |
+| Handoff with known details | Both retained the routine screenshot deadline, resolved stale smoke-run ownership from the later accepted comment, retained the fixture-refresh trigger and passing-check completion condition, and produced both drafts without asking for already supplied details. |
+| Pilot with unresolved dependencies | Both kept Nora proposed, retained Lee's access responsibility and the scheduled rehearsal/demo, surfaced missing review ownership and access timing, drafted a question for the PM, and supplied the independent tooltip. Telemetry remained advisory; neither claimed external contact. |
+
+A fresh Copilot **Claude Sonnet 5 / high** source review received the complete candidate files and diff and found no actionable defect. Primary inspection independently checked the verbatim accepted paragraph, examples, source scope and new reference destinations.
+
+A separate fresh reviewer inspected the tasks, expectations and complete responses with source identities concealed and presentation order alternated. It found no substantive defect in any response. Primary inspection agreed: the pilot question's focus on rehearsal contingency reasonably addresses the unknown access timing; an exact ETA question is not required.
+
+Successful baselines establish no candidate-caused improvement. These are synthetic drafting diagnostics with one sample per source/case, supplied context and explicitly inlined guidance. They do not test real context retrieval, method selection, native host loading, file operations, external communication or long-session reliability. No product wording changed after source review or actor dispatch.
+
+The existing 39 evaluator tests, 235 package-local Markdown link destinations, new section anchors, aligned Atlas versions and diff checks passed. Satchel remains at 0.2.0. These checks support their structural properties, not instruction adherence.

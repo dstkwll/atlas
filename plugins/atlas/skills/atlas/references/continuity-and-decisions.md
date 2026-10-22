@@ -1,6 +1,12 @@
 # Continuity and decisions
 
-Use when ongoing work requires decisions, unresolved questions or next steps to survive the conversation, and for authority changes, pauses, handoffs or resumption. A small task completed directly needs no new memory file.
+Use for commitments and dependency requests, when ongoing work requires decisions, unresolved questions or next steps to survive the conversation, and for authority changes, pauses, handoffs or resumption. A small task completed directly needs no new memory file.
+
+## Keep commitments and dependency requests clear
+
+When recording a commitment or assignment, or asking for something our work depends on, preserve the owner, required action or result, and any agreed timing or completion condition. Label proposed owners as proposed. If missing timing or ownership affects sequencing, feasibility, or an existing commitment, check available context first. If a consequential gap remains, make it explicit and ask the user, or draft the question for the relevant decision-maker. Continue unaffected authorized work.
+
+For example, retain Friday in “Alex will send the summary by Friday” and the sign-off condition in “Deploy after security signs off.” “Priya could investigate” names a proposed owner, not an established assignment. An ordinary request without a consequential timing gap needs no deadline question.
 
 ## Keep one useful front door
 

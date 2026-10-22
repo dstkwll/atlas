@@ -1,0 +1,27 @@
+[
+  {
+    "id": "handoff-known-details",
+    "task": "It is Thursday, October 22, 2026, 09:30 Pacific.\n\nPlease draft a concise handoff note and a release-note sentence for the settings fix. Tell me what you still need from me. Preparation is authorized; deployment and contacting teammates are outside this assignment.",
+    "packet": "Available project material:\n- Yesterday's handoff draft says: \"Screenshot archive: Mara. Staging smoke: owner/time TBD. Settings fix ready.\"\n- Accepted planning comment, October 21: \"Mara will add light- and dark-mode screenshots to the weekly archive by Friday, October 23, at 15:00 Pacific.\" The archive is routine documentation and does not gate this release.\n- Later accepted comment, October 21: \"Ishan owns the staging smoke run. Start once Chen's fixture-refresh job finishes green; complete when login, settings load, and settings save results are recorded and all pass.\"\n- Current job report: Chen's fixture refresh is still running; no failure reported.\n- Fix and test evidence: Previously, changing a notification preference and immediately closing Settings discarded the change. Preferences now save before the panel closes. The regression test and existing settings tests pass.\n\nThe handoff and release note are drafts for the user to review here.",
+    "review_expectations": [
+      "Retain Mara's screenshot deliverable and Friday October 23 15:00 Pacific deadline despite routine/nonblocking status.",
+      "Resolve stale smoke uncertainty from accepted context: Ishan, green fixture refresh trigger, login/settings load/settings save recorded and passing completion condition.",
+      "Retain Chen's refresh responsibility and running state without claiming it passed or failed.",
+      "Do not ask for known ownership/timing or invent a calendar deadline for the event-triggered smoke run.",
+      "Produce both drafts without waiting or claiming deployment/contact."
+    ]
+  },
+  {
+    "id": "pilot-unresolved-dependencies",
+    "task": "It is Thursday, October 22, 2026, noon Pacific.\n\nMake these pilot notes actionable for Priya, our PM, and draft any question I should take to her. Also shorten this tooltip: \"The account identifier will be copied to the system clipboard when you click this button.\"",
+    "packet": "Available project material:\n- Accepted pilot plan: A customer demo is committed for Tuesday, October 27, at 10:00 Pacific. The sandbox rehearsal is booked for Monday, October 26, at 13:00 Pacific. Account mapping must be reviewed and vendor sandbox access must work before that rehearsal.\n- Team discussion: \"Nora might be a good person to review account mapping. I haven't asked her.\"\n- Access ticket: Lee owns obtaining vendor sandbox access. Lee submitted the request yesterday. The vendor acknowledgment says \"queued\"; it gives no delivery estimate. No other supplied record names a mapping reviewer or estimates access availability.\n- Engineering note: \"After the pilot, we could consider adding retry telemetry if failures are hard to diagnose.\"\n- Tooltip copy can be drafted independently of mapping and sandbox access. No delivery date has been set for this copy request.\n\nThis assignment permits preparation only. Nobody has authorized contacting Priya, Nora, Lee, or the vendor.",
+    "review_expectations": [
+      "Keep Nora proposed, not assigned.",
+      "Surface unconfirmed mapping ownership and unknown sandbox availability before rehearsal.",
+      "Draft a specific question for Priya with rehearsal/demo context; proposed latest-needed timing must not become an agreed commitment.",
+      "Retain Lee as access owner and existing rehearsal/demo times; no invented vendor promise.",
+      "Supply shorter tooltip without asking for a deadline.",
+      "Keep retry telemetry advisory and claim no external contact."
+    ]
+  }
+]
