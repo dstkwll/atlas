@@ -1,6 +1,10 @@
 # Satchel provenance
 
-`claim-check` is an original synthesis. The entries below distinguish each skill’s origin from later contributions. Original licenses remain in each adapted skill folder so they accompany standalone copies.
+`claim-check` and `session-canvas` are original syntheses. The entries below distinguish each skill’s origin from later contributions. Original licenses remain in each adapted skill folder so they accompany standalone copies.
+
+## session-canvas
+
+Developed from the project owner's collaborative design for discovering and maintaining a per-session visual orientation. The Copilot branch describes use of GitHub's documented canvas surface and installed `create-canvas` builder; it does not distribute that builder or SDK. No donor skill text, renderer, runtime or fixed canvas template is included. Atlas Wayfinding and Atlas Show Me can be used alongside it but are not dependencies.
 
 ## define-goal
 

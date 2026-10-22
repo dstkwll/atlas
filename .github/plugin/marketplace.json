@@ -17,8 +17,8 @@
     {
       "name": "satchel",
       "source": "./plugins/satchel",
-      "description": "Standalone skills for explanations, writing, decision history, questionnaires, evidence checks, learning, goals and session catch-up.",
-      "version": "0.2.0"
+      "description": "Standalone skills for explanations, writing, decision history, questionnaires, evidence checks, learning, goals, session catch-up and evolving canvases.",
+      "version": "0.3.0"
     }
   ]
 }
