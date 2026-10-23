@@ -10,6 +10,8 @@ Recover the accepted outcome, current authority and existing plan. Identify the 
 
 Identify what each contribution actually needs from another: a decision, contract, artifact, access or evidence. Separate prerequisites for doing useful work from evidence needed to accept the final result. Preserve the exact dependency and its owner or next investigation; one unavailable resource or unsettled policy should not stop unaffected authorized work. For each proposed blocker, explain which output actually depends on the missing detail. If a shared contract has a settled independent portion, use that portion for ready work rather than freezing the whole contract until every policy or integration question is resolved.
 
+When recording commitments or assignments, or asking for a dependency, apply [commitment and request clarity](continuity-and-decisions.md#keep-commitments-and-dependency-requests-clear) to preserve established details and resolve consequential ownership or timing gaps.
+
 Choose the lightest arrangement that can deliver and assess the result. Extra participants should supply useful capacity, expertise or independence. Keep an integration owner and make shared assumptions explicit enough for contributions to fit. The same lead can hold several responsibilities; naming a responsibility does not require a separate actor.
 
 ## Select a useful pattern
