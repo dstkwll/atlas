@@ -60,7 +60,7 @@ Validation results and limits accompany each pull request. Work-environment deta
 
 ## Standalone utilities with Satchel
 
-The same marketplace also contains [Satchel](plugins/satchel/README.md), a separate collection of skills for explanations, writing, decision history, questionnaires, evidence checks, learning, goals and session catch-up. Each complete skill folder works independently. Satchel and Atlas can be installed together, and neither requires the other. See [Satchel's setup instructions](plugins/satchel/README.md#install) for plugin installation or copying individual skills.
+The same marketplace also contains [Satchel](plugins/satchel/README.md), a separate collection of skills for explanations, writing, decision history, questionnaires, evidence checks, learning, goals, session catch-up and evolving canvases. Each complete skill folder works independently. Satchel and Atlas can be installed together, and neither requires the other. See [Satchel's setup instructions](plugins/satchel/README.md#install) for plugin installation or copying individual skills.
 
 ## Maintain this repository
 
