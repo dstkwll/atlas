@@ -384,3 +384,6 @@ FIXTURES.update(CORE_AUTHORING_FIXTURES)
 
 # Interrupted integration recovery data; semantic expectations stay outside fixtures.
 FIXTURES.update(json.loads((Path(__file__).parent / "interrupted_integration_fixtures.json").read_text()))
+
+# Review readiness inputs; semantic expectations remain in readiness-review.md.
+FIXTURES.update(json.loads((Path(__file__).parent / "readiness_fixtures.json").read_text()))

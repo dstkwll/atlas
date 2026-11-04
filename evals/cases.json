@@ -816,5 +816,29 @@
     ],
     "check": "guidance-only",
     "entry": "atlas"
+  },
+  {
+    "id": "review-preparation",
+    "fixture": "review-preparation",
+    "check": "review-preparation",
+    "turns": [
+      "Get the two workshop handout layouts ready for me to compare and choose. The project has the existing options and card content."
+    ]
+  },
+  {
+    "id": "review-early-decision",
+    "fixture": "review-early-decision",
+    "check": "no_implementation",
+    "turns": [
+      "We need a summary of the weekend volunteer sessions. I haven't decided whether it should go just to coordinators or also to sponsors. Help me work that out and get things moving."
+    ]
+  },
+  {
+    "id": "review-input-blocker",
+    "fixture": "review-input-blocker",
+    "check": "no_implementation",
+    "turns": [
+      "Get the narrator auditions ready so I can listen and choose one for onboarding. Use the approved excerpts listed in this project."
+    ]
   }
 ]
