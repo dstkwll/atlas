@@ -12,10 +12,16 @@ Recent feedback describes two failures: the lead recommends its own unblocked wo
 
 The initial PR #38 proposal made closing guidance optional. That was a maintainer interpretation, not an accepted withdrawal of the standing requirement. This revision preserves it and clarifies the order of judgment:
 
-1. Decide whether there is a real reason to return: completion of the assignment, a necessary decision or dependency, an explicit pause, or an applicable limit. Finish independent authorized work before returning.
+1. Decide whether there is a real reason to return: completion of the assignment, a necessary decision or dependency, an explicit pause, or an applicable limit. Advance useful authorized work; bring forward an answerable necessary user request rather than delaying it for later dependent preparation. Continue independent work while waiting where supported.
 2. At that return, give brief, visible orientation: what happens next, why, and who must act. If user input is needed, make it specific and answerable in plain language. The question may itself be the `Next:` paragraph.
 
 Keep these instructions in the shared lead. The host profile points to them; no controller, new runtime, mandatory task record or second policy source is needed.
+
+## Readiness for a user contribution
+
+A future need for human judgment does not by itself make the current handoff useful. Identify the next necessary contribution: supplying missing input is different from reviewing the result that input will enable. An answerable request should not wait for construction of that later interaction. When the user is to review or test a result, finish the authorized preparation needed for that particular action and supply a usable path to it. Keep performed checks separate from what only the user can verify. This is a completion criterion for the handoff, not a requirement to finish the whole assignment before involving the user. A consequential question can be ready before the work it will shape; dependent preparation waits for its answer.
+
+A failed route may leave independent work or another permitted route available. Existing controls and bounds still govern those alternatives. If required inputs or access prevent the user action, return the concrete dependency; an unfinished review surface or structural check does not establish readiness for the missing interaction. The [readiness comparison](../validation/turn-ending-guidance.md#readiness-for-user-review) records the bounded evidence and adverse findings. This clarification preserves the charter's continuation intent, the standing Next close and legitimate completion, decision, pause and limit returns.
 
 ## Alternatives and tradeoffs
 
