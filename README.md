@@ -1,8 +1,18 @@
 # Atlas
 
-Atlas is a small software-lead guide for the agent you already use. Give the main agent a goal; it chooses useful investigation, design, implementation, review and repair, carries the architectural context, and returns for decisions that belong to you.
+[![Evaluator tests](https://github.com/dstkwll/atlas/actions/workflows/evaluator-tests.yml/badge.svg)](https://github.com/dstkwll/atlas/actions/workflows/evaluator-tests.yml)
 
-The package contains one lead skill, seven optional entry points, shared activity guides and a specialist runbook library. It requires no added service, hook, orchestration runtime or connection to this project's Drive folder. Your existing host, tools and project rules remain in control.
+Atlas is a portable set of AI agent skills for software delivery, with installation paths for Codex, GitHub Copilot and Claude Code. Give your main agent a goal; Atlas guides investigation, architecture, implementation, review and repair, keeps the project context, and brings consequential decisions back to you.
+
+The package contains one lead skill, seven optional entry points, shared activity guides and a specialist runbook library. Your existing host, tools and project rules remain in control; Atlas adds no service, hooks or orchestration runtime.
+
+## Review the engineering
+
+- **Design:** the [architect charter](docs/architect-charter.md) explains the product boundaries; [architecture decisions](docs/decisions/) record accepted choices and tradeoffs.
+- **Implementation:** the [lead skill](plugins/atlas/skills/atlas/SKILL.md) selects focused [engineering runbooks](plugins/atlas/skills/atlas/references/specialist-runbooks.md) as the task requires.
+- **Evaluation:** the [Python evaluation harness](evals/README.md) provides task fixtures, state checks and review rubrics. [Published observations](docs/validation/behavior-evals.md) include failures and evidence limits. The CI badge above covers evaluator unit tests, not agent reliability.
+
+For installation and a first task, start below or use the [setup guide](SETUP.md).
 
 ## Use it in your project
 
@@ -67,3 +77,7 @@ The same marketplace also contains [Satchel](plugins/satchel/README.md), a separ
 Read [AGENTS.md](AGENTS.md), [the architect charter](docs/architect-charter.md), and [the contributor workflow](CONTRIBUTING.md), then the assigned [issue](https://github.com/dstkwll/atlas/issues) and linked PRs. Installable packages live in `plugins/atlas/` and `plugins/satchel/`. Atlas's canonical lead lives at `plugins/atlas/skills/atlas/`, with deeper runbooks loaded only when relevant. Repository maintenance instructions and work history are excluded from both packages.
 
 For maintainer behavior checks, use the [evaluation pilot](evals/README.md) and read its [observations and limits](docs/validation/behavior-evals.md). The evaluator and fixtures are not installed with Atlas.
+
+## License and attribution
+
+Original project work is licensed under the [MIT License](LICENSE). Third-party material retains its applicable license and attribution, including the Apache 2.0 license for Satchel's `define-goal` adaptation. See [Atlas's third-party notices](plugins/atlas/skills/atlas/THIRD_PARTY_NOTICES.md) and [Satchel's provenance](plugins/satchel/PROVENANCE.md) for sources and modification details. Keep the included licenses and notices when redistributing packages or standalone skills.
