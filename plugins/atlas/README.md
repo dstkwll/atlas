@@ -18,7 +18,7 @@ If the profile is unavailable, invoke the Atlas plugin's skill from the `/` pick
 
 Existing organizational/project instructions and tool permissions continue to apply.
 
-See the repository [setup guide](https://github.com/dstkwll/atlas/blob/main/SETUP.md) for installation, updates, manual skill use and continuity. Shared lead guidance is contained in [the skill](skills/atlas/SKILL.md) and its relative references; the profile is only a native entrypoint. No access to the Atlas repository or Drive is required during work.
+See the repository [setup guide](https://github.com/dstkwll/atlas/blob/main/SETUP.md) for installation, updates, manual skill use and continuity. Shared lead guidance is contained in [the skill](skills/atlas/SKILL.md) and its relative references; the profile is only a native entrypoint. The installed package contains the guidance needed during work.
 
 Select [`atlas-show-me`](skills/atlas-show-me/SKILL.md) for a concise visual explanation of the current topic, from a small call tree or structural diff to focused HTML when needed. It closely preserves HumanLayer's `show-me` examples and explicit-invocation metadata. This entry is self-contained: for standalone use, copy its complete folder with its license and metadata; it does not load or require the Atlas lead.
 
@@ -29,3 +29,7 @@ For a concrete planning deliverable, ask Atlas to turn the discussion into a PRD
 `atlas-to-documentation` defaults to PRD and also supports guides, architecture documents and references. `atlas-blast-radius` assesses wider effects; `atlas-reflect` runs a requested retrospective and writes a separate contextual file. Arena is a confirmed, bounded runbook only.
 
 When creating or revising agent-facing instructions, skills or agent runbooks, Atlas can use [Writing agent guidance](skills/atlas/references/writing-agent-guidance.md). It covers clear decisions, useful examples, completion evidence and reference placement. [Guidance improvement](skills/atlas/references/guidance-improvement.md) supports diagnosis and behavioral evaluation when needed; neither requires another skill selection.
+
+## License
+
+Original project work uses the [MIT License](LICENSE). Adapted material retains its [third-party notices](skills/atlas/THIRD_PARTY_NOTICES.md) and included licenses. Keep the licenses and notices with package and standalone skill copies.

@@ -25,17 +25,17 @@ Choose the skill that fits the current request. The host keeps control of tools,
 
 ## Install
 
-For a draft checkout, load the local package for a Copilot CLI session:
-
-```shell
-copilot --plugin-dir /absolute/path/to/atlas/plugins/satchel
-```
-
-Once Satchel is merged into the marketplace's default branch, add the marketplace if needed, then install it:
+Add the marketplace if needed, then install Satchel:
 
 ```shell
 copilot plugin marketplace add dstkwll/atlas
 copilot plugin install satchel@atlas
+```
+
+To try a local checkout in a Copilot CLI session:
+
+```shell
+copilot --plugin-dir /absolute/path/to/atlas/plugins/satchel
 ```
 
 Start a fresh session and select the skill through the host's skill picker, or ask the agent to use the named skill. Picker names and plugin prefixes vary by host. Satchel has no agent profile to select.
@@ -59,3 +59,7 @@ The package records source credits and modification details in [PROVENANCE.md](P
 All ten skills allow normal model discovery. Each has a distinct task and contains its own required instructions; Satchel adds no lead, required sequence, service, hooks, scripts or MCP servers. Session Canvas may create a session-scoped extension through Copilot's existing builder when that is the chosen surface. The authoring skill retains Matt's conceptual vocabulary and two-file structure. The teaching skill serves conversational learning rather than maintaining a course workspace. Atlas retains its separate software-lead and authoring methods.
 
 The public [validation summary](https://github.com/dstkwll/atlas/blob/main/docs/validation/satchel.md) records observed behavior and limits; draft reviewers can read that path in their checkout or PR. Using a skill requires only its installed folder. Research history and deferred ideas belong in the project's issues and PRs.
+
+## License
+
+Original project work uses the [MIT License](LICENSE). Third-party material retains its included licenses: `define-goal` includes Apache 2.0, and the other adapted skills include MIT notices. See [PROVENANCE.md](PROVENANCE.md) for sources and modifications. Keep the licenses and notices when copying a package or standalone skill.
