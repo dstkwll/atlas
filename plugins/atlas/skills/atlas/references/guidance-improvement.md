@@ -16,6 +16,8 @@ Keep the correction and rationale small and reviewable. Preserve source attribut
 
 ## Evaluate tool-using agent behavior
 
+When creating or materially revising the evaluation itself, use [Evaluation design](evaluation-design.md) to connect the claim, actor-visible setup, observation, grader controls and comparison. This method owns diagnosis and changes to guidance; evaluation design supplies the authoring path.
+
 Apply the existing comparison method when designing or checking evaluation of an agent's instructions, tools or coordination. Deterministic code changes without agent-behavior implications need no model trial; use [Model and retrieval quality](model-and-retrieval-quality.md) additionally when prediction or retrieval quality is part of the claim.
 
 Give the agent realistic task requirements and operating constraints, but keep evaluator-only expected answers and grader feedback separate. Identify held-out cases before tuning; reuse after inspecting results is diagnostic evidence. Retain candidate identities and a concise evidence record for every evaluation attempt, separating host/model/tool conditions and setup failures from behavioral results. Choose repetition according to observed variability and the decision; do not rerun until the favored condition passes.

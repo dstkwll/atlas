@@ -4,6 +4,8 @@ Use when software changes training, inference, retrieval or their evaluation. Es
 
 For fine-tuning, preference/reward optimization, training-signal failures or checkpoint-integrity claims, consult [Model post-training](model-post-training.md). Use its relevant diagnostics without imposing a training sequence on ordinary inference or retrieval work.
 
+For a new or revised evaluation of an AI feature, use [Evaluation design](evaluation-design.md) for realistic tasks, hidden expectations, suitable graders and comparison conditions. Use the domain checks below to choose meaningful data and failure slices.
+
 ## Data and prediction
 
 Check point-in-time feature availability, split independence, duplicates and label leakage. A random split may hide leakage across users, time or related records. Compare training transformations with serving transformations, including missing values, units and category handling. Identify the model/data/configuration versions needed to reproduce a result without exporting protected data.

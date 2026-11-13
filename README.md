@@ -58,7 +58,7 @@ After activating Atlas, use ordinary requests such as:
 - “Make the existing project checks usable by a fresh agent, including setup, evidence and cleanup.”
 - “Migrate this component while preserving its appearance and keyboard behavior.”
 
-For example, “Turn these working notes into a reusable skill” can use the portable [writing runbook](plugins/atlas/skills/atlas/references/writing-agent-guidance.md), shared with Atlas maintainers.
+For example, “Turn these working notes into a reusable skill” can use the portable [writing runbook](plugins/atlas/skills/atlas/references/writing-agent-guidance.md), shared with Atlas maintainers. “Design an evaluation that catches this failure without rejecting valid alternatives” uses [evaluation design](plugins/atlas/skills/atlas/references/evaluation-design.md).
 
 Atlas chooses the relevant runbooks from the request. Teaching, investigation, verification and planning can each be the completed outcome; implementation follows the authority you actually give it.
 
@@ -70,7 +70,7 @@ Validation results and limits accompany each pull request. Work-environment deta
 
 ## Standalone utilities with Satchel
 
-The same marketplace also contains [Satchel](plugins/satchel/README.md), a separate collection of skills for explanations, writing, decision history, questionnaires, evidence checks, learning, goals, session catch-up and evolving canvases. Each complete skill folder works independently. Satchel and Atlas can be installed together, and neither requires the other. See [Satchel's setup instructions](plugins/satchel/README.md#install) for plugin installation or copying individual skills.
+The same marketplace also contains [Satchel](plugins/satchel/README.md), a separate collection of skills for explanations, writing, decision history, questionnaires, evidence checks, evaluation design, learning, goals, session catch-up and evolving canvases. Each complete skill folder works independently. Satchel and Atlas can be installed together, and neither requires the other. See [Satchel's setup instructions](plugins/satchel/README.md#install) for plugin installation or copying individual skills.
 
 ## Maintain this repository
 

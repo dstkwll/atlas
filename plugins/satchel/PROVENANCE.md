@@ -1,6 +1,10 @@
 # Satchel provenance
 
-`claim-check` and `session-canvas` are original syntheses. The entries below distinguish each skill’s origin from later contributions. Original licenses remain in each adapted skill folder so they accompany standalone copies.
+`claim-check`, `session-canvas` and `to-eval` are original syntheses. The entries below distinguish each skill’s origin from later contributions. Original licenses remain in each adapted skill folder so they accompany standalone copies.
+
+## to-eval
+
+Original evaluation-design synthesis informed by Atlas’s existing evidence methods and Microsoft Vally’s [eval-authoring guide](https://microsoft.github.io/vally/guides/writing-eval-specs/). No donor prose, runtime or spec schema is copied. The complete skill works independently; Atlas’s evaluation-design runbook serves software-lead work and is not a dependency. Review shared principles together when either changes, while preserving each package’s independently usable instructions.
 
 ## session-canvas
 

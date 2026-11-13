@@ -2,6 +2,17 @@
 
 Choose a case by the behavior at risk, then read its rubric and the linked public topic evidence before grading. Each registered ID below appears once. The grouping describes **purpose**, not execution status, success, independence, or held-out coverage. [README](README.md) owns running, evidence interpretation, claim limits, and selection of next evidence. [review.md](review.md) supplies the common four-dimension rubric; the links below locate additional governing criteria.
 
+## Evaluation authoring and standalone Satchel
+
+**Rubric:** [evaluation authoring](evaluation-authoring-review.md). **Authoring mechanics:** [worked guide](authoring.md). **Public evidence:** [observations and limits](../docs/validation/evaluation-authoring.md). These are developer-authored diagnostics; registration does not establish an improvement or held-out status.
+
+| Cases | Boundary to inspect |
+| --- | --- |
+| `eval-design-outbox` | Design a useful evaluation while keeping unavailable operation-order evidence distinct from an observable final state. |
+| `to-eval-editor` | Produce a portable editing evaluation that accepts semantic alternatives and preserves unresolved quality criteria. |
+| `satchel-edit-scope` | Use standalone Unslop with actual local input, retaining denominators, uncertainty, conditional plans and quotation. |
+| `to-eval-direct-control` | Answer an ordinary arithmetic request without imposing eval design. |
+
 ## Proportionate response and conversational progression
 
 **Rubric:** [initial case criteria](review.md#case-specific-acceptance), [turn endings](review.md#turn-ending-guidance-across-intent), [acknowledgment criteria](review.md#documentation-reflection-impact-and-optional-comparison). **Public evidence:** [turn-ending observations](../docs/validation/turn-ending-guidance.md).
