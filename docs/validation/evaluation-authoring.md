@@ -35,6 +35,14 @@ A fresh GPT-6 Sol / high review inspected the corrected runner and the four desi
 
 The 44 evaluator unit tests passed, including five new tests for standalone staging, unguided initial/recovery inputs, preview side effects and invalid configuration. All 102 registered cases preflight in both conditions; that is not execution coverage. New-skill frontmatter, included license, local links and aligned package/marketplace versions were checked. These mechanical checks do not establish semantic quality.
 
+## Fresh-consumer probe
+
+Two fresh contexts each received only one generated outbox plan and a small function interface. They implemented the plan's primary final-state checker, without the original brief, the other plan or evaluator controls. Their methods were plan-to-code mapping and self-authored local smoke assertions. The lead inspected both implementations and executed six previously declared vectors: missing item, exact item, equivalent key order, wrong item, duplicate and target plus unrelated item.
+
+Both consumers faithfully carried forward their respective acceptance gates. Both rejected missing, wrong and duplicate items and accepted the valid alternatives. The consumer of the unguided plan accepted the unauthorized extra item, while recording it as a diagnostic; the consumer of the guided plan rejected it. Both consumers' own smoke checks had passed. The defect therefore propagated from a generated specification into executable grading, even with tests that matched that specification.
+
+This state-only probe supports downstream-consumer checks and independent expected-outcome controls as useful next work. It does not evaluate report truthfulness, retry ordering, actual outbox execution or general consumer reliability. The suspected defect and vectors were selected after artifact review, and there was only one consumer per plan; it is exposed developmental evidence, not a causal estimate of guidance benefit. The generated code remains disposable maintainer evidence, not a new installed evaluator or framework.
+
 ## Next evidence
 
 Review the generated graders before using their outputs for a decision. Test authentic incomplete answers separately from incomplete evidence capture, and use a fresh consumer to implement a produced spec. Add unfamiliar task families, native installed-but-not-invoked selection, representative multi-file journeys and previous-version comparisons where those claims matter. Host portability, human comprehension, broader standalone skill coverage and hardened evidence isolation remain untested here.
