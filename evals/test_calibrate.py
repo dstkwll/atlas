@@ -84,7 +84,7 @@ class CalibrationTests(unittest.TestCase):
         self.assertEqual(result['controls'][0]['submitted_rows'], [original, conflicting])
         self.assertEqual(len(result['controls'][0]['submission_errors']), 1)
         self.assertEqual(result['unmatched_rows'][0]['row']['verdict'], 'PASS')
-        self.assertEqual(result['unmatched_rows'][1]['index'], 10)
+        self.assertEqual(result['unmatched_rows'][1]['index'], len(self.review['judgments']) - 1)
         self.assertIsNone(result['unmatched_rows'][1]['row'])
         self.assertFalse(result['all_controls_agree'])
 
