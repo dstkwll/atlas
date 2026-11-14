@@ -387,3 +387,6 @@ FIXTURES.update(json.loads((Path(__file__).parent / "interrupted_integration_fix
 
 # Review readiness inputs; semantic expectations remain in readiness-review.md.
 FIXTURES.update(json.loads((Path(__file__).parent / "readiness_fixtures.json").read_text()))
+
+# Authoring tasks contain raw material only; review criteria are not staged.
+FIXTURES.update(json.loads((Path(__file__).parent / "evaluation-authoring-fixtures.json").read_text()))

@@ -840,5 +840,46 @@
     "turns": [
       "Get the narrator auditions ready so I can listen and choose one for onboarding. Use the approved excerpts listed in this project."
     ]
+  },
+  {
+    "id": "eval-design-outbox",
+    "fixture": "eval-design-outbox",
+    "turns": [
+      "Read BRIEF.md and the local tool. Design a practical evaluation to compare the two instruction versions. Save the plan under planning/ and explain what the available evidence can establish. This task is evaluation design only; do not execute the tool, edit its source or run model trials."
+    ],
+    "check": "no_implementation",
+    "git_root": true
+  },
+  {
+    "id": "to-eval-editor",
+    "package": "satchel",
+    "entry": "to-eval",
+    "fixture": "eval-design-editor",
+    "turns": [
+      "Use BRIEF.md and sample.md to design a useful evaluation of the editing assistant. Save a portable plan under planning/ that another author can implement. Keep this to design; do not run the comparison or change the inputs."
+    ],
+    "check": "no_implementation",
+    "git_root": true
+  },
+  {
+    "id": "satchel-edit-scope",
+    "package": "satchel",
+    "entry": "unslop",
+    "fixture": "satchel-edit-scope",
+    "turns": [
+      "Edit draft.md for clarity while preserving its meaning and voice. Return the revised prose here; leave the file unchanged."
+    ],
+    "check": "unchanged",
+    "git_root": true
+  },
+  {
+    "id": "to-eval-direct-control",
+    "package": "satchel",
+    "entry": "to-eval",
+    "turns": [
+      "What is 18 times 7? Just the answer, please."
+    ],
+    "check": "unchanged",
+    "git_root": true
   }
 ]

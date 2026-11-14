@@ -18,6 +18,48 @@ from fixtures import FIXTURES
 ROOT = Path(__file__).resolve().parent.parent
 
 
+def instruction_source(case):
+    """Resolve only supported repository packages, before any trial side effects."""
+    package = case.get('package', 'atlas')
+    if package not in ('atlas', 'satchel'):
+        raise ValueError('Unsupported skill package: ' + str(package))
+    entry = case.get('entry', 'atlas' if package == 'atlas' else None)
+    if not isinstance(entry, str) or not entry or Path(entry).name != entry or entry in ('.', '..'):
+        raise ValueError('A package-local skill entry is required')
+    package_root = ROOT / 'plugins' / package / 'skills'
+    if not (package_root / entry / 'SKILL.md').is_file():
+        raise ValueError('Skill entry does not exist: ' + package + '/' + entry)
+    # Atlas entries share the lead and references. Satchel entries ship alone.
+    source = package_root if package == 'atlas' else package_root / entry
+    return package, entry, source
+
+
+def preview(case, condition):
+    package, entry, source = instruction_source(case)
+    if condition not in ('guided', 'unguided'):
+        raise ValueError('Unsupported instruction condition')
+    if not isinstance(case.get('git_root', False), bool):
+        raise ValueError('git_root must be a boolean')
+    fixture = case.get('fixture')
+    if fixture is not None and fixture not in FIXTURES:
+        raise ValueError('Unknown fixture: ' + str(fixture))
+    if case.get('missing') and package != 'atlas':
+        raise ValueError('The missing-lead fixture is Atlas-only')
+    if case.get('missing') and entry == 'atlas':
+        raise ValueError('A missing-lead case requires a non-lead entry')
+    installed = (sorted(p.name for p in source.iterdir() if (p / 'SKILL.md').is_file())
+                 if package == 'atlas' else [entry]) if condition == 'guided' else []
+    if case.get('missing') and 'atlas' in installed:
+        installed.remove('atlas')
+    return {'case': case['id'], 'package': package, 'entry': entry,
+            'condition': condition, 'source': str(source.relative_to(ROOT)),
+            'git_root': case.get('git_root', False),
+            'installed_skills': installed,
+            'turns': case['turns'], 'visible_fixture_files': sorted(FIXTURES.get(fixture, {})),
+            'check': case['check'],
+            'grading': 'Objective facts plus manual review; expectations are not staged.'}
+
+
 class Host:
     def __init__(self, home, workspace, output, deadline):
         self.deadline, self.sequence, self.events = deadline, 0, []
@@ -128,31 +170,41 @@ def capture_tools(home, output):
 
 
 def trial(case, args, output):
+    condition = getattr(args, 'condition', 'guided')
+    plan = preview(case, condition)
+    package, entry, source = instruction_source(case)
     output.mkdir(parents=True, exist_ok=False)
     workspace = output / 'workspace'
     workspace.mkdir()
+    # Preserve legacy fixture semantics; new cases may opt into a project root.
+    if plan['git_root']:
+        subprocess.run(['git', 'init', '--quiet', str(workspace)], check=True)
     for name, content in FIXTURES.get(case.get('fixture'), {}).items():
         (workspace / name).parent.mkdir(parents=True, exist_ok=True)
         (workspace / name).write_text(content)
     skills = workspace / '.agents/skills'
-    shutil.copytree(ROOT / 'plugins/atlas/skills', skills)
-    if case.get('missing'):
+    if condition == 'guided':
+        shutil.copytree(source, skills if package == 'atlas' else skills / entry)
+    if case.get('missing') and condition == 'guided':
         shutil.rmtree(skills / 'atlas')
     (workspace / 'AGENTS.md').write_text(
         'This is a disposable local project. Use only local project files and tools. '
         'Do not contact external services, delegate, install software, read other projects '
         'or user-profile guidance, or change the installed .agents/skills or this file. '
-        'Use only the project-local skill installation. Planning files belong under planning/.\n')
+        'Any supplied skills are project-local. Planning files belong under planning/.\n')
     before = snapshot(workspace)
     (output / 'before.json').write_text(json.dumps(before, indent=2))
     metadata = {'case': case, 'model_requested': args.model, 'effort_requested': args.effort,
         'codex_version': subprocess.check_output(['codex', '--version'], text=True).strip(),
         'revision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
-        'candidate_files': snapshot(ROOT / 'plugins/atlas/skills'), 'timeout_seconds': args.timeout,
-        'protocol': 'native Codex app-server', 'runner_files': snapshot(ROOT / 'evals'), 'activation': 'explicit project-local skill input',
+        'candidate_files': snapshot(source), 'staged_skill_files': snapshot(skills) if skills.exists() else {},
+        'instruction_plan': plan, 'timeout_seconds': args.timeout,
+        'protocol': 'native Codex app-server', 'runner_files': snapshot(ROOT / 'evals'),
+        'activation': 'explicit project-local skill input' if condition == 'guided' else 'no skill installation or input',
         'started': time.time()}
     (output / 'metadata.json').write_text(json.dumps(metadata, indent=2))
     completed, host, home, error, turns = False, None, None, None, []
+    tool_status = None
     try:
         # Separate configuration, skills and session state. Credentials never enter evidence.
         with tempfile.TemporaryDirectory(prefix='atlas-eval-home-') as directory:
@@ -193,8 +245,7 @@ def trial(case, args, output):
                         # Wait for the compaction turn to finish before the next ordinary turn.
                         host.wait(lambda e: e.get('method') == 'turn/completed', mark)
                     inputs = [{'type': 'text', 'text': prompt}]
-                    if i == 0 or i == case.get('fresh_thread_before'):
-                        entry = case.get('entry', 'atlas')
+                    if condition == 'guided' and (i == 0 or i == case.get('fresh_thread_before')):
                         inputs.insert(0, {'type': 'skill', 'name': entry,
                             'path': str(skills / entry / 'SKILL.md')})
                     mark = len(host.events)
@@ -215,7 +266,7 @@ def trial(case, args, output):
                         host.close()
                     finally:
                         try:
-                            capture_tools(home, output)
+                            tool_status = capture_tools(home, output)
                         except OSError as exc:
                             # Preserve an existing turn/teardown failure if recording itself fails.
                             completed = False
@@ -230,6 +281,10 @@ def trial(case, args, output):
         result = {'facts': {'host_completed': False}, 'changed_files': None, 'probe_changes': None, 'behavior_verdict': 'UNKNOWN', 'routing_verdict': 'UNREVIEWED'}
     if case.get('no_edit_before'):
         result['facts']['first_turn_workspace_matches_before'] = (turns[0]['files'] == before) if turns else None
+    if condition == 'unguided':
+        result['routing_verdict'] = 'NOT_APPLICABLE'
+    result.update({'condition': condition, 'package': package, 'entry': entry,
+                   'installed_skills': plan['installed_skills'], 'tool_capture': tool_status})
     result.update({'cleanup': {'host_stopped': host.process.poll() is not None if host else None, 'temporary_home_removed': not home.exists() if home else None}, 'error': error, 'elapsed_seconds': round(time.time() - metadata['started'], 1),
                    'status': 'completed' if completed else 'blocked', 'case': case['id']})
     (output / 'result.json').write_text(json.dumps(result, indent=2))
@@ -245,10 +300,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--case', action='append', required=True, help='case id; repeat flag to select several')
     parser.add_argument('--repeat', type=int, choices=range(1, 4), default=1)
-    parser.add_argument('--model', required=True)
+    parser.add_argument('--model', help='required for execution; preview uses no model')
+    parser.add_argument('--condition', choices=['guided', 'unguided'], default='guided',
+                        help='unguided keeps the raw task/fixture but supplies no skills')
+    parser.add_argument('--preview', action='store_true', help='show actor setup without authentication or inference')
     parser.add_argument('--effort', choices=['low', 'medium', 'high'], default='low')
     parser.add_argument('--timeout', type=int, default=300, help='total native-host seconds per trial')
-    parser.add_argument('--output', type=Path, required=True, help='new local evidence directory; never commit raw runs')
+    parser.add_argument('--output', type=Path, help='new local evidence directory; never commit raw runs')
     parser.add_argument('--auth-home', type=Path, default=Path(os.environ.get('CODEX_HOME', Path.home()/'.codex')))
     args = parser.parse_args()
     if args.timeout < 1 or args.timeout > 600:
@@ -256,13 +314,22 @@ def main():
     cases = json.loads((ROOT / 'evals/cases.json').read_text())
     if set(args.case) - {c['id'] for c in cases}:
         parser.error('unknown case id')
+    selected = [case for case in cases if case['id'] in args.case]
+    try:
+        plans = [preview(case, args.condition) for case in selected]
+    except ValueError as exc:
+        parser.error(str(exc))
+    if args.preview:
+        print(json.dumps(plans, indent=2))
+        return
+    if not args.model or not args.output:
+        parser.error('--model and --output are required for execution')
     args.output = args.output.resolve()
     args.output.mkdir(parents=True, exist_ok=False)
     ok = True
-    for case in cases:
-        if case['id'] in args.case:
-            for n in range(args.repeat):
-                ok = trial(case, args, args.output / f"{case['id']}-{n+1}") and ok
+    for case in selected:
+        for n in range(args.repeat):
+            ok = trial(case, args, args.output / f"{case['id']}-{n+1}") and ok
     raise SystemExit(0 if ok else 2)  # Host completion only, never a behavior pass.
 
 

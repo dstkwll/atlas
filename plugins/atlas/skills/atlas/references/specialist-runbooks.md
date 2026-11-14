@@ -41,6 +41,7 @@ Use existing approved project/host tools. Runbooks prescribe no additional tools
 | Fine-tuning, preference/reward learning, training-signal diagnosis or checkpoint integrity | [Model post-training](model-post-training.md) |
 | Package distribution or a change in information exposure | [Release preparation](release-preparation.md) |
 | Create or revise agent-facing instructions, skills or agent runbooks | [Writing agent guidance](writing-agent-guidance.md) |
+| Design an evaluation of an agent, AI feature or generated artifact | [Evaluation design](evaluation-design.md) |
 | Evaluate agent instructions/tools/coordination, or diagnose recurring guidance failures | [Guidance improvement](guidance-improvement.md) |
 
 These are questions to investigate, not automatic findings. Use only applicable checks and return evidence that changes the next decision. A supported zero-finding review is valid. For independent assurance, apply the existing [review contract](independent-review.md); for implementation, apply [delivery and repair](deliver-and-repair.md).

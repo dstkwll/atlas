@@ -37,3 +37,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## Evaluation design
+
+The original evaluation-design method is informed by the project’s existing evaluation work and Microsoft Vally’s [Writing Eval Specs](https://microsoft.github.io/vally/guides/writing-eval-specs/) guide. No Vally text, implementation or runtime is distributed.
