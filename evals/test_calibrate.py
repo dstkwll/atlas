@@ -108,6 +108,29 @@ class CalibrationTests(unittest.TestCase):
             controls.write_text(json.dumps(self.suite))
             self.assertEqual(subprocess.run(cmd + ['--expect-controls-sha256', frozen], capture_output=True).returncode, 2)
 
+    def test_cli_rejects_duplicate_json_members(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / 'review.json'
+            good = json.dumps(self.review)
+            first_verdict = json.dumps(self.review['judgments'][0]['verdict'])
+            conflicting_field = good.replace('"verdict": ' + first_verdict,
+                                             '"verdict": "UNKNOWN", "verdict": ' + first_verdict, 1)
+            conflicting_lists = '{"judgments": [], ' + good[1:]
+            for raw in (conflicting_field, conflicting_lists):
+                with self.subTest(raw=raw[:60]):
+                    path.write_text(raw)
+                    result = subprocess.run([sys.executable, str(Path(calibrate.__file__)),
+                                             '--review', str(path)], capture_output=True, text=True)
+                    self.assertEqual(result.returncode, 2)
+                    self.assertIn('Duplicate JSON member', result.stderr)
+                    self.assertEqual(result.stdout, '')
+            controls = Path(d) / 'controls.json'
+            controls.write_text(json.dumps(self.suite).replace('"id": ', '"id": "discarded", "id": ', 1))
+            result = subprocess.run([sys.executable, str(Path(calibrate.__file__)),
+                                     '--controls', str(controls), '--packet'], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 2)
+            self.assertIn('Duplicate JSON member', result.stderr)
+
     def test_cli_retains_review_identity_and_distinguishes_failure(self):
         with tempfile.TemporaryDirectory() as d:
             path = Path(d) / 'review.json'

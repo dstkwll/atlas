@@ -9,9 +9,18 @@ DEFAULT_CONTROLS = Path(__file__).with_name('calibration-controls.json')
 VERDICTS = {'PASS', 'FAIL', 'UNKNOWN', 'NOT_APPLICABLE'}
 
 
+def unique_members(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError('Duplicate JSON member: ' + key)
+        result[key] = value
+    return result
+
+
 def load_controls(path):
     raw = path.read_bytes()
-    suite = json.loads(raw)
+    suite = json.loads(raw, object_pairs_hook=unique_members)
     seen = set()
     if not isinstance(suite.get('id'), str) or not suite['id'].strip():
         raise ValueError('A control-set ID is required')
@@ -119,7 +128,7 @@ def main():
             print(json.dumps(packet(suite), indent=2))
             return
         raw = args.review.read_bytes()
-        result = assess(suite, json.loads(raw))
+        result = assess(suite, json.loads(raw, object_pairs_hook=unique_members))
         result.update(control_set=suite['id'], controls_sha256=digest, packet_sha256=visible_digest,
                       review_sha256=hashlib.sha256(raw).hexdigest())
     except (OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
