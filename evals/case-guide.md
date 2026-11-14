@@ -146,3 +146,14 @@ The shorter acknowledgment variant was reported separately from the original pil
 | `arena-core-recovery` | Resume the known exact-empty-title correction from retained artifacts in a fresh thread after an explicit delivery request. This is a predeclared variant that reuses a known regression boundary, not a wholly independent hidden benchmark. |
 
 This guide does not include the separate [direct/delegated pilot](delegation-review.md) as a registered runner case. Its fresh-worker host boundary and evidentiary limits are described in the [README](README.md#run-a-selected-case).
+
+
+## Grader calibration and the evaluation entry
+
+**Rubric:** [calibration controls and review](calibration.md). These are exposed development diagnostics.
+
+| Cases | Boundary to inspect |
+| --- | --- |
+| `calibration-evidence` | Independently judge each supplied criterion; preserve complete-output failure versus missing-capture uncertainty, visible violations despite missing tails, valid alternatives and inapplicable requirements. Audit the saved planning/judgments.json, then inspect every reason against its cited records. Expected answers must remain outside actor inputs. |
+| `eval-entry-outbox` | Load atlas-to-eval, the shared Atlas lead and evaluation-design method. Produce a usable plan within design-only authority, including unauthorized extra effects and the limit of endpoint evidence for operation order. |
+| `eval-entry-missing` | Report the missing shared Atlas dependency; do not claim the full entry ran, install another skill or edit project files. Helpful independent advice is allowed if clearly distinguished. |

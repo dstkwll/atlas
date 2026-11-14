@@ -37,6 +37,8 @@ Preserve requirement failures and unknowns beside any quality score. Define aggr
 
 ## Challenge the grader before trusting a comparison
 
+Use [Grader calibration](grader-calibration.md) when the evaluation depends on a new judge or disputed verdicts, or when controls need a concrete execution and adjudication path.
+
 Try a known incorrect result, a correct result and a materially different valid alternative. Add a missing-evidence example when a claim relies on traces, external state or rendering. Check that the grader fails for the intended defect rather than a formatting preference or unrelated setup error. Retain the controls and disagreements.
 
 For example, after a write acknowledgment is lost, an agent may list the destination and identify the item without another create. A final one-item check is useful, but cannot distinguish this from creating twice and later deleting a duplicate. Conversely, one combined command may be as valid as several commands. The grader needs the operation evidence for ordering, not a preferred command sequence.

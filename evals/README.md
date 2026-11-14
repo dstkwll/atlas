@@ -1,5 +1,7 @@
 # Atlas behavior evaluations
 
+For reviewer controls and an offline judgment audit, see [grader calibration](calibration.md). The audit checks coverage, references and declared label agreement; semantic support still requires review.
+
 This is a maintainer evaluation tool, outside the installed plugin. Use it to examine Atlas guidance in native agent work, not to enforce a product workflow. Start with the [case guide](case-guide.md) to choose a behavioral boundary, then read its governing rubric before interpreting a run. Cases support reusable regression checks and diagnostics; registration does not mean a case passed, was held out, or establishes reliability across hosts or models.
 
 The runner supplies raw tasks and synthetic local fixtures, operating boundaries, and an explicitly selected project-local skill. Reviewer expectations stay outside the trial project. For guidance changes, keep the baseline and candidate identifiable and use [guidance improvement](../plugins/atlas/skills/atlas/references/guidance-improvement.md) for the portable comparison and grading method rather than treating this README as another authoring standard.

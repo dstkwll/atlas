@@ -4,7 +4,7 @@
 
 Atlas is a portable set of AI agent skills for software delivery, with installation paths for Codex, GitHub Copilot and Claude Code. Give your main agent a goal; Atlas guides investigation, architecture, implementation, review and repair, keeps the project context, and brings consequential decisions back to you.
 
-The package contains one lead skill, seven optional entry points, shared activity guides and a specialist runbook library. Your existing host, tools and project rules remain in control; Atlas adds no service, hooks or orchestration runtime.
+The package contains one lead skill, eight optional entry points, shared activity guides and a specialist runbook library. Your existing host, tools and project rules remain in control; Atlas adds no service, hooks or orchestration runtime.
 
 ## Review the engineering
 
@@ -45,6 +45,8 @@ Select `atlas-show-me` to explain the current topic with the smallest useful vis
 
 Ask Atlas to produce a PRD, an ordered set of testable vertical slices, or a handoff for another agent. Optional `atlas-to-documentation`, `atlas-to-tickets` and `atlas-handoff` skills expose those same runbooks directly. They preserve settled intent and make remaining decisions, dependencies and test prerequisites visible. Artifact creation does not authorize implementation or tracker publication. See [setup](SETUP.md#prd-ticket-and-handoff-deliverables).
 
+Select [`atlas-to-eval`](plugins/atlas/skills/atlas-to-eval/SKILL.md) to turn a quality question, requirement or observed failure into an evaluation case or plan through the Atlas lead and its existing evaluation-design runbook. Designing an evaluation does not itself authorize trials. See [setup](SETUP.md#evaluation-design).
+
 Documentation includes PRDs, guides, architecture explanations and references. `atlas-blast-radius` exposes focused impact analysis; `atlas-reflect` exposes an intentional retrospective with a separate contextual record. Atlas can propose a bounded Arena comparison through its runbook, with confirmation before launching.
 
 ## Describe the outcome you need
@@ -70,7 +72,7 @@ Validation results and limits accompany each pull request. Work-environment deta
 
 ## Standalone utilities with Satchel
 
-The same marketplace also contains [Satchel](plugins/satchel/README.md), a separate collection of skills for explanations, writing, decision history, questionnaires, evidence checks, evaluation design, learning, goals, session catch-up and evolving canvases. Each complete skill folder works independently. Satchel and Atlas can be installed together, and neither requires the other. See [Satchel's setup instructions](plugins/satchel/README.md#install) for plugin installation or copying individual skills.
+The same marketplace also contains [Satchel](plugins/satchel/README.md), a separate collection of skills for explanations, writing, decision history, questionnaires, evidence checks, evaluation design, learning, goals, session catch-up and evolving canvases. Each complete skill folder works independently. Satchel’s `to-eval` works independently without activating Atlas; `atlas-to-eval` is the companion entry for using evaluation design through the Atlas lead. Satchel and Atlas can be installed together, and neither requires the other. See [Satchel's setup instructions](plugins/satchel/README.md#install) for plugin installation or copying individual skills.
 
 ## Maintain this repository
 
