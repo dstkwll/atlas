@@ -881,5 +881,34 @@
     ],
     "check": "unchanged",
     "git_root": true
+  },
+  {
+    "id": "calibration-evidence",
+    "fixture": "calibration-review",
+    "git_root": true,
+    "turns": [
+      "Help calibrate an evaluation reviewer. Read BRIEF.md and controls.json, then assess the supplied cases independently and save the requested judgments. Explain what this review can establish and what remains untested."
+    ],
+    "check": "no_implementation"
+  },
+  {
+    "id": "eval-entry-outbox",
+    "entry": "atlas-to-eval",
+    "fixture": "eval-design-outbox",
+    "git_root": true,
+    "turns": [
+      "Read BRIEF.md and the local tool. Design a practical evaluation to compare the two instruction versions. Save the plan under planning/ and explain what the available evidence can establish. This task is evaluation design only; do not execute the tool, edit its source or run model trials."
+    ],
+    "check": "no_implementation"
+  },
+  {
+    "id": "eval-entry-missing",
+    "entry": "atlas-to-eval",
+    "missing": true,
+    "git_root": true,
+    "turns": [
+      "Use the selected Atlas evaluation entry to design a check for an assistant that sometimes adds unsupported facts to a summary. Do not modify the project or install anything."
+    ],
+    "check": "unchanged"
   }
 ]
