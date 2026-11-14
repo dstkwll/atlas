@@ -46,3 +46,7 @@ This state-only probe supports downstream-consumer checks and independent expect
 ## Next evidence
 
 Review the generated graders before using their outputs for a decision. Test authentic incomplete answers separately from incomplete evidence capture, and use a fresh consumer to implement a produced spec. Add unfamiliar task families, native installed-but-not-invoked selection, representative multi-file journeys and previous-version comparisons where those claims matter. Host portability, human comprehension, broader standalone skill coverage and hardened evidence isolation remain untested here.
+
+## Compatibility correction — November 14
+
+Post-publication review identified that unconditional Git initialization changed the older ledger fixture: a chained `ls .git && cat ...` could now reach evidence where the original repository-free setup did not. Git initialization is now explicitly opt-in per case, defaults off, and is recorded in preview/metadata. The four new authoring diagnostics opt in, preserving the setup actually exercised above; existing ledger cases retain their governing rubric unchanged. A regression test stages a registered ledger case in both conditions and checks that no Git repository was created. The evaluator suite now has 45 passing tests. The new cases were not rerun after this compatibility correction; their Git-root setup is unchanged, and the correction has source/test coverage.

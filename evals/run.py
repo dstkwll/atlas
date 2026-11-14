@@ -38,6 +38,8 @@ def preview(case, condition):
     package, entry, source = instruction_source(case)
     if condition not in ('guided', 'unguided'):
         raise ValueError('Unsupported instruction condition')
+    if not isinstance(case.get('git_root', False), bool):
+        raise ValueError('git_root must be a boolean')
     fixture = case.get('fixture')
     if fixture is not None and fixture not in FIXTURES:
         raise ValueError('Unknown fixture: ' + str(fixture))
@@ -51,6 +53,7 @@ def preview(case, condition):
         installed.remove('atlas')
     return {'case': case['id'], 'package': package, 'entry': entry,
             'condition': condition, 'source': str(source.relative_to(ROOT)),
+            'git_root': case.get('git_root', False),
             'installed_skills': installed,
             'turns': case['turns'], 'visible_fixture_files': sorted(FIXTURES.get(fixture, {})),
             'check': case['check'],
@@ -173,8 +176,9 @@ def trial(case, args, output):
     output.mkdir(parents=True, exist_ok=False)
     workspace = output / 'workspace'
     workspace.mkdir()
-    # Stop ancestor project instruction discovery at this disposable project.
-    subprocess.run(['git', 'init', '--quiet', str(workspace)], check=True)
+    # Preserve legacy fixture semantics; new cases may opt into a project root.
+    if plan['git_root']:
+        subprocess.run(['git', 'init', '--quiet', str(workspace)], check=True)
     for name, content in FIXTURES.get(case.get('fixture'), {}).items():
         (workspace / name).parent.mkdir(parents=True, exist_ok=True)
         (workspace / name).write_text(content)

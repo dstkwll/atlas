@@ -59,7 +59,8 @@ class InstructionConditions(unittest.TestCase):
     def test_unguided_preserves_fixture_without_skills_even_after_recovery(self):
         case = {'id': 'baseline', 'package': 'satchel', 'entry': 'unslop',
                 'fixture': 'satchel-edit-scope', 'check': 'unchanged',
-                'turns': ['Edit the draft', 'Continue from the file'], 'fresh_thread_before': 1}
+                'turns': ['Edit the draft', 'Continue from the file'], 'fresh_thread_before': 1,
+                'git_root': True}
         with tempfile.TemporaryDirectory() as d:
             output, host = self.exercise(Path(d), case, 'unguided')
             self.assertFalse((output / 'workspace/.agents').exists())
@@ -94,13 +95,23 @@ class InstructionConditions(unittest.TestCase):
         for change in ({'package': '../satchel'}, {'entry': '../atlas'},
                        {'package': 'satchel'}, {'fixture': 'not-registered'},
                        {'package': 'satchel', 'entry': 'to-eval', 'missing': True},
-                       {'missing': True}):
+                       {'missing': True}, {'git_root': 'false'}):
             case = {'id': 'bad', 'check': 'unchanged', 'turns': ['Hello'], **change}
             with self.subTest(change=change), tempfile.TemporaryDirectory() as d:
                 output = Path(d) / 'output'
                 with self.assertRaises(ValueError):
                     run.trial(case, argparse.Namespace(condition='guided'), output)
                 self.assertFalse(output.exists())
+
+    def test_legacy_ledger_keeps_its_repository_free_setup(self):
+        cases = json.loads((run.ROOT / 'evals/cases.json').read_text())
+        case = next(c for c in cases if c['check'] == 'ledger')
+        for condition in ('guided', 'unguided'):
+            with self.subTest(condition=condition), tempfile.TemporaryDirectory() as d:
+                output, _ = self.exercise(Path(d), case, condition)
+                self.assertFalse((output / 'workspace/.git').exists())
+                metadata = json.loads((output / 'metadata.json').read_text())
+                self.assertFalse(metadata['instruction_plan']['git_root'])
 
     def test_missing_lead_preview_matches_intended_staging(self):
         plan = run.preview({'id': 'missing', 'entry': 'atlas-handoff', 'check': 'unchanged', 'missing': True, 'turns': ['Hello']}, 'guided')

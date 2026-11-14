@@ -78,7 +78,7 @@ python3 evals/run.py --case satchel-edit-scope --preview
 python3 evals/run.py --case satchel-edit-scope --condition unguided --preview
 ```
 
-The preview lists fixture paths and intended installed skills; it is a setup plan, not a complete content or hash audit. Inspect file contents and referenced resources too; a path listing alone cannot detect answer leakage. Each workspace has its own Git root to bound ancestor project discovery. The normal workspace sandbox is not an adversarial security boundary: records outside the workspace can remain readable, and temporary directories may be writable. Inspect events for out-of-scope access; suspected contamination invalidates the affected comparison. Do not use this setup to claim isolation against hostile actors.
+The preview lists fixture paths and intended installed skills; it is a setup plan, not a complete content or hash audit. Inspect file contents and referenced resources too; a path listing alone cannot detect answer leakage. A case can explicitly set `git_root: true` to bound ancestor project discovery; the four authoring diagnostics do so. The default leaves Git uninitialized, preserving older fixture semantics, including the ledger rubric. Place those legacy workspaces outside other repositories and inspect effective project discovery. Preview and trial metadata record the choice. The normal workspace sandbox is not an adversarial security boundary: records outside the workspace can remain readable, and temporary directories may be writable. Inspect events for out-of-scope access; suspected contamination invalidates the affected comparison. Do not use this setup to claim isolation against hostile actors.
 
 Run matched conditions with an account-available model and new output directories:
 
