@@ -1,5 +1,6 @@
 """Task-derived examples for the ready portion of the dependency PRD diagnostic."""
 import copy
+from value_checks import same_value
 
 
 CASES = [
@@ -42,8 +43,8 @@ def observe(summarize):
             shape = (isinstance(value, list) and all(
                 isinstance(row, dict) and type(row.get('open_count')) is int for row in value))
             results.append(dict(case=name, correct_summary=shape and value == expected,
-                                input_preserved=tickets == source, observed=value, error=None))
+                                input_preserved=same_value(tickets, source), observed=value, error=None))
         except Exception as exc:
-            results.append(dict(case=name, correct_summary=False, input_preserved=tickets == source,
+            results.append(dict(case=name, correct_summary=False, input_preserved=same_value(tickets, source),
                                 observed=None, error=type(exc).__name__ + ': ' + str(exc)))
     return results

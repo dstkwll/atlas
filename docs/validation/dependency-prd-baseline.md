@@ -53,7 +53,7 @@ Before any native author ran, Opus 5.5/high source review found that case-insens
 
 The Opus job was `0daf9a8e-9653-47b1-8095-c05e91dcc622`, with cross-family routing and no write grant. Its first dispatch failed before inference because a requested read path did not exist; the corrected dispatch was the only review inference job. Optional review suggestions clarified recipient settings and preserved the distinction between author-caused and recipient-caused failure. No broad sandbox or infrastructure was added.
 
-Final local checks: **68 evaluator tests passed**; **113 registered cases** preflighted in both conditions. The fresh reviewer independently passed 13 focused dependency/CSV transfer tests and verified that the prior CSV consumer descriptor is unchanged. The two dynamic recipients are not registered cases. Primary pre-author semantic controls distinguished proper dependency gating, blocking all work, promoting the routing proposal and missing action capture; these are criterion-specific checks, not calibration of a general-purpose semantic judge.
+Before the pre-merge correction below, local checks were: **68 evaluator tests passed**; **113 registered cases** preflighted in both conditions. The fresh reviewer independently passed 13 focused dependency/CSV transfer tests and verified that the prior CSV consumer descriptor is unchanged. The two dynamic recipients are not registered cases. Primary pre-author semantic controls distinguished proper dependency gating, blocking all work, promoting the routing proposal and missing action capture; these are criterion-specific checks, not calibration of a general-purpose semantic judge.
 
 ## Exact output identities
 
@@ -66,3 +66,11 @@ Final local checks: **68 evaluator tests passed**; **113 registered cases** pref
 | Independent summary checker | `16c05d8cf753a4567435b151245166fb7efc87b66bd12d241b8630d970288465` |
 
 The useful result is a reusable comparison that retains successful baseline behavior and document caveats. It does not justify adding a runbook or tightening Atlas from this single case. A later evaluation could use a real multi-file task where the dependency must be discovered from conflicting evidence, or a controlled follow-up that resolves it; either needs separately declared inputs and bounds. The broader initiative remains open.
+
+## Pre-merge correction, November 15
+
+GitHub review subsequently found that Python equality accepted type-only input mutations. The primary reproduced a summarizer converting integer ticket IDs to floats while all initial checks passed. The same comparison existed in the CSV checker. A shared type-sensitive comparison now checks the acyclic built-in fixture values recursively in both success and exception paths, while retaining dictionary-key-order tolerance. This does not assert object-identity, aliasing or arbitrary custom/cyclic-object preservation.
+
+The primary reran the two saved summary implementations and all three prior CSV implementations against the stronger checkers: each still passed all five examples with inputs preserved. Original receipts and source identities remain unchanged; separate type-sensitive receipts bind these rechecks to the new checker and helper hashes. No additional native author or recipient trial ran. The original frozen checker in the table above remains the version used for the first observations, not the strengthened final checker.
+
+Final local verification is **70 passing evaluator tests**. A fresh reviewer independently passed 15 focused tests and confirmed rejection of type-only mutations in both observers and both return paths. This is a real evaluator false positive retained beside the otherwise successful native outcomes.

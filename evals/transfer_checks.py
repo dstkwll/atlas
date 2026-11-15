@@ -2,6 +2,7 @@
 import copy
 import csv
 import io
+from value_checks import same_value
 
 HEADER = ['loan_id', 'tool', 'due_at']
 CASES = [
@@ -34,8 +35,8 @@ def observe(export_csv):
                 raise TypeError('export_csv did not return a string')
             rows = list(csv.reader(io.StringIO(raw, newline=''), strict=True))
             results.append(dict(case=name, correct_rows=rows == expected,
-                                input_preserved=loans == source, rows=rows, error=None))
+                                input_preserved=same_value(loans, source), rows=rows, error=None))
         except Exception as exc:
-            results.append(dict(case=name, correct_rows=False, input_preserved=loans == source,
+            results.append(dict(case=name, correct_rows=False, input_preserved=same_value(loans, source),
                                 rows=None, error=type(exc).__name__ + ': ' + str(exc)))
     return results
