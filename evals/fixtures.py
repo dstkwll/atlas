@@ -407,3 +407,6 @@ FIXTURES['calibration-review'] = {
 
 # Minimized consumer artifacts; independent task-derived expectations stay outside.
 FIXTURES.update(json.loads((Path(__file__).parent / "artifact-consumer-fixtures.json").read_text()))
+
+# Artifact producers receive accepted requirements; consumers receive their outputs separately.
+FIXTURES.update(json.loads((Path(__file__).parent / "transfer-fixtures.json").read_text()))

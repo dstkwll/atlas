@@ -169,3 +169,16 @@ This guide does not include the separate [direct/delegated pilot](delegation-rev
 | `satchel-calibration-evidence` | Exercise standalone to-eval on supplied evidence judgments; distinguish complete malformed output and verified absence from collector loss, while preserving the original controls. Verify actual installed scope and reads. |
 
 The existing `calibration-evidence` case now stages evidence-boundaries-v3 with thirteen controls. Earlier eight-control observations remain bound to v1 and their saved source hashes; do not relabel them as coverage of later revisions.
+
+## Schema-aware and planning-artifact transfers
+
+**Rubric:** [artifact transfer](transfer-review.md). Producer completion, artifact fidelity and downstream implementation are separate judgments.
+
+| Cases | Boundary to inspect |
+| --- | --- |
+| `artifact-consumer-schema` | Use the supplied record contract to accept legitimate metadata fields without relaxing total item count or malformed-output checks; compare the original seven vectors. |
+| `transfer-prd` | Preserve the full accepted export contract and deferred policy in a PRD that a fresh implementer can use without the author brief. |
+| `transfer-tickets` | Make the ordinary export executable without unnecessary overdue/timezone prerequisites; preserve scope across tickets and readiness index. |
+| `transfer-handoff` | Recover actual code state and the narrow remaining tie-order repair, preserving working behavior and unrun-test uncertainty. |
+
+The dynamic `transfer-consumer` run is created by `transfer_artifact.py` from one actual producer's files, not a separately authored registered fixture. Its objective change-boundary result is distinct from task-derived CSV checks and semantic artifact review.
