@@ -101,6 +101,14 @@ def check(case, root, before, completed):
             p = root / target
             results['artifact_nonempty'] = (any(f.is_file() and f.stat().st_size for f in p.rglob('*'))
                                            if kind == 'tickets' else p.is_file() and p.stat().st_size > 0)
+    elif kind == 'transfer-consumer':
+        results['only_export_tests_planning_changed'] = all(
+            (p == 'csv_export.py' or p == 'conftest.py' or p == 'tests' or p.startswith('tests/')
+             or p == '.pytest_cache' or p.startswith('.pytest_cache/')
+             or p == 'planning' or p.startswith('planning/')
+             or (p.startswith('test_') and p.endswith('.py')))
+            and not (p == 'planning/deliverable' or p.startswith('planning/deliverable/'))
+            for p in changed)
     elif kind == 'repair':
         results['only_source_and_tests_changed'] = all(p == 'shipping.py' or p == 'tests' or p.startswith('tests/') or (p.startswith('test_') and p.endswith('.py')) for p in changed)
     elif kind == 'station-repair':

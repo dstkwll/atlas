@@ -939,5 +939,44 @@
       "Read BRIEF.md and controls.json. Assess the supplied criteria independently, save the requested judgments, and explain the limits of this check."
     ],
     "check": "no_implementation"
+  },
+  {
+    "id": "artifact-consumer-schema",
+    "fixture": "artifact-consumer-schema",
+    "git_root": true,
+    "turns": [
+      "Read BRIEF.md, plan.md and schema.md. Implement the supplied final-state checker and explain any unresolved rules. Save outputs only under planning/."
+    ],
+    "check": "no_implementation"
+  },
+  {
+    "id": "transfer-prd",
+    "entry": "atlas-to-documentation",
+    "fixture": "transfer-export",
+    "git_root": true,
+    "turns": [
+      "Read BRIEF.md and current code. Write a concise implementation-ready PRD for this accepted slice as Markdown under planning/deliverable/. A fresh implementer will receive only that directory and current code, not BRIEF.md or this conversation. Preserve acceptance and unresolved policy boundaries. Design only: do not implement, edit sources or run model trials."
+    ],
+    "check": "no_implementation"
+  },
+  {
+    "id": "transfer-tickets",
+    "entry": "atlas-to-tickets",
+    "fixture": "transfer-export",
+    "git_root": true,
+    "turns": [
+      "Read BRIEF.md and current code. Draft executable tickets and a readiness index as Markdown under planning/deliverable/. A fresh implementer will receive only that directory and current code, not BRIEF.md or this conversation. Cover the accepted slice, preserve the actual dependency frontier and leave future policy undecided. Draft only: do not implement, edit sources or publish tickets."
+    ],
+    "check": "no_implementation"
+  },
+  {
+    "id": "transfer-handoff",
+    "entry": "atlas-handoff",
+    "fixture": "transfer-recovery",
+    "git_root": true,
+    "turns": [
+      "Read BRIEF.md and inspect current code. Prepare a focused recovery handoff as Markdown under planning/deliverable/. A fresh recipient will receive only that directory and current code, not BRIEF.md or this conversation. Preserve the remaining authorized repair and accurate current state. Handoff only: do not fix code or claim unrun tests passed."
+    ],
+    "check": "no_implementation"
   }
 ]
