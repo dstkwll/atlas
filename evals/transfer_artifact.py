@@ -14,6 +14,7 @@ PRODUCERS = {'transfer-prd', 'transfer-tickets', 'transfer-handoff', 'dependency
 CONFLICT_FILES = ('evals/dependency_checks.py', 'evals/transfer_checks.py',
                   'examples/queue_summary.py', 'examples/csv_export.py', 'examples/loans.py',
                   'evidence/summary-original.json', 'evidence/csv-original.json', 'smoke.py')
+ATTRIBUTION_PATH = 'planning/deliverable/evidence-attribution.md'
 
 
 def producer_id(root):
@@ -43,13 +44,15 @@ def regular_text(path):
     return path.read_bytes().decode('utf-8')
 
 
-def prepare(root):
+def prepare(root, *, evidence_attribution=False):
     # Local maintainer input, not a security sandbox. Resolve the selected trial once.
     root = root.resolve()
     result = json.loads(regular_text(root / 'result.json'))
     name = producer_id(root)
     if name not in PRODUCERS or result['status'] != 'completed' or not result['facts'].get('only_planning_changed'):
         raise ValueError('Expected a completed planning-only transfer producer')
+    if evidence_attribution and name != 'conflict-prd':
+        raise ValueError('Evidence-attribution clarification requires a conflict-prd producer')
     workspace = root / 'workspace'
     if workspace.is_symlink():
         raise ValueError('Workspace must not be a symlink')
@@ -86,6 +89,10 @@ def prepare(root):
         raise ValueError('Deliverable inventory changed after producer completion')
     if not any(k.startswith('planning/deliverable/') and v.strip() for k,v in fixture.items()):
         raise ValueError('No nonempty deliverable was produced')
+    if evidence_attribution:
+        if ATTRIBUTION_PATH in fixture:
+            raise ValueError('Evidence-attribution path conflicts with an original deliverable')
+        fixture[ATTRIBUTION_PATH] = regular_text(Path(__file__).with_name('attribution-addendum.md'))
     return fixture
 
 
@@ -98,10 +105,12 @@ def main():
     p.add_argument('--timeout', type=int, default=300)
     p.add_argument('--auth-home', type=Path, default=Path(os.environ.get('CODEX_HOME', Path.home()/'.codex')))
     p.add_argument('--preview', action='store_true')
+    p.add_argument('--evidence-attribution', action='store_true',
+                   help='Add the explicit evidence clarification to a conflict-prd transfer')
     args = p.parse_args()
     if not 1 <= args.timeout <= 600:
         p.error('--timeout must be between 1 and 600 seconds')
-    fixture = prepare(args.producer)
+    fixture = prepare(args.producer, evidence_attribution=args.evidence_attribution)
     manifest = {k: hashlib.sha256(v.encode()).hexdigest() for k,v in fixture.items()}
     if args.preview:
         print(json.dumps(manifest, indent=2)); return
@@ -112,9 +121,16 @@ def main():
     run.FIXTURES[key] = fixture
     args.condition = 'unguided'
     output = args.output.resolve()
-    completed = run.trial(case, args, output)
-    (output/'transfer-source.json').write_text(json.dumps({'producer':str(args.producer.resolve()),
-        'files':manifest, 'adapter_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}, indent=2))
+    if output.exists():
+        p.error('Output directory must not already exist')
+    source_record = {'producer':str(args.producer.resolve()), 'files':manifest,
+        'evidence_attribution':args.evidence_attribution,
+        'adapter_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
+    try:
+        completed = run.trial(case, args, output)
+    finally:
+        if output.is_dir():
+            (output/'transfer-source.json').write_text(json.dumps(source_record, indent=2))
     raise SystemExit(0 if completed else 1)
 
 
