@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stage a fresh CSV-export consumer from one inspected producer's actual files."""
+"""Stage a fresh consumer from an inspected CSV or dependency-PRD producer."""
 import argparse
 import hashlib
 import json
@@ -10,7 +10,24 @@ import stat
 import run
 
 SOURCE_FILES = ('loans.py', 'csv_export.py')
-PRODUCERS = {'transfer-prd', 'transfer-tickets', 'transfer-handoff'}
+PRODUCERS = {'transfer-prd', 'transfer-tickets', 'transfer-handoff', 'dependency-prd'}
+
+
+def producer_id(root):
+    return json.loads(regular_text(root / 'metadata.json'))['case']['id']
+
+
+def consumer_case(producer):
+    if producer not in PRODUCERS:
+        raise ValueError('Unknown transfer producer')
+    dependency = producer == 'dependency-prd'
+    key = 'dependency-consumer' if dependency else 'transfer-consumer'
+    scope = ('Implement the work declared ready and run useful local tests. Preserve planning/deliverable/. '
+             if dependency else
+             'Implement in csv_export.py and run useful local tests. Preserve loans.py and planning/deliverable/. ')
+    return {'id': key, 'fixture': key, 'git_root': True, 'check': key, 'turns': [
+        'Read the supplied planning/deliverable/ documents and current code. You are authorized to implement the work that the artifact declares ready, respecting its scope and unresolved decisions. '
+        + scope + 'If required intent is missing, record the exact blocker under planning/ rather than inventing policy. Use only this project; no external services, installation or publication.']}
 
 
 def regular_text(path):
@@ -22,9 +39,8 @@ def regular_text(path):
 def prepare(root):
     # Local maintainer input, not a security sandbox. Resolve the selected trial once.
     root = root.resolve()
-    meta = json.loads(regular_text(root / 'metadata.json'))
     result = json.loads(regular_text(root / 'result.json'))
-    name = meta['case']['id']
+    name = producer_id(root)
     if name not in PRODUCERS or result['status'] != 'completed' or not result['facts'].get('only_planning_changed'):
         raise ValueError('Expected a completed planning-only transfer producer')
     workspace = root / 'workspace'
@@ -33,7 +49,8 @@ def prepare(root):
     before = json.loads(regular_text(root / 'before.json'))
     after = json.loads(regular_text(root / 'after.json'))
     fixture = {}
-    for name in SOURCE_FILES:
+    source_files = ('queue_summary.py', 'delivery.py') if name == 'dependency-prd' else SOURCE_FILES
+    for name in source_files:
         content = regular_text(workspace / name)
         if hashlib.sha256(content.encode()).hexdigest() != before[name]['sha256']:
             raise ValueError('Producer source changed: ' + name)
@@ -82,15 +99,14 @@ def main():
         print(json.dumps(manifest, indent=2)); return
     if not args.output or not args.model:
         p.error('--output and --model required for execution')
-    key = 'transfer-consumer'
+    case = consumer_case(producer_id(args.producer))
+    key = case['id']
     run.FIXTURES[key] = fixture
-    case = {'id':key, 'fixture':key, 'git_root':True, 'check':key,
-            'turns':['Read the supplied planning/deliverable/ documents and current code. You are authorized to implement the work that the artifact declares ready, respecting its scope and unresolved decisions. Implement in csv_export.py and run useful local tests. Preserve loans.py and planning/deliverable/. If required intent is missing, record the exact blocker under planning/ rather than inventing policy. Use only this project; no external services, installation or publication.']}
     args.condition = 'unguided'
     output = args.output.resolve()
     completed = run.trial(case, args, output)
     (output/'transfer-source.json').write_text(json.dumps({'producer':str(args.producer.resolve()),
-        'files':manifest}, indent=2))
+        'files':manifest, 'adapter_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}, indent=2))
     raise SystemExit(0 if completed else 1)
 
 

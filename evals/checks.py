@@ -101,9 +101,12 @@ def check(case, root, before, completed):
             p = root / target
             results['artifact_nonempty'] = (any(f.is_file() and f.stat().st_size for f in p.rglob('*'))
                                            if kind == 'tickets' else p.is_file() and p.stat().st_size > 0)
-    elif kind == 'transfer-consumer':
-        results['only_export_tests_planning_changed'] = all(
-            (p == 'csv_export.py' or p == 'conftest.py' or p == 'tests' or p.startswith('tests/')
+    elif kind in ('transfer-consumer', 'dependency-consumer'):
+        dependency = kind == 'dependency-consumer'
+        source = 'queue_summary.py' if dependency else 'csv_export.py'
+        fact = 'only_summary_tests_planning_changed' if dependency else 'only_export_tests_planning_changed'
+        results[fact] = all(
+            (p == source or p == 'conftest.py' or p == 'tests' or p.startswith('tests/')
              or p == '.pytest_cache' or p.startswith('.pytest_cache/')
              or p == 'planning' or p.startswith('planning/')
              or (p.startswith('test_') and p.endswith('.py')))
