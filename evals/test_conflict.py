@@ -10,6 +10,7 @@ import dependency_checks
 import transfer_checks
 from checks import check, snapshot
 from conflict_checks import exercise
+from conflict_value_checks import exercise_values
 from fixtures import FIXTURES
 from transfer_artifact import CONFLICT_FILES, consumer_case, prepare
 
@@ -32,6 +33,46 @@ summary,csv_export=examples()
 
 
 class ConflictTests(unittest.TestCase):
+    def test_value_probes_retain_original_and_repaired_detection(self):
+        for modules in [(historical('dependency_checks'), historical('transfer_checks')),
+                        (dependency_checks, transfer_checks)]:
+            rows = exercise_values(*modules, summary, csv_export)
+            self.assertEqual(len(rows), 4)
+            self.assertTrue(all(row['passed'] for row in rows))
+
+    def test_type_only_comparator_passes_original_but_fails_value_probes(self):
+        def types_only(left, right):
+            if type(left) is not type(right):
+                return False
+            if isinstance(left, dict):
+                return left.keys() == right.keys() and all(
+                    types_only(left[key], right[key]) for key in left)
+            if isinstance(left, (list, tuple)):
+                return len(left) == len(right) and all(
+                    types_only(a, b) for a, b in zip(left, right))
+            return True  # Deliberately ignores scalar values.
+
+        modules = []
+        for name, data in [('dependency_checks', 'tickets'), ('transfer_checks', 'loans')]:
+            text = FIXTURES['conflict-prd']['evals/' + name + '.py']
+            text = text.replace(data + ' == source', 'types_only(' + data + ', source)')
+            module = types.ModuleType(name)
+            module.types_only = types_only
+            exec(text, module.__dict__)
+            modules.append(module)
+        original = exercise(*modules, summary, csv_export)
+        self.assertEqual(len(original), 12)
+        self.assertTrue(all(row['passed'] for row in original))
+        supplemental = exercise_values(*modules, summary, csv_export)
+        self.assertEqual(len(supplemental), 4)
+        self.assertTrue(all(not row['passed'] for row in supplemental))
+        for row in supplemental:
+            self.assertIsNone(row['error'])
+            self.assertTrue(all(result['input_preserved'] is True for result in row['rows']))
+            correct = 'correct_summary' if row['family'] == 'summary' else 'correct_rows'
+            expected = row['probe'] == 'value_mutation'
+            self.assertTrue(all(result[correct] is expected for result in row['rows']))
+
     def test_original_defect_and_complete_repair(self):
         old_summary, old_csv = historical('dependency_checks'), historical('transfer_checks')
         original = exercise(old_summary, old_csv, summary, csv_export)
