@@ -41,11 +41,11 @@ Two fresh contexts each received only one generated outbox plan and a small func
 
 Both consumers faithfully carried forward their respective acceptance gates. Both rejected missing, wrong and duplicate items and accepted the valid alternatives. The consumer of the unguided plan accepted the unauthorized extra item, while recording it as a diagnostic; the consumer of the guided plan rejected it. Both consumers' own smoke checks had passed. The defect therefore propagated from a generated specification into executable grading, even with tests that matched that specification.
 
-This state-only probe supports downstream-consumer checks and independent expected-outcome controls as useful next work. It does not evaluate report truthfulness, retry ordering, actual outbox execution or general consumer reliability. The suspected defect and vectors were selected after artifact review, and there was only one consumer per plan; it is exposed developmental evidence, not a causal estimate of guidance benefit. The generated code remains disposable maintainer evidence, not a new installed evaluator or framework.
+This state-only probe motivated later [calibration](grader-calibration.md) and [artifact-transfer](artifact-transfer.md) checks, whose reports retain their own findings and limits. It does not evaluate report truthfulness, retry ordering, actual outbox execution or general consumer reliability. The suspected defect and vectors were selected after artifact review, and there was only one consumer per plan; it is exposed developmental evidence, not a causal estimate of guidance benefit. The generated code remains disposable maintainer evidence, not a new installed evaluator or framework.
 
-## Next evidence
+## Evidence limits and later work
 
-Review the generated graders before using their outputs for a decision. Test authentic incomplete answers separately from incomplete evidence capture, and use a fresh consumer to implement a produced spec. Add unfamiliar task families, native installed-but-not-invoked selection, representative multi-file journeys and previous-version comparisons where those claims matter. Host portability, human comprehension, broader standalone skill coverage and hardened evidence isolation remain untested here.
+Review generated graders before using their outputs for a decision. Later work examined [incomplete answers versus capture loss](artifact-evidence-boundaries.md) and [fresh artifact consumers](artifact-transfer.md). The trials reported here do not establish unfamiliar-task transfer, native installed-but-not-invoked selection, representative multi-file journeys or previous-version comparisons. Host portability, human comprehension, broader standalone skill coverage and hardened evidence isolation remain untested here.
 
 ## Compatibility correction — November 14
 

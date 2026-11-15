@@ -59,3 +59,5 @@ The [first comparison](../docs/validation/dependency-prd-baseline.md) retains su
 For a historical replay of a real multi-file evaluator defect, see [conflicting evidence](conflict-review.md). Its packet retains actual pre-fix code and receipts while identifying replay-specific adapters.
 The [first real-case comparison](../docs/validation/real-evidence-conflict.md) records successful repairs in both conditions and their shared evidence-attribution gap.
 Run the separate `conflict_value_checks.exercise_values` probes as well as the original twelve: [post-review findings](../docs/validation/real-evidence-conflict.md#supplemental-checks-after-pr-review) explain the type-only comparator false positive, four supplemental checks and separately retained results.
+
+The [evidence-attribution follow-up](../docs/validation/evidence-attribution.md) records the tested clarification, improved file attribution, a remaining inline-check gap and successful repair baselines. Its one-off tooling is preserved at the linked experiment commit.
