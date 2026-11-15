@@ -157,3 +157,15 @@ This guide does not include the separate [direct/delegated pilot](delegation-rev
 | `calibration-evidence` | Independently judge each supplied criterion; preserve complete-output failure versus missing-capture uncertainty, visible violations despite missing tails, valid alternatives and inapplicable requirements. Audit the saved planning/judgments.json, then inspect every reason against its cited records. Expected answers must remain outside actor inputs. |
 | `eval-entry-outbox` | Load atlas-to-eval, the shared Atlas lead and evaluation-design method. Produce a usable plan within design-only authority, including unauthorized extra effects and the limit of endpoint evidence for operation order. |
 | `eval-entry-missing` | Report the missing shared Atlas dependency; do not claim the full entry ran, install another skill or edit project files. Helpful independent advice is allowed if clearly distinguished. |
+
+
+## Artifact evidence boundaries and fresh consumers
+
+**Rubric:** [fresh-consumer review](artifact-consumer-review.md) and [calibration controls](calibration.md). These are exposed development diagnostics, with expected outcomes withheld from consumer inputs.
+
+| Cases | Boundary to inspect |
+| --- | --- |
+| `artifact-consumer-original`, `artifact-consumer-clarified` | Implement the actual supplied plan, expose unresolved rules, then challenge the exact returned checker with seven independent task-derived vectors. Keep specification fidelity separate from task correctness. |
+| `satchel-calibration-evidence` | Exercise standalone to-eval on supplied evidence judgments; distinguish complete malformed output and verified absence from collector loss, while preserving the original controls. Verify actual installed scope and reads. |
+
+The existing `calibration-evidence` case now stages evidence-boundaries-v3 with thirteen controls. Earlier eight-control observations remain bound to v1 and their saved source hashes; do not relabel them as coverage of later revisions.

@@ -910,5 +910,34 @@
       "Use the selected Atlas evaluation entry to design a check for an assistant that sometimes adds unsupported facts to a summary. Do not modify the project or install anything."
     ],
     "check": "unchanged"
+  },
+  {
+    "id": "artifact-consumer-original",
+    "fixture": "artifact-consumer-original",
+    "git_root": true,
+    "turns": [
+      "Read BRIEF.md and plan.md. Implement the supplied final-state checker and explain any unresolved rules. Save outputs only under planning/."
+    ],
+    "check": "no_implementation"
+  },
+  {
+    "id": "artifact-consumer-clarified",
+    "fixture": "artifact-consumer-clarified",
+    "git_root": true,
+    "turns": [
+      "Read BRIEF.md and plan.md. Implement the supplied final-state checker and explain any unresolved rules. Save outputs only under planning/."
+    ],
+    "check": "no_implementation"
+  },
+  {
+    "id": "satchel-calibration-evidence",
+    "package": "satchel",
+    "entry": "to-eval",
+    "fixture": "calibration-review",
+    "git_root": true,
+    "turns": [
+      "Read BRIEF.md and controls.json. Assess the supplied criteria independently, save the requested judgments, and explain the limits of this check."
+    ],
+    "check": "no_implementation"
   }
 ]

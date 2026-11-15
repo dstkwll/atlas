@@ -1,0 +1,47 @@
+{
+  "provenance": "Task-derived exposed diagnostic expectations frozen before native consumers; withheld from their workspaces. A specification ambiguity is separate from artifact failure under the authoritative task.",
+  "controls": [
+    {
+      "id": "malformed-complete",
+      "raw": "[{\"title\":",
+      "capture_status": "complete",
+      "expected": "FAIL"
+    },
+    {
+      "id": "malformed-unavailable",
+      "raw": "[{\"title\":",
+      "capture_status": "unavailable",
+      "expected": "UNKNOWN"
+    },
+    {
+      "id": "exact",
+      "raw": "[{\"id\":1,\"title\":\"Notice\"}]",
+      "capture_status": "complete",
+      "expected": "PASS"
+    },
+    {
+      "id": "wrong-shape",
+      "raw": "{\"id\":1,\"title\":\"Notice\"}",
+      "capture_status": "complete",
+      "expected": "FAIL"
+    },
+    {
+      "id": "absent",
+      "raw": null,
+      "capture_status": "absent",
+      "expected": "FAIL"
+    },
+    {
+      "id": "extra-item",
+      "raw": "[{\"id\":1,\"title\":\"Notice\"},{\"id\":2,\"title\":\"Other\"}]",
+      "capture_status": "complete",
+      "expected": "FAIL"
+    },
+    {
+      "id": "valid-alternative",
+      "raw": "[ { \"title\": \"Notice\", \"id\": 1 } ]",
+      "capture_status": "complete",
+      "expected": "PASS"
+    }
+  ]
+}

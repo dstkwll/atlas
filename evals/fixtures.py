@@ -404,3 +404,6 @@ FIXTURES['calibration-review'] = {
         '(a nonempty list of evidence IDs from that control), and reason (your evidence-grounded reasoning). '
         'Leave source inputs unchanged. Do not run models or access other projects.\n')
 }
+
+# Minimized consumer artifacts; independent task-derived expectations stay outside.
+FIXTURES.update(json.loads((Path(__file__).parent / "artifact-consumer-fixtures.json").read_text()))
