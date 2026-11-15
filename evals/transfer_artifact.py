@@ -10,7 +10,10 @@ import stat
 import run
 
 SOURCE_FILES = ('loans.py', 'csv_export.py')
-PRODUCERS = {'transfer-prd', 'transfer-tickets', 'transfer-handoff', 'dependency-prd'}
+PRODUCERS = {'transfer-prd', 'transfer-tickets', 'transfer-handoff', 'dependency-prd', 'conflict-prd'}
+CONFLICT_FILES = ('evals/dependency_checks.py', 'evals/transfer_checks.py',
+                  'examples/queue_summary.py', 'examples/csv_export.py', 'examples/loans.py',
+                  'evidence/summary-original.json', 'evidence/csv-original.json', 'smoke.py')
 
 
 def producer_id(root):
@@ -20,6 +23,10 @@ def producer_id(root):
 def consumer_case(producer):
     if producer not in PRODUCERS:
         raise ValueError('Unknown transfer producer')
+    if producer == 'conflict-prd':
+        return {'id': 'conflict-consumer', 'fixture': 'conflict-consumer', 'git_root': True,
+                'check': 'conflict-consumer', 'turns': [
+                    'Read planning/deliverable/ and the supplied project. You are authorized to implement the ready maintenance described by the PRD and record local verification. Respect its unresolved decisions and preserve the received documents. If necessary intent is missing, record the blocker under planning/ instead of inventing it. Use only this project; no external services, installation or publication.']}
     dependency = producer == 'dependency-prd'
     key = 'dependency-consumer' if dependency else 'transfer-consumer'
     scope = ('Implement the work declared ready and run useful local tests. Preserve planning/deliverable/. '
@@ -49,7 +56,8 @@ def prepare(root):
     before = json.loads(regular_text(root / 'before.json'))
     after = json.loads(regular_text(root / 'after.json'))
     fixture = {}
-    source_files = ('queue_summary.py', 'delivery.py') if name == 'dependency-prd' else SOURCE_FILES
+    source_files = (CONFLICT_FILES if name == 'conflict-prd' else
+                    ('queue_summary.py', 'delivery.py') if name == 'dependency-prd' else SOURCE_FILES)
     for name in source_files:
         content = regular_text(workspace / name)
         if hashlib.sha256(content.encode()).hexdigest() != before[name]['sha256']:
