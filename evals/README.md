@@ -60,5 +60,4 @@ For a historical replay of a real multi-file evaluator defect, see [conflicting 
 The [first real-case comparison](../docs/validation/real-evidence-conflict.md) records successful repairs in both conditions and their shared evidence-attribution gap.
 Run the separate `conflict_value_checks.exercise_values` probes as well as the original twelve: [post-review findings](../docs/validation/real-evidence-conflict.md#supplemental-checks-after-pr-review) explain the type-only comparator false positive, four supplemental checks and separately retained results.
 
-For a matched follow-up using the actual PRDs with and without an explicit verification clarification, see [evidence attribution](attribution-review.md). The optional transfer addendum is task-specific maintainer tooling; it does not change installed guidance.
-The [observed comparison](../docs/validation/evidence-attribution.md) records improved file attribution, a remaining inline-check gap, and successful repair baselines.
+The [evidence-attribution follow-up](../docs/validation/evidence-attribution.md) records the tested clarification, improved file attribution, a remaining inline-check gap and successful repair baselines. Its one-off tooling is preserved at the linked experiment commit.

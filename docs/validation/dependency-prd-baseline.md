@@ -65,7 +65,7 @@ Before the pre-merge correction below, local checks were: **68 evaluator tests p
 | Guided-artifact recipient implementation | `6a689fe69f692bd0351bceddd5a87316a2b6439f9eb664e76220a733cf36fc5b` |
 | Independent summary checker | `16c05d8cf753a4567435b151245166fb7efc87b66bd12d241b8630d970288465` |
 
-The useful result is a reusable comparison that retains successful baseline behavior and document caveats. It does not justify adding a runbook or tightening Atlas from this single case. A later evaluation could use a real multi-file task where the dependency must be discovered from conflicting evidence, or a controlled follow-up that resolves it; either needs separately declared inputs and bounds. The broader initiative remains open.
+The useful result is a reusable comparison that retains successful baseline behavior and document caveats. It does not justify adding a runbook or tightening Atlas from this single case. The later [real multi-file replay](real-evidence-conflict.md) examined dependency discovery from conflicting evidence. The alternative proposed follow-up resolving this case's dependency was not pursued.
 
 ## Pre-merge correction, November 15
 

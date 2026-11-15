@@ -55,4 +55,4 @@ SHA-256 identifies the exact generated outputs used for these observations. Tria
 | Handoff recipient implementation | `7b715df5d8ed34f2a82fd2753c7d9b3bd6455c041adba8c7e66883906757a8c3` |
 | Independent CSV checker | `29708911bd14c7a4e497128ad0876956b975ef43d48c796c2b16c8c83b84fb8f` |
 
-The next useful evidence is a different task family with a real unresolved dependency or authority conflict, plus an unguided author baseline. The current result does not justify changing portable runbooks or adding a new runtime. The broader initiative remains open.
+The later [dependency-aware PRD comparison](dependency-prd-baseline.md) examined another task family with an unresolved dependency and an unguided author baseline. The result reported here does not justify changing portable runbooks or adding a new runtime.

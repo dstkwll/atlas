@@ -42,4 +42,4 @@ A fresh Codex reviewer independently inspected the final source, controls, fixtu
 
 All 55 evaluator unit tests pass, including duplicate-key input rejection retained from the #67 merge correction. All 108 registered cases preflight in guided and unguided conditions. Mechanical coverage, control agreement, source use and useful downstream behavior remain separate claims.
 
-Next evidence should carry a representative valid schema instance into a fresh consumer, keep invalid and valid-alternative cases independent of its own tests, and extend beyond outbox graders to PRDs, tickets and handoffs. Avoid repairing only the failing example until a favored artifact passes.
+The later [artifact-transfer evaluation](artifact-transfer.md) supplied a valid schema instance and independent invalid/valid-alternative checks to fresh consumers, and examined PRDs, tickets and handoffs. Its vectors do not cover every declared schema rule. Avoid repairing only the failing example until a favored artifact passes.
