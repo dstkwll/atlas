@@ -410,3 +410,4 @@ FIXTURES.update(json.loads((Path(__file__).parent / "artifact-consumer-fixtures.
 
 # Artifact producers receive accepted requirements; consumers receive their outputs separately.
 FIXTURES.update(json.loads((Path(__file__).parent / "transfer-fixtures.json").read_text()))
+FIXTURES.update(json.loads((Path(__file__).parent / "dependency-fixtures.json").read_text()))

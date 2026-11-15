@@ -978,5 +978,15 @@
       "Read BRIEF.md and inspect current code. Prepare a focused recovery handoff as Markdown under planning/deliverable/. A fresh recipient will receive only that directory and current code, not BRIEF.md or this conversation. Preserve the remaining authorized repair and accurate current state. Handoff only: do not fix code or claim unrun tests passed."
     ],
     "check": "no_implementation"
+  },
+  {
+    "id": "dependency-prd",
+    "entry": "atlas-to-documentation",
+    "fixture": "dependency-prd",
+    "git_root": true,
+    "turns": [
+      "Read BRIEF.md, routing-draft.md and current code. Write an implementation-ready PRD as Markdown under planning/deliverable/. A fresh implementer will receive only that directory and current code, not the source brief, routing draft or this conversation. Preserve accepted requirements, readiness and unresolved dependencies. Planning only: do not implement, edit sources, contact services or publish."
+    ],
+    "check": "no_implementation"
   }
 ]

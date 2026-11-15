@@ -182,3 +182,5 @@ The existing `calibration-evidence` case now stages evidence-boundaries-v3 with 
 | `transfer-handoff` | Recover actual code state and the narrow remaining tie-order repair, preserving working behavior and unrun-test uncertainty. |
 
 The dynamic `transfer-consumer` run is created by `transfer_artifact.py` from one actual producer's files, not a separately authored registered fixture. Its objective change-boundary result is distinct from task-derived CSV checks and semantic artifact review.
+
+`dependency-prd` adds a [matched author comparison](dependency-review.md): the summary function is ready while delivery needs an unapproved recipient-policy decision and resolver contract. Run the same author case guided and unguided, then transfer each actual artifact through the helper into a fresh unguided `dependency-consumer`. Inspect independent progress, preserved policy boundaries, task-derived summary behavior and actual actions separately. The dynamic consumer is not a registered case.

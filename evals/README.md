@@ -52,3 +52,6 @@ The **Evaluator correctness** GitHub Actions check runs fast unittests on pull r
 Raw runs under ignored `evals/runs/` are local-only and may contain host metadata, paths, or unexpected content. Sanitize excerpts before publication. Public PR descriptions and concise [validation summaries](../docs/validation/) should distinguish executed observations, source review, adverse findings, and untested scope without making private traces a prerequisite for maintenance. Later changes to tested behavior need fresh evidence or an explicit qualification. Do not pool heterogeneous cases or cross-host observations into a performance rate.
 
 For a producer-to-recipient check of PRDs, tickets and handoffs, see [artifact transfer](transfer-review.md). The recipient receives the actual produced artifact and current code; task-derived checks remain outside its workspace.
+
+For a matched guided/unguided PRD-author comparison with ready work and an unresolved delivery dependency, see [dependency-aware PRD transfer](dependency-review.md).
+The [first comparison](../docs/validation/dependency-prd-baseline.md) retains successful baseline behavior and fidelity caveats in both artifacts.
