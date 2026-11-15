@@ -988,5 +988,15 @@
       "Read BRIEF.md, routing-draft.md and current code. Write an implementation-ready PRD as Markdown under planning/deliverable/. A fresh implementer will receive only that directory and current code, not the source brief, routing draft or this conversation. Preserve accepted requirements, readiness and unresolved dependencies. Planning only: do not implement, edit sources, contact services or publish."
     ],
     "check": "no_implementation"
+  },
+  {
+    "id": "conflict-prd",
+    "entry": "atlas-to-documentation",
+    "fixture": "conflict-prd",
+    "git_root": true,
+    "turns": [
+      "Read README.md and investigate the reported mismatch against the project files. Write the requested implementation-ready PRD as Markdown under planning/deliverable/. Planning only; preserve source and original evidence."
+    ],
+    "check": "no_implementation"
   }
 ]

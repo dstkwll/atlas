@@ -55,3 +55,6 @@ For a producer-to-recipient check of PRDs, tickets and handoffs, see [artifact t
 
 For a matched guided/unguided PRD-author comparison with ready work and an unresolved delivery dependency, see [dependency-aware PRD transfer](dependency-review.md).
 The [first comparison](../docs/validation/dependency-prd-baseline.md) retains successful baseline behavior and fidelity caveats in both artifacts.
+
+For a historical replay of a real multi-file evaluator defect, see [conflicting evidence](conflict-review.md). Its packet retains actual pre-fix code and receipts while identifying replay-specific adapters.
+The [first real-case comparison](../docs/validation/real-evidence-conflict.md) records successful repairs in both conditions and their shared evidence-attribution gap.

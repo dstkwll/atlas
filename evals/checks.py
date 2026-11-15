@@ -101,6 +101,12 @@ def check(case, root, before, completed):
             p = root / target
             results['artifact_nonempty'] = (any(f.is_file() and f.stat().st_size for f in p.rglob('*'))
                                            if kind == 'tickets' else p.is_file() and p.stat().st_size > 0)
+    elif kind == 'conflict-consumer':
+        results['original_evidence_examples_and_documents_preserved'] = all(
+            before.get(p) == after.get(p) for p in before.keys() | after.keys()
+            if p == 'examples' or p.startswith('examples/')
+            or p == 'planning/deliverable' or p.startswith('planning/deliverable/')
+            or (p in before and (p == 'evidence' or p.startswith('evidence/'))))
     elif kind in ('transfer-consumer', 'dependency-consumer'):
         dependency = kind == 'dependency-consumer'
         source = 'queue_summary.py' if dependency else 'csv_export.py'
