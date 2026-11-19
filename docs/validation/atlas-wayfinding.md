@@ -56,7 +56,7 @@ The 39 evaluator correctness tests pass with the new reusable seed-catalog case 
 
 ## First map when the subject or goal is unclear
 
-Nine scripted conversations compared Atlas 0.13.2 (`c5a1d07`) with the 0.13.3 candidate. Each side used fresh native Codex sessions, the explicit Wayfinding entry, gpt-5.6-sol at medium effort and identical user turns within each pair. Review included progress messages. The runner staged the exact Wayfinding reference for each version. Two [reusable cases](../../evals/wayfinding-review.md#choosing-when-to-show-the-first-map) cover opposite opening needs.
+Nine scripted conversations compared Atlas 0.13.2 (`c5a1d07`) with the first 0.13.3 draft (`5a88116`). Each side used fresh native Codex sessions, the explicit Wayfinding entry, gpt-5.6-sol at medium effort and identical user turns within each pair. Review included progress messages. The runner staged the exact Wayfinding reference for each version. Two [reusable cases](../../evals/wayfinding-review.md#choosing-when-to-show-the-first-map) cover opposite opening needs.
 
 - With a free afternoon and no named domain, the baseline proposed a destination and listed five possible areas. The candidate asked for one recent moment. When the user later distinguished hearing an aunt’s stories from getting friends to linger after dinner, both versions showed that fork and left the choice open.
 - A separate case supplied a blue button as the first clue. The baseline suggested three trails and asked what kind of button it was. The candidate asked what caught the user’s attention. This case was written independently of the example in the guidance.
@@ -66,3 +66,16 @@ Nine scripted conversations compared Atlas 0.13.2 (`c5a1d07`) with the 0.13.3 ca
 A reviewer who saw the pairs in shuffled order without version labels preferred the candidate on all three ambiguous starts. The same reader preferred the baseline on the choir and seed swap. The candidate introduced a question about trusting the volunteers even though the organizer had said they could cover Sunday.
 
 These observations cover one run per version and scenario on one host and model. They show when a map appeared in these conversations. Enjoyment and fit in unscripted human sessions remain open.
+
+## Grounded interpretations and asking once
+
+The follow-up compared the first draft (`5a88116`) with the revised entry and shared reference. Four two-turn conversations ran twice per version in fresh native Codex sessions using gpt-5.6-sol at medium effort. Reviewers saw progress and replies with the version labels hidden. They judged the meaning separately from whether a single reply asked twice for the same contribution, including a question repeated as an imperative. The [cases and review criteria](../../evals/wayfinding-review.md#interpretation-and-repeated-questions) include the café, seed swap and dispatch handoff.
+
+| Scenario | Observed in the revised explicit skill |
+| --- | --- |
+| Repair café | Both follow-ups kept one volunteer’s enjoyment scoped to that person and asked what stayed with the user. One still hinted that closing could be a chore. One opening requested the same fragment twice. An earlier-draft run had described an unfair burden and assumed the user’s expectation had changed. |
+| Seed swap | Both runs used the stated coverage, compared $90 with keeping Saturday free and recommended Sunday after the organizer supplied that preference. Both earlier-draft runs repeated their first question. All four runs ultimately chose Sunday. |
+| Dispatch | All four runs linked the driver’s accurate recall and subsequent route to the stale printed list. One revised reply went too far in saying that correcting the list caused the successful run. |
+| Writing | All four runs recognized that discussion of the writing might matter more than audience size or applause. Both revised replies asked what happened in the draft exchange. One mistakenly described applause as roughly constant, although the less memorable reading received more. |
+
+The blind readers marked a clear duplicate in seven of 16 earlier-draft replies and one of 16 revised replies. A reply that explained a tradeoff and then asked about it once counted as a single request. One extra café pair selected the general Atlas lead and requested Wayfinding in the message. Both versions read the shared Wayfinding reference, and both still asked what had *changed* for the user. These counts describe scripted sessions on one host and model. They do not establish a general rate of improvement or identical behavior across entry points.

@@ -4,7 +4,7 @@ Use for a requested Wayfinding, brainstorming-together or grilling session. This
 
 ## Find a starting point together
 
-Briefly name Wayfinding as you begin. If the user is unsure where to start and there is little to connect yet, invite them to share one moment, thought or detail. When they offer a clue whose meaning is still open, ask one short question in their own terms and give them the floor. For “I keep thinking about the empty noticeboard at the station,” try “What caught your eye about it?” Let their answer supply the meaning. Save lists of prompts or possible interpretations for when the user asks for suggestions or gets stuck after an invitation. The question itself can be the next step.
+Briefly name Wayfinding as you begin. If the user is unsure where to start and there is little to connect yet, invite them to share one moment, thought or detail. When a clue could mean several things, go straight to a short question in the user’s terms. For “I keep thinking about the empty noticeboard at the station,” an ordinary follow-up can be “**Next:** What caught your eye about it?” An interpretive preamble can answer for them before they get a turn. Save a menu of starting prompts for someone who asks for suggestions or gets stuck after an invitation.
 
 Show a compact map as soon as a relationship would help the user think. It might connect two directions they are considering, a constraint with the choice it affects, or a question with the answer it depends on. Ground it in their words, facts you inspect or the existing record. This can be the first reply. If they ask for a map, show what you can ground now and leave the rest open. A single sentence can connect two possible directions and ask which matters more. When all you have is a topic name, ask what drew the user to it.
 
@@ -39,6 +39,14 @@ Once the map is useful, update it after each meaningful answer or finding before
 For example, a field-report design has an open offline-editing question and an unresolved retention policy. The owner answers, “Inspectors must be able to edit without a connection; each report has one assigned editor.” Record those two commitments. Upload-failure behavior can now enter the frontier; choosing a sync mechanism may remain blocked on device and storage facts you can inspect. Keep retention open: that answer settled neither its duration nor whether old reports should be deleted. Show the change and ask about the most consequential newly available behavior; do not silently choose a sync mechanism or retention policy. The example illustrates an answer changing the map, not a required domain or output format.
 
 Use Atlas's relevant domain methods as the discussion reveals their need. Bring their findings back into this map and the user's decision: an identity concern can require security guidance; a confusing screen can need interface review. A method or bounded researcher contributes evidence, not a separate owner or a substitute for the user's judgment. Keep prototypes tied to a question and within actual authority; Wayfinding by itself does not authorize implementation, provisioning or external actions.
+
+### Check the reply before sending
+
+Read your draft, including its question, for anything it assumes about the user. Could they answer “nothing changed,” “I never said that bothered me” or “that part is already covered”? Remove the invented premise. With an ambiguous observation, often only a question about the scene is needed. One person’s account speaks for that person.
+
+When a detail favors one interpretation over another, offer the connection and its basis. “I lose my place in the audio on the bus, but I follow the same chapter fine at home” suggests that listening conditions matter. Leave room for correction. With a bounded choice, use the constraints as given, compare what still differs, and apply a deciding preference once supplied.
+
+Read the body and the closing **Next:** paragraph as one turn. Keep the actual request for input only in the close. Delete any earlier sentence that elicits the same answer, including an imperative such as “decide whether.” For a $12 ferry that saves half an hour over walking, “**Next:** Is that half hour worth $12 to you?” is a complete handoff. A group of independent questions can share the close at the user’s requested pace.
 
 ## Preserve the session and leave it deliberately
 

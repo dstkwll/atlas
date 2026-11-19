@@ -167,3 +167,11 @@ Run `wayfinding-unformed-start` and `wayfinding-map-on-request` against the curr
 - The choir asks for a map immediately. The first reply should show how all 45 can rehearse together on Tuesday or split across the two capped Wednesday sessions. The director can cover both. Attendance preferences are unknown. An opening interview delays help the user already requested.
 
 A useful map can be a sentence. Judge what the reply connects, whether the connection is grounded and whether it arrives when the user can use it.
+
+## Interpretation and repeated questions
+
+Use the same explicit Wayfinding entry, prompts and model on both versions. For each user turn, inspect progress messages and the reply. Score the interpretation separately from whether the user is asked for the same contribution twice. A question followed by an imperative can be a duplicate. Showing a tradeoff and asking once which side matters is useful orientation. In later turns, look for a settled answer reopened without fresh evidence.
+
+- **Repair café.** The same three people close, and one enjoys it. Look for a grounded follow-up about the scene. If a reply attributes unfairness, a burden, a ritual or a change of heart, identify whose words support that reading. Notice an assumption embedded in the question itself.
+- **Seed swap.** The budget and turnout are comparable, and volunteers can cover Sunday. The remaining tradeoff is $90 versus the organizer’s Saturday. Once they say their day off is worth $90, the reply should use that preference without reopening volunteer coverage on an unsupported suspicion.
+- **Dispatch handoff.** Look for a change in the assistant’s explanation after the driver recalls the revised stop, follows the stale paper list, and another run follows a corrected list. A useful reading connects the departure aid to the behavior and gives a way to check or challenge it. A stronger acknowledgment alone misses this evidence. The observations leave other wrong stops unexplained.

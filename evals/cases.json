@@ -805,6 +805,36 @@
     "check": "no_implementation"
   },
   {
+    "id": "wayfinding-repair-cafe",
+    "entry": "atlas-wayfinding",
+    "git_root": true,
+    "turns": [
+      "Can you help me think something through? I keep circling it and haven’t worked out what I’m asking.",
+      "At our Saturday repair café, the same three people always end up closing. One of them told me it’s the part they look forward to. I’m still trying to understand what I noticed."
+    ],
+    "check": "no_implementation"
+  },
+  {
+    "id": "wayfinding-seed-swap",
+    "entry": "atlas-wayfinding",
+    "git_root": true,
+    "turns": [
+      "Could you help me choose the slot for our neighborhood seed swap? Saturday is free but I’d have to be there all day. Sunday is $90 and two volunteers can cover it. Both fit the budget and draw about the same crowd. What’s the one thing I should settle first?",
+      "Saturday is my only day off that week. I’d happily spend $90 to keep it."
+    ],
+    "check": "no_implementation"
+  },
+  {
+    "id": "wayfinding-dispatch-handoff",
+    "entry": "atlas-wayfinding",
+    "git_root": true,
+    "turns": [
+      "Help me think through our morning dispatch handoff. Twice this week a driver went to the original first stop after the route changed. Both drivers had replied ‘got it’ in the dispatch chat. I’m debating whether to ask for a more specific reply.",
+      "I watched loading this morning. Drivers clip a printed stop list to the tote and work down it. Yesterday one driver could tell me the new first stop while we were loading. The sheet on her tote still had the old order, and that was the order she drove. On Friday someone penciled a swap onto the sheet and that run went as planned."
+    ],
+    "check": "no_implementation"
+  },
+  {
     "id": "arena-core-calendar",
     "entry": "atlas",
     "fixture": "arena-core-calendar",
