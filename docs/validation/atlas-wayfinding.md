@@ -103,3 +103,17 @@ The same repair-café observation tested three responses. In one script the obse
 | The group kept talking after the practical work ended | All four offered a social-time interpretation, sometimes adding other motives. | Three offered a tentative social-time interpretation. The fourth recognized that the work alone was an incomplete explanation and left the possible attraction of the gathering implicit. |
 
 Two additional revised-version checks selected the explicit Wayfinding entry. It asked a neutral question on the sparse café turn, connected the stronger evidence to time together, and supplied possibilities when the first message asked for them. The general-lead comparisons used the same prompts across versions. The explicit-entry checks are illustrative. Some requested hypotheses still sounded certain in their headings, and these scripted runs on one host and model do not establish general reliability.
+
+### Saying what the stronger evidence suggests
+
+In the missed reply on `7f191bf`, the general Atlas lead had received the full Wayfinding and discovery guides. It recognized that the volunteers “still chose the same time and place together,” then stopped at “It doesn’t yet tell us what that time means to them.” The reply distinguished the activity from the repair work. It left the user to infer that the time together could itself be a reason to stay. Other runs on the same guidance made that inference, so the trace identifies the omission but cannot establish its cause.
+
+Both [registered café conversations](../../evals/wayfinding-review.md#the-general-lead-enters-wayfinding) ran four times per version in fresh native Codex sessions through the general Atlas lead, on gpt-5.6-sol at medium effort. The prompts were identical across versions. The returned tool records included the applicable reply check in every run.
+
+| What the observer supplied | Previous PR head (`7f191bf`) | Revised shared guide |
+| --- | --- | --- |
+| The same trio closes and one person looks forward to it | All four left their reasons open. | All four left their reasons open. Two follow-ups made timing assumptions about noticing the pattern before the comment or during closing. |
+| Two occasions when the trio stayed together after the work ended | Two suggested that closing gave them time together. Two described the gathering without offering it as a possible reason to stay. | Three suggested a possible draw. One said, “The back-table conversation may be the part they’re preserving, though what it gives them is still open.” The fourth called the time together a possible “common thread,” which could also describe the recurring activity without explaining its appeal. |
+| A request for a few possible explanations on the original sparse facts | All four offered several hypotheses. | All four offered several hypotheses, three or four per reply. |
+
+In two additional revised sessions, the repair log established a half-hour gap but gave no evidence of what the volunteers did. Both left the explanation open. Factual precision still varied on the richer prompt. Three revised replies used “work disappeared” or “work disappears” where the observer had described an early finish and an offer of help. Some also introduced a ritual. These scripted comparisons on one host and model do not establish how often either behavior occurs in practice.
