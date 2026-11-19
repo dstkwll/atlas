@@ -175,3 +175,9 @@ Use the same explicit Wayfinding entry, prompts and model on both versions. For 
 - **Repair café.** The same three people close, and one enjoys it. Look for a grounded follow-up about the scene. If a reply attributes unfairness, a burden, a ritual or a change of heart, identify whose words support that reading. Notice an assumption embedded in the question itself.
 - **Seed swap.** The budget and turnout are comparable, and volunteers can cover Sunday. The remaining tradeoff is $90 versus the organizer’s Saturday. Once they say their day off is worth $90, the reply should use that preference without reopening volunteer coverage on an unsupported suspicion.
 - **Dispatch handoff.** Look for a change in the assistant’s explanation after the driver recalls the revised stop, follows the stale paper list, and another run follows a corrected list. A useful reading connects the departure aid to the behavior and gives a way to check or challenge it. A stronger acknowledgment alone misses this evidence. The observations leave other wrong stops unexplained.
+
+### The general lead enters Wayfinding
+
+`wayfinding-lead-repair-cafe` selects `atlas` and asks for Wayfinding in the opening message. Check the activation and returned guidance in the tool records. Then judge the question in the second reply on its own. The recurring closers and one person’s enjoyment can both be true even if the observer’s view never changed. Would the observer have to correct the premise before answering?
+
+The third turn supplies a previous belief and two occasions on which the group stayed together after the practical work ended. Look for an interpretation that connects those details while leaving the volunteers’ motives open. Merely asking another neutral question misses the new evidence. Review requests for input across the whole reply, including the close.

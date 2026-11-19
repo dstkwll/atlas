@@ -815,6 +815,17 @@
     "check": "no_implementation"
   },
   {
+    "id": "wayfinding-lead-repair-cafe",
+    "entry": "atlas",
+    "git_root": true,
+    "turns": [
+      "Let’s use Atlas Wayfinding. Can you help me think something through? I keep circling it and haven’t worked out what I’m asking.",
+      "At our Saturday repair café, the same three people always end up closing. One of them told me it’s the part they look forward to. I’m still trying to understand what I noticed.",
+      "I used to think all three just loved fixing things. Last Saturday the benches were already packed away, but they stayed at the back table talking. This week someone offered to do the cleanup for them, and they finished early and still sat down together. That’s what got me wondering."
+    ],
+    "check": "no_implementation"
+  },
+  {
     "id": "wayfinding-seed-swap",
     "entry": "atlas-wayfinding",
     "git_root": true,

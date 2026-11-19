@@ -144,6 +144,7 @@ The shorter acknowledgment variant was reported separately from the original pil
 | `wayfinding-summary-continuity` **— later shared-entry diagnostic**; `wayfinding-seed-catalog` **— later prose-revision scenario** | Check a checkpoint and continued design after a changed premise; keep these distinct from the original suite. |
 | `wayfinding-unformed-start`, `wayfinding-map-on-request` | Follow an unformed intent until a real choice emerges, and show an immediate map for a user who asks for one. |
 | `wayfinding-repair-cafe`, `wayfinding-seed-swap`, `wayfinding-dispatch-handoff` | Keep an observation open, use a supplied preference, and offer an interpretation supported by contrasting evidence. Inspect repeated requests separately. |
+| `wayfinding-lead-repair-cafe` | Enter Wayfinding through the general lead. Two observations of the same café warrant different replies as the evidence changes. |
 | `arena-core-calendar` | Explore a changed premise in a new planning-only calendar scenario using existing HTML. This is a predeclared variant, not a wholly independent hidden benchmark. |
 | `arena-core-recovery` | Resume the known exact-empty-title correction from retained artifacts in a fresh thread after an explicit delivery request. This is a predeclared variant that reuses a known regression boundary, not a wholly independent hidden benchmark. |
 
