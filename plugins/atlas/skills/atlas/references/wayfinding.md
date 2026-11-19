@@ -2,9 +2,13 @@
 
 Use for a requested Wayfinding, brainstorming-together or grilling session. This is a deliberate conversational assignment within Atlas: develop shared understanding and a credible route with the user. Ordinary design advice still uses [Discover and design](discover-and-design.md) without entering this mode. Read that guide for the shared investigation, comparison and readiness methods; this reference owns the distinctive interaction below.
 
-## Enter and keep the destination visible
+## Find a starting point together
 
-Briefly name the mode and the destination you understand: a decision, design, specification or route the conversation should clarify. Mark an uncertain destination as provisional and ask what would resolve it. Survey the major areas before detailing a favored solution. Show an initial compact map and ask the question most likely to change the direction. Inspect facts needed to frame that question; do not bury the opening conversation beneath an exhaustive investigation.
+Briefly name Wayfinding as you begin. If the user is unsure where to start and there is little to connect yet, invite them to share one moment, thought or detail. When they offer a clue whose meaning is still open, ask one short question in their own terms and give them the floor. For “I keep thinking about the empty noticeboard at the station,” try “What caught your eye about it?” Let their answer supply the meaning. Save lists of prompts or possible interpretations for when the user asks for suggestions or gets stuck after an invitation. The question itself can be the next step.
+
+Show a compact map as soon as a relationship would help the user think. It might connect two directions they are considering, a constraint with the choice it affects, or a question with the answer it depends on. Ground it in their words, facts you inspect or the existing record. This can be the first reply. If they ask for a map, show what you can ground now and leave the rest open. A single sentence can connect two possible directions and ask which matters more. When all you have is a topic name, ask what drew the user to it.
+
+When mapping, name the destination as you understand it, identify what would clarify any uncertainty, and survey the major areas before detailing a favored solution. Inspect facts needed to frame the question most likely to change direction. Keep the opening investigation proportionate.
 
 Keep this map visible and recoverable, in the existing brief or approved task record when one is needed. A short conversation can carry it inline. Use clear prose, a table or a useful diagram; the distinctions matter, not fixed headings or a new tracker:
 
@@ -26,7 +30,7 @@ Use adaptive pacing: one consequential question, or a compact group of independe
 
 Bring a grounded recommendation and meaningful alternatives when they help the decision. For unexplored taste or intent, first elicit the desired experience rather than disguising your preference as a factual answer. Contribute promising possibilities as well as risks; premature criticism can close off the idea the session should discover. Use concrete episodes, counterexamples and precise terminology to challenge both the initial framing and your preferred approach. Follow the shared discovery guide's comparison method rather than inventing a questionnaire to exhaust.
 
-After each meaningful answer or finding, update the map before choosing the next question:
+Once the map is useful, update it after each meaningful answer or finding before choosing the next question:
 
 1. Record what it actually settles and its basis: who accepted a decision, or what inspected evidence establishes. A finding can establish a fact or unblock a question; it does not accept a choice for the user. A partial agreement accepts only that part; an ambiguous acknowledgment does not settle unnamed consequential choices. Respect clear answers without repeatedly seeking confirmation.
 2. Follow the consequences. Bring questions with settled prerequisites onto the frontier; keep those waiting on another answer, source or investigation blocked. When fog becomes precise, turn it into a frontier or blocked question and preserve still-unexplored territory. Revisit the wider map when a branch closes, a premise changes, evidence contradicts the approach or new questions become expressible. Expose conflicts with accepted decisions and affected dependencies instead of quietly rewriting history or reopening the whole design.

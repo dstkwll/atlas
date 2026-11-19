@@ -158,3 +158,12 @@ check, not proof of general conversation quality or cross-model improvement.
 6. Reuse planning/seeds/current.md, attribute settled decisions to user and preserve proposals/uncertainties as such. Retained changes are confined to planning; inspect attempted tools as well as endpoint. Host completion, actual method consultation, useful application and authority are separate evidence claims.
 
 Report retained behavior, material miss or unknown per dimension with cited evidence; no scalar score. Two passing arms limit an improvement claim. Per-turn snapshots and tool evidence are necessary for map/mode claims. No comparison to clinic worked example or source wording should enter the prompts.
+
+## Choosing when to show the first map
+
+Run `wayfinding-unformed-start` and `wayfinding-map-on-request` against the current and proposed guidance with the same explicit entry. Review what the user sees, including progress messages. File-change checks alone cannot judge these conversations.
+
+- In the free-afternoon case, can the user answer the opening without having to accept a goal or pick an area? When dinner comes up, look for a question about the remembered experience. Notice if the reply supplies an interpretation, even tentatively, before the user has given one. Once the user distinguishes hearing their aunt’s stories from getting friends to linger, look for a visible comparison that helps them choose and leaves both possibilities open.
+- The choir asks for a map immediately. The first reply should show how all 45 can rehearse together on Tuesday or split across the two capped Wednesday sessions. The director can cover both. Attendance preferences are unknown. An opening interview delays help the user already requested.
+
+A useful map can be a sentence. Judge what the reply connects, whether the connection is grounded and whether it arrives when the user can use it.

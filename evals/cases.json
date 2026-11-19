@@ -785,6 +785,26 @@
     ]
   },
   {
+    "id": "wayfinding-unformed-start",
+    "entry": "atlas-wayfinding",
+    "git_root": true,
+    "turns": [
+      "I’ve got a free afternoon and the feeling there’s something I’d like to make better. I can’t even tell you what area it’s in yet. Can we figure it out together?",
+      "I can't think of anything broken. I keep remembering how good the conversations were after dinner at my aunt’s place, though. I don’t know why that sticks with me.",
+      "It was the way people lingered. I might want to hear more of my aunt’s stories one on one, or make room for that kind of lingering with my friends. Those would be pretty different afternoons."
+    ],
+    "check": "no_implementation"
+  },
+  {
+    "id": "wayfinding-map-on-request",
+    "entry": "atlas-wayfinding",
+    "git_root": true,
+    "turns": [
+      "Can you map out the choices for our choir rehearsal before we get into questions? The hall seats all 45 singers, but it’s only free Tuesdays. The school has two Wednesday slots, each capped at 25. The director can cover both slots."
+    ],
+    "check": "no_implementation"
+  },
+  {
     "id": "arena-core-calendar",
     "entry": "atlas",
     "fixture": "arena-core-calendar",

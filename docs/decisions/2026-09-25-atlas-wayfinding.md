@@ -16,6 +16,8 @@ The third approach is accepted. The name is **Atlas Wayfinding**, with skill ID 
 
 The explicit entry selects an assignment in the main conversation. The shared `wayfinding.md` reference owns its interaction contract; Discover and design continues to own the broader investigation, comparison and readiness methods. Ordinary Atlas can use the mode for a requested brainstorming/grilling session without requiring a separate installed wrapper. Ordinary design advice does not silently acquire the mode.
 
+When both the subject and aim are still forming, the user can begin with a concrete experience. The map becomes visible when there is a grounded relationship to show or the user asks for orientation. A session that starts with a clear choice or an existing map can use it immediately.
+
 The visible map distinguishes destination, decisions/evidence, available questions, precise blocked questions, poorly understood territory, deferrals and exclusions. These are semantic distinctions in the existing artifact, not a required schema or new tracker. A question with no answer yet is not automatically fog. Map changes should follow meaningful answers and evidence, while unexamined territory remains visible. Exact headings and a full-map repetition after every reply are unnecessary.
 
 Wayfinding suspends delivery while that discovery assignment is active, including delivery previously authorized. Preserve that earlier scope for resumption. Design agreement alone does not resume execution. A clear user request to implement or resume transitions normally without a special phrase or another approval gate. Pauses, short synthesis requests and partial handoffs remain valid; the mode does not require exhaustive knowledge or endless questioning.
