@@ -181,3 +181,9 @@ Use the same explicit Wayfinding entry, prompts and model on both versions. For 
 `wayfinding-lead-repair-cafe` selects `atlas` and asks for Wayfinding in the opening message. Check the activation and returned guidance in the tool records. Then judge the question in the second reply on its own. The recurring closers and one person’s enjoyment can both be true even if the observer’s view never changed. Would the observer have to correct the premise before answering?
 
 The third turn supplies a previous belief and two occasions on which the group stayed together after the practical work ended. Look for an interpretation that connects those details while leaving the volunteers’ motives open. Merely asking another neutral question misses the new evidence. Review requests for input across the whole reply, including the close.
+
+Pair that conversation with `wayfinding-lead-cafe-possibilities`. The observation is identical, but the user adds a request for possible explanations. Judge each reply against the information and invitation Atlas had at that turn.
+
+- On the original sparse observation, distinguish a recap of the recurring closers and one volunteer’s enjoyment from a proposed explanation. Count suggestions in questions and disclaimers as well as in lists. A single unsupported guess can also lead the user.
+- When the user asks, look for genuinely different, plausible accounts offered as hypotheses. A question that helps distinguish them can add value after the possibilities have been supplied.
+- When the practical work ends and the same group stays to talk, look for a bounded interpretation tied to that contrast. Record any unrelated theories added around a good inference separately.

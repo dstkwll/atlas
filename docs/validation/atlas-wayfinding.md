@@ -91,3 +91,15 @@ Fresh native Codex sessions selected the general lead on both drafts, using gpt-
 - None of the six ambiguous café replies per version presumed the observer had changed their mind. The earlier failure did not recur in these trials, so the comparison cannot establish a reduction in its frequency.
 - Once the group kept meeting after the repair work and cleanup ended, all three runs per version suggested the gathering itself might matter. In the writing case, all three per version recognized that a conversation about the work might matter more than applause or room size. Each version kept both formats open.
 - Speculation remained possible. One revised reply suggested burden, belonging, ritual or ownership before the café observer supplied a reason. One earlier reply also mistook an earlier closing time for a shorter closing period. Each mistake is separate from attributing a change in the observer’s view.
+
+### When to offer possible meanings
+
+The same repair-café observation tested three responses. In one script the observer supplied sparse facts, then described two occasions when the trio kept gathering after the work ended. The [paired script](../../evals/wayfinding-review.md#the-general-lead-enters-wayfinding) added a request for possible explanations to the sparse turn. Each script ran four times against `76adca7` and the revised guidance in fresh native Codex sessions. Both sides selected the general Atlas lead, requested Wayfinding in the opening message and used gpt-5.6-sol at medium effort. Reviewers graded the replies with version labels hidden.
+
+| What the user supplied | Earlier draft | Revised guidance |
+| --- | --- | --- |
+| Recurring closers and one person’s enjoyment | Three of four replies introduced possible motives or feelings, including through a disclaimer. | All four stayed with the observations and asked what caught the user’s attention. |
+| The same facts plus a request for a few explanations | All four brainstormed, giving six or seven options each. | All four brainstormed. Three offered three options and one offered four. |
+| The group kept talking after the practical work ended | All four offered a social-time interpretation, sometimes adding other motives. | Three offered a tentative social-time interpretation. The fourth recognized that the work alone was an incomplete explanation and left the possible attraction of the gathering implicit. |
+
+Two additional revised-version checks selected the explicit Wayfinding entry. It asked a neutral question on the sparse café turn, connected the stronger evidence to time together, and supplied possibilities when the first message asked for them. The general-lead comparisons used the same prompts across versions. The explicit-entry checks are illustrative. Some requested hypotheses still sounded certain in their headings, and these scripted runs on one host and model do not establish general reliability.

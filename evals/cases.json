@@ -826,6 +826,16 @@
     "check": "no_implementation"
   },
   {
+    "id": "wayfinding-lead-cafe-possibilities",
+    "entry": "atlas",
+    "git_root": true,
+    "turns": [
+      "Let’s use Atlas Wayfinding. Can you help me think something through? I keep circling it and haven’t worked out what I’m asking.",
+      "At our Saturday repair café, the same three people always end up closing. One of them told me it’s the part they look forward to. I’m still trying to understand what I noticed. Could you offer a few possible explanations for why they stay?"
+    ],
+    "check": "no_implementation"
+  },
+  {
     "id": "wayfinding-seed-swap",
     "entry": "atlas-wayfinding",
     "git_root": true,
