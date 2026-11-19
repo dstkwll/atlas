@@ -1,6 +1,10 @@
 # Satchel provenance
 
-`claim-check`, `session-canvas` and `to-eval` are original syntheses. The entries below distinguish each skill’s origin from later contributions. Original licenses remain in each adapted skill folder so they accompany standalone copies.
+`agreement-check`, `claim-check`, `session-canvas` and `to-eval` are original syntheses. The entries below distinguish each skill’s origin from later contributions. Original licenses remain in each adapted skill folder so they accompany standalone copies.
+
+## agreement-check
+
+Original Satchel synthesis prompted by reviewing how Google’s Elephant Goldfish Model records an agreed direction and reviews the resulting draft. Satchel’s instructions for comparing the draft and decision record in both directions were written independently. [Elephant Goldfish Model workflow](https://github.com/google/elephant-goldfish-model/blob/70406c4d22cc7ea8299637c2c5b44625c48b3f08/README.md#try-your-first-design)
 
 ## to-eval
 

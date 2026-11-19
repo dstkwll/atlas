@@ -78,3 +78,19 @@ The missing reason is a retained diagnostic miss, not a passing claim for comple
 A fresh independent grader received the task evidence, fixed rubric and outputs with condition labels hidden and order varied by case. It confirmed no material factual distinction, identified the shared interruption-reason omission as a minor completeness miss, and treated the returns caveats as excess wording rather than invented restrictions. It rejected an invalid calibration response that called inaccessible churn evidence false and accepted a concise complete board-status alternative. The lead checked these findings against the supplied records.
 
 The skill validator, JSON/version checks, unchanged Atlas package check and all 39 evaluator unit tests passed. The unit tests concern evaluator infrastructure, not claim-check judgment. User installations were not updated.
+
+## Agreement checks on existing drafts
+
+Satchel 0.5.0 adds a standalone check of a draft against the applicable decisions. Earlier ordinary reviews and a short comparison prompt had already found substantive issues in the same two historical cases. These runs tested the packaged skill through explicit native selection.
+
+Two fresh Codex CLI 0.153.4 sessions used an initial candidate with `gpt-5.6-sol` at medium effort. The handoff review noticed a delivery safeguard but missed an obligation in the referenced protocol. The profile review distinguished approval of an earlier document from approval of the draft. We revised the skill to start from each governing source and compare like passages before attributing a change to an edit.
+
+Three fresh sessions then used the final skill (SHA-256 `24bca493ea77a21bbe7d88df582d105669867a7824f95ab8d91c7618f6fc34a9`) with the same model and effort. Tool records show each session read the staged skill and case materials. Each returned a review with the workspace unchanged.
+
+| Case | Observed result |
+| --- | --- |
+| Edited handoff, original, protocol and dispatch record | Found an evidence-retention obligation implicit in both drafts. Recognized the separate dispatch safeguard but still described its absence as a regression. Missed a narrowed prohibition in the edit. |
+| Professional profile, owner conversation and decision records | Kept approval of one document separate from approval of the other. Flagged where the draft could imply broader independent adoption than the records established. Missed an unconfirmed causal link. |
+| Independently written public notice with a later accepted time change | Accepted the notice as written, including the changed time and omission of internal assignments. Added an unnecessary conditional comment about printing. |
+
+The historical cases were revisited after the first run informed the revision. These results document specific catches and misses. They do not establish consistent coverage, improvement over an ordinary prompt, automatic selection or behavior in other hosts.
