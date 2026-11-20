@@ -53,3 +53,67 @@ A separate four-turn seed-catalog conversation was prepared before inspecting th
 An Opus 5.5 extra-high source critique identified the narrower answer-only update trigger and a possible human-runbook audience ambiguity. The final source responds to answers or findings, separates established facts from accepted choices, and makes authoring triggers explicitly agent-facing. It also avoids duplicating the evaluation method and clarifies factual dependencies and host loading. The supplied critique packet was partly clipped; that review is not evidence for omitted passages. A separate full-source review of the final candidate found no concrete defect. The authoring exercise also predates these final wording clarifications.
 
 The 39 evaluator correctness tests pass with the new reusable seed-catalog case registered. Skill format, relative links, unchanged mode transitions, distribution attribution and aligned package versions were checked. The broader library audit remains outside this revision.
+
+## First map when the subject or goal is unclear
+
+Nine scripted conversations compared Atlas 0.13.2 (`c5a1d07`) with the first 0.13.3 draft (`5a88116`). Each side used fresh native Codex sessions, the explicit Wayfinding entry, gpt-5.6-sol at medium effort and identical user turns within each pair. Review included progress messages. The runner staged the exact Wayfinding reference for each version. Two [reusable cases](../../evals/wayfinding-review.md#choosing-when-to-show-the-first-map) cover opposite opening needs.
+
+- With a free afternoon and no named domain, the baseline proposed a destination and listed five possible areas. The candidate asked for one recent moment. When the user later distinguished hearing an aunt’s stories from getting friends to linger after dinner, both versions showed that fork and left the choice open.
+- A separate case supplied a blue button as the first clue. The baseline suggested three trails and asked what kind of button it was. The candidate asked what caught the user’s attention. This case was written independently of the example in the guidance.
+- The requested choir map appeared in the first reply in both versions. The candidate traced the lending library’s missing battery from receipt through completeness and functional testing, recovered the walking group’s settled route and open headcount choice, and used the bike-pickup code to show how the next hourly notice could arrive after the 15-minute hold. Both versions also gave starting prompts when asked and reached a choice once the seed-swap organizer valued a free Saturday above $90.
+- The candidate still suggested what a memory or volunteer’s remark meant before the user had explained it. The free-afternoon progress message anticipated an improvement project, several replies repeated the question in the closing, and the choir map added schedules beyond the two named arrangements.
+
+A reviewer who saw the pairs in shuffled order without version labels preferred the candidate on all three ambiguous starts. The same reader preferred the baseline on the choir and seed swap. The candidate introduced a question about trusting the volunteers even though the organizer had said they could cover Sunday.
+
+These observations cover one run per version and scenario on one host and model. They show when a map appeared in these conversations. Enjoyment and fit in unscripted human sessions remain open.
+
+## Grounded interpretations and asking once
+
+The follow-up compared the first draft (`5a88116`) with the revised entry and shared reference. Four two-turn conversations ran twice per version in fresh native Codex sessions using gpt-5.6-sol at medium effort. Reviewers saw progress and replies with the version labels hidden. They judged the meaning separately from whether a single reply asked twice for the same contribution, including a question repeated as an imperative. The [cases and review criteria](../../evals/wayfinding-review.md#interpretation-and-repeated-questions) include the café, seed swap and dispatch handoff.
+
+| Scenario | Observed in the revised explicit skill |
+| --- | --- |
+| Repair café | Both follow-ups kept one volunteer’s enjoyment scoped to that person and asked what stayed with the user. One still hinted that closing could be a chore. One opening requested the same fragment twice. An earlier-draft run had described an unfair burden and assumed the user’s expectation had changed. |
+| Seed swap | Both runs used the stated coverage, compared $90 with keeping Saturday free and recommended Sunday after the organizer supplied that preference. Both earlier-draft runs repeated their first question. All four runs ultimately chose Sunday. |
+| Dispatch | All four runs linked the driver’s accurate recall and subsequent route to the stale printed list. One revised reply went too far in saying that correcting the list caused the successful run. |
+| Writing | All four runs recognized that discussion of the writing might matter more than audience size or applause. Both revised replies asked what happened in the draft exchange. One mistakenly described applause as roughly constant, although the less memorable reading received more. |
+
+The blind readers marked a clear duplicate in seven of 16 earlier-draft replies and one of 16 revised replies. A reply that explained a tradeoff and then asked about it once counted as a single request. One extra café pair selected the general Atlas lead and requested Wayfinding in the message. Both versions read the shared Wayfinding reference, and both still asked what had *changed* for the user. These counts describe scripted sessions on one host and model. They do not establish a general rate of improvement or identical behavior across entry points.
+
+### Wayfinding through the general Atlas lead
+
+In the earlier general-lead café run at `d8e94f6`, the host selected `atlas` and the user requested Wayfinding in the message. The combined file read was clipped, but the lead then read the complete Wayfinding reference, including the check for an invented change of mind. It subsequently read Discover and design, which asks how new evidence changes the overall understanding. The reply kept several explanations open, then asked what had changed in the observer’s view. The observer had only described a recurring event and one volunteer’s enjoyment.
+
+The general lead’s routing row now points directly to the per-reply check and distinguishes a change in the map from a change the user reports. This preserves the existing discovery and Wayfinding methods. Some neutral replies on the earlier draft also followed a separate read of Discover and design. Read order is a possible influence. The trace establishes what was available and what the user was asked, but cannot identify a unique cause.
+
+Fresh native Codex sessions selected the general lead on both drafts, using gpt-5.6-sol at medium effort and identical turns within each pair. Three repetitions covered the [café case](../../evals/wayfinding-review.md#the-general-lead-enters-wayfinding), which adds stronger evidence after the original ambiguous turn, and the writing case. A separate three-repetition café variant changed the actual closing time while leaving the observer’s view unstated. Reviewers saw progress and replies with version labels hidden.
+
+- None of the six ambiguous café replies per version presumed the observer had changed their mind. The earlier failure did not recur in these trials, so the comparison cannot establish a reduction in its frequency.
+- Once the group kept meeting after the repair work and cleanup ended, all three runs per version suggested the gathering itself might matter. In the writing case, all three per version recognized that a conversation about the work might matter more than applause or room size. Each version kept both formats open.
+- Speculation remained possible. One revised reply suggested burden, belonging, ritual or ownership before the café observer supplied a reason. One earlier reply also mistook an earlier closing time for a shorter closing period. Each mistake is separate from attributing a change in the observer’s view.
+
+### When to offer possible meanings
+
+The same repair-café observation tested three responses. In one script the observer supplied sparse facts, then described two occasions when the trio kept gathering after the work ended. The [paired script](../../evals/wayfinding-review.md#the-general-lead-enters-wayfinding) added a request for possible explanations to the sparse turn. Each script ran four times against `76adca7` and the revised guidance in fresh native Codex sessions. Both sides selected the general Atlas lead, requested Wayfinding in the opening message and used gpt-5.6-sol at medium effort. Reviewers graded the replies with version labels hidden.
+
+| What the user supplied | Earlier draft | Revised guidance |
+| --- | --- | --- |
+| Recurring closers and one person’s enjoyment | Three of four replies introduced possible motives or feelings, including through a disclaimer. | All four stayed with the observations and asked what caught the user’s attention. |
+| The same facts plus a request for a few explanations | All four brainstormed, giving six or seven options each. | All four brainstormed. Three offered three options and one offered four. |
+| The group kept talking after the practical work ended | All four offered a social-time interpretation, sometimes adding other motives. | Three offered a tentative social-time interpretation. The fourth recognized that the work alone was an incomplete explanation and left the possible attraction of the gathering implicit. |
+
+Two additional revised-version checks selected the explicit Wayfinding entry. It asked a neutral question on the sparse café turn, connected the stronger evidence to time together, and supplied possibilities when the first message asked for them. The general-lead comparisons used the same prompts across versions. The explicit-entry checks are illustrative. Some requested hypotheses still sounded certain in their headings, and these scripted runs on one host and model do not establish general reliability.
+
+### Saying what the stronger evidence suggests
+
+In the missed reply on `7f191bf`, the general Atlas lead had received the full Wayfinding and discovery guides. It recognized that the volunteers “still chose the same time and place together,” then stopped at “It doesn’t yet tell us what that time means to them.” The reply distinguished the activity from the repair work. It left the user to infer that the time together could itself be a reason to stay. Other runs on the same guidance made that inference, so the trace identifies the omission but cannot establish its cause.
+
+Both [registered café conversations](../../evals/wayfinding-review.md#the-general-lead-enters-wayfinding) ran four times per version in fresh native Codex sessions through the general Atlas lead, on gpt-5.6-sol at medium effort. The prompts were identical across versions. The returned tool records included the applicable reply check in every run.
+
+| What the observer supplied | Previous PR head (`7f191bf`) | Revised shared guide |
+| --- | --- | --- |
+| The same trio closes and one person looks forward to it | All four left their reasons open. | All four left their reasons open. Two follow-ups made timing assumptions about noticing the pattern before the comment or during closing. |
+| Two occasions when the trio stayed together after the work ended | Two suggested that closing gave them time together. Two described the gathering without offering it as a possible reason to stay. | Three suggested a possible draw. One said, “The back-table conversation may be the part they’re preserving, though what it gives them is still open.” The fourth called the time together a possible “common thread,” which could also describe the recurring activity without explaining its appeal. |
+| A request for a few possible explanations on the original sparse facts | All four offered several hypotheses. | All four offered several hypotheses, three or four per reply. |
+
+In two additional revised sessions, the repair log established a half-hour gap but gave no evidence of what the volunteers did. Both left the explanation open. Factual precision still varied on the richer prompt. Three revised replies used “work disappeared” or “work disappears” where the observer had described an early finish and an offer of help. Some also introduced a ritual. These scripted comparisons on one host and model do not establish how often either behavior occurs in practice.

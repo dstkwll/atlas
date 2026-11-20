@@ -37,7 +37,7 @@ Reconsider selection before the next dependent action when a new concern appears
 | Situation | Reference |
 | --- | --- |
 | Unclear goal, consequential design, brainstorming or pressure-testing an approach; unfamiliar existing system | [Discover and design](references/discover-and-design.md) |
-| Requested Atlas Wayfinding, sustained brainstorming together or grilling session | [Wayfinding](references/wayfinding.md) |
+| Requested Atlas Wayfinding, sustained brainstorming together or grilling session | [Wayfinding](references/wayfinding.md). On each reply, [check the premise of your question](references/wayfinding.md#check-the-reply-before-sending). A new detail can change your map while the user’s view stays the same. Ask what changed for them only when they describe a change. Offer possible explanations when asked, or a tentative reading when the evidence favors it. Otherwise stay with what the user noticed. |
 | New or substantially revised screen, interface critique, confusing or generic product experience | [Product interface review](references/product-design-review.md) |
 | Research with users, feedback synthesis, or a product decision dependent on user evidence | [User research](references/user-research.md) |
 | Create or interpret a chart, dashboard or quantitative graphic | [Quantitative visualization](references/data-visualization.md) |

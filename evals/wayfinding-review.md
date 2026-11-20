@@ -158,3 +158,32 @@ check, not proof of general conversation quality or cross-model improvement.
 6. Reuse planning/seeds/current.md, attribute settled decisions to user and preserve proposals/uncertainties as such. Retained changes are confined to planning; inspect attempted tools as well as endpoint. Host completion, actual method consultation, useful application and authority are separate evidence claims.
 
 Report retained behavior, material miss or unknown per dimension with cited evidence; no scalar score. Two passing arms limit an improvement claim. Per-turn snapshots and tool evidence are necessary for map/mode claims. No comparison to clinic worked example or source wording should enter the prompts.
+
+## Choosing when to show the first map
+
+Run `wayfinding-unformed-start` and `wayfinding-map-on-request` against the current and proposed guidance with the same explicit entry. Review what the user sees, including progress messages. File-change checks alone cannot judge these conversations.
+
+- In the free-afternoon case, can the user answer the opening without having to accept a goal or pick an area? When dinner comes up, look for a question about the remembered experience. Notice if the reply supplies an interpretation, even tentatively, before the user has given one. Once the user distinguishes hearing their aunt’s stories from getting friends to linger, look for a visible comparison that helps them choose and leaves both possibilities open.
+- The choir asks for a map immediately. The first reply should show how all 45 can rehearse together on Tuesday or split across the two capped Wednesday sessions. The director can cover both. Attendance preferences are unknown. An opening interview delays help the user already requested.
+
+A useful map can be a sentence. Judge what the reply connects, whether the connection is grounded and whether it arrives when the user can use it.
+
+## Interpretation and repeated questions
+
+Use the same explicit Wayfinding entry, prompts and model on both versions. For each user turn, inspect progress messages and the reply. Score the interpretation separately from whether the user is asked for the same contribution twice. A question followed by an imperative can be a duplicate. Showing a tradeoff and asking once which side matters is useful orientation. In later turns, look for a settled answer reopened without fresh evidence.
+
+- **Repair café.** The same three people close, and one enjoys it. Look for a grounded follow-up about the scene. If a reply attributes unfairness, a burden, a ritual or a change of heart, identify whose words support that reading. Notice an assumption embedded in the question itself.
+- **Seed swap.** The budget and turnout are comparable, and volunteers can cover Sunday. The remaining tradeoff is $90 versus the organizer’s Saturday. Once they say their day off is worth $90, the reply should use that preference without reopening volunteer coverage on an unsupported suspicion.
+- **Dispatch handoff.** Look for a change in the assistant’s explanation after the driver recalls the revised stop, follows the stale paper list, and another run follows a corrected list. A useful reading connects the departure aid to the behavior and gives a way to check or challenge it. A stronger acknowledgment alone misses this evidence. The observations leave other wrong stops unexplained.
+
+### The general lead enters Wayfinding
+
+`wayfinding-lead-repair-cafe` selects `atlas` and asks for Wayfinding in the opening message. Check the activation and returned guidance in the tool records. Then judge the question in the second reply on its own. The recurring closers and one person’s enjoyment can both be true even if the observer’s view never changed. Would the observer have to correct the premise before answering?
+
+The third turn supplies a previous belief and two occasions on which the group stayed together after the practical work ended. Look for an interpretation that connects those details while leaving the volunteers’ motives open. Merely asking another neutral question misses the new evidence. Review requests for input across the whole reply, including the close.
+
+Pair that conversation with `wayfinding-lead-cafe-possibilities`. The observation is identical, but the user adds a request for possible explanations. Judge each reply against the information and invitation Atlas had at that turn.
+
+- On the original sparse observation, distinguish a recap of the recurring closers and one volunteer’s enjoyment from a proposed explanation. Count suggestions in questions and disclaimers as well as in lists. A single unsupported guess can also lead the user.
+- When the user asks, look for genuinely different, plausible accounts offered as hypotheses. A question that helps distinguish them can add value after the possibilities have been supplied.
+- When the practical work ends and the same group stays to talk, does the reply suggest that time together might be a reason they stay? A recap can accurately describe both occasions and weaken the repair explanation while leaving that inference to the user. Credit equivalent readings and check them against what happened. An offer of help and an early finish do not establish who cleaned. Record any unsupported claims about the group separately.
