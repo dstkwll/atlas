@@ -18,7 +18,7 @@
       "name": "satchel",
       "source": "./plugins/satchel",
       "description": "Standalone skills for explanations, writing, decision history, questionnaires, evidence and agreement checks, evaluation design, learning, goals, session catch-up and evolving canvases.",
-      "version": "0.5.0"
+      "version": "0.6.0"
     }
   ]
 }

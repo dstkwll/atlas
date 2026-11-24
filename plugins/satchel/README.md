@@ -11,7 +11,7 @@ A collection of standalone skills for everyday work with an agent. Each skill wo
 | [to-questionnaire](skills/to-questionnaire/SKILL.md) | Turn unresolved questions into a questionnaire someone can answer. |
 | [to-eval](skills/to-eval/SKILL.md) | Turn a requirement, quality question or failure into a useful evaluation case or plan. |
 | [claim-check](skills/claim-check/SKILL.md) | Assess claims against available evidence and identify uncertainty. |
-| [agreement-check](skills/agreement-check/SKILL.md) | Check a draft for commitments it omits, changes or adds compared with what was agreed. |
+| [did-we-agree-to-this](skills/did-we-agree-to-this/SKILL.md) | Check a draft for promises we never made and commitments it left out. |
 | [teach-me](skills/teach-me/SKILL.md) | Learn a topic through explanation, examples and practice. |
 | [reorient](skills/reorient/SKILL.md) | Catch up on current work and decisions that need you. |
 | [define-goal](skills/define-goal/SKILL.md) | Turn an intention into a bounded, verifiable objective. |
@@ -19,7 +19,7 @@ A collection of standalone skills for everyday work with an agent. Each skill wo
 
 Choose the skill that fits the current request. The host keeps control of tools, permissions and project instructions. Invoking a skill does not authorize publishing, sending messages or changing unrelated files.
 
-`reorient` catches you up on task progress; `wait-what` repairs a confusing explanation. `why` reconstructs a decision's history. Use `claim-check` to verify an assertion and `agreement-check` to compare a draft with the decisions that govern it. `unslop` edits prose; `writing-for-agents` helps author agent instructions. `to-eval` designs an evaluation; it does not start a benchmark merely by being invoked. Each can be used without the others.
+`reorient` catches you up on task progress; `wait-what` repairs a confusing explanation. `why` reconstructs a decision's history. Use `claim-check` to verify an assertion and `did-we-agree-to-this` to compare a draft with the decisions that govern it. `unslop` edits prose; `writing-for-agents` helps author agent instructions. `to-eval` designs an evaluation; it does not start a benchmark merely by being invoked. Each can be used without the others.
 
 `define-goal` can prepare a copyable objective on hosts without native goal tools. Defining an objective does not itself start the underlying work.
 
@@ -52,11 +52,13 @@ To install just one skill, copy its **complete folder** from `skills/`, includin
 
 For example, copying `skills/wait-what/` into `.agents/skills/` produces `.agents/skills/wait-what/SKILL.md`. No sibling skill folder is required. In Codex, invoke `$wait-what`; in hosts with slash commands, select the discovered skill. If discovery is unavailable, ask the agent to read the exact installed `SKILL.md` path.
 
+Satchel 0.6.0 renames `agreement-check` to `did-we-agree-to-this`. Update saved invocations to the new name. For a manual install, replace the old skill folder with the complete `skills/did-we-agree-to-this/` folder.
+
 Choose plugin installation or manual copying for a skill in each host. Keeping both can expose duplicate entries or leave an older copy active after an update.
 
 ## Sources and evidence
 
-The package records source credits and modification details in [PROVENANCE.md](PROVENANCE.md), separate from the task instructions. The adapted skills draw from Matt Pocock, Lauren Tan and OpenAI, with additional writing ideas from Sushruth. `agreement-check`, `claim-check`, `session-canvas` and `to-eval` are original syntheses. Reorient began as the project owner’s original synthesis, with Ketchup guidance incorporated in the Satchel revision. Each skill with an upstream contribution retains its applicable license. Keep that license when copying a standalone skill.
+The package records source credits and modification details in [PROVENANCE.md](PROVENANCE.md), separate from the task instructions. The adapted skills draw from Matt Pocock, Lauren Tan and OpenAI, with additional writing ideas from Sushruth. `did-we-agree-to-this`, `claim-check`, `session-canvas` and `to-eval` are original syntheses. Reorient began as the project owner’s original synthesis, with Ketchup guidance incorporated in the Satchel revision. Each skill with an upstream contribution retains its applicable license. Keep that license when copying a standalone skill.
 
 All Satchel skills allow normal model discovery. Each has a distinct task and contains its own required instructions; Satchel adds no lead, required sequence, service, hooks, scripts or MCP servers. Session Canvas may create a session-scoped extension through Copilot's existing builder when that is the chosen surface. The authoring skill retains Matt's conceptual vocabulary and two-file structure. The teaching skill serves conversational learning rather than maintaining a course workspace. Atlas retains its separate software-lead and authoring methods.
 
