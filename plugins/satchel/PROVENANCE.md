@@ -1,8 +1,8 @@
 # Satchel provenance
 
-`agreement-check`, `claim-check`, `session-canvas` and `to-eval` are original syntheses. The entries below distinguish each skill’s origin from later contributions. Original licenses remain in each adapted skill folder so they accompany standalone copies.
+`did-we-agree-to-this`, `claim-check`, `session-canvas` and `to-eval` are original syntheses. The entries below distinguish each skill’s origin from later contributions. Original licenses remain in each adapted skill folder so they accompany standalone copies.
 
-## agreement-check
+## did-we-agree-to-this
 
 Original Satchel synthesis prompted by reviewing how Google’s Elephant Goldfish Model records an agreed direction and reviews the resulting draft. Satchel’s instructions for comparing the draft and decision record in both directions were written independently. [Elephant Goldfish Model workflow](https://github.com/google/elephant-goldfish-model/blob/70406c4d22cc7ea8299637c2c5b44625c48b3f08/README.md#try-your-first-design)
 
@@ -18,9 +18,9 @@ Developed from the project owner's collaborative design for discovering and main
 
 Modified for Satchel from [OpenAI's define-goal](https://github.com/openai/skills/tree/b0401f07213a66414d84a65cb50c1d226f99485a/skills/.curated/define-goal): adds portable drafting, explicit native-creation intent and truthful outcome reporting; preserves an unfinished conflicting goal and offers separate goal-backed work only where supported. The PR-review example now verifies resolution through a paginated audit of review-thread state. The upstream UI metadata is unchanged. The [Apache 2.0 license](skills/define-goal/LICENSE.txt) is included.
 
-## reorient
+## catch-me-up
 
-Reorient began as the project owner's original synthesis. The Satchel revision incorporates guidance from Lauren Tan's [Ketchup](https://github.com/cursor/plugins/blob/978ca6e9c0e012047cd5058b8e829240336e704e/pstack/skills/ketchup/SKILL.md) for the recap window and pending decisions, including the [later pending-item clarification](https://github.com/cursor/plugins/blob/8838150c6b4829ea3c01782631213776d86df14a/pstack/skills/ketchup/SKILL.md). It uses normal discovery and concise catch-up, with new advice only on request; no sibling skill or hard word limit is required. The original [MIT license](skills/reorient/LICENSE) is retained for the Ketchup contribution.
+This skill began as the project owner's original synthesis under the name `reorient`. The Satchel revision incorporates guidance from Lauren Tan's [Ketchup](https://github.com/cursor/plugins/blob/978ca6e9c0e012047cd5058b8e829240336e704e/pstack/skills/ketchup/SKILL.md) for the recap window and pending decisions, including the [later pending-item clarification](https://github.com/cursor/plugins/blob/8838150c6b4829ea3c01782631213776d86df14a/pstack/skills/ketchup/SKILL.md). It uses normal discovery and concise catch-up, with new advice only on request; no sibling skill or hard word limit is required. The original [MIT license](skills/catch-me-up/LICENSE) is retained for the Ketchup contribution.
 
 ## teach-me
 
