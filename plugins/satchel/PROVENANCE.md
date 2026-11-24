@@ -18,9 +18,9 @@ Developed from the project owner's collaborative design for discovering and main
 
 Modified for Satchel from [OpenAI's define-goal](https://github.com/openai/skills/tree/b0401f07213a66414d84a65cb50c1d226f99485a/skills/.curated/define-goal): adds portable drafting, explicit native-creation intent and truthful outcome reporting; preserves an unfinished conflicting goal and offers separate goal-backed work only where supported. The PR-review example now verifies resolution through a paginated audit of review-thread state. The upstream UI metadata is unchanged. The [Apache 2.0 license](skills/define-goal/LICENSE.txt) is included.
 
-## reorient
+## catch-me-up
 
-Reorient began as the project owner's original synthesis. The Satchel revision incorporates guidance from Lauren Tan's [Ketchup](https://github.com/cursor/plugins/blob/978ca6e9c0e012047cd5058b8e829240336e704e/pstack/skills/ketchup/SKILL.md) for the recap window and pending decisions, including the [later pending-item clarification](https://github.com/cursor/plugins/blob/8838150c6b4829ea3c01782631213776d86df14a/pstack/skills/ketchup/SKILL.md). It uses normal discovery and concise catch-up, with new advice only on request; no sibling skill or hard word limit is required. The original [MIT license](skills/reorient/LICENSE) is retained for the Ketchup contribution.
+This skill began as the project owner's original synthesis under the name `reorient`. The Satchel revision incorporates guidance from Lauren Tan's [Ketchup](https://github.com/cursor/plugins/blob/978ca6e9c0e012047cd5058b8e829240336e704e/pstack/skills/ketchup/SKILL.md) for the recap window and pending decisions, including the [later pending-item clarification](https://github.com/cursor/plugins/blob/8838150c6b4829ea3c01782631213776d86df14a/pstack/skills/ketchup/SKILL.md). It uses normal discovery and concise catch-up, with new advice only on request; no sibling skill or hard word limit is required. The original [MIT license](skills/catch-me-up/LICENSE) is retained for the Ketchup contribution.
 
 ## teach-me
 

@@ -1,9 +1,9 @@
 ---
-name: reorient
+name: catch-me-up
 description: Catch the user up on overall progress and pending decisions in the current conversation. Use for a general catch-up, not a single-item status, explanation repair or agent handoff.
 ---
 
-# Reorient
+# Catch me up
 
 Restore the user's bearings, usually in a short paragraph plus any choices waiting on them. Cover changes since their last message before this request, or the point they specify. Notifications and worker reports do not reset that window. Use names they recognize. Recall the objective only if it helps; skip routine steps and repeated history.
 
