@@ -2,7 +2,7 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "satchel",
   "description": "Standalone skills for explanations, writing, decision history, questionnaires, evidence and agreement checks, evaluation design, learning, goals, session catch-up and evolving canvases.",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "repository": "https://github.com/dstkwll/atlas",
   "keywords": [
     "skills",
