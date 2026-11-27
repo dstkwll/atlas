@@ -30,7 +30,7 @@ Connect each material requirement to an observable result and an appropriate che
 
 For example, after a create request loses its acknowledgment, exactly one intended item in storage is useful evidence. It does not establish that the actor reconciled the result before retrying. That claim also needs reliable operation evidence. One combined command and several commands may both implement a valid sequence.
 
-Distinguish unavailable observation from an observed bad artifact. Complete captured output that violates a required format or content rule is a failure; a collector that lost part of the output leaves dependent claims unknown. An intact violation in a faithful partial capture still fails; missing later bytes do not erase it. A trusted complete inventory of the required location at the judged time can establish that a required deliverable is absent. Include paired controls and reconcile their expected verdicts with the main rubric so a downstream consumer does not inherit conflicting rules.
+Distinguish unavailable observation from an observed bad artifact: a lost capture leaves dependent claims unknown, and a violation you did observe still fails. When grading partial captures, an absent deliverable or paired controls, read [Captured evidence](references/captured-evidence.md).
 
 If the intended observation is unavailable, say what remains untested and what would supply it. Do not substitute a keyword check for semantic understanding or a model report for an unobserved tool effect. For an artifact used by another person or agent, consider testing the next consumer's task as well as reading the artifact.
 

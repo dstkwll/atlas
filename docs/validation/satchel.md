@@ -130,3 +130,12 @@ Satchel 0.6.1 corrects four passages and adds package checks to the evaluator te
 `evals/test_satchel_package.py` checks that each skill folder has closed frontmatter with a matching name and a description, a license and a README link, that `PROVENANCE.md` names each skill, that relative link targets exist, and that the manifest and marketplace versions match. The test failed on each seeded defect and passed once it was removed: version drift, a name that differs from its folder, unclosed frontmatter, a broken README link, a missing provenance name and a missing license. The checks read structure only: they do not judge skill prose, confirm that a provenance entry is complete or follow link anchors. All 83 evaluator tests passed.
 
 Copilot CLI 1.0.114, started with a fresh temporary home and `--plugin-dir`, listed all 12 Satchel skills with the revised `to-eval` description. With Atlas's folder added, it listed those 12 beside Atlas's nine, and the two evaluation-design descriptions no longer open with the same words. This did not run model selection, a marketplace install, or Codex or Claude Code discovery. User installations were not updated.
+
+## Host-specific detail behind references
+
+Satchel 0.6.2 moves two passages out of their skill entries into bundled reference files.
+
+- `define-goal`: the `get_goal`/`create_goal` protocol and the native-goal quality bar now sit in `references/native-goal-tools.md`. The entry points to it when the user asked to save a goal and the host has goal tools. The entry keeps the draft-only rule and the ban on creating a goal for an ordinary task. The workflow also no longer names Codex's `$define-goal` syntax.
+- `to-eval`: the rules for partial captures, absent deliverables and paired controls now sit in `references/captured-evidence.md`. The entry keeps the core rule in one sentence and points to the reference.
+
+The moved text is verbatim. No actor has run either skill since the move, so whether an agent reads each reference when its condition applies is unobserved. The registered `satchel-calibration-evidence` case exercises the moved `to-eval` rules and was not rerun. All 83 evaluator tests passed, including the relative-link check on both new files.
