@@ -142,7 +142,7 @@ The moved text is verbatim. Two fresh Copilot Claude Opus 5.5 / high calls had r
 
 Four recorded goal cases (SG01–SG04) also ran text-only on the 0.6.0 entry and on the new entry without its reference. A Copilot GPT-6.1 Sol / high grader, with version labels hidden and their order varied, scored three ties and preferred the new entry once. The new entry's replies were 17% longer in total. Each condition ran once, on cases the editor had already seen, so these results are diagnostic.
 
-The `to-eval` reference was not exercised: the registered `satchel-calibration-evidence` case uses those rules and was not rerun. All 83 evaluator tests passed, including the relative-link check on both new files.
+The `to-eval` reference was checked after 0.6.2 merged. Two fresh Copilot Claude Opus 5.5 / high calls with read access to the skill folder and the `calibration-review` fixture each judged its 13 controls, one on the 0.6.0 entry and one on the 0.6.2 entry. `evals/calibrate.py --review` found that both matched the reference label on all 13, and the 0.6.2 actor opened the reference. This checks labels, not the reasoning behind them, and it is not a run of the registered `satchel-calibration-evidence` case through the native runner. All 83 evaluator tests passed, including the relative-link check on both new files.
 
 ## Usual reply shapes for catch-me-up and claim-check
 
