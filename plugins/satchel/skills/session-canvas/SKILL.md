@@ -42,7 +42,7 @@ Save output in the session workspace or the user's chosen artifact home, never i
 
 ## Maintain orientation through this session
 
-Follow the agreed cadence. By default, the existing lead briefly compares the canvas with the conversation and work performed before completing each user exchange. This means the user message and the work/response it prompted, not every tool call or internal model turn. Use this same check when the user asks to refresh. Do not create a separate recurring reviewer, scheduler or stop hook to force extra turns.
+Follow the agreed cadence. By default, the same assistant briefly compares the canvas with the conversation and work performed before completing each user exchange. This means the user message and the work/response it prompted, not every tool call or internal model turn. Use this same check when the user asks to refresh. Do not create a separate recurring reviewer, scheduler or stop hook to force extra turns.
 
 Check whether direction, decisions, evidence, task status, dependencies, open questions or next steps changed. Update what changed and preserve the useful layout. When the purpose, major route or useful level of detail changes, reconsider the representation and retain a concise reason. Routine in-scope updates need no renewed brief approval; return consequential changes to the user's accepted intent to them. If the agent has wandered from the agreed goal, show the discrepancy and correct the work or seek the needed decision. Do not rewrite the goal to legitimize the detour.
 

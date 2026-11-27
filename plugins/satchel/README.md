@@ -54,6 +54,13 @@ For example, copying `skills/wait-what/` into `.agents/skills/` produces `.agent
 
 Satchel 0.6.0 renames `reorient` to `catch-me-up` and `agreement-check` to `did-we-agree-to-this`. Update any saved commands that use the old names. For manual installations, replace each old skill folder with its complete renamed folder from `skills/`.
 
+To update a plugin installation:
+
+```shell
+copilot plugin marketplace update atlas
+copilot plugin update satchel@atlas
+```
+
 Choose plugin installation or manual copying for a skill in each host. Keeping both can expose duplicate entries or leave an older copy active after an update.
 
 ## Sources and evidence

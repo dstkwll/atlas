@@ -2,6 +2,25 @@
 
 These findings separate source review, local package discovery and model behavior. Small fictional trials do not establish reliable enforcement or improvement over an ordinary prompt. The [full historical report](https://github.com/dstkwll/atlas/blob/e3fd4bcc80b8062b05159379e5cf98bbcebea050/docs/validation/satchel.md) preserves every attempt, source identity, correction and qualification; [PR #51](https://github.com/dstkwll/atlas/pull/51) holds implementation history. The package provenance file records source credits; adapted skill folders retain their original licenses.
 
+## Where each skill's evidence is recorded
+
+Sections below keep the skill names in use when each trial ran.
+
+| Skill | Evidence |
+| --- | --- |
+| `catch-me-up` | The `reorient` row in the findings table. The skill had that name until 0.6.0. |
+| `claim-check` | The findings table and [Uncited claims and incomplete review coverage](#uncited-claims-and-incomplete-review-coverage). |
+| `define-goal` | The findings table. |
+| `did-we-agree-to-this` | [Agreement checks on existing drafts](#agreement-checks-on-existing-drafts). The skill was `agreement-check` in 0.5.0. |
+| `session-canvas` | [Session Canvas validation](session-canvas.md). |
+| `teach-me` | The findings table. |
+| `to-eval` | [Evaluation authoring](evaluation-authoring.md). |
+| `to-questionnaire` | The findings table. |
+| `unslop` | The findings table and [Draft editing and reader context](#draft-editing-and-reader-context). |
+| `wait-what` | The findings table. |
+| `why` | The findings table. |
+| `writing-for-agents` | The findings table. |
+
 ## Scope of the evidence
 
 Three studies completed 54 actor calls on authenticated Copilot Claude Opus 5.5/xhigh: 32 for the original five skills, 16 for Reorient and define-goal, and six for Why and Unslop. These counts include baselines, teaching follow-ups and diagnostic rechecks, not independent successes. Raw requests were kept separate from grading expectations. Actors had supplied text only, with no tools, files or network. Teaching follow-ups replayed the previous transcript into fresh calls; they do not prove native continuity.
@@ -94,3 +113,20 @@ Three fresh sessions then used the final skill (SHA-256 `24bca493ea77a21bbe7d88d
 | Independently written public notice with a later accepted time change | Accepted the notice as written, including the changed time and omission of internal assignments. Added an unnecessary conditional comment about printing. |
 
 The historical cases were revisited after the first run informed the revision. These results document specific catches and misses. They do not establish consistent coverage, improvement over an ordinary prompt, automatic selection or behavior in other hosts.
+
+## Package corrections and a structural test
+
+Satchel 0.6.1 corrects four passages and adds package checks to the evaluator test run.
+
+| Change | Reason |
+| --- | --- |
+| The `to-eval` description now opens “Design an evaluation case or plan”. | It shared its first 14 words with `atlas-to-eval`, so a host with both packages listed two nearly identical entries. |
+| `session-canvas` says “the same assistant” where it said “the existing lead”. | “Lead” is Atlas's term, and the skill ships without Atlas. |
+| `wait-what` asks for short sentences, consistent terms and a project glossary if one exists. | The earlier paragraph relied on ASD-STE100, “ubiquitous language” and `GLOSSARY.md`/`GLOSSARY-MAP.md` files that few projects have. |
+| `did-we-agree-to-this` says to check delivery instructions where they live and not to count them as missing from the draft. | “Track separate delivery instructions in their own right” did not say what to do. The owner confirmed this reading. It matches the 0.5.0 handoff case, where the review described a separate dispatch safeguard's absence as a regression. |
+
+`PROVENANCE.md` gains the missing `claim-check` entry, the README gains the plugin update commands, and this page gains the index above. No actor ran the four edited passages, so their effect on behavior is unobserved. A fresh Copilot GPT-6.1 Sol / high source review judged that each edited passage keeps its intended meaning. It also found that the new test accepted unclosed frontmatter, rejected a quoted name and was described as checking more than it did. The lead confirmed each point in the code, fixed the first two and narrowed the description below.
+
+`evals/test_satchel_package.py` checks that each skill folder has closed frontmatter with a matching name and a description, a license and a README link, that `PROVENANCE.md` names each skill, that relative link targets exist, and that the manifest and marketplace versions match. Each check failed on a seeded defect and passed once it was removed. The checks read structure only: they do not judge skill prose, confirm that a provenance entry is complete or follow link anchors. All 83 evaluator tests passed.
+
+Copilot CLI 1.0.114, started with a fresh temporary home and `--plugin-dir`, listed all 12 Satchel skills with the revised `to-eval` description. With Atlas's folder added, it listed those 12 beside Atlas's nine, and the two evaluation-design descriptions no longer open with the same words. This did not run model selection, a marketplace install, or Codex or Claude Code discovery. User installations were not updated.
