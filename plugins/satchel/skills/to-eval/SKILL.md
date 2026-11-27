@@ -1,6 +1,6 @@
 ---
 name: to-eval
-description: Turn a requirement, quality question or observed failure into an evaluation case or plan with meaningful evidence and graders. Use for eval design, not ordinary answering or an implied request to run a benchmark.
+description: Design an evaluation case or plan, with meaningful evidence and graders, from a requirement, quality question or observed failure. Use for eval design, not ordinary answering or an implied request to run a benchmark.
 ---
 
 # To eval

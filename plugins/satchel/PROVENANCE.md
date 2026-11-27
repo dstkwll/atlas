@@ -6,6 +6,10 @@
 
 Original Satchel synthesis prompted by reviewing how Google’s Elephant Goldfish Model records an agreed direction and reviews the resulting draft. Satchel’s instructions for comparing the draft and decision record in both directions were written independently. [Elephant Goldfish Model workflow](https://github.com/google/elephant-goldfish-model/blob/70406c4d22cc7ea8299637c2c5b44625c48b3f08/README.md#try-your-first-design)
 
+## claim-check
+
+Original Satchel synthesis for checking a claim, statistic, quotation or citation against a stated evidence boundary. The project [MIT license](skills/claim-check/LICENSE) is included.
+
 ## to-eval
 
 Original evaluation-design synthesis informed by Atlas’s existing evidence methods and Microsoft Vally’s [eval-authoring guide](https://microsoft.github.io/vally/guides/writing-eval-specs/). No donor prose, runtime or spec schema is copied. The complete skill works independently; Atlas’s evaluation-design runbook serves software-lead work and is not a dependency. Review shared principles together when either changes, while preserving each package’s independently usable instructions.
