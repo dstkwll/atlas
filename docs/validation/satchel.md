@@ -143,3 +143,22 @@ The moved text is verbatim. Two fresh Copilot Claude Opus 5.5 / high calls had r
 Four recorded goal cases (SG01–SG04) also ran text-only on the 0.6.0 entry and on the new entry without its reference. A Copilot GPT-6.1 Sol / high grader, with version labels hidden and their order varied, scored three ties and preferred the new entry once. The new entry's replies were 17% longer in total. Each condition ran once, on cases the editor had already seen, so these results are diagnostic.
 
 The `to-eval` reference was not exercised: the registered `satchel-calibration-evidence` case uses those rules and was not rerun. All 83 evaluator tests passed, including the relative-link check on both new files.
+
+## Usual reply shapes for catch-me-up and claim-check
+
+Satchel 0.6.3 states a usual reply shape in `catch-me-up` and `claim-check`, and shortens three boundary sentences in `catch-me-up`. `catch-me-up` now asks for two to four sentences on what changed, then one line per pending choice. `claim-check` now asks for the conclusion first, one line of evidence per claim and a table only for three or more claims.
+
+Twelve recorded cases ran once on each version: SR01–SR05 for `catch-me-up`; C07, C08, H03 and the four claim-coverage cases for `claim-check`. Each run was a fresh, text-only Copilot Claude Opus 5.5 / high call that received the skill text, the fixture notice, the supplied materials and the conversation. A Copilot GPT-6.1 Sol / high grader scored each pair against the case rubric with version labels hidden and their order varied by case.
+
+| Skill | Reply length across its cases | Grader verdicts |
+| --- | --- | --- |
+| `catch-me-up` | 457 to 445 words (3% shorter) | Three ties; the new text preferred twice |
+| `claim-check` | 2,801 to 2,509 words (10% shorter) | Four ties; the new text preferred three times |
+
+- The 0.6.0 `catch-me-up` replies were already short in this setup, at 34 to 208 words. The run neither reproduces the verbosity recorded for `reorient` nor shows the new shape shortening replies.
+- In SR03, the 0.6.0 reply told the user that choosing a budget “is also the approval”; the new text's reply did not. The lead confirmed this in the outputs. In SR05 both versions replayed the settled checklist, and in SR04 both added the same unsupported deposit detail.
+- `claim-check` replies were shorter in five of seven cases and 16% longer in C07.
+
+The same kind of edit to `why` was run on WY01 and WY02 and withdrawn: its replies were 4% longer in total, and the grader preferred each version once.
+
+Each condition ran once. The editor had seen every case before writing the new text, so these results are diagnostic. They do not establish dependable brevity, automatic selection or behavior on other models or hosts. Three dispatches refused by the supervisor's job limit ran no inference and were sent again; no completed call was rerun. All 83 evaluator tests passed.
