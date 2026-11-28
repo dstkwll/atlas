@@ -38,6 +38,23 @@ The amended run temporarily recorded a successful local probe after a failed int
 
 All three attempts completed. Fresh independent review inspected actual tool delivery, recovery order, responses and artifacts separately from endpoint facts. The baseline already demonstrated recovery, so this comparison establishes no improvement or causal benefit. It also does not exercise unrecoverable guidance, prove restraint after a complete relevant read, or establish reliability across natural requests, long sessions or other hosts. Earlier results remain attributed to their original candidates; they were not rerun or reassigned to this amendment.
 
+## Removal of the truncated-guidance paragraph: November 2026
+
+Atlas 0.13.5 removes the paragraph this section's amendment added; the [decision record](../decisions/2026-09-24-lead-composition.md) gives the reason.
+
+The `guidance-truncated-read` diagnostic ran twice on main `a83978f` (0.13.4, with the paragraph) and twice on the candidate, on native Codex 0.153.4 with `gpt-6-astra` at medium effort and a 240-second bound. The two skill snapshots differed only in the lead. All four attempts completed in 123 to 144 seconds.
+
+| | Main, with the paragraph | Candidate, without it |
+| --- | --- | --- |
+| First read clipped by the host | 2 of 2 | 2 of 2 |
+| Omitted guidance recovered before the first planning write | 2 of 2 | 2 of 2 |
+| How | One reread the file with a larger allowance; one read the omitted line ranges | Both reread the file with a larger allowance |
+| Changes outside `planning/` | None | None |
+
+Each clipped read returned the host's truncation warning and omitted the same region of Discover and design, lines 71 to 107. Recovery was checked from the native tool outputs: every omitted non-blank line appeared in a later output before the first write. A fresh Copilot GPT-6.1 Sol / high reviewer then judged the four final replies and saved notes against the onboarding criteria, with labels that did not identify the arm. It passed all four on the criteria, the design-only boundary and the separation of proposals from accepted decisions, and found them materially equivalent.
+
+The candidate recovered as main did, so these runs show no loss from the removal. They are two attempts per arm on one host and model, with a prompt that names the read limit and may draw attention to it. They do not show recovery from a clip the prompt never mentions, in a long session, or on another host. Four earlier attempts requested a model this host does not offer and stopped before any inference.
+
 ## Checks and limits
 
 The evaluator's 39 correctness tests pass. Package versions are aligned at 0.9.2, the lead routing table is unchanged, and local link/whitespace checks cover the changed guidance. These checks do not establish model adherence.
