@@ -73,7 +73,8 @@ The shorter acknowledgment variant was reported separately from the original pil
 | --- | --- |
 | `resume`, `continuity`, `continuity-no-write` | Recover after native compaction or retain accepted task state while respecting an explicit write prohibition. |
 | `documentation-default`, `documentation-guide`, `documentation-architecture`, `reflection` | Select the requested document or contextual reflection and inspect its meaning, not just file presence. |
-| `blast-radius` | Trace a proposed payload change to actual consumers without claiming an unrun check. |
+| `blast-radius`, `blast-radius-entry` | Trace a proposed payload change to actual consumers without claiming an unrun check. The second enters through `atlas-blast-radius` and saves the assessment. |
+| `show-me-entry` | Enter through `atlas-show-me` and explain the existing page with one focused saved view, without redesigning or editing it. |
 
 ## Verification when physical evidence is deferred
 

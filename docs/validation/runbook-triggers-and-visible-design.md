@@ -47,3 +47,20 @@ The initial observations above describe the pre-integration guidance; they are n
 For the combined candidate, all 39 evaluator tests passed again, relative file targets resolved and versions aligned at 0.8.1. Direct comparison verified that the three methods added by PR #34 match merged main byte for byte. A fresh independent source review found no concrete integration conflict across parallel-test interference, TDD/ordinary fixes, tier-dependent comparisons, a single API lookup and agent evaluation with missing action traces. These were source consistency scenarios, not executed product workflows.
 
 Two additional native diagnostic samples replayed the visible-design and specialist-activity cases against the combined guidance under the earlier host/model conditions. Both completed within scope. The design sample read discovery, presented competing policies and recommendations, responded to the fairness concern, and saved a planning note through continuity guidance while leaving reservations unaccepted. The specialist sample successfully read Performance and Types and invariants, preserved the no-edit boundary, and distinguished inspection hypotheses from measured evidence. The lead inspected tool records, responses and the planning artifact. The prior continuity omission did not recur in this one replay; policy over-elaboration and unverified fairness judgments still limit the design result. These reused cases are diagnostic checks, not a fresh matched efficacy comparison or proof that PR #34 improved behavior. Native execution of PR #34's three added methods remains outside this diagnostic coverage.
+
+## Routing and retry probes: November 27, 2026
+
+A review of 0.13.3 proposed two lead edits. One named more activities in the row that points to the specialist index, on the theory that requests about types, build failures, framework or client-state semantics, diagrams, evaluation design and grader checks never reach their runbooks because that row does not name them. The other reworded "Unknown external effects require reconciliation before retry" to also allow a service's idempotency mechanism, as [Failure handling](../../plugins/atlas/skills/atlas/references/failure-handling.md) already does.
+
+Both were tested before either was proposed for merge, and both were withdrawn. Each probe ran once on main `b333e9c` and once on the candidate, as a fresh Copilot Claude Opus 5.5 / high call.
+
+| Probes | Setup | Main | Candidate |
+| --- | --- | --- | --- |
+| Eight advice requests whose matching runbook is listed only in the specialist index | Read access to the skill folder | 8 of 8 opened the matching runbook | 8 of 8 |
+| Three controls with a cue already in the lead, and one typo fix | Same | 3 of 3 opened the matching runbook; the typo fix opened none | Same |
+| A timed-out write with a documented idempotency key, and one with no duplicate protection | Read access to the skill folder | Allowed the same-key retry; refused the unprotected retry | Same |
+| The same two requests | Lead text only, references unavailable | Allowed the same-key retry; refused the unprotected retry | Same |
+
+Opened files are the union of the supervisor's file-access events and each reply's own list; the driver did not keep the two apart. One later rerun that saved its raw events showed them agreeing. On main, two of the eight reached their runbook without opening the index, through links in Deliver and repair and in the documentation method.
+
+Main already did what each edit was meant to cause, so neither edit shows a benefit and the lead keeps its current wording. The limits matter: one run per probe and arm, one model, read-only advice with no project, and a prompt that told the actor to read what the skill directs. These probes do not test whether a host loads the lead, whether routing holds late in a long session, or the inconsistent routing reported in [issue #33](https://github.com/dstkwll/atlas/issues/33).

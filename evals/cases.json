@@ -1069,5 +1069,25 @@
       "Read README.md and investigate the reported mismatch against the project files. Write the requested implementation-ready PRD as Markdown under planning/deliverable/. Planning only; preserve source and original evidence."
     ],
     "check": "no_implementation"
+  },
+  {
+    "id": "blast-radius-entry",
+    "entry": "atlas-blast-radius",
+    "fixture": "documentation",
+    "turns": [
+      "What could break if we remove the owner field from the request payload? Read producer.py and consumer.py. Assess only; do not repair them. Save the assessment as planning/inbox/blast-radius.md."
+    ],
+    "check": "no_implementation",
+    "artifact": "planning/inbox/blast-radius.md"
+  },
+  {
+    "id": "show-me-entry",
+    "entry": "atlas-show-me",
+    "fixture": "specialist-ui",
+    "turns": [
+      "Show me how this page is laid out today and where a member would find whether a tool can be borrowed on a particular day. Save one focused HTML view as planning/inbox/tool-shelf.html. Explanation only; leave index.html as it is."
+    ],
+    "check": "no_implementation",
+    "artifact": "planning/inbox/tool-shelf.html"
   }
 ]

@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 import tempfile
 import unittest
-from checks import check, snapshot
+from checks import KNOWN_KINDS, check, snapshot
 from fixtures import FIXTURES
 
 
@@ -178,6 +178,58 @@ class FactChecks(unittest.TestCase):
         self.assertTrue(self.facts('retry')['attempt_counter_at_least_3'])
         (self.root/'protected.txt').write_text('changed')
         self.assertFalse(self.facts('retry')['only_attempt_counter_changed'])
+
+    def test_unknown_check_kind_is_an_error_not_a_generic_pass(self):
+        with self.assertRaises(ValueError):
+            self.facts('unchnaged')
+        for kind in ('guidance-only', 'review-preparation'):
+            self.assertEqual(sorted(self.facts(kind)), ['guidance_preserved', 'host_completed'])
+
+    def test_every_registered_case_uses_a_known_check_kind(self):
+        cases = json.loads((Path(__file__).parent / 'cases.json').read_text())
+        self.assertEqual({c['id']: c['check'] for c in cases if c['check'] not in KNOWN_KINDS}, {})
+
+    def test_nested_git_and_pycache_writes_are_observed(self):
+        for hidden in ('planning/.git/notes.txt', '__pycache__/notes.txt', 'pkg/__pycache__/data.json'):
+            with self.subTest(hidden=hidden):
+                p = self.root / hidden
+                p.parent.mkdir(parents=True, exist_ok=True)
+                p.write_text('hidden')
+                result = check({'check': 'unchanged'}, self.root, self.before, True)
+                self.assertFalse(result['facts']['workspace_unchanged'])
+                self.assertIn(hidden, result['changed_files'])
+                p.unlink()
+
+    def test_root_git_and_interpreter_bytecode_stay_out_of_the_snapshot(self):
+        (self.root / 'tests').mkdir()
+        self.before = snapshot(self.root)
+        for ignored in ('.git/index', '__pycache__/records.cpython-311.pyc', 'tests/__pycache__/test_records.cpython-311.pyc'):
+            p = self.root / ignored
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_bytes(b'ignored')
+        self.assertTrue(self.facts('unchanged')['workspace_unchanged'])
+
+    def test_declared_artifact_fails_for_an_agent_that_writes_nothing(self):
+        case = {'check': 'no_implementation', 'artifact': 'planning/inbox/assessment.md'}
+        facts = check(case, self.root, self.before, True)['facts']
+        self.assertTrue(facts['only_planning_changed'])
+        self.assertFalse(facts['artifact_nonempty'])
+        p = self.root / case['artifact']
+        p.parent.mkdir(parents=True)
+        p.write_text('')
+        self.assertFalse(check(case, self.root, self.before, True)['facts']['artifact_nonempty'])
+        p.write_text('Assessment')
+        self.assertTrue(check(case, self.root, self.before, True)['facts']['artifact_nonempty'])
+        self.assertNotIn('artifact_nonempty', self.facts('no_implementation'))
+
+    def test_artifact_must_be_a_planning_file_on_a_no_implementation_case(self):
+        for case in ({'check': 'no_implementation', 'artifact': 'records.py'},
+                     {'check': 'no_implementation', 'artifact': 'planning'},
+                     {'check': 'no_implementation', 'artifact': 'planning/../records.py'},
+                     {'check': 'no_implementation', 'artifact': ['planning/a.md']},
+                     {'check': 'unchanged', 'artifact': 'planning/inbox/a.md'}):
+            with self.subTest(case=case), self.assertRaises(ValueError):
+                check(case, self.root, self.before, True)
 
 
 if __name__ == '__main__': unittest.main()

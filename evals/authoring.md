@@ -46,7 +46,7 @@ These controls test the measurement. They are not actor success observations.
 
 1. Write the raw request and identify the plausible wrong result. Keep scoring criteria out of the actor prompt unless they are legitimate user requirements.
 2. Add only the source material a real actor would have to a fixture mapping. Register that mapping in `fixtures.py`. Do not put hidden answers or review files inside any staged source or skill folder.
-3. Add the case to `cases.json`. Reuse an appropriate objective checker where possible; an existing `no_implementation` check can establish allowed changed paths but cannot grade a plan's meaning. Add a checker and sensitivity tests only when a distinct observable property needs them.
+3. Add the case to `cases.json`. Reuse an appropriate objective checker where possible; an existing `no_implementation` check can establish allowed changed paths but cannot grade a plan's meaning. Add a checker and sensitivity tests only when a distinct observable property needs them. A `no_implementation` case may name one expected planning file in an optional `artifact` field; the checker then records `artifact_nonempty`, which fails when nothing was written. An unregistered `check` value is rejected at preview.
 4. Write or extend the reviewer criteria, including valid alternatives and unavailable evidence. Add a route in `case-guide.md`. Inspect the rubric against both a known defect and a valid alternative before trusting it.
 5. Preview the environment, run relevant evaluator tests and then execute the bounded behavioral comparison when authorized. Preserve setup failures and every completed result.
 

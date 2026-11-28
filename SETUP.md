@@ -62,7 +62,7 @@ project/organizational rules and the user's authority apply. If that guidance
 is unavailable, report it instead of claiming Atlas is active.
 ```
 
-For a manual project installation, use the exact entry path `.agents/skills/atlas/SKILL.md` in that paragraph instead of the plugin path. This optional default makes the recovery source explicit; it does not activate Atlas on hosts that ignore the project instructions or expand what Atlas may do.
+For a manual project installation, use that installation's exact entry path in the paragraph instead of the plugin path: `.agents/skills/atlas/SKILL.md`, or `.claude/skills/atlas/SKILL.md` for a Claude Code project copy. This optional default makes the recovery source explicit; it does not activate Atlas on hosts that ignore the project instructions or expand what Atlas may do.
 
 ## Local or restricted installation
 
@@ -161,6 +161,17 @@ To stop using the CLI plugin, run `copilot plugin uninstall atlas@atlas`. In VS 
 ## Compatibility evidence
 
 Plugin packaging was checked on 2026-09-06 against [GitHub's plugin reference](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-plugin-reference), [VS Code plugin documentation](https://code.visualstudio.com/docs/agent-customization/agent-plugins), and [Copilot plugin concepts](https://docs.github.com/en/copilot/concepts/agents/about-plugins). See [the packaging validation record](docs/validation/copilot-plugin.md) for actual native checks and remaining limits. The [activation and continuity record](docs/validation/activation.md) covers the subsequent native profile, follow-up and compaction checks. Documentation support is not proof of execution in your workplace host.
+
+What the maintainers have run on each host, according to those records:
+
+| Host | Run natively | Not run |
+| --- | --- | --- |
+| Copilot CLI | Marketplace and local-package installation, skill discovery, selecting the `atlas:atlas` profile, an ordinary follow-up, session resume and native compaction. | Repeated compactions, workplace policy and enterprise deployment. |
+| VS Code with Copilot | Nothing. Its instructions here follow the host's documentation. | Plugin installation, the agent picker and any chat session. |
+| Codex | A project-local skill and the optional `AGENTS.md` default, each through native compaction. The maintainer evaluations also run on Codex. | Repeated compactions in a long session. |
+| Claude Code | Nothing. Its instructions here follow the host's documentation. | Skill discovery, invocation and compaction. |
+
+Treat a path marked "Nothing" as untested, and tell the maintainers what you observe.
 
 ## Documentation, impact and reflection
 

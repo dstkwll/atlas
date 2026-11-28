@@ -202,7 +202,7 @@ def observe(trial):
             'behavior_verdict': 'UNREVIEWED', 'routing_verdict': 'UNREVIEWED',
             'worker_execution': 'UNVERIFIED', 'host_completion': 'UNVERIFIED',
             'token_usage': None, 'monetary_cost': None,
-            'limitations': 'Endpoint snapshot only; .git and __pycache__ are excluded. '
+            'limitations': 'Endpoint snapshot only; the root .git and __pycache__ bytecode are excluded. '
             'No proof of transient effects or out-of-workspace access.'}
 
 
