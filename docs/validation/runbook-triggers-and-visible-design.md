@@ -61,6 +61,6 @@ Both were tested before either was proposed for merge, and both were withdrawn. 
 | A timed-out write with a documented idempotency key, and one with no duplicate protection | Read access to the skill folder | Allowed the same-key retry; refused the unprotected retry | Same |
 | The same two requests | Lead text only, references unavailable | Allowed the same-key retry; refused the unprotected retry | Same |
 
-Opened files were taken from the tool events and agreed with each reply's own list. On main, two of the eight reached their runbook without opening the index, through links in Deliver and repair and in the documentation method.
+Opened files are the union of the supervisor's file-access events and each reply's own list; the driver did not keep the two apart. One later rerun that saved its raw events showed them agreeing. On main, two of the eight reached their runbook without opening the index, through links in Deliver and repair and in the documentation method.
 
 Main already did what each edit was meant to cause, so neither edit shows a benefit and the lead keeps its current wording. The limits matter: one run per probe and arm, one model, read-only advice with no project, and a prompt that told the actor to read what the skill directs. These probes do not test whether a host loads the lead, whether routing holds late in a long session, or the inconsistent routing reported in [issue #33](https://github.com/dstkwll/atlas/issues/33).
