@@ -1,6 +1,7 @@
 ---
 name: atlas-blast-radius
 description: Assess what a proposed or actual change could break beyond its diff, with evidence and unresolved risks.
+disable-model-invocation: true
 ---
 
 Read the [shared Atlas lead guidance](../atlas/SKILL.md) for this assignment, then apply [blast-radius](../atlas/references/blast-radius.md). Announce the runbook and its purpose. Preserve the current assignment, authority and stopping point.

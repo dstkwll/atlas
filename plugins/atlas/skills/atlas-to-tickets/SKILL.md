@@ -1,6 +1,7 @@
 ---
 name: atlas-to-tickets
 description: Turn accepted scope into ordered, testable vertical-slice ticket drafts for an implementation handoff.
+disable-model-invocation: true
 ---
 
 Read the [shared Atlas lead guidance](../atlas/SKILL.md) for this assignment, then apply [to-tickets](../atlas/references/to-tickets.md). Announce the runbook and its purpose. The requested artifact is the outcome; preserve the current task's authority and stopping point. Do not start implementation or external publication merely because the artifact is ready.

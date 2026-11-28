@@ -35,3 +35,11 @@ Independent source and evidence review found no blocking findings after inspecti
 - [VS Code plugin packaging](https://code.visualstudio.com/docs/agent-customization/agent-plugins) supports the namespaced profile directory; [custom agents](https://code.visualstudio.com/docs/agent-customization/custom-agents) support the linked instruction body. Documentation support is distinct from native execution.
 
 Repeated automatic compactions in large sessions, every runbook's restoration, context drift rates, VS Code UI behavior, workplace policy and mobile/Remote selection remain unverified. No user's installed Atlas copy was changed. Sanitized local event extracts, native test drivers and synthetic discovery notes are retained in the workspace's sibling `research/2026-09-08-activation/` directory; they are not installed product resources.
+
+## Explicit-only entry points: November 27, 2026
+
+Atlas 0.13.4 marks `atlas-to-documentation`, `atlas-to-tickets`, `atlas-handoff`, `atlas-to-eval` and `atlas-blast-radius` explicit-only, using the metadata `atlas-reflect` and `atlas-show-me` already carry: `disable-model-invocation: true` in the skill frontmatter and `allow_implicit_invocation: false` in `agents/openai.yaml`. `atlas` and `atlas-wayfinding` are unchanged. The owner chose this in the November 2026 review. It follows the charter's rule that an explicit skill earns its place as a human entry point. An active lead reaches the same runbooks through its own table, so those requests need no entry skill.
+
+This removes automatic selection of the five entries. Someone who relied on a plain request selecting one of them, without Atlas active, now selects or names the skill.
+
+Copilot CLI 1.0.114, started with a fresh temporary home and `--plugin-dir`, still listed all nine Atlas skills as enabled; its listing does not report invocation metadata. In one Claude Code session with manually copied 0.13.3 skills, the two entries that already carried the flag were absent from the skills offered to the model and the other seven were present. No run on any host checked that the five changed entries stop being selected automatically or remain selectable from a picker, and Codex and VS Code were not run.

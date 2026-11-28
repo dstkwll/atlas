@@ -2,6 +2,7 @@
 name: atlas-to-documentation
 description: Create or update a PRD, guide, architecture explanation or reference from the current task and its evidence.
 argument-hint: "prd (default) | guide | architecture | reference — topic or source"
+disable-model-invocation: true
 ---
 
 Read the [shared Atlas lead guidance](../atlas/SKILL.md) for this assignment, then apply [to-documentation](../atlas/references/to-documentation.md). Announce the runbook and its purpose. Preserve the current assignment, authority and stopping point.
