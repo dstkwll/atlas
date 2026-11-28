@@ -40,7 +40,7 @@ All three attempts completed. Fresh independent review inspected actual tool del
 
 ## Removal of the truncated-guidance paragraph: November 2026
 
-Atlas 0.13.4 removes the paragraph this section's amendment added; the [decision record](../decisions/2026-09-24-lead-composition.md) gives the reason. The earlier comparison above is the only evidence so far: one attempt without the paragraph and one with it, both of which recovered. The `guidance-truncated-read` diagnostic has not yet been rerun on 0.13.3 and on the candidate. Until it is, this removal rests on that single earlier attempt, on an older lead, with a prompt that may itself draw attention to the read.
+Atlas 0.13.5 removes the paragraph this section's amendment added; the [decision record](../decisions/2026-09-24-lead-composition.md) gives the reason. The earlier comparison above is the only evidence so far: one attempt without the paragraph and one with it, both of which recovered. The `guidance-truncated-read` diagnostic has not yet been rerun on 0.13.4 and on the candidate. Until it is, this removal rests on that single earlier attempt, on an older lead, with a prompt that may itself draw attention to the read.
 
 ## Checks and limits
 
