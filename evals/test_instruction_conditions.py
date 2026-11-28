@@ -113,6 +113,14 @@ class InstructionConditions(unittest.TestCase):
                 metadata = json.loads((output / 'metadata.json').read_text())
                 self.assertFalse(metadata['instruction_plan']['git_root'])
 
+    def test_preview_rejects_unknown_check_kind_and_misplaced_artifact(self):
+        for change in ({'check': 'unchnaged'}, {'check': None},
+                       {'check': 'no_implementation', 'artifact': 'records.py'},
+                       {'check': 'unchanged', 'artifact': 'planning/inbox/a.md'}):
+            case = {'id': 'bad', 'turns': ['Hello'], 'check': 'unchanged', **change}
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                run.preview(case, 'guided')
+
     def test_missing_lead_preview_matches_intended_staging(self):
         plan = run.preview({'id': 'missing', 'entry': 'atlas-handoff', 'check': 'unchanged', 'missing': True, 'turns': ['Hello']}, 'guided')
         self.assertNotIn('atlas', plan['installed_skills'])

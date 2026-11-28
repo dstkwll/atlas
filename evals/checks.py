@@ -7,10 +7,34 @@ from stat import S_IMODE
 import sys
 
 
+# Kinds with their own facts below, then kinds that deliberately record only the generic facts.
+SPECIFIC_KINDS = frozenset((
+    'unchanged', 'prd', 'tickets', 'handoff', 'no_implementation', 'conflict-consumer',
+    'transfer-consumer', 'dependency-consumer', 'repair', 'station-repair', 'records-repair',
+    'retry', 'outbox', 'ledger'))
+GENERIC_ONLY_KINDS = frozenset(('guidance-only', 'review-preparation'))
+KNOWN_KINDS = SPECIFIC_KINDS | GENERIC_ONLY_KINDS
+
+
+def artifact_path(case):
+    """Optional planning file a no_implementation case expects; None when not declared."""
+    target = case.get('artifact')
+    if target is None:
+        return None
+    parts = Path(target).parts if isinstance(target, str) else ()
+    if case.get('check') != 'no_implementation' or len(parts) < 2 or parts[0] != 'planning' or '..' in parts:
+        raise ValueError('artifact must be a file path under planning/ on a no_implementation case')
+    return target
+
+
 def snapshot(root):
     result = {}
     for p in root.rglob('*'):
-        if '.git' in p.parts or '__pycache__' in p.parts:
+        parts = p.relative_to(root).parts
+        # Skip the workspace's own repository data and interpreter bytecode only. A nested
+        # .git directory, or any other file placed in a __pycache__ directory, is observed.
+        if parts[0] == '.git' or p.name == '__pycache__' or (
+                '__pycache__' in parts and p.suffix == '.pyc'):
             continue
         stat = p.lstat()
         value = {'mode': S_IMODE(stat.st_mode)}
@@ -29,6 +53,9 @@ def snapshot(root):
 def check(case, root, before, completed):
     results = {'host_completed': completed}
     kind = case['check']
+    if kind not in KNOWN_KINDS:
+        raise ValueError('Unknown check kind: ' + str(kind))
+    artifact = artifact_path(case)
     probe_before = snapshot(root)
     if kind == 'ledger':
         from ledger_checks import observe
@@ -95,9 +122,9 @@ def check(case, root, before, completed):
         results['workspace_unchanged'] = not changed
     elif kind in ('prd', 'tickets', 'handoff', 'no_implementation'):
         results['only_planning_changed'] = all(p == 'planning' or p.startswith('planning/') for p in changed)
-        if kind != 'no_implementation':
-            target = {'prd': 'planning/inbox/prd.html', 'tickets': 'planning/inbox/tickets',
-                      'handoff': 'planning/inbox/handoff.md'}[kind]
+        if kind != 'no_implementation' or artifact:
+            target = artifact or {'prd': 'planning/inbox/prd.html', 'tickets': 'planning/inbox/tickets',
+                                  'handoff': 'planning/inbox/handoff.md'}[kind]
             p = root / target
             results['artifact_nonempty'] = (any(f.is_file() and f.stat().st_size for f in p.rglob('*'))
                                            if kind == 'tickets' else p.is_file() and p.stat().st_size > 0)

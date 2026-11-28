@@ -12,7 +12,7 @@ import tempfile
 import threading
 import time
 
-from checks import check, snapshot
+from checks import KNOWN_KINDS, artifact_path, check, snapshot
 from fixtures import FIXTURES
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -43,6 +43,9 @@ def preview(case, condition):
     fixture = case.get('fixture')
     if fixture is not None and fixture not in FIXTURES:
         raise ValueError('Unknown fixture: ' + str(fixture))
+    if case.get('check') not in KNOWN_KINDS:
+        raise ValueError('Unknown check kind: ' + str(case.get('check')))
+    artifact_path(case)
     if case.get('missing') and package != 'atlas':
         raise ValueError('The missing-lead fixture is Atlas-only')
     if case.get('missing') and entry == 'atlas':
