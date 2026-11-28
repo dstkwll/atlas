@@ -1,6 +1,7 @@
 ---
 name: atlas-to-eval
 description: Turn a requirement, quality question or observed failure into an evaluation case or plan using the Atlas lead. Use for eval design, not an implied request to run trials.
+disable-model-invocation: true
 ---
 
 Read the [shared Atlas lead guidance](../atlas/SKILL.md) for this assignment, then apply [evaluation design](../atlas/references/evaluation-design.md). Announce the runbook and its purpose. Preserve the current assignment, authority and stopping point.
