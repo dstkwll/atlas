@@ -38,6 +38,10 @@ The amended run temporarily recorded a successful local probe after a failed int
 
 All three attempts completed. Fresh independent review inspected actual tool delivery, recovery order, responses and artifacts separately from endpoint facts. The baseline already demonstrated recovery, so this comparison establishes no improvement or causal benefit. It also does not exercise unrecoverable guidance, prove restraint after a complete relevant read, or establish reliability across natural requests, long sessions or other hosts. Earlier results remain attributed to their original candidates; they were not rerun or reassigned to this amendment.
 
+## Removal of the truncated-guidance paragraph: November 2026
+
+Atlas 0.13.4 removes the paragraph this section's amendment added; the [decision record](../decisions/2026-09-24-lead-composition.md) gives the reason. The earlier comparison above is the only evidence so far: one attempt without the paragraph and one with it, both of which recovered. The `guidance-truncated-read` diagnostic has not yet been rerun on 0.13.3 and on the candidate. Until it is, this removal rests on that single earlier attempt, on an older lead, with a prompt that may itself draw attention to the read.
+
 ## Checks and limits
 
 The evaluator's 39 correctness tests pass. Package versions are aligned at 0.9.2, the lead routing table is unchanged, and local link/whitespace checks cover the changed guidance. These checks do not establish model adherence.
