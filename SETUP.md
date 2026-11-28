@@ -169,7 +169,7 @@ What the maintainers have run on each host, according to those records:
 | Copilot CLI | Marketplace and local-package installation, skill discovery, selecting the `atlas:atlas` profile, an ordinary follow-up, session resume and native compaction. | Repeated compactions, workplace policy and enterprise deployment. |
 | VS Code with Copilot | Nothing. Its instructions here follow the host's documentation. | Plugin installation, the agent picker and any chat session. |
 | Codex | A project-local skill and the optional `AGENTS.md` default, each through native compaction. The maintainer evaluations also run on Codex. | Repeated compactions in a long session. |
-| Claude Code | Nothing. Its instructions here follow the host's documentation. | Skill discovery, invocation and compaction. |
+| Claude Code | One session with manually copied skills offered the model every entry except the two that were explicit-only at the time. | Invocation, picker selection and compaction. |
 
 Treat a path marked "Nothing" as untested, and tell the maintainers what you observe.
 
